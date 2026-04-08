@@ -33,11 +33,6 @@ function getDurationSeconds(duration = '') {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-function isShortVideo(duration = '') {
-  const totalSeconds = getDurationSeconds(duration);
-  return totalSeconds > 0 && totalSeconds <= 60;
-}
-
 function uniqueBy(items, keyFn) {
   const seen = new Set();
   return items.filter((item) => {
@@ -46,6 +41,26 @@ function uniqueBy(items, keyFn) {
     seen.add(key);
     return true;
   });
+}
+
+function detectShort(details, durationSeconds) {
+  const snippet = details?.snippet || {};
+  const title = String(snippet.title || '').toLowerCase();
+  const description = String(snippet.description || '').toLowerCase();
+  const tags = Array.isArray(snippet.tags) ? snippet.tags.map((t) => String(t).toLowerCase()) : [];
+  const thumbUrl =
+    snippet.thumbnails?.default?.url ||
+    snippet.thumbnails?.medium?.url ||
+    snippet.thumbnails?.high?.url ||
+    '';
+
+  return (
+    title.includes('#shorts') ||
+    description.includes('#shorts') ||
+    tags.includes('#shorts') ||
+    thumbUrl.includes('/vi_webp/') ||
+    durationSeconds <= 60
+  );
 }
 
 async function getUploadsPlaylistId(channelHandle, apiKey) {
@@ -104,6 +119,7 @@ async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
 
         const duration = details.contentDetails?.duration || '';
         const durationSeconds = getDurationSeconds(duration);
+        const isShort = detectShort(details, durationSeconds);
 
         return {
           id: videoId,
@@ -123,8 +139,10 @@ async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
           duration,
           durationText: formatDuration(duration),
           durationSeconds,
-          isShort: isShortVideo(duration),
-          url: `https://www.youtube.com/watch?v=${videoId}`,
+          isShort,
+          url: isShort
+            ? `https://www.youtube.com/shorts/${videoId}`
+            : `https://www.youtube.com/watch?v=${videoId}`,
         };
       })
       .filter(Boolean),
@@ -162,19 +180,19 @@ export default async function handler(req, res) {
       getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
     ]);
 
-    const shortsOnly = mainVideos.filter((video) => video.isShort);
-    const longformOnly = mainVideos.filter((video) => !video.isShort);
+    const shortsOnly = mainVideos.filter((video) => video.isShort || video.durationSeconds <= 60);
+    const longformOnly = mainVideos.filter((video) => !video.isShort && video.durationSeconds > 60);
 
     const longformFallback = mainVideos
       .filter((video) => video.durationSeconds > 60)
       .sort((a, b) => b.durationSeconds - a.durationSeconds);
 
     const shortsFallback = mainVideos
-      .filter((video) => !video.isShort && video.durationSeconds <= 180)
+      .filter((video) => video.isShort || video.durationSeconds <= 180)
       .sort((a, b) => a.durationSeconds - b.durationSeconds);
 
-    const fullPreferred = fullVideosRaw.filter((video) => video.durationSeconds > 60);
-    const fullFallback = [...fullVideosRaw];
+    const fullPreferred = fullVideosRaw.filter((video) => !video.isShort && video.durationSeconds > 60);
+    const fullFallback = fullVideosRaw.filter((video) => video.durationSeconds > 0);
 
     const longform = fillToCount(longformOnly, longformFallback.length ? longformFallback : mainVideos, 9);
     const shorts = fillToCount(shortsOnly, shortsFallback.length ? shortsFallback : mainVideos, 8);
