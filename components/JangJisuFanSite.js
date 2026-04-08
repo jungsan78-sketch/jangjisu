@@ -63,7 +63,7 @@ function NavChip({ href, label, tone = 'neutral', external = false }) {
   );
 }
 
-function VideoCard({ video, compact = false }) {
+function VideoCard({ video }) {
   return (
     <a
       href={video.url}
@@ -71,12 +71,12 @@ function VideoCard({ video, compact = false }) {
       rel="noreferrer"
       className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#0c1018] transition hover:-translate-y-1 hover:border-white/20"
     >
-      <div className={`relative overflow-hidden bg-[#121826] ${compact ? 'aspect-[9/14]' : 'aspect-video'}`}>
+      <div className="relative aspect-video overflow-hidden bg-[#121826]">
         {video.thumbnail ? (
           <img
             src={video.thumbnail}
             alt={video.title}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
@@ -84,7 +84,6 @@ function VideoCard({ video, compact = false }) {
 
         <div className="absolute left-3 top-3 flex items-center gap-2">
           <span className="rounded-full bg-[#ff4e45] px-3 py-1 text-[11px] font-bold text-white">YouTube</span>
-          {compact ? <span className="rounded-full bg-black/70 px-3 py-1 text-[11px] font-bold text-white">Shorts</span> : null}
         </div>
 
         {video.durationText ? (
@@ -159,7 +158,6 @@ export default function JangJisuFanSite() {
     channel: {
       name: '장지수',
       soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
-      vodUrl: 'https://www.sooplive.com/station/iamquaddurup/vod/normal',
       boardUrl: 'https://www.sooplive.com/station/iamquaddurup/board',
       fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
       isLive: null,
@@ -168,16 +166,14 @@ export default function JangJisuFanSite() {
     notices: [],
     pinnedPosts: [],
     ok: false,
-    fetchedAt: '',
-    error: '',
   });
 
   const [youtube, setYoutube] = useState({
     ok: false,
-    main: { longform: [], shorts: [] },
+    latestVideos: [],
     full: [],
     channels: {
-      main: { title: '장지수', url: 'https://www.youtube.com/@jisoujang' },
+      latest: { title: '장지수', url: 'https://www.youtube.com/@jisoujang' },
       full: { title: '장지수 풀영상', url: 'https://www.youtube.com/@jisoujang_full' },
     },
     error: '',
@@ -196,90 +192,70 @@ export default function JangJisuFanSite() {
     const loadSoop = async () => {
       try {
         const res = await fetch('/api/soop');
-        const text = await res.text();
-        let json = {};
-        try { json = JSON.parse(text); } catch { throw new Error('api/soop returned non-JSON response'); }
-
-        if (mounted) {
-          setData({
-            channel: {
-              name: '장지수',
-              soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
-              vodUrl: 'https://www.sooplive.com/station/iamquaddurup/vod/normal',
-              boardUrl: 'https://www.sooplive.com/station/iamquaddurup/board',
-              fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
-              isLive: null,
-              liveTitle: '장지수 방송국',
-              ...(json.channel || {}),
-            },
-            notices: Array.isArray(json.notices) ? json.notices : [],
-            pinnedPosts: Array.isArray(json.pinnedPosts) ? json.pinnedPosts : [],
-            ok: Boolean(json.ok),
-            fetchedAt: json.fetchedAt || '',
-            error: json.error || '',
-          });
-        }
-      } catch (error) {
-        if (mounted) setData((prev) => ({ ...prev, ok: false, error: error.message || 'failed to load /api/soop' }));
-      }
+        const json = await res.json();
+        if (!mounted) return;
+        setData({
+          channel: {
+            name: '장지수',
+            soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
+            boardUrl: 'https://www.sooplive.com/station/iamquaddurup/board',
+            fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
+            isLive: null,
+            liveTitle: '장지수 방송국',
+            ...(json.channel || {}),
+          },
+          notices: Array.isArray(json.notices) ? json.notices : [],
+          pinnedPosts: Array.isArray(json.pinnedPosts) ? json.pinnedPosts : [],
+          ok: Boolean(json.ok),
+        });
+      } catch {}
     };
 
     const loadYoutube = async () => {
       try {
         const res = await fetch('/api/youtube');
-        const text = await res.text();
-        let json = {};
-        try { json = JSON.parse(text); } catch { throw new Error('api/youtube returned non-JSON response'); }
-
-        if (mounted) {
-          setYoutube({
-            ok: Boolean(json.ok),
-            main: {
-              longform: Array.isArray(json.main?.longform) ? json.main.longform : [],
-              shorts: Array.isArray(json.main?.shorts) ? json.main.shorts : [],
+        const json = await res.json();
+        if (!mounted) return;
+        setYoutube({
+          ok: Boolean(json.ok),
+          latestVideos: Array.isArray(json.latestVideos) ? json.latestVideos : [],
+          full: Array.isArray(json.full) ? json.full : [],
+          channels: {
+            latest: {
+              title: json.channels?.latest?.title || '장지수',
+              url: json.channels?.latest?.url || 'https://www.youtube.com/@jisoujang',
             },
-            full: Array.isArray(json.full) ? json.full : [],
-            channels: {
-              main: {
-                title: json.channels?.main?.title || '장지수',
-                url: json.channels?.main?.url || 'https://www.youtube.com/@jisoujang',
-              },
-              full: {
-                title: json.channels?.full?.title || '장지수 풀영상',
-                url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full',
-              },
+            full: {
+              title: json.channels?.full?.title || '장지수 풀영상',
+              url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full',
             },
-            error: json.error || '',
-          });
-        }
-      } catch (error) {
-        if (mounted) setYoutube((prev) => ({ ...prev, ok: false, error: error.message || 'failed to load /api/youtube' }));
-      }
+          },
+          error: json.error || '',
+        });
+      } catch {}
     };
 
     const loadSchedule = async () => {
       try {
         const res = await fetch('/api/schedule');
-        const text = await res.text();
-        let json = {};
-        try { json = JSON.parse(text); } catch { throw new Error('api/schedule returned non-JSON response'); }
-
-        if (mounted) {
-          setSchedule({
-            ok: Boolean(json.ok),
-            monthLabel: json.monthLabel || '',
-            items: Array.isArray(json.items) ? json.items : [],
-            sourceUrl: json.sourceUrl || '',
-          });
-        }
-      } catch {
-        if (mounted) setSchedule((prev) => ({ ...prev, ok: false }));
-      }
+        const json = await res.json();
+        if (!mounted) return;
+        setSchedule({
+          ok: Boolean(json.ok),
+          monthLabel: json.monthLabel || '',
+          items: Array.isArray(json.items) ? json.items : [],
+          sourceUrl: json.sourceUrl || '',
+        });
+      } catch {}
     };
 
     loadSoop();
     loadYoutube();
     loadSchedule();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const liveLabel =
@@ -304,6 +280,15 @@ export default function JangJisuFanSite() {
         html {
           scroll-behavior: smooth;
         }
+        @keyframes heroFloat {
+          0% { transform: translate3d(0, 0, 0) scale(1.02); }
+          50% { transform: translate3d(0, -8px, 0) scale(1.05); }
+          100% { transform: translate3d(0, 0, 0) scale(1.02); }
+        }
+        @keyframes shimmerText {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
       `}</style>
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -324,8 +309,7 @@ export default function JangJisuFanSite() {
 
           <nav className="flex flex-wrap items-center gap-3">
             <NavChip href="#schedule" label="일정" />
-            <NavChip href="#main-video" label="본채널 영상" tone="red" />
-            <NavChip href="#shorts" label="Shorts" tone="red" />
+            <NavChip href="#latest-video" label="최신 영상" tone="red" />
             <NavChip href="#full-video" label="풀영상" tone="red" />
             <NavChip href="#notice" label="공지" />
             <NavChip href={data.channel.fanCafeUrl} label="팬카페" tone="green" external />
@@ -335,13 +319,34 @@ export default function JangJisuFanSite() {
 
       <main className="relative mx-auto max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
         <section className="overflow-hidden rounded-[34px] border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/30">
-          <div className="relative min-h-[420px] overflow-hidden lg:min-h-[500px]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(44,149,255,0.34),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(125,211,252,0.22),_transparent_20%),linear-gradient(180deg,_rgba(37,99,235,0.96)_0%,_rgba(8,15,32,0.92)_40%,_rgba(4,7,12,1)_100%)]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#05070c]" />
+          <div className="relative min-h-[460px] overflow-hidden lg:min-h-[560px]">
+            <video
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+              src="/hero.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{ animation: 'heroFloat 18s ease-in-out infinite' }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(44,149,255,0.32),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(125,211,252,0.18),_transparent_20%),linear-gradient(180deg,_rgba(3,7,18,0.40)_0%,_rgba(3,7,18,0.62)_45%,_rgba(2,6,12,0.88)_100%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-[#05070c]" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-[radial-gradient(circle_at_center,rgba(96,165,250,0.18),transparent_70%)] blur-2xl" />
 
-            <div className="relative z-10 flex min-h-[420px] flex-col items-center justify-center px-6 text-center lg:min-h-[500px]">
-              <div className="text-[58px] font-black uppercase leading-[0.92] tracking-[0.18em] text-white sm:text-[82px] md:text-[110px] lg:text-[144px]">
+            <div className="relative z-10 flex min-h-[460px] flex-col items-center justify-center px-6 text-center lg:min-h-[560px]">
+              <div
+                className="select-none bg-[linear-gradient(90deg,#ffffff_0%,#dbeafe_25%,#ffffff_50%,#bae6fd_75%,#ffffff_100%)] bg-[length:200%_200%] bg-clip-text text-[58px] font-black uppercase leading-[0.92] tracking-[0.22em] text-transparent sm:text-[82px] md:text-[112px] lg:text-[152px]"
+                style={{
+                  textShadow: '0 0 18px rgba(255,255,255,0.08), 0 10px 35px rgba(0,0,0,0.8), 0 2px 0 rgba(255,255,255,0.06)',
+                  animation: 'shimmerText 10s linear infinite',
+                }}
+              >
                 JANGJISOU
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <a href={data.channel.soopUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/85 backdrop-blur transition hover:bg-white/12">SOOP 방송국</a>
+                <a href={youtube.channels.latest.url} target="_blank" rel="noreferrer" className="rounded-full border border-[#ff4e45]/30 bg-[#ff4e45]/15 px-4 py-2 text-sm text-[#ffb2ae] backdrop-blur transition hover:bg-[#ff4e45]/20">YouTube</a>
               </div>
             </div>
           </div>
@@ -360,17 +365,10 @@ export default function JangJisuFanSite() {
           </div>
         </section>
 
-        <section id="main-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="장지수 본채널 영상" actionHref={youtube.channels.main.url} actionLabel="본채널 바로가기" logo="▶️" />
+        <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
+          <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.url} actionLabel="본채널 바로가기" logo="▶️" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {youtube.main.longform.map((video) => <VideoCard key={video.id} video={video} />)}
-          </div>
-        </section>
-
-        <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="Shorts" actionHref={youtube.channels.main.url} actionLabel="쇼츠 보러가기" logo="▶️" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {youtube.main.shorts.map((video) => <VideoCard key={video.id} video={video} compact />)}
+            {youtube.latestVideos.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
         </section>
 

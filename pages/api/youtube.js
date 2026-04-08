@@ -151,69 +151,27 @@ export default async function handler(req, res) {
     const mainChannel = await getUploadsPlaylistId('jisoujang', apiKey);
     const fullChannel = await getUploadsPlaylistId('jisoujang_full', apiKey);
 
-    const [mainVideosRaw, fullVideosRaw] = await Promise.all([
-      getPlaylistVideos(mainChannel.uploadsPlaylistId, apiKey, 30),
+    const [latestRaw, fullRaw] = await Promise.all([
+      getPlaylistVideos(mainChannel.uploadsPlaylistId, apiKey, 24),
       getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
     ]);
 
-    // 기준: 3분 이하 = Shorts, 3분 초과 = 본채널 영상
-    const shortsOnly = mainVideosRaw
-      .filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 180)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/shorts/${video.id}`,
-      }));
-
-    const longformOnly = mainVideosRaw
-      .filter((video) => video.durationSeconds > 180)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-      }));
-
-    const shortsFallback = mainVideosRaw
-      .filter((video) => video.durationSeconds > 0)
-      .sort((a, b) => a.durationSeconds - b.durationSeconds)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/shorts/${video.id}`,
-      }));
-
-    const longformFallback = mainVideosRaw
-      .filter((video) => video.durationSeconds > 180)
-      .sort((a, b) => b.durationSeconds - a.durationSeconds)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-      }));
-
-    const fullPreferred = fullVideosRaw
-      .filter((video) => video.durationSeconds > 180)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-      }));
-
-    const fullFallback = fullVideosRaw
-      .filter((video) => video.durationSeconds > 0)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-      }));
-
-    const longform = fillToCount(
-      longformOnly,
-      longformFallback.length ? longformFallback : mainVideosRaw.map((video) => ({ ...video, url: `https://www.youtube.com/watch?v=${video.id}` })),
+    const latestVideos = fillToCount(
+      latestRaw.filter((video) => video.durationSeconds > 0),
+      latestRaw,
       9
     );
 
-    const shorts = fillToCount(shortsOnly, shortsFallback, 8);
-    const fullVideos = fillToCount(fullPreferred, fullFallback, 9);
+    const fullVideos = fillToCount(
+      fullRaw.filter((video) => video.durationSeconds > 180),
+      fullRaw,
+      9
+    );
 
     return res.status(200).json({
       ok: true,
       channels: {
-        main: {
+        latest: {
           title: mainChannel.channelTitle,
           handle: '@jisoujang',
           url: 'https://www.youtube.com/@jisoujang',
@@ -224,10 +182,7 @@ export default async function handler(req, res) {
           url: 'https://www.youtube.com/@jisoujang_full',
         },
       },
-      main: {
-        longform,
-        shorts,
-      },
+      latestVideos,
       full: fullVideos,
       fetchedAt: new Date().toISOString(),
     });
