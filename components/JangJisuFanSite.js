@@ -243,7 +243,9 @@ useEffect(() => {
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
               <div className="text-xs uppercase tracking-[0.3em] text-white/40">collector status</div>
               <div className="mt-2 text-lg font-semibold">{loading ? '불러오는 중' : data.ok ? '정상 수집 중' : 'collector 필요'}</div>
-              <div className="mt-1 text-sm text-white/50">기준 링크: {data.channel.boardUrl.replace('https://', '')}</div>
+             <div className="mt-1 text-sm text-white/50">
+                기준 링크: {(data.channel?.boardUrl || 'https://www.sooplive.com/station/iamquaddurup/board').replace('https://', '')}
+              </div>
             </div>
           </div>
 
