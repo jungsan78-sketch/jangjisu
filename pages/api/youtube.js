@@ -42,20 +42,16 @@ function uniqueIds(ids) {
   });
 }
 
-async function getChannelInfo(channelHandle, apiKey) {
-  const channelRes = await fetch(
+async function getChannelTitle(channelHandle, apiKey) {
+  const res = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
     { cache: 'no-store' }
   );
-  const channelJson = await channelRes.json();
-
-  if (!channelRes.ok || !channelJson.items?.length) {
-    throw new Error(`Failed to load channel for handle: ${channelHandle}`);
+  const json = await res.json();
+  if (!res.ok || !json.items?.length) {
+    throw new Error(`Failed to load channel title for ${channelHandle}`);
   }
-
-  return {
-    title: channelJson.items[0].snippet.title,
-  };
+  return json.items[0].snippet.title;
 }
 
 async function scrapeTabVideoIds(tabUrl) {
@@ -69,16 +65,33 @@ async function scrapeTabVideoIds(tabUrl) {
   });
 
   const html = await res.text();
-
   if (!res.ok || !html) {
-    throw new Error(`Failed to fetch YouTube tab: ${tabUrl}`);
+    throw new Error(`Failed to fetch tab ${tabUrl}`);
   }
 
-  const matches = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1]);
-  return uniqueIds(matches).slice(0, 18);
+  const ids = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1]);
+  return uniqueIds(ids).slice(0, 18);
 }
 
-async function getVideosByIds(ids, apiKey, vertical = false) {
+async function getUploadsFallbackIds(channelHandle, apiKey) {
+  const channelRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${channelHandle}&key=${apiKey}`,
+    { cache: 'no-store' }
+  );
+  const channelJson = await channelRes.json();
+  const uploadsId = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploadsId) return [];
+
+  const playlistRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploadsId}&maxResults=24&key=${apiKey}`,
+    { cache: 'no-store' }
+  );
+  const playlistJson = await playlistRes.json();
+
+  return uniqueIds((playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
+}
+
+async function getVideosByIds(ids, apiKey, shortsMode = false) {
   if (!ids?.length) return [];
 
   const res = await fetch(
@@ -86,19 +99,18 @@ async function getVideosByIds(ids, apiKey, vertical = false) {
     { cache: 'no-store' }
   );
   const json = await res.json();
+  if (!res.ok || !json.items?.length) return [];
 
-  if (!res.ok || !json.items?.length) {
-    return [];
-  }
-
-  const map = new Map(json.items.map((item) => [item.id, item]));
+  const byId = new Map(json.items.map((item) => [item.id, item]));
 
   return ids
     .map((id) => {
-      const details = map.get(id);
+      const details = byId.get(id);
       if (!details) return null;
 
       const duration = details.contentDetails?.duration || '';
+      const durationSeconds = getDurationSeconds(duration);
+
       return {
         id,
         title: details.snippet?.title || '',
@@ -113,8 +125,8 @@ async function getVideosByIds(ids, apiKey, vertical = false) {
         viewsText: formatViews(details.statistics?.viewCount || '0'),
         duration,
         durationText: formatDuration(duration),
-        durationSeconds: getDurationSeconds(duration),
-        url: vertical
+        durationSeconds,
+        url: shortsMode
           ? `https://www.youtube.com/shorts/${id}`
           : `https://www.youtube.com/watch?v=${id}`,
       };
@@ -126,83 +138,61 @@ function fillToCount(primary, fallback, count) {
   const result = [...primary];
   for (const item of fallback) {
     if (result.length >= count) break;
-    if (!result.some((video) => video.id === item.id)) {
-      result.push(item);
-    }
+    if (!result.some((v) => v.id === item.id)) result.push(item);
   }
   return result.slice(0, count);
-}
-
-async function fallbackUploads(channelHandle, apiKey) {
-  const channelRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${channelHandle}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const channelJson = await channelRes.json();
-  const uploads = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-  if (!uploads) return [];
-
-  const playlistRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=24&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const playlistJson = await playlistRes.json();
-  return uniqueIds((playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
 }
 
 export default async function handler(req, res) {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   if (!apiKey) {
-    return res.status(200).json({
-      ok: false,
-      error: 'YOUTUBE_API_KEY is not set',
-    });
+    return res.status(200).json({ ok: false, error: 'YOUTUBE_API_KEY is not set' });
   }
 
   try {
-    const [mainInfo, fullInfo] = await Promise.all([
-      getChannelInfo('jisoujang', apiKey),
-      getChannelInfo('jisoujang_full', apiKey),
+    const [mainTitle, fullTitle] = await Promise.all([
+      getChannelTitle('jisoujang', apiKey),
+      getChannelTitle('jisoujang_full', apiKey),
     ]);
 
-    let videoIds = [];
+    let videosIds = [];
     let shortsIds = [];
     let fullIds = [];
 
     try {
-      [videoIds, shortsIds, fullIds] = await Promise.all([
+      [videosIds, shortsIds, fullIds] = await Promise.all([
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang/videos'),
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang/shorts'),
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
       ]);
-    } catch (e) {
-      const [mainFallback, fullFallback] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
+    } catch {
+      const [mainFallbackIds, fullFallbackIds] = await Promise.all([
+        getUploadsFallbackIds('jisoujang', apiKey),
+        getUploadsFallbackIds('jisoujang_full', apiKey),
       ]);
 
-      videoIds = mainFallback.filter(Boolean);
-      shortsIds = mainFallback.filter(Boolean);
-      fullIds = fullFallback.filter(Boolean);
+      videosIds = mainFallbackIds;
+      shortsIds = mainFallbackIds;
+      fullIds = fullFallbackIds;
     }
 
     let [videos, shorts, full] = await Promise.all([
-      getVideosByIds(videoIds.slice(0, 12), apiKey, false),
+      getVideosByIds(videosIds.slice(0, 12), apiKey, false),
       getVideosByIds(shortsIds.slice(0, 12), apiKey, true),
       getVideosByIds(fullIds.slice(0, 12), apiKey, false),
     ]);
 
     if (!videos.length || !shorts.length || !full.length) {
-      const [mainFallback, fullFallback] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
+      const [mainFallbackIds, fullFallbackIds] = await Promise.all([
+        getUploadsFallbackIds('jisoujang', apiKey),
+        getUploadsFallbackIds('jisoujang_full', apiKey),
       ]);
 
       const [fallbackVideos, fallbackShorts, fallbackFull] = await Promise.all([
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, false),
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, true),
-        getVideosByIds(fullFallback.slice(0, 18), apiKey, false),
+        getVideosByIds(mainFallbackIds.slice(0, 18), apiKey, false),
+        getVideosByIds(mainFallbackIds.slice(0, 18), apiKey, true),
+        getVideosByIds(fullFallbackIds.slice(0, 18), apiKey, false),
       ]);
 
       videos = fillToCount(videos, fallbackVideos, 9);
@@ -214,13 +204,13 @@ export default async function handler(req, res) {
       ok: true,
       channels: {
         latest: {
-          title: mainInfo.title,
+          title: mainTitle,
           url: 'https://www.youtube.com/@jisoujang',
           videosUrl: 'https://www.youtube.com/@jisoujang/videos',
           shortsUrl: 'https://www.youtube.com/@jisoujang/shorts',
         },
         full: {
-          title: fullInfo.title,
+          title: fullTitle,
           url: 'https://www.youtube.com/@jisoujang_full',
           videosUrl: 'https://www.youtube.com/@jisoujang_full/videos',
         },
