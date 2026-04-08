@@ -43,26 +43,6 @@ function uniqueBy(items, keyFn) {
   });
 }
 
-function detectShort(details, durationSeconds) {
-  const snippet = details?.snippet || {};
-  const title = String(snippet.title || '').toLowerCase();
-  const description = String(snippet.description || '').toLowerCase();
-  const tags = Array.isArray(snippet.tags) ? snippet.tags.map((t) => String(t).toLowerCase()) : [];
-  const thumbUrl =
-    snippet.thumbnails?.default?.url ||
-    snippet.thumbnails?.medium?.url ||
-    snippet.thumbnails?.high?.url ||
-    '';
-
-  return (
-    title.includes('#shorts') ||
-    description.includes('#shorts') ||
-    tags.includes('#shorts') ||
-    thumbUrl.includes('/vi_webp/') ||
-    durationSeconds <= 60
-  );
-}
-
 async function getUploadsPlaylistId(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -119,7 +99,6 @@ async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
 
         const duration = details.contentDetails?.duration || '';
         const durationSeconds = getDurationSeconds(duration);
-        const isShort = detectShort(details, durationSeconds);
 
         return {
           id: videoId,
@@ -139,10 +118,7 @@ async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
           duration,
           durationText: formatDuration(duration),
           durationSeconds,
-          isShort,
-          url: isShort
-            ? `https://www.youtube.com/shorts/${videoId}`
-            : `https://www.youtube.com/watch?v=${videoId}`,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
         };
       })
       .filter(Boolean),
@@ -175,27 +151,63 @@ export default async function handler(req, res) {
     const mainChannel = await getUploadsPlaylistId('jisoujang', apiKey);
     const fullChannel = await getUploadsPlaylistId('jisoujang_full', apiKey);
 
-    const [mainVideos, fullVideosRaw] = await Promise.all([
+    const [mainVideosRaw, fullVideosRaw] = await Promise.all([
       getPlaylistVideos(mainChannel.uploadsPlaylistId, apiKey, 30),
       getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
     ]);
 
-    const shortsOnly = mainVideos.filter((video) => video.isShort || video.durationSeconds <= 60);
-    const longformOnly = mainVideos.filter((video) => !video.isShort && video.durationSeconds > 60);
+    // 기준: 3분 이하 = Shorts, 3분 초과 = 본채널 영상
+    const shortsOnly = mainVideosRaw
+      .filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 180)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/shorts/${video.id}`,
+      }));
 
-    const longformFallback = mainVideos
-      .filter((video) => video.durationSeconds > 60)
-      .sort((a, b) => b.durationSeconds - a.durationSeconds);
+    const longformOnly = mainVideosRaw
+      .filter((video) => video.durationSeconds > 180)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+      }));
 
-    const shortsFallback = mainVideos
-      .filter((video) => video.isShort || video.durationSeconds <= 180)
-      .sort((a, b) => a.durationSeconds - b.durationSeconds);
+    const shortsFallback = mainVideosRaw
+      .filter((video) => video.durationSeconds > 0)
+      .sort((a, b) => a.durationSeconds - b.durationSeconds)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/shorts/${video.id}`,
+      }));
 
-    const fullPreferred = fullVideosRaw.filter((video) => !video.isShort && video.durationSeconds > 60);
-    const fullFallback = fullVideosRaw.filter((video) => video.durationSeconds > 0);
+    const longformFallback = mainVideosRaw
+      .filter((video) => video.durationSeconds > 180)
+      .sort((a, b) => b.durationSeconds - a.durationSeconds)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+      }));
 
-    const longform = fillToCount(longformOnly, longformFallback.length ? longformFallback : mainVideos, 9);
-    const shorts = fillToCount(shortsOnly, shortsFallback.length ? shortsFallback : mainVideos, 8);
+    const fullPreferred = fullVideosRaw
+      .filter((video) => video.durationSeconds > 180)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+      }));
+
+    const fullFallback = fullVideosRaw
+      .filter((video) => video.durationSeconds > 0)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+      }));
+
+    const longform = fillToCount(
+      longformOnly,
+      longformFallback.length ? longformFallback : mainVideosRaw.map((video) => ({ ...video, url: `https://www.youtube.com/watch?v=${video.id}` })),
+      9
+    );
+
+    const shorts = fillToCount(shortsOnly, shortsFallback, 8);
     const fullVideos = fillToCount(fullPreferred, fullFallback, 9);
 
     return res.status(200).json({
