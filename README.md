@@ -1,10 +1,14 @@
 변경 파일
-- components/JangJisuFanSite.js
+- components/SiteFooter.jsx
 
-변경 내용
-- 일정 섹션을 영상보다 위로 이동
-- 상단 메뉴 추가 후 각 섹션으로 스크롤 이동
-- 히어로 영역을 JANGJISOU 텍스트 중심으로 단순화
-- 유튜브/플랫폼 로고 느낌을 작게 활용
-- 탭/섹션 제목을 한글 중심으로 정리
-- 카드 비네팅 느낌 제거
+적용 방법
+1. 새 파일로 추가
+2. 현재 components/JangJisuFanSite.js 상단에 아래 import 추가
+
+import SiteFooter from './SiteFooter';
+
+3. 현재 JangJisuFanSite 컴포넌트의 맨 마지막 </main> 바로 아래에 추가
+
+<SiteFooter />
+
+4. GitHub push 후 Vercel 재배포
