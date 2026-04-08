@@ -16,6 +16,26 @@ function SectionTitle({ eyebrow, title, actionHref, actionLabel }) {
   );
 }
 
+function formatRelativeTime(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
+
+  if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))}분 전`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}시간 전`;
+  if (diffMs < week) return `${Math.floor(diffMs / day)}일 전`;
+  if (diffMs < month) return `${Math.floor(diffMs / week)}주 전`;
+  if (diffMs < year) return `${Math.floor(diffMs / month)}개월 전`;
+  return `${Math.floor(diffMs / year)}년 전`;
+}
+
 function VideoCard({ video, compact = false }) {
   return (
     <a href={video.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[24px] border border-white/10 bg-black/25 transition hover:-translate-y-1 hover:border-cyan-300/20">
@@ -26,11 +46,20 @@ function VideoCard({ video, compact = false }) {
           <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-        {video.durationText ? <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">{video.durationText}</div> : null}
+        {compact ? (
+          <div className="absolute left-3 top-3 rounded-full bg-[#ff4e45] px-3 py-1 text-[11px] font-bold text-white">
+            Shorts
+          </div>
+        ) : null}
+        {video.durationText ? (
+          <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+            {video.durationText}
+          </div>
+        ) : null}
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between gap-3 text-xs text-white/45">
-          <span>{video.publishedAtText || ''}</span>
+          <span>{formatRelativeTime(video.publishedAt) || video.publishedAtText || ''}</span>
           <span>{video.viewsText ? `조회 ${video.viewsText}` : ''}</span>
         </div>
         <h4 className="mt-3 line-clamp-2 min-h-[48px] text-base font-semibold leading-6">{video.title}</h4>
@@ -264,17 +293,17 @@ export default function JangJisuFanSite() {
 
         <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="장지수 본채널" title="Longform Video" actionHref={youtube.channels.main.url} actionLabel="본채널 바로가기" />
-          <div className="grid gap-5 lg:grid-cols-4">{youtube.main.longform.map((video) => <VideoCard key={video.id} video={video} />)}</div>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{youtube.main.longform.map((video) => <VideoCard key={video.id} video={video} />)}</div>
         </section>
 
         <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="장지수 본채널" title="Shorts" actionHref={youtube.channels.main.url} actionLabel="쇼츠 보러가기" />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">{youtube.main.shorts.map((video) => <VideoCard key={video.id} video={video} compact />)}</div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{youtube.main.shorts.map((video) => <VideoCard key={video.id} video={video} compact />)}</div>
         </section>
 
         <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="장지수 풀영상" title="Full Video" actionHref={youtube.channels.full.url} actionLabel="풀영상 채널 바로가기" />
-          <div className="grid gap-5 lg:grid-cols-4">{youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}</div>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}</div>
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
