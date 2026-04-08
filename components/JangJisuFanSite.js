@@ -50,17 +50,21 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '' })
           : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}>
+    <a
+      href={href}
+      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}
+    >
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
   );
 }
 
-function VideoCard({ video }) {
+function VideoCard({ video, vertical = false }) {
   return (
     <a href={video.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#0c1018] transition hover:-translate-y-1 hover:border-white/20">
-      <div className="relative aspect-video overflow-hidden bg-[#121826]">
+      <div className={`relative overflow-hidden bg-[#121826] ${vertical ? 'aspect-[9/14]' : 'aspect-video'}`}>
         {video.thumbnail ? (
           <img src={video.thumbnail} alt={video.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]" />
         ) : (
@@ -151,10 +155,15 @@ export default function JangJisuFanSite() {
     },
   });
   const [youtube, setYoutube] = useState({
-    latestVideos: [],
+    shorts: [],
+    videos: [],
     full: [],
     channels: {
-      latest: { url: 'https://www.youtube.com/@jisoujang' },
+      latest: {
+        url: 'https://www.youtube.com/@jisoujang',
+        videosUrl: 'https://www.youtube.com/@jisoujang/videos',
+        shortsUrl: 'https://www.youtube.com/@jisoujang/shorts',
+      },
       full: { url: 'https://www.youtube.com/@jisoujang_full' },
     },
   });
@@ -167,6 +176,7 @@ export default function JangJisuFanSite() {
 
   useEffect(() => {
     let mounted = true;
+
     const loadSoop = async () => {
       try {
         const res = await fetch('/api/soop');
@@ -174,28 +184,34 @@ export default function JangJisuFanSite() {
         if (!mounted) return;
         setData((prev) => ({
           ...prev,
-          channel: {
-            ...prev.channel,
-            ...(json.channel || {}),
-          },
+          channel: { ...prev.channel, ...(json.channel || {}) },
         }));
       } catch {}
     };
+
     const loadYoutube = async () => {
       try {
         const res = await fetch('/api/youtube');
         const json = await res.json();
         if (!mounted) return;
         setYoutube({
-          latestVideos: Array.isArray(json.latestVideos) ? json.latestVideos : [],
+          shorts: Array.isArray(json.shorts) ? json.shorts : [],
+          videos: Array.isArray(json.videos) ? json.videos : [],
           full: Array.isArray(json.full) ? json.full : [],
           channels: {
-            latest: { url: json.channels?.latest?.url || 'https://www.youtube.com/@jisoujang' },
-            full: { url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full' },
+            latest: {
+              url: json.channels?.latest?.url || 'https://www.youtube.com/@jisoujang',
+              videosUrl: json.channels?.latest?.videosUrl || 'https://www.youtube.com/@jisoujang/videos',
+              shortsUrl: json.channels?.latest?.shortsUrl || 'https://www.youtube.com/@jisoujang/shorts',
+            },
+            full: {
+              url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full',
+            },
           },
         });
       } catch {}
     };
+
     const loadSchedule = async () => {
       try {
         const res = await fetch('/api/schedule');
@@ -208,9 +224,11 @@ export default function JangJisuFanSite() {
         });
       } catch {}
     };
+
     loadSoop();
     loadYoutube();
     loadSchedule();
+
     return () => {
       mounted = false;
     };
@@ -246,9 +264,11 @@ export default function JangJisuFanSite() {
               <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
             </a>
           </div>
+
           <nav className="flex flex-wrap items-center gap-3">
             <NavChip href="#schedule" label="일정" tone="blue" icon="🔵" />
             <NavChip href="#notice" label="공지" tone="blue" icon="🔵" />
+            <NavChip href="#shorts" label="Shorts" tone="red" icon="▶" />
             <NavChip href="#latest-video" label="최신 영상" tone="red" icon="▶" />
             <NavChip href="#full-video" label="풀영상" tone="red" icon="▶" />
             <NavChip href={data.channel.fanCafeUrl} label="팬카페" tone="green" external icon="N" />
@@ -263,10 +283,18 @@ export default function JangJisuFanSite() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(44,149,255,0.32),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(125,211,252,0.18),_transparent_20%),linear-gradient(180deg,_rgba(3,7,18,0.40)_0%,_rgba(3,7,18,0.62)_45%,_rgba(2,6,12,0.88)_100%)]" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-[#05070c]" />
             <div className="absolute inset-x-0 bottom-0 h-40 bg-[radial-gradient(circle_at_center,rgba(96,165,250,0.18),transparent_70%)] blur-2xl" />
+
             <div className="relative z-10 flex min-h-[460px] flex-col items-center justify-center px-6 text-center lg:min-h-[560px]">
-              <div className="select-none bg-[linear-gradient(90deg,#ffffff_0%,#dbeafe_25%,#ffffff_50%,#bae6fd_75%,#ffffff_100%)] bg-[length:200%_200%] bg-clip-text text-[72px] font-black uppercase leading-[0.92] tracking-[0.24em] text-transparent sm:text-[96px] md:text-[128px] lg:text-[176px]" style={{ textShadow: '0 0 18px rgba(255,255,255,0.08), 0 10px 35px rgba(0,0,0,0.8), 0 2px 0 rgba(255,255,255,0.06)', animation: 'shimmerText 10s linear infinite' }}>
+              <div
+                className="select-none bg-[linear-gradient(90deg,#ffffff_0%,#dbeafe_25%,#ffffff_50%,#bae6fd_75%,#ffffff_100%)] bg-[length:200%_200%] bg-clip-text text-[72px] font-black uppercase leading-[0.92] tracking-[0.24em] text-transparent sm:text-[96px] md:text-[128px] lg:text-[176px]"
+                style={{
+                  textShadow: '0 0 18px rgba(255,255,255,0.08), 0 10px 35px rgba(0,0,0,0.8), 0 2px 0 rgba(255,255,255,0.06)',
+                  animation: 'shimmerText 10s linear infinite',
+                }}
+              >
                 SOU
               </div>
+
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <a href={data.channel.soopUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/15 px-4 py-2 text-sm text-[#b8d8ff] backdrop-blur transition hover:bg-[#3b82f6]/20">🔵 SOOP 방송국</a>
                 <a href={youtube.channels.latest.url} target="_blank" rel="noreferrer" className="rounded-full border border-[#ff4e45]/30 bg-[#ff4e45]/15 px-4 py-2 text-sm text-[#ffb2ae] backdrop-blur transition hover:bg-[#ff4e45]/20">▶ YouTube</a>
@@ -289,10 +317,17 @@ export default function JangJisuFanSite() {
           </div>
         </section>
 
+        <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
+          <SectionTitle eyebrow="유튜브 본채널" title="Shorts" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
+          </div>
+        </section>
+
         <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.url} actionLabel="본채널 바로가기" logo="▶" />
+          <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {youtube.latestVideos.map((video) => <VideoCard key={video.id} video={video} />)}
+            {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
         </section>
 

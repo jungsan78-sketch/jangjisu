@@ -156,13 +156,31 @@ export default async function handler(req, res) {
       getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
     ]);
 
-    const latestVideos = fillToCount(
-      latestRaw.filter((video) => video.durationSeconds > 0),
-      latestRaw,
+    const shorts = fillToCount(
+      latestRaw.filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 180).map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/shorts/${video.id}`,
+      })),
+      latestRaw
+        .filter((video) => video.durationSeconds > 0)
+        .sort((a, b) => a.durationSeconds - b.durationSeconds)
+        .map((video) => ({ ...video, url: `https://www.youtube.com/shorts/${video.id}` })),
+      8
+    );
+
+    const videos = fillToCount(
+      latestRaw.filter((video) => video.durationSeconds > 180).map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+      })),
+      latestRaw
+        .filter((video) => video.durationSeconds > 0)
+        .sort((a, b) => b.durationSeconds - a.durationSeconds)
+        .map((video) => ({ ...video, url: `https://www.youtube.com/watch?v=${video.id}` })),
       9
     );
 
-    const fullVideos = fillToCount(
+    const full = fillToCount(
       fullRaw.filter((video) => video.durationSeconds > 180),
       fullRaw,
       9
@@ -175,6 +193,8 @@ export default async function handler(req, res) {
           title: mainChannel.channelTitle,
           handle: '@jisoujang',
           url: 'https://www.youtube.com/@jisoujang',
+          videosUrl: 'https://www.youtube.com/@jisoujang/videos',
+          shortsUrl: 'https://www.youtube.com/@jisoujang/shorts',
         },
         full: {
           title: fullChannel.channelTitle,
@@ -182,8 +202,9 @@ export default async function handler(req, res) {
           url: 'https://www.youtube.com/@jisoujang_full',
         },
       },
-      latestVideos,
-      full: fullVideos,
+      shorts,
+      videos,
+      full,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
