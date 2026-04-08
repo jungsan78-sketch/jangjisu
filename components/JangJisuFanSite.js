@@ -50,11 +50,7 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '' })
           : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
 
   return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}
-    >
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}>
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
@@ -268,8 +264,8 @@ export default function JangJisuFanSite() {
           <nav className="flex flex-wrap items-center gap-3">
             <NavChip href="#schedule" label="일정" tone="blue" icon="🔵" />
             <NavChip href="#notice" label="공지" tone="blue" icon="🔵" />
-            <NavChip href="#shorts" label="Shorts" tone="red" icon="▶" />
             <NavChip href="#latest-video" label="최신 영상" tone="red" icon="▶" />
+            <NavChip href="#shorts" label="Shorts" tone="red" icon="▶" />
             <NavChip href="#full-video" label="풀영상" tone="red" icon="▶" />
             <NavChip href={data.channel.fanCafeUrl} label="팬카페" tone="green" external icon="N" />
           </nav>
@@ -317,17 +313,17 @@ export default function JangJisuFanSite() {
           </div>
         </section>
 
-        <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="Shorts" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
-          </div>
-        </section>
-
         <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
+          </div>
+        </section>
+
+        <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
+          <SectionTitle eyebrow="유튜브 본채널" title="Shorts" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
           </div>
         </section>
 

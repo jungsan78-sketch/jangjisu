@@ -33,19 +33,18 @@ function getDurationSeconds(duration = '') {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-function uniqueBy(items, keyFn) {
+function uniqueIds(ids) {
   const seen = new Set();
-  return items.filter((item) => {
-    const key = keyFn(item);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
+  return ids.filter((id) => {
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
     return true;
   });
 }
 
-async function getUploadsPlaylistId(channelHandle, apiKey) {
+async function getChannelInfo(channelHandle, apiKey) {
   const channelRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&forHandle=${channelHandle}&key=${apiKey}`,
+    `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
     { cache: 'no-store' }
   );
   const channelJson = await channelRes.json();
@@ -55,75 +54,72 @@ async function getUploadsPlaylistId(channelHandle, apiKey) {
   }
 
   return {
-    uploadsPlaylistId: channelJson.items[0].contentDetails.relatedPlaylists.uploads,
-    channelTitle: channelJson.items[0].snippet.title,
+    title: channelJson.items[0].snippet.title,
   };
 }
 
-async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
-  const playlistRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=${maxResults}&key=${apiKey}`,
+async function scrapeTabVideoIds(tabUrl) {
+  const res = await fetch(tabUrl, {
+    cache: 'no-store',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+      'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
+    },
+  });
+
+  const html = await res.text();
+
+  if (!res.ok || !html) {
+    throw new Error(`Failed to fetch YouTube tab: ${tabUrl}`);
+  }
+
+  const matches = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1]);
+  return uniqueIds(matches).slice(0, 18);
+}
+
+async function getVideosByIds(ids, apiKey, vertical = false) {
+  if (!ids?.length) return [];
+
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${ids.join(',')}&key=${apiKey}`,
     { cache: 'no-store' }
   );
-  const playlistJson = await playlistRes.json();
+  const json = await res.json();
 
-  if (!playlistRes.ok || !playlistJson.items?.length) {
+  if (!res.ok || !json.items?.length) {
     return [];
   }
 
-  const videoIds = playlistJson.items
-    .map((item) => item.contentDetails?.videoId)
-    .filter(Boolean)
-    .join(',');
+  const map = new Map(json.items.map((item) => [item.id, item]));
 
-  if (!videoIds) return [];
+  return ids
+    .map((id) => {
+      const details = map.get(id);
+      if (!details) return null;
 
-  const videosRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${videoIds}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const videosJson = await videosRes.json();
-
-  if (!videosRes.ok || !videosJson.items?.length) {
-    return [];
-  }
-
-  const statsMap = new Map(videosJson.items.map((video) => [video.id, video]));
-
-  return uniqueBy(
-    playlistJson.items
-      .map((item) => {
-        const videoId = item.contentDetails?.videoId;
-        const details = statsMap.get(videoId);
-        if (!videoId || !details) return null;
-
-        const duration = details.contentDetails?.duration || '';
-        const durationSeconds = getDurationSeconds(duration);
-
-        return {
-          id: videoId,
-          title: item.snippet?.title || details.snippet?.title || '',
-          thumbnail:
-            item.snippet?.thumbnails?.maxres?.url ||
-            item.snippet?.thumbnails?.high?.url ||
-            item.snippet?.thumbnails?.medium?.url ||
-            details.snippet?.thumbnails?.maxres?.url ||
-            details.snippet?.thumbnails?.high?.url ||
-            details.snippet?.thumbnails?.medium?.url ||
-            '',
-          publishedAt: item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || '',
-          publishedAtText: formatPublishedAt(item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || ''),
-          views: details.statistics?.viewCount || '0',
-          viewsText: formatViews(details.statistics?.viewCount || '0'),
-          duration,
-          durationText: formatDuration(duration),
-          durationSeconds,
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-        };
-      })
-      .filter(Boolean),
-    (item) => item.id
-  );
+      const duration = details.contentDetails?.duration || '';
+      return {
+        id,
+        title: details.snippet?.title || '',
+        thumbnail:
+          details.snippet?.thumbnails?.maxres?.url ||
+          details.snippet?.thumbnails?.high?.url ||
+          details.snippet?.thumbnails?.medium?.url ||
+          `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        publishedAt: details.snippet?.publishedAt || '',
+        publishedAtText: formatPublishedAt(details.snippet?.publishedAt || ''),
+        views: details.statistics?.viewCount || '0',
+        viewsText: formatViews(details.statistics?.viewCount || '0'),
+        duration,
+        durationText: formatDuration(duration),
+        durationSeconds: getDurationSeconds(duration),
+        url: vertical
+          ? `https://www.youtube.com/shorts/${id}`
+          : `https://www.youtube.com/watch?v=${id}`,
+      };
+    })
+    .filter(Boolean);
 }
 
 function fillToCount(primary, fallback, count) {
@@ -137,6 +133,23 @@ function fillToCount(primary, fallback, count) {
   return result.slice(0, count);
 }
 
+async function fallbackUploads(channelHandle, apiKey) {
+  const channelRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${channelHandle}&key=${apiKey}`,
+    { cache: 'no-store' }
+  );
+  const channelJson = await channelRes.json();
+  const uploads = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploads) return [];
+
+  const playlistRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=24&key=${apiKey}`,
+    { cache: 'no-store' }
+  );
+  const playlistJson = await playlistRes.json();
+  return uniqueIds((playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
+}
+
 export default async function handler(req, res) {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
@@ -148,63 +161,73 @@ export default async function handler(req, res) {
   }
 
   try {
-    const mainChannel = await getUploadsPlaylistId('jisoujang', apiKey);
-    const fullChannel = await getUploadsPlaylistId('jisoujang_full', apiKey);
-
-    const [latestRaw, fullRaw] = await Promise.all([
-      getPlaylistVideos(mainChannel.uploadsPlaylistId, apiKey, 24),
-      getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
+    const [mainInfo, fullInfo] = await Promise.all([
+      getChannelInfo('jisoujang', apiKey),
+      getChannelInfo('jisoujang_full', apiKey),
     ]);
 
-    const shorts = fillToCount(
-      latestRaw.filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 180).map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/shorts/${video.id}`,
-      })),
-      latestRaw
-        .filter((video) => video.durationSeconds > 0)
-        .sort((a, b) => a.durationSeconds - b.durationSeconds)
-        .map((video) => ({ ...video, url: `https://www.youtube.com/shorts/${video.id}` })),
-      8
-    );
+    let videoIds = [];
+    let shortsIds = [];
+    let fullIds = [];
 
-    const videos = fillToCount(
-      latestRaw.filter((video) => video.durationSeconds > 180).map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-      })),
-      latestRaw
-        .filter((video) => video.durationSeconds > 0)
-        .sort((a, b) => b.durationSeconds - a.durationSeconds)
-        .map((video) => ({ ...video, url: `https://www.youtube.com/watch?v=${video.id}` })),
-      9
-    );
+    try {
+      [videoIds, shortsIds, fullIds] = await Promise.all([
+        scrapeTabVideoIds('https://www.youtube.com/@jisoujang/videos'),
+        scrapeTabVideoIds('https://www.youtube.com/@jisoujang/shorts'),
+        scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
+      ]);
+    } catch (e) {
+      const [mainFallback, fullFallback] = await Promise.all([
+        fallbackUploads('jisoujang', apiKey),
+        fallbackUploads('jisoujang_full', apiKey),
+      ]);
 
-    const full = fillToCount(
-      fullRaw.filter((video) => video.durationSeconds > 180),
-      fullRaw,
-      9
-    );
+      videoIds = mainFallback.filter(Boolean);
+      shortsIds = mainFallback.filter(Boolean);
+      fullIds = fullFallback.filter(Boolean);
+    }
+
+    let [videos, shorts, full] = await Promise.all([
+      getVideosByIds(videoIds.slice(0, 12), apiKey, false),
+      getVideosByIds(shortsIds.slice(0, 12), apiKey, true),
+      getVideosByIds(fullIds.slice(0, 12), apiKey, false),
+    ]);
+
+    if (!videos.length || !shorts.length || !full.length) {
+      const [mainFallback, fullFallback] = await Promise.all([
+        fallbackUploads('jisoujang', apiKey),
+        fallbackUploads('jisoujang_full', apiKey),
+      ]);
+
+      const [fallbackVideos, fallbackShorts, fallbackFull] = await Promise.all([
+        getVideosByIds(mainFallback.slice(0, 18), apiKey, false),
+        getVideosByIds(mainFallback.slice(0, 18), apiKey, true),
+        getVideosByIds(fullFallback.slice(0, 18), apiKey, false),
+      ]);
+
+      videos = fillToCount(videos, fallbackVideos, 9);
+      shorts = fillToCount(shorts, fallbackShorts, 8);
+      full = fillToCount(full, fallbackFull, 9);
+    }
 
     return res.status(200).json({
       ok: true,
       channels: {
         latest: {
-          title: mainChannel.channelTitle,
-          handle: '@jisoujang',
+          title: mainInfo.title,
           url: 'https://www.youtube.com/@jisoujang',
           videosUrl: 'https://www.youtube.com/@jisoujang/videos',
           shortsUrl: 'https://www.youtube.com/@jisoujang/shorts',
         },
         full: {
-          title: fullChannel.channelTitle,
-          handle: '@jisoujang_full',
+          title: fullInfo.title,
           url: 'https://www.youtube.com/@jisoujang_full',
+          videosUrl: 'https://www.youtube.com/@jisoujang_full/videos',
         },
       },
-      shorts,
-      videos,
-      full,
+      videos: videos.slice(0, 9),
+      shorts: shorts.slice(0, 8),
+      full: full.slice(0, 9),
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
