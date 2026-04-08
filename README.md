@@ -1,14 +1,9 @@
 변경 파일
-- components/SiteFooter.jsx
+- pages/api/schedule.js
+- components/JangJisuFanSite.js
 
-적용 방법
-1. 새 파일로 추가
-2. 현재 components/JangJisuFanSite.js 상단에 아래 import 추가
-
-import SiteFooter from './SiteFooter';
-
-3. 현재 JangJisuFanSite 컴포넌트의 맨 마지막 </main> 바로 아래에 추가
-
-<SiteFooter />
-
-4. GitHub push 후 Vercel 재배포
+변경 내용
+- 일정 섹션을 맨 위로 유지
+- 상단 메뉴를 컬러 칩 형태로 변경
+- 팬카페는 초록색, 본채널/Shorts/풀영상은 빨간색으로 강조
+- 일정은 현재 시트에 보이는 비어있지 않은 항목만 표시
