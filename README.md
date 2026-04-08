@@ -1,19 +1,15 @@
-# 장지수 팬 사이트 (완성형 UI 샘플)
+# 변경 파일 안내
 
-## 실행 방법
-```bash
-npm install
-npm run dev
-```
+## 이 ZIP에 들어있는 파일
+- package.json
+- pages/index.js
+- pages/api/soop.js
+- components/JangJisuFanSite.js
 
-## 포함 내용
-- 장지수 팬사이트 다크 프리미엄 UI
-- 방송 ON/OFF 상태 영역
-- 사이트 내 시청 영역
-- 최근 VOD 섹션
-- 최근 공지 섹션
-- 네이버 팬카페 이동 버튼
+## 적용 방법
+기존 프로젝트에 같은 경로로 덮어쓰면 됩니다.
 
-## 참고
-현재는 샘플 데이터 기반 프론트 시안입니다.
-다음 단계에서 SOOP 연동, 공지 자동수집, VOD 연결, 실제 팬카페 링크 반영으로 확장할 수 있습니다.
+## 메모
+- `package.json`이 바뀌었으니 GitHub에 함께 반영하세요.
+- Vercel은 `package.json` 변경 후 자동으로 다시 설치/배포됩니다.
+- SOOP 페이지 구조가 바뀌면 `pages/api/soop.js`의 파싱 로직만 수정하면 됩니다.

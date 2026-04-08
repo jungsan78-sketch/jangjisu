@@ -1,353 +1,357 @@
+
+import { useEffect, useMemo, useState } from 'react';
+
+const fallbackVods = [
+  {
+    title: '최근 방송 다시보기가 여기에 표시됩니다.',
+    url: 'https://www.sooplive.com/station/iamquaddurup/vod',
+    thumbnail: '',
+    duration: '',
+    date: '',
+    views: '',
+  },
+];
+
+const fallbackNotices = [
+  {
+    title: '최근 공지가 여기에 자동으로 연결됩니다.',
+    url: 'https://www.sooplive.com/station/iamquaddurup/board',
+    summary: '배포 후 SOOP 방송국 게시판에서 자동으로 읽어오도록 연결된 영역입니다.',
+    thumbnail: '',
+    date: '',
+  },
+];
+
+function SectionTitle({ eyebrow, title, actionHref, actionLabel }) {
+  return (
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-sm text-white/55">{eyebrow}</p>
+        <h3 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h3>
+      </div>
+      {actionHref && actionLabel ? (
+        <a
+          href={actionHref}
+          target="_blank"
+          rel="noreferrer"
+          className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
+        >
+          {actionLabel}
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 export default function JangJisuFanSite() {
-  const notices = [
-    {
-      id: 1,
-      title: "이번 주 방송 일정 안내",
-      date: "2026.04.08",
-      category: "공지",
-      summary: "주중 저녁 방송과 주말 특별 방송 일정이 업데이트되었습니다.",
+  const [data, setData] = useState({
+    channel: {
+      name: '장지수',
+      soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
+      fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
+      isLive: null,
+      liveTitle: '장지수 방송국',
     },
-    {
-      id: 2,
-      title: "팬카페 이벤트 참여 방법",
-      date: "2026.04.06",
-      category: "이벤트",
-      summary: "네이버 팬카페에서 진행 중인 참여형 이벤트 안내입니다.",
-    },
-    {
-      id: 3,
-      title: "방송 클립 업로드 공지",
-      date: "2026.04.03",
-      category: "안내",
-      summary: "최근 방송 하이라이트와 클립 업로드 관련 공지입니다.",
-    },
-  ];
+    vods: [],
+    notices: [],
+    fetchedAt: '',
+    ok: false,
+  });
 
-  const vods = [
-    {
-      id: 1,
-      title: "새벽 텐션 토크 방송 다시보기",
-      duration: "02:14:28",
-      date: "2026.04.07",
-      views: "12.4K",
-    },
-    {
-      id: 2,
-      title: "팬들과 함께한 주말 게임 방송",
-      duration: "03:02:11",
-      date: "2026.04.05",
-      views: "18.1K",
-    },
-    {
-      id: 3,
-      title: "근황 토크 & Q&A 다시보기",
-      duration: "01:37:40",
-      date: "2026.04.02",
-      views: "9.8K",
-    },
-  ];
+  const [loading, setLoading] = useState(true);
 
-  const schedule = [
-    { day: "수", label: "저녁 토크", time: "20:00" },
-    { day: "금", label: "소통 방송", time: "21:00" },
-    { day: "일", label: "주말 특집", time: "19:00" },
-  ];
+  useEffect(() => {
+    let mounted = true;
 
-  const isLive = true;
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/soop');
+        const json = await res.json();
+        if (mounted) setData(json);
+      } catch (error) {
+        if (mounted) {
+          setData((prev) => ({
+            ...prev,
+            ok: false,
+          }));
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+    const timer = setInterval(fetchData, 120000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const vods = useMemo(() => (data.vods?.length ? data.vods.slice(0, 4) : fallbackVods), [data.vods]);
+  const notices = useMemo(() => (data.notices?.length ? data.notices.slice(0, 3) : fallbackNotices), [data.notices]);
+
+  const liveLabel =
+    data.channel.isLive === true ? 'ON AIR' : data.channel.isLive === false ? 'OFFLINE' : 'CHECKING';
+
+  const statusClass =
+    data.channel.isLive === true
+      ? 'border-rose-400/30 bg-rose-500/20 text-rose-100'
+      : data.channel.isLive === false
+      ? 'border-white/10 bg-white/10 text-white/70'
+      : 'border-amber-300/20 bg-amber-400/10 text-amber-100';
 
   return (
-    <div className="min-h-screen bg-[#06070b] text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-pink-500/15 blur-3xl" />
-        <div className="absolute top-40 right-[-60px] h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-80 w-[36rem] -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+    <div className="min-h-screen bg-[#05070c] text-white">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-20 left-[-50px] h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute top-20 right-[-70px] h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-72 w-[30rem] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-black/35 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <div>
-            <div className="text-xs uppercase tracking-[0.35em] text-pink-300/80">Fan Archive</div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">장지수 팬 사이트</h1>
+            <div className="text-[11px] uppercase tracking-[0.35em] text-cyan-200/70">JANG JISOU ARCHIVE</div>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">장지수 팬 아카이브</h1>
           </div>
-
-          <nav className="hidden items-center gap-8 text-sm text-white/75 md:flex">
-            <a href="#live" className="transition hover:text-white">라이브</a>
-            <a href="#vod" className="transition hover:text-white">VOD</a>
-            <a href="#notice" className="transition hover:text-white">공지</a>
+          <div className="hidden items-center gap-3 md:flex">
             <a
-              href="https://cafe.naver.com/"
+              href={data.channel.soopUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-pink-400/30 bg-pink-400/10 px-4 py-2 text-white hover:bg-pink-400/20"
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
+            >
+              SOOP 방송국
+            </a>
+            <a
+              href={data.channel.fanCafeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-[#03C75A] px-4 py-2 text-sm font-semibold text-black transition hover:brightness-110"
             >
               네이버 팬카페
             </a>
-          </nav>
+          </div>
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-7xl px-6 py-8 lg:px-8 lg:py-10">
-        <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/30">
-            <div className="relative aspect-[16/9] bg-gradient-to-br from-[#121523] via-[#0c1020] to-[#090b14]">
-              <img
-                src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1600&q=80"
-                alt="장지수 메인 비주얼"
-                className="h-full w-full object-cover opacity-35"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+      <main className="relative mx-auto max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
+        <section className="overflow-hidden rounded-[34px] border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/30">
+          <div className="relative min-h-[520px] overflow-hidden lg:min-h-[560px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(44,149,255,0.34),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(125,211,252,0.22),_transparent_20%),linear-gradient(180deg,_rgba(37,99,235,0.96)_0%,_rgba(8,15,32,0.92)_40%,_rgba(4,7,12,1)_100%)]" />
+            <div className="absolute inset-x-0 top-0 h-8 bg-[linear-gradient(90deg,#000_0_2%,#2563eb_2%_4%,#111827_4%_6%,#2563eb_6%_8%,#000_8%_10%,#2563eb_10%_12%,#111827_12%_14%,#2563eb_14%_16%,#000_16%_18%,#2563eb_18%_20%,#111827_20%_22%,#2563eb_22%_24%,#000_24%_26%,#2563eb_26%_28%,#111827_28%_30%,#2563eb_30%_32%,#000_32%_34%,#2563eb_34%_36%,#111827_36%_38%,#2563eb_38%_40%,#000_40%_42%,#2563eb_42%_44%,#111827_44%_46%,#2563eb_46%_48%,#000_48%_50%,#2563eb_50%_52%,#111827_52%_54%,#2563eb_54%_56%,#000_56%_58%,#2563eb_58%_60%,#111827_60%_62%,#2563eb_62%_64%,#000_64%_66%,#2563eb_66%_68%,#111827_68%_70%,#2563eb_70%_72%,#000_72%_74%,#2563eb_74%_76%,#111827_76%_78%,#2563eb_78%_80%,#000_80%_82%,#2563eb_82%_84%,#111827_84%_86%,#2563eb_86%_88%,#000_88%_90%,#2563eb_90%_92%,#111827_92%_94%,#2563eb_94%_96%,#000_96%_100%)] opacity-80" />
+            <div className="absolute inset-x-0 top-8 h-[230px] bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.24),_transparent_55%),linear-gradient(180deg,rgba(59,130,246,0.45),rgba(37,99,235,0.12))]" />
+            <div className="absolute left-8 top-14 h-28 w-28 rounded-[28px] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/30 backdrop-blur-xl md:h-40 md:w-40">
+              <div className="flex h-full w-full items-center justify-center rounded-[22px] bg-[radial-gradient(circle_at_50%_40%,#67e8f9,#22c55e_55%,#1d4ed8)] text-5xl md:text-7xl">
+                🌍
+              </div>
+            </div>
+            <div className="absolute right-8 top-12 h-28 w-28 rounded-[28px] border border-white/15 bg-white/10 p-2 shadow-2xl shadow-black/30 backdrop-blur-xl md:h-40 md:w-40">
+              <div className="flex h-full w-full items-center justify-center rounded-[22px] bg-white/80 text-5xl md:text-7xl">
+                🧑🏻‍🎤
+              </div>
+            </div>
 
-              <div className="absolute left-6 right-6 top-6 flex items-center justify-between">
-                <div className="rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm text-white/85 backdrop-blur-md">
-                  SOOP STREAMER HUB
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(34,197,94,0.25),transparent_10%),radial-gradient(circle_at_80%_28%,rgba(16,185,129,0.18),transparent_9%),radial-gradient(circle_at_78%_30%,rgba(74,222,128,0.18),transparent_7%),radial-gradient(circle_at_90%_23%,rgba(74,222,128,0.22),transparent_6%),radial-gradient(circle_at_12%_26%,rgba(34,197,94,0.22),transparent_8%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-[#05070c]" />
+
+            <div className="relative z-10 grid gap-6 px-5 pb-8 pt-24 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pt-28">
+              <div className="self-end">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-xs text-white/85 backdrop-blur">
+                  <span className="h-2 w-2 rounded-full bg-[#03C75A]" />
+                  팬메이드 허브
                 </div>
-                <div
-                  className={`rounded-full px-4 py-2 text-sm font-medium backdrop-blur-md ${
-                    isLive
-                      ? "border border-rose-400/30 bg-rose-500/20 text-rose-100"
-                      : "border border-white/10 bg-white/10 text-white/70"
-                  }`}
-                >
-                  {isLive ? "● 방송 ON AIR" : "● 현재 OFFLINE"}
+
+                <div className="mt-6">
+                  <div className="text-[52px] font-black uppercase leading-[0.88] tracking-[-0.04em] text-white drop-shadow-[0_8px_0_rgba(0,0,0,0.35)] md:text-[92px]">
+                    Jang
+                    <br />
+                    Jisou
+                  </div>
+                </div>
+
+                <div className="mt-6 max-w-3xl">
+                  <h2 className="text-3xl font-black leading-tight tracking-tight md:text-5xl">
+                    <span className="bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300 bg-clip-text text-transparent">
+                      오늘의 방송부터 팬카페, 공지, 다시보기까지
+                    </span>
+                    <br />
+                    <span className="bg-gradient-to-r from-white via-sky-100 to-cyan-200 bg-clip-text text-transparent">
+                      장지수의 흐름을 한눈에 모아보는 팬 아카이브.
+                    </span>
+                  </h2>
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72 md:text-base">
+                    장지수 방송국 분위기를 참고해서 팬이 직접 챙겨보는 느낌으로 구성한 메인 허브예요.
+                    라이브 상태, 최근 VOD, 최근 게시판 글, 팬카페 이동까지 자연스럽게 이어지도록 잡았습니다.
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <a
+                    href={data.channel.soopUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-white px-5 py-3 text-sm font-bold text-black transition hover:scale-[1.02]"
+                  >
+                    SOOP 방송국 바로가기
+                  </a>
+                  <a
+                    href={data.channel.fanCafeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-[#03C75A] px-5 py-3 text-sm font-bold text-black transition hover:brightness-110"
+                  >
+                    네이버 팬카페 가기
+                  </a>
                 </div>
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
-                <div className="max-w-3xl">
-                  <div className="mb-3 inline-flex items-center rounded-full border border-pink-400/25 bg-pink-400/10 px-3 py-1 text-xs font-medium text-pink-200">
-                    장지수 공식 팬아카이브 스타일 콘셉트
+              <div className="grid gap-4 self-end">
+                <div className="rounded-[28px] border border-white/10 bg-black/35 p-5 backdrop-blur-xl">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-sm text-white/55">LIVE STATUS</div>
+                      <div className="mt-2 text-2xl font-bold">{liveLabel}</div>
+                      <div className="mt-2 text-sm text-white/65">{data.channel.liveTitle || '장지수 방송국'}</div>
+                    </div>
+                    <div className={`rounded-full border px-4 py-2 text-sm font-semibold ${statusClass}`}>
+                      {liveLabel}
+                    </div>
                   </div>
-                  <h2 className="text-4xl font-semibold leading-tight tracking-tight lg:text-6xl">
-                    장지수 방송 소식, 공지, 다시보기를
-                    <br className="hidden lg:block" /> 한 곳에서.
-                  </h2>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70 lg:text-base">
-                    SOOP 방송 상태, 최근 공지, 다시보기 VOD, 네이버 팬카페 이동까지 한 화면에서 볼 수 있게 구성한
-                    프리미엄 팬사이트 메인 시안입니다.
-                  </p>
-
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <a
-                      href="#live"
-                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:scale-[1.02]"
-                    >
-                      지금 방송 보기
-                    </a>
-                    <a
-                      href="https://cafe.naver.com/"
+                      href={data.channel.soopUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                      className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-black transition hover:brightness-110"
                     >
-                      팬카페 바로가기
+                      방송 보러가기
+                    </a>
+                    <a
+                      href="#vod"
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                    >
+                      최신 VOD 보기
                     </a>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/55">현재 방송 상태</p>
-                  <h3 className="mt-1 text-2xl font-semibold">{isLive ? "LIVE NOW" : "OFFLINE"}</h3>
-                </div>
-                <div className={`h-3 w-3 rounded-full ${isLive ? "bg-rose-400 shadow-[0_0_20px_rgba(251,113,133,0.9)]" : "bg-white/30"}`} />
-              </div>
-              <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
-                <div className="flex items-center justify-between text-sm text-white/65">
-                  <span>현재 방송 제목</span>
-                  <span>SOOP</span>
-                </div>
-                <p className="mt-2 text-lg font-medium">봄맞이 소통 방송 + 팬들과 실시간 이야기</p>
-                <div className="mt-4 flex gap-3">
-                  <button className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:brightness-110">
-                    라이브 시청
-                  </button>
-                  <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10">
-                    방송국 이동
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/55">이번 주 방송 예정</p>
-                  <h3 className="mt-1 text-xl font-semibold">Weekly Schedule</h3>
-                </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">Fan View</span>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {schedule.map((item) => (
-                  <div key={item.day} className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/25 px-4 py-3">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sm font-semibold">
-                        {item.day}
-                      </div>
-                      <div>
-                        <div className="font-medium">{item.label}</div>
-                        <div className="text-sm text-white/50">장지수 방송 예정</div>
-                      </div>
+                <div className="rounded-[28px] border border-white/10 bg-black/35 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-white/55">SYNC STATUS</div>
+                      <div className="mt-2 text-xl font-bold">{loading ? '불러오는 중' : data.ok ? '자동 연결됨' : '연결 대기'}</div>
                     </div>
-                    <div className="text-sm font-semibold text-pink-200">{item.time}</div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/65">
+                      {data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('ko-KR') : '대기 중'}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="live" className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-xl shadow-black/20 lg:p-6">
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm text-white/55">사이트 내 시청 영역</p>
-                <h3 className="mt-1 text-2xl font-semibold">Live Viewer</h3>
-              </div>
-              <span className="rounded-full border border-rose-400/25 bg-rose-500/10 px-3 py-1 text-xs text-rose-100">내부 플레이어 연동 자리</span>
-            </div>
-
-            <div className="relative aspect-video overflow-hidden rounded-[24px] border border-white/10 bg-black">
-              <img
-                src="https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1600&q=80"
-                alt="라이브 플레이어 프리뷰"
-                className="h-full w-full object-cover opacity-45"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black to-black/20" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="rounded-full border border-rose-400/30 bg-rose-500/15 px-4 py-1 text-xs font-semibold tracking-[0.25em] text-rose-100">
-                  LIVE PREVIEW
+                  <p className="mt-3 text-sm leading-6 text-white/65">
+                    이 영역은 SOOP 방송국에서 라이브 상태, VOD, 게시판 정보를 읽어와 자동으로 갱신됩니다.
+                  </p>
                 </div>
-                <div className="mt-4 text-2xl font-semibold lg:text-3xl">장지수 방송 시청 영역</div>
-                <p className="mt-3 max-w-md text-sm leading-6 text-white/65">
-                  실제 제작 단계에서는 SOOP 라이브 플레이어 또는 연동 가능한 시청 영역으로 교체되는 자리입니다.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-xl shadow-black/20 lg:p-6">
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm text-white/55">팬 커뮤니티 바로가기</p>
-                <h3 className="mt-1 text-2xl font-semibold">Naver Fan Cafe</h3>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-emerald-400/15 bg-gradient-to-br from-emerald-400/10 via-white/[0.03] to-white/[0.02] p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.3em] text-emerald-200/80">community</div>
-                  <div className="mt-2 text-2xl font-semibold">팬카페 바로 이동</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-2 text-sm text-white/70">NAVER</div>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-white/70">
-                공지 확인, 팬 소통, 이벤트 참여를 위해 네이버 팬카페로 자연스럽게 이어질 수 있도록 배치한 핵심 CTA 영역입니다.
-              </p>
-              <a
-                href="https://cafe.naver.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 inline-flex rounded-full bg-emerald-400 px-5 py-3 text-sm font-semibold text-black transition hover:scale-[1.02]"
-              >
-                팬카페 이동하기
-              </a>
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                <div className="text-sm text-white/55">최근 방문 포인트</div>
-                <div className="mt-2 text-lg font-semibold">공지 / 이벤트</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                <div className="text-sm text-white/55">추천 기능</div>
-                <div className="mt-2 text-lg font-semibold">방송 알림 확인</div>
               </div>
             </div>
           </div>
         </section>
 
         <section id="vod" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm text-white/55">최근 방송 다시보기</p>
-              <h3 className="mt-1 text-3xl font-semibold tracking-tight">Latest VOD</h3>
-            </div>
-            <button className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10">
-              전체 다시보기 보기
-            </button>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-3">
-            {vods.map((vod) => (
-              <article
-                key={vod.id}
-                className="group overflow-hidden rounded-[24px] border border-white/10 bg-black/25 transition hover:-translate-y-1 hover:border-pink-300/20"
+          <SectionTitle
+            eyebrow="최근 방송 다시보기"
+            title="Latest VOD"
+            actionHref="https://www.sooplive.com/station/iamquaddurup/vod"
+            actionLabel="VOD 전체보기"
+          />
+          <div className="grid gap-5 lg:grid-cols-4">
+            {vods.map((vod, index) => (
+              <a
+                key={`${vod.url}-${index}`}
+                href={vod.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group overflow-hidden rounded-[24px] border border-white/10 bg-black/25 transition hover:-translate-y-1 hover:border-cyan-300/20"
               >
-                <div className="relative aspect-video overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"
-                    alt={vod.title}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
+                <div className="relative aspect-video overflow-hidden bg-[linear-gradient(135deg,#0b1220,#0f1b35)]">
+                  {vod.thumbnail ? (
+                    <img
+                      src={vod.thumbnail}
+                      alt={vod.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                  <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                    {vod.duration}
-                  </div>
+                  {vod.duration ? (
+                    <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                      {vod.duration}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center justify-between text-xs text-white/45">
-                    <span>{vod.date}</span>
-                    <span>{vod.views} views</span>
+                  <div className="flex items-center justify-between gap-3 text-xs text-white/45">
+                    <span>{vod.date || '최근 업로드'}</span>
+                    <span>{vod.views || ''}</span>
                   </div>
-                  <h4 className="mt-3 text-lg font-semibold leading-7">{vod.title}</h4>
-                  <button className="mt-5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:scale-[1.02]">
+                  <h4 className="mt-3 line-clamp-2 min-h-[56px] text-lg font-semibold leading-7">{vod.title}</h4>
+                  <div className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">
                     다시보기 보기
-                  </button>
+                  </div>
                 </div>
-              </article>
+              </a>
             ))}
           </div>
         </section>
 
         <section id="notice" className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-pink-500/10 to-white/[0.03] p-6 shadow-xl shadow-black/20">
-            <p className="text-sm text-pink-100/70">자동 업데이트 공지 영역</p>
+          <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-cyan-500/10 to-white/[0.03] p-6 shadow-xl shadow-black/20">
+            <p className="text-sm text-cyan-100/75">SOOP 게시판 자동 연결</p>
             <h3 className="mt-1 text-3xl font-semibold">Recent Notice</h3>
             <p className="mt-4 text-sm leading-7 text-white/70">
-              실제 제작 단계에서는 장지수 SOOP 방송국 공지를 주기적으로 수집해 최신순으로 자동 반영하는 구조로 연결합니다.
+              장지수 방송국 게시판 최신 글을 읽어와 메인에 보여주는 영역입니다. 배포 후에는 주기적으로 자동 갱신되도록 동작합니다.
             </p>
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
               <div className="text-xs uppercase tracking-[0.3em] text-white/40">collector status</div>
-              <div className="mt-2 text-lg font-semibold">정상 수집 중</div>
-              <div className="mt-1 text-sm text-white/50">최근 갱신: 방금 전</div>
+              <div className="mt-2 text-lg font-semibold">{loading ? '불러오는 중' : data.ok ? '정상 수집 중' : '연결 재시도 필요'}</div>
+              <div className="mt-1 text-sm text-white/50">
+                기준 링크: {data.channel.soopUrl.replace('https://', '')}/board
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            {notices.map((notice) => (
-              <article
-                key={notice.id}
-                className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/10 transition hover:border-pink-300/20"
+            {notices.map((notice, index) => (
+              <a
+                key={`${notice.url}-${index}`}
+                href={notice.url}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/10 transition hover:border-cyan-300/20"
               >
-                <div className="flex flex-wrap items-center gap-3 text-xs">
-                  <span className="rounded-full border border-pink-300/20 bg-pink-400/10 px-3 py-1 text-pink-100">
-                    {notice.category}
-                  </span>
-                  <span className="text-white/45">{notice.date}</span>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">
+                        게시판
+                      </span>
+                      <span className="text-white/45">{notice.date || '최근 글'}</span>
+                    </div>
+                    <h4 className="mt-3 text-xl font-semibold">{notice.title}</h4>
+                    <p className="mt-3 line-clamp-2 text-sm leading-7 text-white/68">
+                      {notice.summary || '장지수 방송국 게시판 글로 이동합니다.'}
+                    </p>
+                  </div>
+                  {notice.thumbnail ? (
+                    <img
+                      src={notice.thumbnail}
+                      alt={notice.title}
+                      className="hidden h-24 w-24 rounded-2xl object-cover md:block"
+                    />
+                  ) : null}
                 </div>
-                <h4 className="mt-3 text-xl font-semibold">{notice.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-white/68">{notice.summary}</p>
-                <button className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 hover:bg-white/10">
-                  공지 자세히 보기
-                </button>
-              </article>
+              </a>
             ))}
           </div>
         </section>
