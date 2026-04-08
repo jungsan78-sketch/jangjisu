@@ -36,24 +36,65 @@ export default function JangJisuFanSite() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
+useEffect(() => {
+  let mounted = true;
+
+  const load = async () => {
+    try {
+      const res = await fetch('/api/soop');
+      const text = await res.text();
+
+      let json = {};
       try {
-        const res = await fetch('/api/soop');
-        const json = await res.json();
-        if (mounted) setData(json);
-      } finally {
-        if (mounted) setLoading(false);
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('api/soop returned non-JSON response');
       }
-    };
-    load();
-    const timer = setInterval(load, 120000);
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
-  }, []);
+
+      const safeData = {
+        channel: {
+          name: '장지수',
+          soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
+          vodUrl: 'https://www.sooplive.com/station/iamquaddurup/vod/normal',
+          boardUrl: 'https://www.sooplive.com/station/iamquaddurup/board',
+          fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
+          isLive: null,
+          liveTitle: '장지수 방송국',
+          ...(json.channel || {}),
+        },
+        vods: Array.isArray(json.vods) ? json.vods : [],
+        notices: Array.isArray(json.notices) ? json.notices : [],
+        pinnedPosts: Array.isArray(json.pinnedPosts) ? json.pinnedPosts : [],
+        ok: Boolean(json.ok),
+        fetchedAt: json.fetchedAt || '',
+        error: json.error || '',
+      };
+
+      if (mounted) setData(safeData);
+    } catch (error) {
+      if (mounted) {
+        setData((prev) => ({
+          ...prev,
+          ok: false,
+          error: error.message || 'failed to load /api/soop',
+          vods: [],
+          notices: [],
+          pinnedPosts: [],
+        }));
+      }
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
+
+  load();
+  const timer = setInterval(load, 120000);
+
+  return () => {
+    mounted = false;
+    clearInterval(timer);
+  };
+}, []);
 
   const liveLabel =
     data.channel.isLive === true ? 'ON AIR' : data.channel.isLive === false ? 'OFFLINE' : 'CHECKING';
