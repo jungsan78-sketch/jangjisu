@@ -38,6 +38,16 @@ function isShortVideo(duration = '') {
   return totalSeconds > 0 && totalSeconds <= 60;
 }
 
+function uniqueBy(items, keyFn) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = keyFn(item);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 async function getUploadsPlaylistId(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -55,7 +65,7 @@ async function getUploadsPlaylistId(channelHandle, apiKey) {
   };
 }
 
-async function getPlaylistVideos(playlistId, apiKey, maxResults = 24) {
+async function getPlaylistVideos(playlistId, apiKey, maxResults = 30) {
   const playlistRes = await fetch(
     `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=${maxResults}&key=${apiKey}`,
     { cache: 'no-store' }
@@ -85,38 +95,52 @@ async function getPlaylistVideos(playlistId, apiKey, maxResults = 24) {
 
   const statsMap = new Map(videosJson.items.map((video) => [video.id, video]));
 
-  return playlistJson.items
-    .map((item) => {
-      const videoId = item.contentDetails?.videoId;
-      const details = statsMap.get(videoId);
-      if (!videoId || !details) return null;
+  return uniqueBy(
+    playlistJson.items
+      .map((item) => {
+        const videoId = item.contentDetails?.videoId;
+        const details = statsMap.get(videoId);
+        if (!videoId || !details) return null;
 
-      const duration = details.contentDetails?.duration || '';
-      const durationSeconds = getDurationSeconds(duration);
+        const duration = details.contentDetails?.duration || '';
+        const durationSeconds = getDurationSeconds(duration);
 
-      return {
-        id: videoId,
-        title: item.snippet?.title || details.snippet?.title || '',
-        thumbnail:
-          item.snippet?.thumbnails?.maxres?.url ||
-          item.snippet?.thumbnails?.high?.url ||
-          item.snippet?.thumbnails?.medium?.url ||
-          details.snippet?.thumbnails?.maxres?.url ||
-          details.snippet?.thumbnails?.high?.url ||
-          details.snippet?.thumbnails?.medium?.url ||
-          '',
-        publishedAt: item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || '',
-        publishedAtText: formatPublishedAt(item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || ''),
-        views: details.statistics?.viewCount || '0',
-        viewsText: formatViews(details.statistics?.viewCount || '0'),
-        duration,
-        durationText: formatDuration(duration),
-        durationSeconds,
-        isShort: isShortVideo(duration),
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-      };
-    })
-    .filter(Boolean);
+        return {
+          id: videoId,
+          title: item.snippet?.title || details.snippet?.title || '',
+          thumbnail:
+            item.snippet?.thumbnails?.maxres?.url ||
+            item.snippet?.thumbnails?.high?.url ||
+            item.snippet?.thumbnails?.medium?.url ||
+            details.snippet?.thumbnails?.maxres?.url ||
+            details.snippet?.thumbnails?.high?.url ||
+            details.snippet?.thumbnails?.medium?.url ||
+            '',
+          publishedAt: item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || '',
+          publishedAtText: formatPublishedAt(item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt || ''),
+          views: details.statistics?.viewCount || '0',
+          viewsText: formatViews(details.statistics?.viewCount || '0'),
+          duration,
+          durationText: formatDuration(duration),
+          durationSeconds,
+          isShort: isShortVideo(duration),
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+        };
+      })
+      .filter(Boolean),
+    (item) => item.id
+  );
+}
+
+function fillToCount(primary, fallback, count) {
+  const result = [...primary];
+  for (const item of fallback) {
+    if (result.length >= count) break;
+    if (!result.some((video) => video.id === item.id)) {
+      result.push(item);
+    }
+  }
+  return result.slice(0, count);
 }
 
 export default async function handler(req, res) {
@@ -133,21 +157,28 @@ export default async function handler(req, res) {
     const mainChannel = await getUploadsPlaylistId('jisoujang', apiKey);
     const fullChannel = await getUploadsPlaylistId('jisoujang_full', apiKey);
 
-    const [mainVideos, fullVideos] = await Promise.all([
+    const [mainVideos, fullVideosRaw] = await Promise.all([
       getPlaylistVideos(mainChannel.uploadsPlaylistId, apiKey, 30),
-      getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 18),
+      getPlaylistVideos(fullChannel.uploadsPlaylistId, apiKey, 24),
     ]);
 
     const shortsOnly = mainVideos.filter((video) => video.isShort);
     const longformOnly = mainVideos.filter((video) => !video.isShort);
 
-    const shortsFallback = mainVideos.filter((video) => !video.isShort && video.durationSeconds <= 180);
-    const filledShorts = [...shortsOnly];
+    const longformFallback = mainVideos
+      .filter((video) => video.durationSeconds > 60)
+      .sort((a, b) => b.durationSeconds - a.durationSeconds);
 
-    for (const item of shortsFallback) {
-      if (filledShorts.length >= 8) break;
-      if (!filledShorts.some((video) => video.id === item.id)) filledShorts.push(item);
-    }
+    const shortsFallback = mainVideos
+      .filter((video) => !video.isShort && video.durationSeconds <= 180)
+      .sort((a, b) => a.durationSeconds - b.durationSeconds);
+
+    const fullPreferred = fullVideosRaw.filter((video) => video.durationSeconds > 60);
+    const fullFallback = [...fullVideosRaw];
+
+    const longform = fillToCount(longformOnly, longformFallback.length ? longformFallback : mainVideos, 9);
+    const shorts = fillToCount(shortsOnly, shortsFallback.length ? shortsFallback : mainVideos, 8);
+    const fullVideos = fillToCount(fullPreferred, fullFallback, 9);
 
     return res.status(200).json({
       ok: true,
@@ -164,10 +195,10 @@ export default async function handler(req, res) {
         },
       },
       main: {
-        longform: longformOnly.slice(0, 8),
-        shorts: filledShorts.slice(0, 8),
+        longform,
+        shorts,
       },
-      full: fullVideos.slice(0, 8),
+      full: fullVideos,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {

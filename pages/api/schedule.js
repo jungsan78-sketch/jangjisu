@@ -2,6 +2,7 @@ export default async function handler(req, res) {
   const sheetUrl =
     'https://docs.google.com/spreadsheets/d/1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM/edit?gid=315851366#gid=315851366';
 
+  // 현재 달(4월) 안에서 내용이 있는 칸만 반영
   const items = [
     { date: '4월 1일', day: '수', title: '리모콘핀볼' },
     { date: '4월 2일', day: '목', title: '갠방' },
@@ -17,8 +18,6 @@ export default async function handler(req, res) {
     { date: '4월 20일', day: '월', title: '1부 에뱀코리아' },
     { date: '4월 21일', day: '화', title: '촬영 휴방' },
     { date: '4월 27일', day: '월', title: '뱀피스' },
-    { date: '5월 4일', day: '월', title: '챈나 경도' },
-    { date: '5월 10일', day: '일', title: '식목일 공방' },
   ];
 
   return res.status(200).json({

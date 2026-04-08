@@ -1,9 +1,8 @@
 변경 파일
+- pages/api/youtube.js
 - pages/api/schedule.js
-- components/JangJisuFanSite.js
 
 변경 내용
-- 일정 섹션을 맨 위로 유지
-- 상단 메뉴를 컬러 칩 형태로 변경
-- 팬카페는 초록색, 본채널/Shorts/풀영상은 빨간색으로 강조
-- 일정은 현재 시트에 보이는 비어있지 않은 항목만 표시
+- 본채널 longform이 비지 않게 9개까지 보강
+- 풀영상도 9개까지 채워서 한 칸 비는 현상 방지
+- 일정은 회색 처리된 다음달/전달 칸 제외
