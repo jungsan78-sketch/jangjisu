@@ -1,30 +1,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-const fallbackVods = [
-  {
-    title: '최근 방송 다시보기가 여기에 표시됩니다.',
-    url: 'https://www.sooplive.com/station/iamquaddurup/vod',
-    thumbnail: '',
-    duration: '',
-    date: '',
-    views: '',
-  },
-];
-
-const fallbackNotices = [
-  {
-    title: '최근 공지가 여기에 자동으로 연결됩니다.',
-    url: 'https://www.sooplive.com/station/iamquaddurup/board',
-    summary: '배포 후 SOOP 방송국 게시판에서 자동으로 읽어오도록 연결된 영역입니다.',
-    thumbnail: '',
-    date: '',
-  },
-];
-
 function SectionTitle({ eyebrow, title, actionHref, actionLabel }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className="text-sm text-white/55">{eyebrow}</p>
         <h3 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h3>
@@ -48,49 +27,44 @@ export default function JangJisuFanSite() {
     channel: {
       name: '장지수',
       soopUrl: 'https://www.sooplive.com/station/iamquaddurup',
+      vodUrl: 'https://www.sooplive.com/station/iamquaddurup/vod',
+      boardUrl: 'https://www.sooplive.com/station/iamquaddurup/board',
       fanCafeUrl: 'https://cafe.naver.com/quaddurupfancafe',
       isLive: null,
       liveTitle: '장지수 방송국',
     },
     vods: [],
     notices: [],
-    fetchedAt: '',
+    pinnedPosts: [],
     ok: false,
+    fetchedAt: '',
   });
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    const fetchData = async () => {
+    const load = async () => {
       try {
         const res = await fetch('/api/soop');
         const json = await res.json();
         if (mounted) setData(json);
-      } catch (error) {
+      } catch (e) {
         if (mounted) {
-          setData((prev) => ({
-            ...prev,
-            ok: false,
-          }));
+          setData((prev) => ({ ...prev, ok: false }));
         }
       } finally {
         if (mounted) setLoading(false);
       }
     };
 
-    fetchData();
-    const timer = setInterval(fetchData, 120000);
-
+    load();
+    const timer = setInterval(load, 120000);
     return () => {
       mounted = false;
       clearInterval(timer);
     };
   }, []);
-
-  const vods = useMemo(() => (data.vods?.length ? data.vods.slice(0, 4) : fallbackVods), [data.vods]);
-  const notices = useMemo(() => (data.notices?.length ? data.notices.slice(0, 3) : fallbackNotices), [data.notices]);
 
   const liveLabel =
     data.channel.isLive === true ? 'ON AIR' : data.channel.isLive === false ? 'OFFLINE' : 'CHECKING';
@@ -101,6 +75,13 @@ export default function JangJisuFanSite() {
       : data.channel.isLive === false
       ? 'border-white/10 bg-white/10 text-white/70'
       : 'border-amber-300/20 bg-amber-400/10 text-amber-100';
+
+  const vods = useMemo(() => data.vods?.slice(0, 4) || [], [data.vods]);
+  const pinnedPosts = useMemo(() => data.pinnedPosts || [], [data.pinnedPosts]);
+  const extraPosts = useMemo(
+    () => (data.notices || []).filter((item) => !pinnedPosts.some((p) => p.url === item.url)).slice(0, 3),
+    [data.notices, pinnedPosts]
+  );
 
   return (
     <div className="min-h-screen bg-[#05070c] text-white">
@@ -172,19 +153,9 @@ export default function JangJisuFanSite() {
                   </div>
                 </div>
 
-                <div className="mt-6 max-w-3xl">
-                  <h2 className="text-3xl font-black leading-tight tracking-tight md:text-5xl">
-                    <span className="bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300 bg-clip-text text-transparent">
-                      오늘의 방송부터 팬카페, 공지, 다시보기까지
-                    </span>
-                    <br />
-                    <span className="bg-gradient-to-r from-white via-sky-100 to-cyan-200 bg-clip-text text-transparent">
-                      장지수의 흐름을 한눈에 모아보는 팬 아카이브.
-                    </span>
-                  </h2>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72 md:text-base">
+                <div className="mt-5 max-w-2xl">
+                  <p className="text-sm leading-7 text-white/72 md:text-base">
                     장지수 방송국 분위기를 참고해서 팬이 직접 챙겨보는 느낌으로 구성한 메인 허브예요.
-                    라이브 상태, 최근 VOD, 최근 게시판 글, 팬카페 이동까지 자연스럽게 이어지도록 잡았습니다.
                   </p>
                 </div>
 
@@ -230,7 +201,9 @@ export default function JangJisuFanSite() {
                       방송 보러가기
                     </a>
                     <a
-                      href="#vod"
+                      href={data.channel.vodUrl}
+                      target="_blank"
+                      rel="noreferrer"
                       className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
                     >
                       최신 VOD 보기
@@ -249,7 +222,7 @@ export default function JangJisuFanSite() {
                     </div>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-white/65">
-                    이 영역은 SOOP 방송국에서 라이브 상태, VOD, 게시판 정보를 읽어와 자동으로 갱신됩니다.
+                    라이브 상태, 다시보기, 공지, 뱀이봤 링크를 자동으로 불러오는 영역입니다.
                   </p>
                 </div>
               </div>
@@ -261,98 +234,144 @@ export default function JangJisuFanSite() {
           <SectionTitle
             eyebrow="최근 방송 다시보기"
             title="Latest VOD"
-            actionHref="https://www.sooplive.com/station/iamquaddurup/vod"
+            actionHref={data.channel.vodUrl}
             actionLabel="VOD 전체보기"
           />
           <div className="grid gap-5 lg:grid-cols-4">
-            {vods.map((vod, index) => (
-              <a
-                key={`${vod.url}-${index}`}
-                href={vod.url}
-                target="_blank"
-                rel="noreferrer"
-                className="group overflow-hidden rounded-[24px] border border-white/10 bg-black/25 transition hover:-translate-y-1 hover:border-cyan-300/20"
-              >
-                <div className="relative aspect-video overflow-hidden bg-[linear-gradient(135deg,#0b1220,#0f1b35)]">
-                  {vod.thumbnail ? (
-                    <img
-                      src={vod.thumbnail}
-                      alt={vod.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                  {vod.duration ? (
-                    <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                      {vod.duration}
+            {vods.length ? (
+              vods.map((vod, index) => (
+                <a
+                  key={`${vod.url}-${index}`}
+                  href={vod.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group overflow-hidden rounded-[24px] border border-white/10 bg-black/25 transition hover:-translate-y-1 hover:border-cyan-300/20"
+                >
+                  <div className="relative aspect-video overflow-hidden bg-[linear-gradient(135deg,#0b1220,#0f1b35)]">
+                    {vod.thumbnail ? (
+                      <img
+                        src={vod.thumbnail}
+                        alt={vod.title}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+                    {vod.duration ? (
+                      <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                        {vod.duration}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center justify-between gap-3 text-xs text-white/45">
+                      <span>{vod.date || '최근 업로드'}</span>
+                      <span>{vod.views ? `조회 ${vod.views}` : ''}</span>
                     </div>
-                  ) : null}
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3 text-xs text-white/45">
-                    <span>{vod.date || '최근 업로드'}</span>
-                    <span>{vod.views || ''}</span>
+                    <h4 className="mt-3 line-clamp-2 min-h-[56px] text-lg font-semibold leading-7">{vod.title}</h4>
+                    <div className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">
+                      다시보기 보기
+                    </div>
                   </div>
-                  <h4 className="mt-3 line-clamp-2 min-h-[56px] text-lg font-semibold leading-7">{vod.title}</h4>
-                  <div className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">
-                    다시보기 보기
-                  </div>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))
+            ) : (
+              <div className="col-span-full rounded-3xl border border-white/10 bg-black/25 p-8 text-white/65">
+                VOD를 불러오지 못했을 때는 <a className="underline" href={data.channel.vodUrl} target="_blank" rel="noreferrer">다시보기 전체보기</a>로 바로 이동할 수 있게 해뒀습니다.
+              </div>
+            )}
           </div>
+        </section>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          {pinnedPosts.map((post, idx) => (
+            <a
+              key={`${post.url}-${idx}`}
+              href={post.url}
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 transition hover:border-cyan-300/20"
+            >
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">
+                  {post.type}
+                </span>
+                <span className="text-white/45">{post.date || '바로가기'}</span>
+              </div>
+              <div className="mt-3 flex gap-4">
+                <div className="flex-1">
+                  <h4 className="text-2xl font-semibold">{post.title}</h4>
+                  <p className="mt-3 line-clamp-3 text-sm leading-7 text-white/68">
+                    {post.summary || `${post.type} 게시글로 이동합니다.`}
+                  </p>
+                </div>
+                {post.thumbnail ? (
+                  <img
+                    src={post.thumbnail}
+                    alt={post.title}
+                    className="hidden h-24 w-24 rounded-2xl object-cover md:block"
+                  />
+                ) : null}
+              </div>
+            </a>
+          ))}
         </section>
 
         <section id="notice" className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-cyan-500/10 to-white/[0.03] p-6 shadow-xl shadow-black/20">
             <p className="text-sm text-cyan-100/75">SOOP 게시판 자동 연결</p>
-            <h3 className="mt-1 text-3xl font-semibold">Recent Notice</h3>
+            <h3 className="mt-1 text-3xl font-semibold">Recent Board</h3>
             <p className="mt-4 text-sm leading-7 text-white/70">
-              장지수 방송국 게시판 최신 글을 읽어와 메인에 보여주는 영역입니다. 배포 후에는 주기적으로 자동 갱신되도록 동작합니다.
+              장지수 방송국의 최근 게시글을 읽어와 메인에 보여주는 영역입니다.
             </p>
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
               <div className="text-xs uppercase tracking-[0.3em] text-white/40">collector status</div>
               <div className="mt-2 text-lg font-semibold">{loading ? '불러오는 중' : data.ok ? '정상 수집 중' : '연결 재시도 필요'}</div>
               <div className="mt-1 text-sm text-white/50">
-                기준 링크: {data.channel.soopUrl.replace('https://', '')}/board
+                기준 링크: {data.channel.boardUrl.replace('https://', '')}
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            {notices.map((notice, index) => (
-              <a
-                key={`${notice.url}-${index}`}
-                href={notice.url}
-                target="_blank"
-                rel="noreferrer"
-                className="block rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/10 transition hover:border-cyan-300/20"
-              >
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                      <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">
-                        게시판
-                      </span>
-                      <span className="text-white/45">{notice.date || '최근 글'}</span>
+            {extraPosts.length ? (
+              extraPosts.map((notice, index) => (
+                <a
+                  key={`${notice.url}-${index}`}
+                  href={notice.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/10 transition hover:border-cyan-300/20"
+                >
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">
+                          {notice.type || '게시판'}
+                        </span>
+                        <span className="text-white/45">{notice.date || '최근 글'}</span>
+                      </div>
+                      <h4 className="mt-3 text-xl font-semibold">{notice.title}</h4>
+                      <p className="mt-3 line-clamp-2 text-sm leading-7 text-white/68">
+                        {notice.summary || '장지수 방송국 게시판 글로 이동합니다.'}
+                      </p>
                     </div>
-                    <h4 className="mt-3 text-xl font-semibold">{notice.title}</h4>
-                    <p className="mt-3 line-clamp-2 text-sm leading-7 text-white/68">
-                      {notice.summary || '장지수 방송국 게시판 글로 이동합니다.'}
-                    </p>
+                    {notice.thumbnail ? (
+                      <img
+                        src={notice.thumbnail}
+                        alt={notice.title}
+                        className="hidden h-24 w-24 rounded-2xl object-cover md:block"
+                      />
+                    ) : null}
                   </div>
-                  {notice.thumbnail ? (
-                    <img
-                      src={notice.thumbnail}
-                      alt={notice.title}
-                      className="hidden h-24 w-24 rounded-2xl object-cover md:block"
-                    />
-                  ) : null}
-                </div>
-              </a>
-            ))}
+                </a>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-white/65">
+                게시글 목록을 불러오지 못했을 때는 상단의 공지/뱀이봤 카드로 바로 이동할 수 있게 해뒀습니다.
+              </div>
+            )}
           </div>
         </section>
       </main>

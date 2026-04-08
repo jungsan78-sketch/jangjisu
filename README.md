@@ -1,15 +1,12 @@
-# 변경 파일 안내
+# 변경 파일만 전달
 
-## 이 ZIP에 들어있는 파일
-- package.json
-- pages/index.js
+## 덮어쓸 파일
 - pages/api/soop.js
 - components/JangJisuFanSite.js
 
-## 적용 방법
-기존 프로젝트에 같은 경로로 덮어쓰면 됩니다.
-
-## 메모
-- `package.json`이 바뀌었으니 GitHub에 함께 반영하세요.
-- Vercel은 `package.json` 변경 후 자동으로 다시 설치/배포됩니다.
-- SOOP 페이지 구조가 바뀌면 `pages/api/soop.js`의 파싱 로직만 수정하면 됩니다.
+## 변경 내용
+- VOD 파싱 로직을 다중 방식으로 강화
+- VOD 상세 페이지의 og:image / og:title를 우선 사용
+- 공지 URL, 뱀이봤 URL을 각각 직접 연결해 상단 카드로 고정
+- 게시판 목록도 추가 수집
+- 히어로 문구 큰 타이틀 삭제/축소
