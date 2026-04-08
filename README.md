@@ -1,7 +1,6 @@
 변경 파일
-- pages/api/youtube.js
+- components/JangJisuFanSite.js
 
 변경 내용
-- 3분 이하 영상은 Shorts
-- 3분 초과 영상은 본채널 영상
-- 본채널/풀영상이 비지 않게 보강 유지
+- 오늘 일정이면 '오늘 일정' / 'TODAY' 강조 표시
+- 제목에 '휴방'이 들어가면 주황색 배지 표시

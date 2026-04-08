@@ -105,14 +105,51 @@ function VideoCard({ video, compact = false }) {
   );
 }
 
+function isTodaySchedule(item) {
+  const now = new Date();
+  const text = String(item.date || '');
+  const monthMatch = text.match(/(\d+)월/);
+  const dayMatch = text.match(/(\d+)일/);
+  if (!monthMatch || !dayMatch) return false;
+  const month = Number(monthMatch[1]);
+  const day = Number(dayMatch[1]);
+  return now.getMonth() + 1 === month && now.getDate() === day;
+}
+
+function isOffDay(item) {
+  return String(item.title || '').includes('휴방');
+}
+
 function ScheduleItem({ item }) {
+  const isToday = isTodaySchedule(item);
+  const offDay = isOffDay(item);
+
+  const wrapperClass = isToday
+    ? 'border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.16),rgba(11,15,23,0.95))] shadow-[0_0_0_1px_rgba(103,232,249,0.08),0_18px_40px_rgba(14,165,233,0.12)]'
+    : 'border-white/10 bg-[#0b0f17] hover:border-white/20';
+
+  const badgeClass = offDay
+    ? 'border-orange-300/25 bg-orange-400/15 text-orange-100'
+    : isToday
+      ? 'border-cyan-300/25 bg-cyan-300/15 text-cyan-100'
+      : 'border-white/10 bg-white/5 text-white/55';
+
   return (
-    <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-5 transition hover:border-white/20">
+    <div className={`rounded-[24px] border p-5 transition ${wrapperClass}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm font-semibold text-white">{item.date}</div>
-        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">{item.day}</div>
+        <div className={`rounded-full border px-3 py-1 text-xs ${badgeClass}`}>
+          {offDay ? '휴방' : isToday ? '오늘 일정' : item.day}
+        </div>
       </div>
+
       <div className="mt-4 text-lg font-semibold leading-7 text-white">{item.title}</div>
+
+      {isToday ? (
+        <div className="mt-4 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+          TODAY
+        </div>
+      ) : null}
     </div>
   );
 }
