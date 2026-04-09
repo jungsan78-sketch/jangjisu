@@ -89,113 +89,157 @@ function VideoCard({ video, vertical = false }) {
   );
 }
 
-function isTodaySchedule(item, scheduleMonth, scheduleYear) {
+function isTodaySchedule(item) {
   const now = new Date();
-  return Number(item?.dateNumber) === now.getDate() && Number(scheduleMonth) === now.getMonth() + 1 && Number(scheduleYear) === now.getFullYear();
+  const text = String(item.date || '');
+  const monthMatch = text.match(/(\d+)월/);
+  const dayMatch = text.match(/(\d+)일/);
+  if (!monthMatch || !dayMatch) return false;
+  const month = Number(monthMatch[1]);
+  const day = Number(dayMatch[1]);
+  return now.getMonth() + 1 === month && now.getDate() === day;
 }
 
 function isOffDay(item) {
   return String(item.title || '').includes('휴방');
 }
 
-function buildCalendarCells(schedule) {
-  const year = Number(schedule?.year);
-  const month = Number(schedule?.month);
-  const items = Array.isArray(schedule?.items) ? schedule.items : [];
-
-  if (!year || !month) return [];
-
-  const firstDate = new Date(year, month - 1, 1);
-  const firstWeekday = (firstDate.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const itemMap = new Map(items.map((item) => [Number(item.dateNumber), item]));
-  const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
-
-  return Array.from({ length: totalCells }, (_, index) => {
-    const dateNumber = index - firstWeekday + 1;
-    if (dateNumber < 1 || dateNumber > daysInMonth) {
-      return { empty: true, key: `empty-${index}` };
-    }
-
-    return {
-      empty: false,
-      key: `date-${dateNumber}`,
-      dateNumber,
-      item: itemMap.get(dateNumber) || null,
-    };
-  });
-}
-
-function CalendarDayCell({ cell, scheduleMonth, scheduleYear }) {
-  if (cell.empty) {
-    return <div className="min-h-[126px] rounded-[22px] border border-dashed border-white/6 bg-white/[0.02]" />;
-  }
-
-  const isToday = cell.item ? isTodaySchedule(cell.item, scheduleMonth, scheduleYear) : false;
-  const offDay = cell.item ? isOffDay(cell.item) : false;
-
+function ScheduleItem({ item }) {
+  const isToday = isTodaySchedule(item);
+  const offDay = isOffDay(item);
   const wrapperClass = isToday
     ? 'border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.16),rgba(11,15,23,0.95))] shadow-[0_0_0_1px_rgba(103,232,249,0.08),0_18px_40px_rgba(14,165,233,0.12)]'
-    : 'border-white/10 bg-[#0b0f17]';
-
-  const dateBadgeClass = isToday
-    ? 'bg-cyan-300 text-slate-950'
-    : 'bg-white/8 text-white';
+    : 'border-white/10 bg-[#0b0f17] hover:border-white/20';
+  const badgeClass = offDay
+    ? 'border-orange-300/25 bg-orange-400/15 text-orange-100'
+    : isToday
+      ? 'border-cyan-300/25 bg-cyan-300/15 text-cyan-100'
+      : 'border-white/10 bg-white/5 text-white/55';
 
   return (
-    <div className={`min-h-[126px] rounded-[22px] border p-4 transition ${wrapperClass}`}>
-      <div className="flex items-start justify-between gap-3">
-        <span className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold ${dateBadgeClass}`}>
-          {cell.dateNumber}
-        </span>
-        {cell.item ? (
-          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${offDay ? 'border-orange-300/20 bg-orange-400/15 text-orange-100' : isToday ? 'border-cyan-300/20 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/5 text-white/60'}`}>
-            {offDay ? '휴방' : isToday ? 'TODAY' : cell.item.day}
-          </span>
-        ) : null}
+    <div className={`rounded-[24px] border p-5 transition ${wrapperClass}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-white">{item.date}</div>
+        <div className={`rounded-full border px-3 py-1 text-xs ${badgeClass}`}>
+          {offDay ? '휴방' : isToday ? '오늘 일정' : item.day}
+        </div>
       </div>
+      <div className="mt-4 text-lg font-semibold leading-7 text-white">{item.title}</div>
+      {isToday ? <div className="mt-4 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">TODAY</div> : null}
+    </div>
+  );
+}
 
-      <div className="mt-4">
-        {cell.item ? (
-          <p className="whitespace-pre-line break-words text-[14px] font-semibold leading-6 text-white/95">
-            {cell.item.title}
-          </p>
-        ) : (
-          <p className="text-sm text-white/28">비어 있음</p>
-        )}
+
+function buildCalendarWeeks(monthLabel, items) {
+  const now = new Date();
+  const match = String(monthLabel || '').match(/(\d{4})년\s*(\d{1,2})월/);
+  const year = match ? Number(match[1]) : now.getFullYear();
+  const month = match ? Number(match[2]) : now.getMonth() + 1;
+
+  const firstDay = new Date(year, month - 1, 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const leadingEmpty = firstDay.getDay();
+  const totalCells = Math.ceil((leadingEmpty + daysInMonth) / 7) * 7;
+  const itemMap = new Map((items || []).map((item) => [Number(item.dayNumber), item]));
+  const cells = [];
+
+  for (let index = 0; index < totalCells; index += 1) {
+    const dayNumber = index - leadingEmpty + 1;
+    if (dayNumber < 1 || dayNumber > daysInMonth) {
+      cells.push(null);
+      continue;
+    }
+
+    const dateObject = new Date(year, month - 1, dayNumber);
+    const item = itemMap.get(dayNumber) || {
+      dayNumber,
+      date: `${month}월 ${dayNumber}일`,
+      day: ['일', '월', '화', '수', '목', '금', '토'][dateObject.getDay()],
+      title: '',
+      empty: true,
+    };
+
+    cells.push(item);
+  }
+
+  return { year, month, weeks: Array.from({ length: totalCells / 7 }, (_, weekIndex) => cells.slice(weekIndex * 7, weekIndex * 7 + 7)) };
+}
+
+function CalendarDayCell({ item, weekdayIndex, month }) {
+  if (!item) {
+    return <div className="min-h-[108px] rounded-[22px] border border-white/5 bg-white/[0.02]" />;
+  }
+
+  const isSunday = weekdayIndex === 0;
+  const isSaturday = weekdayIndex === 6;
+  const isToday = (() => {
+    const now = new Date();
+    return now.getMonth() + 1 === month && now.getDate() === item.dayNumber;
+  })();
+
+  return (
+    <div
+      className={`min-h-[108px] rounded-[22px] border p-4 transition ${
+        isToday
+          ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.96),rgba(5,12,24,0.96))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]'
+          : 'border-white/10 bg-[#07111f]'
+      }`}
+    >
+      <div className={`text-[15px] font-extrabold ${isSunday ? 'text-[#ff8e8e]' : isSaturday ? 'text-[#89b4ff]' : 'text-white'}`}>
+        {item.dayNumber}
+      </div>
+      <div className="mt-4 text-sm font-semibold leading-6 text-white/92 whitespace-pre-line break-keep">
+        {item.title || '비어 있음'}
       </div>
     </div>
   );
 }
 
-function ScheduleCalendar({ schedule }) {
-  const weekdayNames = ['월', '화', '수', '목', '금', '토', '일'];
-  const cells = buildCalendarCells(schedule);
+function ScheduleCalendarSection({ schedule }) {
+  const hasMonth = Boolean(schedule.monthLabel);
+  const hasItems = Array.isArray(schedule.items) && schedule.items.length > 0;
+  const { month, weeks } = buildCalendarWeeks(schedule.monthLabel, schedule.items);
+  const monthText = hasMonth ? schedule.monthLabel.replace('년 ', '.').replace('월', '').replace(/\s/g, '') : '';
+  const weekdayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
 
   return (
-    <div>
-      <div className="mb-4 grid grid-cols-7 gap-3">
-        {weekdayNames.map((dayName, index) => (
-          <div
-            key={dayName}
-            className={`rounded-full border px-3 py-2 text-center text-sm font-semibold ${index >= 5 ? 'border-blue-300/15 bg-blue-400/10 text-blue-100' : 'border-white/10 bg-white/5 text-white/70'}`}
-          >
-            {dayName}
-          </div>
-        ))}
-      </div>
+    <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
+      <SectionTitle eyebrow={schedule.monthLabel || '이번 일정'} title="장지수 일정" actionHref={schedule.sourceUrl || '#'} actionLabel={schedule.sourceUrl ? '시트 보기' : '일정 보기'} logo="🔵" />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {cells.map((cell) => (
-          <CalendarDayCell
-            key={cell.key}
-            cell={cell}
-            scheduleMonth={schedule?.month}
-            scheduleYear={schedule?.year}
-          />
-        ))}
-      </div>
-    </div>
+      {!schedule.loaded || !hasItems ? (
+        <div className="rounded-[24px] border border-white/10 bg-[#07111f] px-6 py-10 text-sm font-semibold text-white/65">
+          일정 데이터를 불러오는 중이거나 시트 구조를 확인하는 중입니다.
+        </div>
+      ) : (
+        <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="text-[22px] font-extrabold tracking-tight text-white sm:text-[26px]">달력 보기</div>
+            <div className="text-sm font-bold tracking-[0.35em] text-white/55">{monthText}</div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 sm:p-5">
+            <div className="mb-4 grid grid-cols-7 gap-3 text-center text-sm font-extrabold text-white/60">
+              {weekdayHeaders.map((label, index) => (
+                <div key={label} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              {weeks.map((week, weekIndex) => (
+                <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-3">
+                  {week.map((item, weekdayIndex) => (
+                    <CalendarDayCell key={item ? `${item.date}-${item.title}` : `empty-${weekIndex}-${weekdayIndex}`} item={item} weekdayIndex={weekdayIndex} month={month} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -235,7 +279,7 @@ export default function JangJisuFanSite() {
       full: { url: 'https://www.youtube.com/@jisoujang_full' },
     },
   });
-  const [schedule, setSchedule] = useState({ monthLabel: '', year: null, month: null, items: [], sourceUrl: '' });
+  const [schedule, setSchedule] = useState({ monthLabel: '', items: [], sourceUrl: '', loaded: false });
   const [activeTab, setActiveTab] = useState('latest');
 
   useEffect(() => {
@@ -288,10 +332,9 @@ export default function JangJisuFanSite() {
         if (!mounted) return;
         setSchedule({
           monthLabel: json.monthLabel || '',
-          year: Number(json.year) || null,
-          month: Number(json.month) || null,
           items: Array.isArray(json.items) ? json.items : [],
           sourceUrl: json.sourceUrl || '',
+          loaded: true,
         });
       } catch {}
     };
@@ -300,7 +343,7 @@ export default function JangJisuFanSite() {
     loadYoutube();
     loadSchedule();
 
-    const scheduleTimer = setInterval(loadSchedule, 60000);
+    const scheduleTimer = setInterval(loadSchedule, 60 * 1000);
 
     return () => {
       mounted = false;
@@ -373,16 +416,7 @@ export default function JangJisuFanSite() {
           </div>
         </section>
 
-        <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow={schedule.monthLabel || '이번 일정'} title="장지수 일정" actionHref={schedule.sourceUrl || '#'} actionLabel={schedule.sourceUrl ? '시트 보기' : '일정 보기'} logo="🔵" />
-          {schedule.year && schedule.month ? (
-            <ScheduleCalendar schedule={schedule} />
-          ) : (
-            <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm text-white/60">
-              일정 데이터를 불러오는 중이거나 시트 구조를 확인하는 중입니다.
-            </div>
-          )}
-        </section>
+        <ScheduleCalendarSection schedule={schedule} />
 
         <section id="notice" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="SOOP 점검 안내" title="SOOP 탭은 점검 중" logo="🔵" />
