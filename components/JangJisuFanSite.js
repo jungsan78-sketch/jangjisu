@@ -386,8 +386,6 @@ export default function JangJisuFanSite() {
             </>
           ) : null}
         </section>
-
-        </section>
       </main>
 
       <footer className="mt-16 border-t border-white/10 bg-black/30">
