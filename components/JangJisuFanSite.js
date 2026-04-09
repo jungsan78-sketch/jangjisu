@@ -167,6 +167,7 @@ export default function JangJisuFanSite() {
     },
   });
   const [schedule, setSchedule] = useState({ monthLabel: '', items: [], sourceUrl: '' });
+  const [youtubeTab, setYoutubeTab] = useState('videos');
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 4200);
@@ -267,9 +268,7 @@ export default function JangJisuFanSite() {
           <nav className="flex flex-wrap items-center gap-3">
             <NavChip href="#schedule" label="일정" tone="blue" icon="🔵" />
             <NavChip href="#notice" label="공지" tone="blue" icon="🔵" />
-            <NavChip href="#latest-video" label="최신 영상" tone="red" icon="▶" />
-            <NavChip href="#shorts" label="Shorts" tone="red" icon="▶" />
-            <NavChip href="#full-video" label="풀영상" tone="red" icon="▶" />
+            <NavChip href="#youtube" label="YOUTUBE" tone="red" icon="▶" />
             <NavChip href={data.channel.fanCafeUrl} label="팬카페" tone="green" external icon="N" />
           </nav>
         </div>
@@ -316,25 +315,87 @@ export default function JangJisuFanSite() {
           </div>
         </section>
 
-        <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="최신영상" title="최신영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
+        <section id="youtube" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
+          <SectionTitle title="YOUTUBE" logo="▶" />
+          <div className="mb-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setYoutubeTab('videos')}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                youtubeTab === 'videos'
+                  ? 'border-[#ff4e45]/40 bg-[#ff4e45]/18 text-white shadow-[0_0_20px_rgba(255,78,69,0.18)]'
+                  : 'border-white/10 bg-white/5 text-white/75 hover:bg-white/10'
+              }`}
+            >
+              영상
+            </button>
+            <button
+              type="button"
+              onClick={() => setYoutubeTab('shorts')}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                youtubeTab === 'shorts'
+                  ? 'border-[#ff4e45]/40 bg-[#ff4e45]/18 text-white shadow-[0_0_20px_rgba(255,78,69,0.18)]'
+                  : 'border-white/10 bg-white/5 text-white/75 hover:bg-white/10'
+              }`}
+            >
+              SHORTS
+            </button>
+            <button
+              type="button"
+              onClick={() => setYoutubeTab('full')}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                youtubeTab === 'full'
+                  ? 'border-[#ff4e45]/40 bg-[#ff4e45]/18 text-white shadow-[0_0_20px_rgba(255,78,69,0.18)]'
+                  : 'border-white/10 bg-white/5 text-white/75 hover:bg-white/10'
+              }`}
+            >
+              풀영상
+            </button>
           </div>
+
+          {youtubeTab === 'videos' ? (
+            <>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">최신영상</div>
+                <a href={youtube.channels.latest.videosUrl} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
+                  더보기
+                </a>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
+              </div>
+            </>
+          ) : null}
+
+          {youtubeTab === 'shorts' ? (
+            <>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">SHORTS</div>
+                <a href={youtube.channels.latest.shortsUrl} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
+                  더보기
+                </a>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
+              </div>
+            </>
+          ) : null}
+
+          {youtubeTab === 'full' ? (
+            <>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">풀영상</div>
+                <a href={youtube.channels.full.url} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
+                  더보기
+                </a>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}
+              </div>
+            </>
+          ) : null}
         </section>
 
-        <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle title="SHORTS" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
-          </div>
-        </section>
-
-        <section id="full-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle title="풀영상" actionHref={youtube.channels.full.url} actionLabel="풀영상 채널 바로가기" logo="▶" />
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}
-          </div>
         </section>
       </main>
 
