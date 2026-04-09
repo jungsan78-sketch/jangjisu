@@ -359,7 +359,7 @@ export default function JangJisuFanSite() {
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">최신영상</div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
+                {(youtube?.videos || []).map((video) => <VideoCard key={video.id} video={video} />)}
               </div>
             </>
           ) : null}
@@ -370,7 +370,7 @@ export default function JangJisuFanSite() {
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">SHORTS</div>
               </div>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
+                {(youtube?.shorts || []).map((video) => <VideoCard key={video.id} video={video} vertical />)}
               </div>
             </>
           ) : null}
@@ -381,7 +381,7 @@ export default function JangJisuFanSite() {
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">풀영상</div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}
+                {(youtube?.full || []).map((video) => <VideoCard key={video.id} video={video} />)}
               </div>
             </>
           ) : null}
