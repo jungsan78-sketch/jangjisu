@@ -53,7 +53,7 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '' })
           : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] ${toneClass}`}>
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
@@ -258,14 +258,12 @@ export default function JangJisuFanSite() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 lg:px-8">
-          <div className="flex items-center justify-between">
-            <a href="#" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)]">
-              <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
-            </a>
-          </div>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
+          <a href="#" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:scale-[1.07] hover:border-white/25 hover:shadow-[0_0_36px_rgba(96,165,250,0.28)]">
+            <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
+          </a>
 
-          <nav className="flex flex-wrap items-center gap-3">
+          <nav className="flex flex-wrap items-center justify-end gap-3">
             <NavChip href="#schedule" label="일정" tone="blue" icon="🔵" />
             <NavChip href="#notice" label="공지" tone="blue" icon="🔵" />
             <NavChip href="#youtube" label="YOUTUBE" tone="red" icon="▶" />
@@ -293,9 +291,9 @@ export default function JangJisuFanSite() {
                 SOU
               </div>
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <a href={data.channel.soopUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/15 px-4 py-2 text-sm text-[#b8d8ff] backdrop-blur transition hover:bg-[#3b82f6]/20">🔵 SOOP 방송국</a>
-                <a href={youtube.channels.latest.url} target="_blank" rel="noreferrer" className="rounded-full border border-[#ff4e45]/30 bg-[#ff4e45]/15 px-4 py-2 text-sm text-[#ffb2ae] backdrop-blur transition hover:bg-[#ff4e45]/20">▶ YouTube</a>
+              <div className="absolute bottom-6 right-6 flex flex-wrap items-center justify-end gap-3 sm:bottom-8 sm:right-8">
+                <a href={data.channel.soopUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#3b82f6]/35 bg-[#3b82f6]/15 px-4 py-2 text-sm font-semibold text-[#d5e8ff] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:border-[#60a5fa]/45 hover:bg-[#3b82f6]/24 hover:shadow-[0_0_24px_rgba(59,130,246,0.24)]">🔵 SOOP 방송국</a>
+                <a href={youtube.channels.latest.url} target="_blank" rel="noreferrer" className="rounded-full border border-[#ff4e45]/35 bg-[#ff4e45]/15 px-4 py-2 text-sm font-semibold text-[#ffd0cb] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:border-[#ff7d74]/45 hover:bg-[#ff4e45]/24 hover:shadow-[0_0_24px_rgba(255,78,69,0.24)]">▶ YouTube</a>
               </div>
             </div>
           </div>
