@@ -359,7 +359,7 @@ export default function JangJisuFanSite() {
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">최신영상</div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {(youtube?.videos || []).map((video) => <VideoCard key={video.id} video={video} />)}
+                {longVideos.map((video) => <VideoCard key={video.id} video={video} />)}
               </div>
             </>
           ) : null}
