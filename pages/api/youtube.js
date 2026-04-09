@@ -1,239 +1,97 @@
-function formatDuration(isoDuration = '') {
-  const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (!match) return '';
-  const hours = parseInt(match[1] || '0', 10);
-  const minutes = parseInt(match[2] || '0', 10);
-  const seconds = parseInt(match[3] || '0', 10);
-
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
-function formatPublishedAt(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('ko-KR');
-}
-
-function formatViews(value) {
-  const num = Number(value || 0);
-  if (!Number.isFinite(num)) return '0';
-  return new Intl.NumberFormat('ko-KR').format(num);
-}
-
-function getDurationSeconds(duration = '') {
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (!match) return 0;
-  const hours = parseInt(match[1] || '0', 10);
-  const minutes = parseInt(match[2] || '0', 10);
-  const seconds = parseInt(match[3] || '0', 10);
-  return hours * 3600 + minutes * 60 + seconds;
-}
-
-function uniqueIds(ids) {
-  const seen = new Set();
-  return ids.filter((id) => {
-    if (!id || seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
-}
-
-async function getChannelInfo(channelHandle, apiKey) {
-  const channelRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const channelJson = await channelRes.json();
-
-  if (!channelRes.ok || !channelJson.items?.length) {
-    throw new Error(`Failed to load channel for handle: ${channelHandle}`);
-  }
-
-  return {
-    title: channelJson.items[0].snippet.title,
-  };
-}
-
-async function scrapeTabVideoIds(tabUrl) {
-  const res = await fetch(tabUrl, {
-    cache: 'no-store',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-      'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
-    },
-  });
-
-  const html = await res.text();
-
-  if (!res.ok || !html) {
-    throw new Error(`Failed to fetch YouTube tab: ${tabUrl}`);
-  }
-
-  const matches = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1]);
-  return uniqueIds(matches).slice(0, 18);
-}
-
-async function getVideosByIds(ids, apiKey, vertical = false) {
-  if (!ids?.length) return [];
-
-  const res = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${ids.join(',')}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const json = await res.json();
-
-  if (!res.ok || !json.items?.length) {
-    return [];
-  }
-
-  const map = new Map(json.items.map((item) => [item.id, item]));
-
-  return ids
-    .map((id) => {
-      const details = map.get(id);
-      if (!details) return null;
-
-      const duration = details.contentDetails?.duration || '';
-      return {
-        id,
-        title: details.snippet?.title || '',
-        thumbnail:
-          details.snippet?.thumbnails?.maxres?.url ||
-          details.snippet?.thumbnails?.high?.url ||
-          details.snippet?.thumbnails?.medium?.url ||
-          `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-        publishedAt: details.snippet?.publishedAt || '',
-        publishedAtText: formatPublishedAt(details.snippet?.publishedAt || ''),
-        views: details.statistics?.viewCount || '0',
-        viewsText: formatViews(details.statistics?.viewCount || '0'),
-        duration,
-        durationText: formatDuration(duration),
-        durationSeconds: getDurationSeconds(duration),
-        url: vertical
-          ? `https://www.youtube.com/shorts/${id}`
-          : `https://www.youtube.com/watch?v=${id}`,
-      };
-    })
-    .filter(Boolean);
-}
-
-function fillToCount(primary, fallback, count) {
-  const result = [...primary];
-  for (const item of fallback) {
-    if (result.length >= count) break;
-    if (!result.some((video) => video.id === item.id)) {
-      result.push(item);
-    }
-  }
-  return result.slice(0, count);
-}
-
-async function fallbackUploads(channelHandle, apiKey) {
-  const channelRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${channelHandle}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const channelJson = await channelRes.json();
-  const uploads = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-  if (!uploads) return [];
-
-  const playlistRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=24&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const playlistJson = await playlistRes.json();
-  return uniqueIds((playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
-}
-
 export default async function handler(req, res) {
-  const apiKey = process.env.YOUTUBE_API_KEY;
+  // 🚨 1. 강력한 캐시 무효화 (브라우저가 예전 데이터를 기억하지 못하게 헤더 설정)
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
-  if (!apiKey) {
-    return res.status(200).json({
-      ok: false,
-      error: 'YOUTUBE_API_KEY is not set',
-    });
-  }
+  const key = process.env.YOUTUBE_API_KEY;
+
+  if (!key) return res.status(500).json({ ok: false, error: "NO KEY" });
 
   try {
-    const [mainInfo, fullInfo] = await Promise.all([
-      getChannelInfo('jisoujang', apiKey),
-      getChannelInfo('jisoujang_full', apiKey),
+    // 🚨 2. API 요청 시 서버 측 캐시 무효화 옵션 추가
+    const fetchOptions = { cache: 'no-store' };
+
+    // 성능 최적화: 채널 정보 병렬 호출
+    const [ch1, ch2] = await Promise.all([
+      fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=jisoujang&key=${key}`, fetchOptions).then(r => r.json()),
+      fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=jisoujang_full&key=${key}`, fetchOptions).then(r => r.json())
     ]);
 
-    let videoIds = [];
-    let shortsIds = [];
-    let fullIds = [];
-
-    try {
-      [videoIds, shortsIds, fullIds] = await Promise.all([
-        scrapeTabVideoIds('https://www.youtube.com/@jisoujang/videos'),
-        scrapeTabVideoIds('https://www.youtube.com/@jisoujang/shorts'),
-        scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
-      ]);
-    } catch (e) {
-      const [mainFallback, fullFallback] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
-      ]);
-
-      videoIds = mainFallback.filter(Boolean);
-      shortsIds = mainFallback.filter(Boolean);
-      fullIds = fullFallback.filter(Boolean);
+    if (!ch1.items?.[0] || !ch2.items?.[0]) {
+      return res.status(404).json({ ok: false, error: "채널 데이터를 불러올 수 없습니다." });
     }
 
-    let [videos, shorts, full] = await Promise.all([
-      getVideosByIds(videoIds.slice(0, 12), apiKey, false),
-      getVideosByIds(shortsIds.slice(0, 12), apiKey, true),
-      getVideosByIds(fullIds.slice(0, 12), apiKey, false),
+    const up1 = ch1.items[0].contentDetails.relatedPlaylists.uploads;
+    const up2 = ch2.items[0].contentDetails.relatedPlaylists.uploads;
+
+    async function getList(pid) {
+      const list = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${pid}&maxResults=25&key=${key}`, fetchOptions).then(r => r.json());
+      
+      if (!list.items || list.items.length === 0) return [];
+
+      const ids = list.items.map(v => v.contentDetails.videoId).join(',');
+      const vids = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${ids}&key=${key}`, fetchOptions).then(r => r.json());
+
+      const map = {};
+      if (vids.items) {
+        vids.items.forEach(v => map[v.id] = v);
+      }
+
+      return list.items.map(v => {
+        const d = map[v.contentDetails.videoId];
+        if (!d) return null;
+
+        const dur = d.contentDetails.duration;
+        const m = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        const sec = (m[1] ? +m[1] * 3600 : 0) + (m[2] ? +m[2] * 60 : 0) + (m[3] ? +m[3] : 0);
+
+        // 🚨 3. 쇼츠 분류 기준 완화: 태그 상관없이 61초 이하(오차 감안)면 무조건 쇼츠로 판별
+        const isShorts = sec <= 61;
+
+        // 🚨 4. 썸네일 완전 탐색 폴백 로직 (빈 화면 방지)
+        const thumbnails = d.snippet.thumbnails || {};
+        const bestThumbnailUrl = 
+          thumbnails.maxres?.url || 
+          thumbnails.standard?.url || 
+          thumbnails.high?.url || 
+          thumbnails.medium?.url || 
+          thumbnails.default?.url || 
+          '';
+
+        return {
+          id: v.contentDetails.videoId,
+          title: d.snippet.title,
+          thumb: bestThumbnailUrl,
+          views: d.statistics.viewCount,
+          date: d.snippet.publishedAt,
+          duration: dur,
+          sec,
+          isShorts
+        };
+      }).filter(Boolean);
+    }
+
+    // 영상 목록 파싱 병렬 처리
+    const [main, full] = await Promise.all([
+      getList(up1),
+      getList(up2)
     ]);
 
-    if (!videos.length || !shorts.length || !full.length) {
-      const [mainFallback, fullFallback] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
-      ]);
-
-      const [fallbackVideos, fallbackShorts, fallbackFull] = await Promise.all([
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, false),
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, true),
-        getVideosByIds(fullFallback.slice(0, 18), apiKey, false),
-      ]);
-
-      videos = fillToCount(videos, fallbackVideos, 9);
-      shorts = fillToCount(shorts, fallbackShorts, 8);
-      full = fillToCount(full, fallbackFull, 9);
-    }
+    // 본채널(main) 영상만 쇼츠와 롱폼으로 분리합니다.
+    const shorts = main.filter(v => v.isShorts);
+    const long = main.filter(v => !v.isShorts);
 
     return res.status(200).json({
       ok: true,
-      channels: {
-        latest: {
-          title: mainInfo.title,
-          url: 'https://www.youtube.com/@jisoujang',
-          videosUrl: 'https://www.youtube.com/@jisoujang/videos',
-          shortsUrl: 'https://www.youtube.com/@jisoujang/shorts',
-        },
-        full: {
-          title: fullInfo.title,
-          url: 'https://www.youtube.com/@jisoujang_full',
-          videosUrl: 'https://www.youtube.com/@jisoujang_full/videos',
-        },
-      },
-      videos: videos.slice(0, 9),
       shorts: shorts.slice(0, 8),
-      full: full.slice(0, 9),
-      fetchedAt: new Date().toISOString(),
+      videos: long.slice(0, 9),
+      // 🚨 5. 풀영상 채널은 필터링 없이 그대로 9개 가져옵니다 (절대 건드리지 않음)
+      full: full.slice(0, 9)
     });
+
   } catch (error) {
-    return res.status(200).json({
-      ok: false,
-      error: error.message,
-    });
+    console.error("YouTube API Error:", error);
+    return res.status(500).json({ ok: false, error: "서버 처리 중 오류가 발생했습니다." });
   }
 }
