@@ -1,0 +1,9 @@
+
+// 기존 페이지에서 이렇게 교체
+
+import ScheduleHybridSection from '@/components/ScheduleHybridSection';
+
+<ScheduleHybridSection
+  monthLabel={schedule.monthLabel}
+  items={schedule.items}
+/>
