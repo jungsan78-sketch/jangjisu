@@ -309,12 +309,12 @@ export default function JangJisuFanSite() {
         <section id="notice" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow="SOOP 점검 안내" title="SOOP 탭은 점검 중" logo="🔵" />
           <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-white/65">
-            SOOP API 키 적용 전까지 공지 탭은 임시 점검 상태로 표시됩니다.
+            점검중
           </div>
         </section>
 
         <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
+          <SectionTitle eyebrow="최신영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
