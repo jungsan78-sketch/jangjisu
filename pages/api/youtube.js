@@ -53,7 +53,16 @@ async function getChannelInfo(channelHandle, apiKey) {
     throw new Error(`Failed to load channel for handle: ${channelHandle}`);
   }
 
+  
+  const LONGFORM_MIN = 70;
+
+  const filteredVideos = videos.filter(v => (v.durationSeconds || 0) > LONGFORM_MIN);
+  const filteredShorts = videos.filter(v => (v.durationSeconds || 0) <= LONGFORM_MIN);
+
   return {
+    videos: filteredVideos,
+    shorts: filteredShorts,
+
     title: channelJson.items[0].snippet.title,
   };
 }
@@ -99,7 +108,16 @@ async function getVideosByIds(ids, apiKey, vertical = false) {
       if (!details) return null;
 
       const duration = details.contentDetails?.duration || '';
-      return {
+      
+  const LONGFORM_MIN = 70;
+
+  const filteredVideos = videos.filter(v => (v.durationSeconds || 0) > LONGFORM_MIN);
+  const filteredShorts = videos.filter(v => (v.durationSeconds || 0) <= LONGFORM_MIN);
+
+  return {
+    videos: filteredVideos,
+    shorts: filteredShorts,
+
         id,
         title: details.snippet?.title || '',
         thumbnail:
