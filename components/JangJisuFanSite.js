@@ -220,8 +220,9 @@ function CalendarDayCell({ item, weekdayIndex, month }) {
 function ScheduleCalendarSection({ schedule }) {
   const hasMonth = Boolean(schedule.monthLabel);
   const hasItems = Array.isArray(schedule.items) && schedule.items.length > 0;
-  const { month, weeks } = buildCalendarWeeks(schedule.monthLabel, schedule.items);
-  const monthText = hasMonth ? schedule.monthLabel.replace('년 ', '.').replace('월', '').replace(/\s/g, '') : '';
+  const { year, month, weeks } = buildCalendarWeeks(schedule.monthLabel, schedule.items);
+  const monthTitle = hasMonth ? `${month}월 달력` : '이번 달 달력';
+  const yearText = hasMonth ? String(year) : '';
   const weekdayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
 
   return (
@@ -235,8 +236,8 @@ function ScheduleCalendarSection({ schedule }) {
       ) : (
         <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
           <div className="mb-5 flex items-center justify-between gap-4">
-            <div className="text-[22px] font-extrabold tracking-tight text-white sm:text-[26px]">달력 보기</div>
-            <div className="text-sm font-bold tracking-[0.35em] text-white/55">{monthText}</div>
+            <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[30px]">{monthTitle}</div>
+            <div className="text-xs font-bold tracking-[0.45em] text-white/40 sm:text-sm">{yearText}</div>
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 sm:p-5">
