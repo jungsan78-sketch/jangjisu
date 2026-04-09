@@ -1,3 +1,18 @@
+const getSheetCandidates = () => {
+  const now = new Date();
+  const currentYear = String(now.getFullYear()).slice(2);
+  const currentMonth = now.getMonth() + 1;
+
+  const previousDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousYear = String(previousDate.getFullYear()).slice(2);
+  const previousMonth = previousDate.getMonth() + 1;
+
+  return [
+    `${currentYear}년 ${currentMonth}월`,
+    `${previousYear}년 ${previousMonth}월`,
+  ];
+};
+
 export default async function handler(req, res) {
   const sheetUrl =
     'https://docs.google.com/spreadsheets/d/1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM/edit?gid=315851366#gid=315851366';
