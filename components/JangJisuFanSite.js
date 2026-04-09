@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 
 function SectionTitle({ eyebrow, title, actionHref, actionLabel, logo }) {
+  const displayTitle = title || eyebrow;
+
   return (
     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <div className="flex items-center gap-2">
-          {logo ? <span className="text-base">{logo}</span> : null}
-          <p className="text-sm text-white/55">{eyebrow}</p>
+          {logo ? <span className="text-lg leading-none text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">{logo}</span> : null}
+          <h3 className="text-[28px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[32px]">
+            {displayTitle}
+          </h3>
         </div>
-        <h3 className="mt-1 text-3xl font-semibold tracking-tight text-white">{title}</h3>
       </div>
       {actionHref && actionLabel ? (
         <a href={actionHref} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
@@ -314,21 +317,21 @@ export default function JangJisuFanSite() {
         </section>
 
         <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="최신영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
+          <SectionTitle eyebrow="최신영상" title="최신영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
         </section>
 
         <section id="shorts" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="Shorts" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
+          <SectionTitle title="SHORTS" actionHref={youtube.channels.latest.shortsUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
           </div>
         </section>
 
         <section id="full-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 풀영상 채널" title="장지수 유튜브 풀영상" actionHref={youtube.channels.full.url} actionLabel="풀영상 채널 바로가기" logo="▶" />
+          <SectionTitle title="풀영상" actionHref={youtube.channels.full.url} actionLabel="풀영상 채널 바로가기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
