@@ -11,12 +11,7 @@ function SectionTitle({ eyebrow, title, actionHref, actionLabel, logo }) {
         <h3 className="mt-1 text-3xl font-semibold tracking-tight text-white">{title}</h3>
       </div>
       {actionHref && actionLabel ? (
-        <a
-          href={actionHref}
-          target="_blank"
-          rel="noreferrer"
-          className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
-        >
+        <a href={actionHref} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
           {actionLabel}
         </a>
       ) : null}
@@ -55,11 +50,7 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '' })
           : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
 
   return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}
-    >
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${toneClass}`}>
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
@@ -68,19 +59,10 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '' })
 
 function VideoCard({ video, vertical = false }) {
   return (
-    <a
-      href={video.url}
-      target="_blank"
-      rel="noreferrer"
-      className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#0c1018] transition hover:-translate-y-1 hover:border-white/20"
-    >
+    <a href={video.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#0c1018] transition hover:-translate-y-1 hover:border-white/20">
       <div className={`relative overflow-hidden bg-[#121826] ${vertical ? 'aspect-[9/14]' : 'aspect-video'}`}>
         {video.thumbnail ? (
-          <img
-            src={video.thumbnail}
-            alt={video.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-          />
+          <img src={video.thumbnail} alt={video.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>
         )}
@@ -140,11 +122,7 @@ function ScheduleItem({ item }) {
         </div>
       </div>
       <div className="mt-4 text-lg font-semibold leading-7 text-white">{item.title}</div>
-      {isToday ? (
-        <div className="mt-4 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
-          TODAY
-        </div>
-      ) : null}
+      {isToday ? <div className="mt-4 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">TODAY</div> : null}
     </div>
   );
 }
@@ -286,7 +264,7 @@ export default function JangJisuFanSite() {
           <nav className="flex flex-wrap items-center gap-3">
             <NavChip href="#schedule" label="일정" tone="blue" icon="🔵" />
             <NavChip href="#notice" label="공지" tone="blue" icon="🔵" />
-            <NavChip href="#latest-video" label="본채널 롱폼" tone="red" icon="▶" />
+            <NavChip href="#latest-video" label="최신 영상" tone="red" icon="▶" />
             <NavChip href="#shorts" label="Shorts" tone="red" icon="▶" />
             <NavChip href="#full-video" label="풀영상" tone="red" icon="▶" />
             <NavChip href={data.channel.fanCafeUrl} label="팬카페" tone="green" external icon="N" />
@@ -329,14 +307,14 @@ export default function JangJisuFanSite() {
         </section>
 
         <section id="notice" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="SOOP" title="점검중" logo="🔵" />
+          <SectionTitle eyebrow="SOOP 점검 안내" title="SOOP 탭은 점검 중" logo="🔵" />
           <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-white/65">
-            점검중
+            SOOP API 키 적용 전까지 공지 탭은 임시 점검 상태로 표시됩니다.
           </div>
         </section>
 
         <section id="latest-video" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-          <SectionTitle eyebrow="유튜브 본채널" title="장지수 본채널 롱폼 영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
+          <SectionTitle eyebrow="유튜브 본채널" title="장지수 최신 영상" actionHref={youtube.channels.latest.videosUrl} actionLabel="더보기" logo="▶" />
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
           </div>
