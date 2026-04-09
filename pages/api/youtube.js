@@ -4,13 +4,13 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ ok: false, error: "NO KEY" });
 
   try {
-    // 1. 성능 최적화: Promise.all을 사용해 채널 정보 병렬 호출 (속도 향상)
+    // 1. 성능 최적화: Promise.all을 사용해 채널 정보 병렬 호출
     const [ch1, ch2] = await Promise.all([
       fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=jisoujang&key=${key}`).then(r => r.json()),
       fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=jisoujang_full&key=${key}`).then(r => r.json())
     ]);
 
-    // 2. 안정성 최적화: API 할당량 초과나 잘못된 응답으로 인한 500 에러 방어
+    // 2. 안정성 최적화: 채널 데이터 응답 오류 방어
     if (!ch1.items?.[0] || !ch2.items?.[0]) {
       return res.status(404).json({ ok: false, error: "채널 데이터를 불러올 수 없습니다." });
     }
@@ -21,10 +21,8 @@ export default async function handler(req, res) {
     async function getList(pid) {
       const list = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${pid}&maxResults=25&key=${key}`).then(r => r.json());
       
-      // 방어 코드: 영상 목록이 비어있을 경우 빈 배열 반환
       if (!list.items || list.items.length === 0) return [];
 
-      // 기존의 훌륭한 로직 유지: videoId들을 묶어서 한 번에 호출
       const ids = list.items.map(v => v.contentDetails.videoId).join(',');
       const vids = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${ids}&key=${key}`).then(r => r.json());
 
@@ -35,45 +33,53 @@ export default async function handler(req, res) {
 
       return list.items.map(v => {
         const d = map[v.contentDetails.videoId];
-        if (!d) return null; // 방어 코드: 상세 정보가 없는 영상 스킵
+        if (!d) return null;
 
         const dur = d.contentDetails.duration;
         const m = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
         const sec = (m[1] ? +m[1] * 3600 : 0) + (m[2] ? +m[2] * 60 : 0) + (m[3] ? +m[3] : 0);
 
-        // 3. 쇼츠/롱폼 교차 검증 (정확도 100% 목표)
-        // 제목, 설명, 혹은 태그에 'shorts' 관련 키워드가 포함되어 있는지 대소문자 구분 없이 확인
         const snippet = d.snippet;
         const hasShortsKeyword = 
           /#shorts/i.test(snippet.title) || 
           /#shorts/i.test(snippet.description) || 
           (snippet.tags && snippet.tags.some(tag => tag.toLowerCase().includes('shorts')));
 
-        // 최종 분류: 재생 시간이 60초 이하이면서 shorts 키워드를 포함하고 있으면 완벽한 쇼츠로 판별
         const isShorts = sec <= 60 && hasShortsKeyword;
+
+        // 🚨 핵심 수정 부분: 썸네일 완전 탐색 폴백(Fallback) 로직
+        // 최고 화질부터 최저 화질까지 순차적으로 확인하여 존재하는 이미지를 무조건 가져옵니다.
+        const thumbnails = snippet.thumbnails || {};
+        const bestThumbnailUrl = 
+          thumbnails.maxres?.url || 
+          thumbnails.standard?.url || 
+          thumbnails.high?.url || 
+          thumbnails.medium?.url || 
+          thumbnails.default?.url || 
+          ''; // 모든 화질이 없을 경우를 대비한 최후의 안전망 (빈 문자열)
 
         return {
           id: v.contentDetails.videoId,
           title: snippet.title,
-          thumb: snippet.thumbnails.high?.url || snippet.thumbnails.default?.url,
+          thumb: bestThumbnailUrl, // 수정된 썸네일 로직 적용
           views: d.statistics.viewCount,
           date: snippet.publishedAt,
           duration: dur,
           sec,
-          isShorts // 필터링을 위한 boolean 값 추가
+          isShorts
         };
-      }).filter(Boolean); // null 값 정리
+      }).filter(Boolean);
     }
 
-    // 4. 성능 최적화: 영상 목록(main, full) 데이터 파싱도 병렬로 동시 처리
+    // 4. 성능 최적화: 영상 목록 데이터 파싱 병렬 처리
     const [main, full] = await Promise.all([
       getList(up1),
       getList(up2)
     ]);
 
-    // 5. 확정된 분류 기준 적용
+    // 5. 확정된 분류 기준 적용 (쇼츠/롱폼 분리)
     const shorts = main.filter(v => v.isShorts);
-    const long = main.filter(v => !v.isShorts); // 쇼츠 기준에 부합하지 않는 모든 영상은 롱폼
+    const long = main.filter(v => !v.isShorts);
 
     return res.status(200).json({
       ok: true,
