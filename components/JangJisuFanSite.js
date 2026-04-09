@@ -187,7 +187,7 @@ export default function JangJisuFanSite() {
 
     const loadYoutube = async () => {
       try {
-        const res = await fetch('/api/youtube');
+        const res = await fetch(`/api/youtube?t=${new Date().getTime()}`);
         const json = await res.json();
         if (!mounted) return;
         setYoutube({
