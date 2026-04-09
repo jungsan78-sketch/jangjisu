@@ -128,11 +128,21 @@ const isDateRow = (row) => {
   return numericCount >= 5;
 };
 
-const normalizeScheduleText = (value) =>
-  String(value || '')
+const normalizeScheduleText = (value) => {
+  const normalized = String(value || '')
     .replace(/\s*\/\s*/g, ' / ')
+    .replace(/\s*\\\s*/g, ' \\ ')
     .replace(/\s{2,}/g, ' ')
     .trim();
+
+  if (!normalized) return '';
+
+  const placeholderOnly = normalized
+    .replace(/[\s/\\|ㆍ·•·・‧⋅ㆍ—–-]+/g, '')
+    .trim();
+
+  return placeholderOnly ? normalized : '';
+};
 
 const parseScheduleRows = (rows, targetYear, targetMonth) => {
   const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();

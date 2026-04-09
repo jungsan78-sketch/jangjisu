@@ -177,21 +177,42 @@ function CalendarDayCell({ item, weekdayIndex, month }) {
     const now = new Date();
     return now.getMonth() + 1 === month && now.getDate() === item.dayNumber;
   })();
+  const hasTitle = Boolean(String(item.title || '').trim());
+  const offDay = isOffDay(item);
 
   return (
     <div
-      className={`min-h-[108px] rounded-[22px] border p-4 transition ${
+      className={`group relative min-h-[108px] overflow-hidden rounded-[22px] border p-4 transition-all duration-300 ${
         isToday
-          ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.96),rgba(5,12,24,0.96))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]'
-          : 'border-white/10 bg-[#07111f]'
+          ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)] hover:-translate-y-1 hover:shadow-[0_0_0_1px_rgba(103,232,249,0.24),0_16px_36px_rgba(34,211,238,0.14)]'
+          : offDay
+            ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:-translate-y-1 hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]'
+            : hasTitle
+              ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:-translate-y-1 hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]'
+              : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'
       }`}
     >
-      <div className={`text-[15px] font-extrabold ${isSunday ? 'text-[#ff8e8e]' : isSaturday ? 'text-[#89b4ff]' : 'text-white'}`}>
-        {item.dayNumber}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className={`text-[15px] font-extrabold ${isSunday ? 'text-[#ff8e8e]' : isSaturday ? 'text-[#89b4ff]' : 'text-white'}`}>
+          {item.dayNumber}
+        </div>
+
+        {isToday ? (
+          <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-2 py-1 text-[10px] font-extrabold tracking-[0.18em] text-cyan-100">
+            TODAY
+          </span>
+        ) : hasTitle ? (
+          <span className={`mt-0.5 h-2.5 w-2.5 rounded-full ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} />
+        ) : null}
       </div>
-      <div className="mt-4 text-sm font-semibold leading-6 text-white/92 whitespace-pre-line break-keep">
-        {item.title || '비어 있음'}
-      </div>
+
+      {hasTitle ? (
+        <div className="relative mt-4 text-sm font-semibold leading-6 text-white/92 whitespace-pre-line break-keep">
+          {item.title}
+        </div>
+      ) : null}
     </div>
   );
 }
