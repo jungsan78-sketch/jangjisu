@@ -301,7 +301,7 @@ export default function JangJisuFanSite() {
     },
   });
   const [schedule, setSchedule] = useState({ monthLabel: '', items: [], sourceUrl: '', loaded: false });
-  const [activeTab, setActiveTab] = useState('latest');
+  const [activeTab, setActiveTab] = useState('videos');
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 4200);
@@ -448,29 +448,30 @@ export default function JangJisuFanSite() {
 
         <section id="youtube" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle title="YOUTUBE" logo="▶" />
-          <div className="flex gap-3 mb-6">
-  {[
-    { key: 'latest', label: '최신영상' },
-    { key: 'full', label: '풀영상' },
-  ].map(tab => (
-    <button
-      key={tab.key}
-      onClick={() => setActiveTab(tab.key)}
-      className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300
-        ${activeTab === tab.key
-          ? 'bg-red-500/20 text-white shadow-[0_0_15px_rgba(255,0,0,0.4)] border border-red-400/40'
-          : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
-        }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
+          <div className="mb-6 flex flex-wrap gap-3">
+            {[
+              { key: 'videos', label: '영상' },
+              { key: 'shorts', label: '쇼츠' },
+              { key: 'full', label: '풀영상' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+                  activeTab === tab.key
+                    ? 'border border-red-400/40 bg-red-500/20 text-white shadow-[0_0_15px_rgba(255,0,0,0.4)]'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          {activeTab === 'latest' ? (
+          {activeTab === 'videos' ? (
             <>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">최신영상</div>
+                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">영상</div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {(youtube?.videos || []).map((video) => <VideoCard key={video.id} video={video} />)}
@@ -478,7 +479,16 @@ export default function JangJisuFanSite() {
             </>
           ) : null}
 
-          
+          {activeTab === 'shorts' ? (
+            <>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">쇼츠</div>
+              </div>
+              <div className="grid gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                {(youtube?.shorts || []).map((video) => <VideoCard key={video.id} video={video} vertical />)}
+              </div>
+            </>
+          ) : null}
 
           {activeTab === 'full' ? (
             <>
