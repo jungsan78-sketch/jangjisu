@@ -43,10 +43,7 @@ function buildMonthMatrix(items, monthLabel = '') {
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push({ empty: true });
   for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push({
-      day,
-      item: itemMap.get(day) || null,
-    });
+    cells.push({ day, item: itemMap.get(day) || null });
   }
   while (cells.length % 7 !== 0) cells.push({ empty: true });
 
@@ -77,7 +74,9 @@ function BigScheduleCard({ item }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-end gap-2">
-            <div className="text-4xl font-black leading-none text-white sm:text-5xl">{day || '--'}</div>
+            <div className="text-4xl font-black leading-none text-white sm:text-5xl">
+              {day || '--'}
+            </div>
             <div className="pb-1 text-sm font-semibold uppercase tracking-[0.2em] text-white/45">
               {month ? `${month}월` : ''}
             </div>
@@ -140,20 +139,12 @@ function CalendarCell({ cell }) {
   );
 }
 
-export default function ScheduleHybridSection({
-  monthLabel = '2026년 4월',
-  sourceUrl = '',
-  items = [],
-}) {
+export default function ScheduleHybridSection({ monthLabel = '일정', sourceUrl = '', items = [] }) {
   const featured = [...items]
     .sort((a, b) => {
       const aToday = isTodayItem(a) ? 1 : 0;
       const bToday = isTodayItem(b) ? 1 : 0;
       if (aToday !== bToday) return bToday - aToday;
-      const aOff = isOffItem(a) ? 1 : 0;
-      const bOff = isOffItem(b) ? 1 : 0;
-      if (aOff !== bOff) return bOff - aOff;
-
       const aParts = parseDateParts(a.date || '');
       const bParts = parseDateParts(b.date || '');
       return (aParts.day || 999) - (bParts.day || 999);
