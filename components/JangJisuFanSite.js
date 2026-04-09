@@ -223,6 +223,7 @@ function ScheduleCalendarSection({ schedule }) {
   const { month, weeks } = buildCalendarWeeks(schedule.monthLabel, schedule.items);
   const monthText = hasMonth ? schedule.monthLabel.replace('년 ', '.').replace('월', '').replace(/\s/g, '') : '';
   const weekdayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
+  const todayItems = (schedule.items || []).filter((item) => isTodaySchedule(item) && String(item.title || '').trim());
 
   return (
     <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
@@ -233,32 +234,55 @@ function ScheduleCalendarSection({ schedule }) {
           일정 데이터를 불러오는 중이거나 시트 구조를 확인하는 중입니다.
         </div>
       ) : (
-        <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div className="text-[22px] font-extrabold tracking-tight text-white sm:text-[26px]">달력 보기</div>
-            <div className="text-sm font-bold tracking-[0.35em] text-white/55">{monthText}</div>
-          </div>
+        <>
+          <div className="sm:hidden">
+            <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)]">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <div className="text-[22px] font-extrabold tracking-tight text-white">오늘 일정</div>
+                <div className="text-xs font-bold tracking-[0.28em] text-white/55">{monthText}</div>
+              </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 sm:p-5">
-            <div className="mb-4 grid grid-cols-7 gap-3 text-center text-sm font-extrabold text-white/60">
-              {weekdayHeaders.map((label, index) => (
-                <div key={label} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>
-                  {label}
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              {weeks.map((week, weekIndex) => (
-                <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-3">
-                  {week.map((item, weekdayIndex) => (
-                    <CalendarDayCell key={item ? `${item.date}-${item.title}` : `empty-${weekIndex}-${weekdayIndex}`} item={item} weekdayIndex={weekdayIndex} month={month} />
+              {todayItems.length > 0 ? (
+                <div className="space-y-4">
+                  {todayItems.map((item) => (
+                    <ScheduleItem key={`${item.date}-${item.title}`} item={item} />
                   ))}
                 </div>
-              ))}
+              ) : (
+                <div className="rounded-[24px] border border-white/10 bg-[#05101d] px-5 py-8 text-sm font-semibold text-white/65">
+                  오늘 등록된 일정이 없습니다.
+                </div>
+              )}
             </div>
           </div>
-        </div>
+
+          <div className="hidden sm:block rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div className="text-[22px] font-extrabold tracking-tight text-white sm:text-[26px]">달력 보기</div>
+              <div className="text-sm font-bold tracking-[0.35em] text-white/55">{monthText}</div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 sm:p-5">
+              <div className="mb-4 grid grid-cols-7 gap-3 text-center text-sm font-extrabold text-white/60">
+                {weekdayHeaders.map((label, index) => (
+                  <div key={label} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {weeks.map((week, weekIndex) => (
+                  <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-3">
+                    {week.map((item, weekdayIndex) => (
+                      <CalendarDayCell key={item ? `${item.date}-${item.title}` : `empty-${weekIndex}-${weekdayIndex}`} item={item} weekdayIndex={weekdayIndex} month={month} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </section>
   );
