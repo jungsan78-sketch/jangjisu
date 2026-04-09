@@ -89,59 +89,111 @@ function VideoCard({ video, vertical = false }) {
   );
 }
 
-function ScheduleCalendar({ schedule }) {
-  const weekdays = Array.isArray(schedule?.weekdays) && schedule.weekdays.length === 7
-    ? schedule.weekdays
-    : ['일', '월', '화', '수', '목', '금', '토'];
-  const cells = Array.isArray(schedule?.cells) ? schedule.cells : [];
+function isTodaySchedule(item, scheduleMonth, scheduleYear) {
+  const now = new Date();
+  return Number(item?.dateNumber) === now.getDate() && Number(scheduleMonth) === now.getMonth() + 1 && Number(scheduleYear) === now.getFullYear();
+}
+
+function isOffDay(item) {
+  return String(item.title || '').includes('휴방');
+}
+
+function buildCalendarCells(schedule) {
+  const year = Number(schedule?.year);
+  const month = Number(schedule?.month);
+  const items = Array.isArray(schedule?.items) ? schedule.items : [];
+
+  if (!year || !month) return [];
+
+  const firstDate = new Date(year, month - 1, 1);
+  const firstWeekday = (firstDate.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const itemMap = new Map(items.map((item) => [Number(item.dateNumber), item]));
+  const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: totalCells }, (_, index) => {
+    const dateNumber = index - firstWeekday + 1;
+    if (dateNumber < 1 || dateNumber > daysInMonth) {
+      return { empty: true, key: `empty-${index}` };
+    }
+
+    return {
+      empty: false,
+      key: `date-${dateNumber}`,
+      dateNumber,
+      item: itemMap.get(dateNumber) || null,
+    };
+  });
+}
+
+function CalendarDayCell({ cell, scheduleMonth, scheduleYear }) {
+  if (cell.empty) {
+    return <div className="min-h-[126px] rounded-[22px] border border-dashed border-white/6 bg-white/[0.02]" />;
+  }
+
+  const isToday = cell.item ? isTodaySchedule(cell.item, scheduleMonth, scheduleYear) : false;
+  const offDay = cell.item ? isOffDay(cell.item) : false;
+
+  const wrapperClass = isToday
+    ? 'border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.16),rgba(11,15,23,0.95))] shadow-[0_0_0_1px_rgba(103,232,249,0.08),0_18px_40px_rgba(14,165,233,0.12)]'
+    : 'border-white/10 bg-[#0b0f17]';
+
+  const dateBadgeClass = isToday
+    ? 'bg-cyan-300 text-slate-950'
+    : 'bg-white/8 text-white';
 
   return (
-    <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#07101d]/95 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-      <div className="flex items-center justify-between px-5 pb-6 pt-2 sm:px-6 lg:px-7">
-        <div className="text-[28px] font-extrabold tracking-tight text-white">달력 보기</div>
-        <div className="text-sm font-semibold tracking-[0.28em] text-white/45">{schedule?.monthStamp || ''}</div>
+    <div className={`min-h-[126px] rounded-[22px] border p-4 transition ${wrapperClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <span className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-bold ${dateBadgeClass}`}>
+          {cell.dateNumber}
+        </span>
+        {cell.item ? (
+          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${offDay ? 'border-orange-300/20 bg-orange-400/15 text-orange-100' : isToday ? 'border-cyan-300/20 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/5 text-white/60'}`}>
+            {offDay ? '휴방' : isToday ? 'TODAY' : cell.item.day}
+          </span>
+        ) : null}
       </div>
 
-      <div className="px-4 pb-4 sm:px-5 sm:pb-5 lg:px-6 lg:pb-6">
-        <div className="rounded-[28px] border border-white/10 bg-[#08111f] p-3 sm:p-4 lg:p-5">
-          <div className="mb-3 grid grid-cols-7 gap-2 sm:mb-4 sm:gap-3">
-            {weekdays.map((day, index) => {
-              const toneClass = index === 0 ? 'text-[#ff6b6b]' : index === 6 ? 'text-[#7db7ff]' : 'text-white/55';
-              return (
-                <div key={day} className={`px-2 py-1 text-center text-sm font-bold ${toneClass}`}>
-                  {day}
-                </div>
-              );
-            })}
-          </div>
+      <div className="mt-4">
+        {cell.item ? (
+          <p className="whitespace-pre-line break-words text-[14px] font-semibold leading-6 text-white/95">
+            {cell.item.title}
+          </p>
+        ) : (
+          <p className="text-sm text-white/28">비어 있음</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
-            {cells.map((cell, index) => {
-              const isSunday = cell.dayOfWeek === 0;
-              const isSaturday = cell.dayOfWeek === 6;
-              const dateToneClass = isSunday ? 'text-[#ff8a8a]' : isSaturday ? 'text-[#8cbcff]' : 'text-white';
-              const baseClass = cell.inCurrentMonth
-                ? 'border-white/8 bg-[linear-gradient(180deg,rgba(9,18,32,0.98),rgba(7,15,27,0.98))]'
-                : 'border-white/[0.04] bg-white/[0.015]';
-              const todayClass = cell.isToday
-                ? 'ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.08),0_12px_30px_rgba(14,165,233,0.16)]'
-                : '';
+function ScheduleCalendar({ schedule }) {
+  const weekdayNames = ['월', '화', '수', '목', '금', '토', '일'];
+  const cells = buildCalendarCells(schedule);
 
-              return (
-                <div key={`${cell.date || 'blank'}-${index}`} className={`min-h-[92px] rounded-[18px] border p-3 sm:min-h-[104px] sm:rounded-[20px] sm:p-4 ${baseClass} ${todayClass}`}>
-                  {cell.inCurrentMonth ? (
-                    <>
-                      <div className={`text-[18px] font-extrabold leading-none ${dateToneClass}`}>{cell.date}</div>
-                      <div className={`mt-4 text-sm font-semibold leading-5 ${cell.hasEvent ? 'text-white' : 'text-white/72'}`}>
-                        {cell.text}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              );
-            })}
+  return (
+    <div>
+      <div className="mb-4 grid grid-cols-7 gap-3">
+        {weekdayNames.map((dayName, index) => (
+          <div
+            key={dayName}
+            className={`rounded-full border px-3 py-2 text-center text-sm font-semibold ${index >= 5 ? 'border-blue-300/15 bg-blue-400/10 text-blue-100' : 'border-white/10 bg-white/5 text-white/70'}`}
+          >
+            {dayName}
           </div>
-        </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        {cells.map((cell) => (
+          <CalendarDayCell
+            key={cell.key}
+            cell={cell}
+            scheduleMonth={schedule?.month}
+            scheduleYear={schedule?.year}
+          />
+        ))}
       </div>
     </div>
   );
@@ -183,7 +235,7 @@ export default function JangJisuFanSite() {
       full: { url: 'https://www.youtube.com/@jisoujang_full' },
     },
   });
-  const [schedule, setSchedule] = useState({ monthLabel: '', monthStamp: '', weekdays: ['일', '월', '화', '수', '목', '금', '토'], cells: [], items: [], sourceUrl: '' });
+  const [schedule, setSchedule] = useState({ monthLabel: '', year: null, month: null, items: [], sourceUrl: '' });
   const [activeTab, setActiveTab] = useState('latest');
 
   useEffect(() => {
@@ -236,9 +288,8 @@ export default function JangJisuFanSite() {
         if (!mounted) return;
         setSchedule({
           monthLabel: json.monthLabel || '',
-          monthStamp: json.monthStamp || '',
-          weekdays: Array.isArray(json.weekdays) ? json.weekdays : ['일', '월', '화', '수', '목', '금', '토'],
-          cells: Array.isArray(json.cells) ? json.cells : [],
+          year: Number(json.year) || null,
+          month: Number(json.month) || null,
           items: Array.isArray(json.items) ? json.items : [],
           sourceUrl: json.sourceUrl || '',
         });
@@ -249,7 +300,7 @@ export default function JangJisuFanSite() {
     loadYoutube();
     loadSchedule();
 
-    const scheduleTimer = setInterval(loadSchedule, 60 * 1000);
+    const scheduleTimer = setInterval(loadSchedule, 60000);
 
     return () => {
       mounted = false;
@@ -324,7 +375,13 @@ export default function JangJisuFanSite() {
 
         <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
           <SectionTitle eyebrow={schedule.monthLabel || '이번 일정'} title="장지수 일정" actionHref={schedule.sourceUrl || '#'} actionLabel={schedule.sourceUrl ? '시트 보기' : '일정 보기'} logo="🔵" />
-          <ScheduleCalendar schedule={schedule} />
+          {schedule.year && schedule.month ? (
+            <ScheduleCalendar schedule={schedule} />
+          ) : (
+            <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm text-white/60">
+              일정 데이터를 불러오는 중이거나 시트 구조를 확인하는 중입니다.
+            </div>
+          )}
         </section>
 
         <section id="notice" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
