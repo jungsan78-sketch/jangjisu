@@ -357,9 +357,6 @@ export default function JangJisuFanSite() {
             <>
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">최신영상</div>
-                <a href={youtube.channels.latest.videosUrl} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
-                  더보기
-                </a>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {youtube.videos.map((video) => <VideoCard key={video.id} video={video} />)}
@@ -371,9 +368,6 @@ export default function JangJisuFanSite() {
             <>
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">SHORTS</div>
-                <a href={youtube.channels.latest.shortsUrl} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
-                  더보기
-                </a>
               </div>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {youtube.shorts.map((video) => <VideoCard key={video.id} video={video} vertical />)}
@@ -385,9 +379,6 @@ export default function JangJisuFanSite() {
             <>
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div className="text-[24px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">풀영상</div>
-                <a href={youtube.channels.full.url} target="_blank" rel="noreferrer" className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">
-                  더보기
-                </a>
               </div>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {youtube.full.map((video) => <VideoCard key={video.id} video={video} />)}
