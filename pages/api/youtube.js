@@ -51,14 +51,6 @@ function uniqueVideos(videos) {
   });
 }
 
-function isShortForm(video) {
-  return Number(video?.durationSeconds || 0) > 0 && Number(video.durationSeconds) <= 70;
-}
-
-function isLongForm(video) {
-  return Number(video?.durationSeconds || 0) > 70;
-}
-
 async function getChannelInfo(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -210,17 +202,17 @@ export default async function handler(req, res) {
       getVideosByIds(uploadsIds.slice(0, 24), apiKey, false),
     ]);
 
-    let videos = uniqueVideos(videosSource).filter(isLongForm);
-    let shorts = uniqueVideos(shortsSource)
-      .filter(isShortForm)
-      .map((video) => ({
-        ...video,
-        url: `https://www.youtube.com/shorts/${video.id}`,
-      }));
-    let full = uniqueVideos(fullSource).filter(isLongForm);
+    let videos = uniqueVideos(videosSource);
+    let shorts = uniqueVideos(shortsSource).map((video) => ({
+      ...video,
+      url: `https://www.youtube.com/shorts/${video.id}`,
+    }));
+    let full = uniqueVideos(fullSource);
 
     if (!videos.length) {
-      videos = uniqueVideos(uploadsSource).filter(isLongForm);
+      videos = uniqueVideos(uploadsSource).filter(
+        (video) => !shorts.some((short) => short.id === video.id)
+      );
     }
 
     if (!videos.length || !shorts.length || !full.length) {
@@ -234,14 +226,16 @@ export default async function handler(req, res) {
         getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
 
-      const fallbackVideos = uniqueVideos(fallbackMain).filter(isLongForm);
+      const fallbackVideos = uniqueVideos(fallbackMain).filter(
+        (video) => !shorts.some((short) => short.id === video.id)
+      );
       const fallbackShorts = uniqueVideos(fallbackMain)
-        .filter(isShortForm)
+        .filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 70)
         .map((video) => ({
           ...video,
           url: `https://www.youtube.com/shorts/${video.id}`,
         }));
-      const fallbackFull = uniqueVideos(fallbackFullSource).filter(isLongForm);
+      const fallbackFull = uniqueVideos(fallbackFullSource);
 
       videos = fillToCount(videos, fallbackVideos, 9);
       shorts = fillToCount(shorts, fallbackShorts, 8);
