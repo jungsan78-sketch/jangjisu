@@ -1,21 +1,5 @@
 import Head from 'next/head';
 
-function SoopWordmark({ compact = false }) {
-  const sizeClass = compact ? 'text-[86px] sm:text-[96px]' : 'text-[108px] sm:text-[132px]';
-  const connectorClass = compact ? 'h-5 w-[74px]' : 'h-6 w-[92px]';
-
-  return (
-    <div className="flex items-center justify-center gap-3 select-none">
-      <span className={`${sizeClass} font-black leading-none tracking-[-0.08em] text-white`}>S</span>
-      <span className={`relative inline-flex items-center ${sizeClass} font-black leading-none tracking-[-0.12em]`}>
-        <span className="bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)] bg-clip-text text-transparent">OO</span>
-        <span className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)] ${connectorClass}`} />
-      </span>
-      <span className={`${sizeClass} font-black leading-none tracking-[-0.08em] text-white`}>P</span>
-    </div>
-  );
-}
-
 function UtilityCard({
   href = '',
   title,
@@ -137,7 +121,7 @@ export default function UtilityHomePage() {
               eyebrow="SOOP PLATFORM"
               accent="soop"
               disabled
-              preview={<SoopWordmark compact />}
+              preview={<span className="text-[72px] font-black leading-none tracking-[0.08em] text-white sm:text-[92px]">SOOP</span>}
             />
           </section>
         </main>
