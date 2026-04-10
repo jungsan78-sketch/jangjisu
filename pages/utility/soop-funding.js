@@ -9,6 +9,19 @@ const TODO_ITEMS = [
   'SOOP API 승인 후 실제 데이터 연결',
 ];
 
+function SoopWordmark() {
+  return (
+    <div className="flex items-center justify-center gap-4 select-none">
+      <span className="text-[110px] font-black leading-none tracking-[-0.08em] text-white sm:text-[132px]">S</span>
+      <span className="relative inline-flex items-center text-[110px] font-black leading-none tracking-[-0.12em] sm:text-[132px]">
+        <span className="bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)] bg-clip-text text-transparent">OO</span>
+        <span className="pointer-events-none absolute left-1/2 top-1/2 h-6 w-[92px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)]" />
+      </span>
+      <span className="text-[110px] font-black leading-none tracking-[-0.08em] text-white sm:text-[132px]">P</span>
+    </div>
+  );
+}
+
 export default function SoopFundingUtilityPage() {
   return (
     <>
@@ -71,8 +84,8 @@ export default function SoopFundingUtilityPage() {
                   </div>
 
                   <div className="mt-8 overflow-hidden rounded-[28px] border border-white/10 bg-[#0b1119] p-4">
-                    <div className="rounded-[24px] border border-white/8 bg-[#0f141d] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
-                      <img src="/soop-platform.svg" alt="SOOP" className="mx-auto w-full max-w-[420px] rounded-[20px] object-contain" />
+                    <div className="rounded-[24px] border border-white/8 bg-[#0f141d] px-4 py-8 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
+                      <SoopWordmark />
                     </div>
                   </div>
 
