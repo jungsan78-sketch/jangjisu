@@ -42,6 +42,28 @@ function uniqueIds(ids) {
   });
 }
 
+function uniqueVideos(videos) {
+  const seen = new Set();
+  return videos.filter((video) => {
+    if (!video?.id || seen.has(video.id)) return false;
+    seen.add(video.id);
+    return true;
+  });
+}
+
+function isShortForm(video) {
+  return Number(video?.durationSeconds || 0) > 0 && Number(video.durationSeconds) <= 70;
+}
+
+function isLongForm(video) {
+  return Number(video?.durationSeconds || 0) > 70;
+}
+
+function excludeByIds(videos, idsToExclude) {
+  const blocked = new Set(idsToExclude || []);
+  return videos.filter((video) => !blocked.has(video.id));
+}
+
 async function getChannelInfo(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -75,7 +97,7 @@ async function scrapeTabVideoIds(tabUrl) {
   }
 
   const matches = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1]);
-  return uniqueIds(matches).slice(0, 18);
+  return uniqueIds(matches).slice(0, 24);
 }
 
 async function getVideosByIds(ids, apiKey, vertical = false) {
@@ -154,10 +176,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   if (!apiKey) {
-    return res.status(200).json({
-      ok: false,
-      error: 'YOUTUBE_API_KEY is not set',
-    });
+    return res.status(200).json({ ok: false, error: 'YOUTUBE_API_KEY is not set' });
   }
 
   try {
@@ -177,33 +196,50 @@ export default async function handler(req, res) {
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
       ]);
     } catch (e) {
-      const [mainFallback, fullFallback] = await Promise.all([
+      const [mainFallback, fullFallbackIds] = await Promise.all([
         fallbackUploads('jisoujang', apiKey),
         fallbackUploads('jisoujang_full', apiKey),
       ]);
-
-      videoIds = mainFallback.filter(Boolean);
-      shortsIds = mainFallback.filter(Boolean);
-      fullIds = fullFallback.filter(Boolean);
+      videoIds = mainFallback;
+      shortsIds = mainFallback;
+      fullIds = fullFallbackIds;
     }
 
-    let [videos, shorts, full] = await Promise.all([
-      getVideosByIds(videoIds.slice(0, 12), apiKey, false),
-      getVideosByIds(shortsIds.slice(0, 12), apiKey, true),
-      getVideosByIds(fullIds.slice(0, 12), apiKey, false),
+    let [videosSource, shortsSource, fullSource] = await Promise.all([
+      getVideosByIds(videoIds.slice(0, 24), apiKey, false),
+      getVideosByIds(shortsIds.slice(0, 24), apiKey, true),
+      getVideosByIds(fullIds.slice(0, 24), apiKey, false),
     ]);
 
+    const shortIds = uniqueVideos(shortsSource).map((video) => video.id);
+
+    let videos = uniqueVideos(excludeByIds(videosSource, shortIds));
+    let shorts = uniqueVideos(shortsSource).map((video) => ({
+      ...video,
+      url: `https://www.youtube.com/shorts/${video.id}`,
+    }));
+    let full = uniqueVideos(fullSource).filter(isLongForm);
+
     if (!videos.length || !shorts.length || !full.length) {
-      const [mainFallback, fullFallback] = await Promise.all([
+      const [mainFallback, fullFallbackIds] = await Promise.all([
         fallbackUploads('jisoujang', apiKey),
         fallbackUploads('jisoujang_full', apiKey),
       ]);
 
-      const [fallbackVideos, fallbackShorts, fallbackFull] = await Promise.all([
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, false),
-        getVideosByIds(mainFallback.slice(0, 18), apiKey, true),
-        getVideosByIds(fullFallback.slice(0, 18), apiKey, false),
+      const [fallbackMain, fallbackFullSource] = await Promise.all([
+        getVideosByIds(mainFallback.slice(0, 24), apiKey, false),
+        getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
+
+      const fallbackShorts = uniqueVideos(fallbackMain)
+        .filter(isShortForm)
+        .map((video) => ({
+          ...video,
+          url: `https://www.youtube.com/shorts/${video.id}`,
+        }));
+      const fallbackShortIds = fallbackShorts.map((video) => video.id);
+      const fallbackVideos = uniqueVideos(excludeByIds(fallbackMain, fallbackShortIds));
+      const fallbackFull = uniqueVideos(fallbackFullSource).filter(isLongForm);
 
       videos = fillToCount(videos, fallbackVideos, 9);
       shorts = fillToCount(shorts, fallbackShorts, 8);
@@ -231,9 +267,6 @@ export default async function handler(req, res) {
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(200).json({
-      ok: false,
-      error: error.message,
-    });
+    return res.status(200).json({ ok: false, error: error.message });
   }
 }
