@@ -56,6 +56,10 @@ function isShortLike(video, knownShortIds = []) {
   return shortSet.has(video?.id) || (Number(video?.durationSeconds || 0) > 0 && Number(video.durationSeconds) <= 70);
 }
 
+function isLongForm(video, knownShortIds = []) {
+  return !isShortLike(video, knownShortIds) && Number(video?.durationSeconds || 0) > 70;
+}
+
 function excludeIds(videos, blockedIds) {
   const blocked = new Set(blockedIds || []);
   return videos.filter((video) => !blocked.has(video.id));
@@ -91,14 +95,12 @@ async function scrapeTabVideoIds(tabUrl) {
   const res = await fetch(tabUrl, {
     cache: 'no-store',
     headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
       'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
     },
   });
 
   const html = await res.text();
-
   if (!res.ok || !html) {
     throw new Error(`Failed to fetch YouTube tab: ${tabUrl}`);
   }
@@ -110,45 +112,50 @@ async function scrapeTabVideoIds(tabUrl) {
 async function getVideosByIds(ids, apiKey, vertical = false) {
   if (!ids?.length) return [];
 
-  const res = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${ids.join(',')}&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const json = await res.json();
-
-  if (!res.ok || !json.items?.length) {
-    return [];
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    chunks.push(ids.slice(i, i + 50));
   }
 
-  const map = new Map(json.items.map((item) => [item.id, item]));
+  const results = [];
+  for (const chunk of chunks) {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics,snippet&id=${chunk.join(',')}&key=${apiKey}`,
+      { cache: 'no-store' }
+    );
+    const json = await res.json();
+    if (!res.ok || !json.items?.length) continue;
 
-  return ids
-    .map((id) => {
-      const details = map.get(id);
-      if (!details) return null;
+    const map = new Map(json.items.map((item) => [item.id, item]));
+    results.push(
+      ...chunk
+        .map((id) => {
+          const details = map.get(id);
+          if (!details) return null;
+          const duration = details.contentDetails?.duration || '';
+          return {
+            id,
+            title: details.snippet?.title || '',
+            thumbnail:
+              details.snippet?.thumbnails?.maxres?.url ||
+              details.snippet?.thumbnails?.high?.url ||
+              details.snippet?.thumbnails?.medium?.url ||
+              `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+            publishedAt: details.snippet?.publishedAt || '',
+            publishedAtText: formatPublishedAt(details.snippet?.publishedAt || ''),
+            views: details.statistics?.viewCount || '0',
+            viewsText: formatViews(details.statistics?.viewCount || '0'),
+            duration,
+            durationText: formatDuration(duration),
+            durationSeconds: getDurationSeconds(duration),
+            url: vertical ? `https://www.youtube.com/shorts/${id}` : `https://www.youtube.com/watch?v=${id}`,
+          };
+        })
+        .filter(Boolean)
+    );
+  }
 
-      const duration = details.contentDetails?.duration || '';
-      return {
-        id,
-        title: details.snippet?.title || '',
-        thumbnail:
-          details.snippet?.thumbnails?.maxres?.url ||
-          details.snippet?.thumbnails?.high?.url ||
-          details.snippet?.thumbnails?.medium?.url ||
-          `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-        publishedAt: details.snippet?.publishedAt || '',
-        publishedAtText: formatPublishedAt(details.snippet?.publishedAt || ''),
-        views: details.statistics?.viewCount || '0',
-        viewsText: formatViews(details.statistics?.viewCount || '0'),
-        duration,
-        durationText: formatDuration(duration),
-        durationSeconds: getDurationSeconds(duration),
-        url: vertical
-          ? `https://www.youtube.com/shorts/${id}`
-          : `https://www.youtube.com/watch?v=${id}`,
-      };
-    })
-    .filter(Boolean);
+  return results;
 }
 
 function fillToCount(primary, fallback, count) {
@@ -162,21 +169,38 @@ function fillToCount(primary, fallback, count) {
   return result.slice(0, count);
 }
 
-async function fallbackUploads(channelHandle, apiKey) {
+async function getUploadsPlaylistId(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle=${channelHandle}&key=${apiKey}`,
     { cache: 'no-store' }
   );
   const channelJson = await channelRes.json();
-  const uploads = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  return channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads || '';
+}
+
+async function fallbackUploads(channelHandle, apiKey, maxResults = 24, maxPages = 1) {
+  const uploads = await getUploadsPlaylistId(channelHandle, apiKey);
   if (!uploads) return [];
 
-  const playlistRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=24&key=${apiKey}`,
-    { cache: 'no-store' }
-  );
-  const playlistJson = await playlistRes.json();
-  return uniqueIds((playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
+  const ids = [];
+  let pageToken = '';
+  let pages = 0;
+
+  while (pages < maxPages && ids.length < maxResults) {
+    const playlistRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}&key=${apiKey}`,
+      { cache: 'no-store' }
+    );
+    const playlistJson = await playlistRes.json();
+    if (!playlistRes.ok) break;
+
+    ids.push(...(playlistJson.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean));
+    pageToken = playlistJson.nextPageToken || '';
+    pages += 1;
+    if (!pageToken) break;
+  }
+
+  return uniqueIds(ids).slice(0, maxResults);
 }
 
 export default async function handler(req, res) {
@@ -196,29 +220,34 @@ export default async function handler(req, res) {
     let shortsIds = [];
     let fullIds = [];
     let uploadsIds = [];
+    let deepUploadsIds = [];
     let sourceMode = 'primary';
 
     try {
-      [shortsIds, fullIds, uploadsIds] = await Promise.all([
+      [shortsIds, fullIds, uploadsIds, deepUploadsIds] = await Promise.all([
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang/shorts'),
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
-        fallbackUploads('jisoujang', apiKey),
+        fallbackUploads('jisoujang', apiKey, 24, 1),
+        fallbackUploads('jisoujang', apiKey, 220, 8),
       ]);
     } catch (e) {
-      const [mainFallback, fullFallbackIds] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
+      const [mainFallback, mainDeepFallback, fullFallbackIds] = await Promise.all([
+        fallbackUploads('jisoujang', apiKey, 24, 1),
+        fallbackUploads('jisoujang', apiKey, 220, 8),
+        fallbackUploads('jisoujang_full', apiKey, 24, 1),
       ]);
       shortsIds = mainFallback;
       fullIds = fullFallbackIds;
       uploadsIds = mainFallback;
+      deepUploadsIds = mainDeepFallback;
       sourceMode = 'fallback';
     }
 
-    const [shortsSource, fullSource, uploadsSource] = await Promise.all([
+    const [shortsSource, fullSource, uploadsSource, deepUploadsSource] = await Promise.all([
       getVideosByIds(shortsIds.slice(0, 24), apiKey, true),
       getVideosByIds(fullIds.slice(0, 24), apiKey, false),
       getVideosByIds(uploadsIds.slice(0, 24), apiKey, false),
+      getVideosByIds(deepUploadsIds, apiKey, false),
     ]);
 
     let shorts = uniqueVideos([
@@ -229,31 +258,37 @@ export default async function handler(req, res) {
       url: `https://www.youtube.com/shorts/${video.id}`,
     }));
 
-    let videos = uniqueVideos(
+    const deepLongformPool = uniqueVideos(
       excludeIds(
-        uploadsSource.filter((video) => !isShortLike(video, shortsIds)),
+        deepUploadsSource.filter((video) => isLongForm(video, shortsIds)),
         shorts.map((video) => video.id)
       )
     );
 
+    let videos = deepLongformPool.slice(0, 9);
     let full = uniqueVideos(fullSource);
 
     if (!videos.length || !shorts.length || !full.length) {
-      const [mainFallback, fullFallbackIds] = await Promise.all([
-        fallbackUploads('jisoujang', apiKey),
-        fallbackUploads('jisoujang_full', apiKey),
+      const [mainDeepFallback, fullFallbackIds] = await Promise.all([
+        fallbackUploads('jisoujang', apiKey, 220, 8),
+        fallbackUploads('jisoujang_full', apiKey, 24, 1),
       ]);
 
-      const [fallbackMain, fallbackFullSource] = await Promise.all([
-        getVideosByIds(mainFallback.slice(0, 24), apiKey, false),
+      const [fallbackMainDeep, fallbackFullSource] = await Promise.all([
+        getVideosByIds(mainDeepFallback, apiKey, false),
         getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
 
-      const fallbackShorts = uniqueVideos(fallbackMain.filter((video) => isShortLike(video, shortsIds))).map((video) => ({
+      const fallbackShorts = uniqueVideos(fallbackMainDeep.filter((video) => isShortLike(video, shortsIds))).map((video) => ({
         ...video,
         url: `https://www.youtube.com/shorts/${video.id}`,
       }));
-      const fallbackVideos = uniqueVideos(excludeIds(fallbackMain.filter((video) => !isShortLike(video, shortsIds)), fallbackShorts.map((video) => video.id)));
+      const fallbackVideos = uniqueVideos(
+        excludeIds(
+          fallbackMainDeep.filter((video) => isLongForm(video, shortsIds)),
+          fallbackShorts.map((video) => video.id)
+        )
+      );
       const fallbackFull = uniqueVideos(fallbackFullSource);
 
       videos = fillToCount(videos, fallbackVideos, 9);
@@ -287,8 +322,10 @@ export default async function handler(req, res) {
               shortsIds: shortsIds.slice(0, 24),
               fullIds: fullIds.slice(0, 24),
               uploadsIds: uploadsIds.slice(0, 24),
+              deepUploadsIds: deepUploadsIds.slice(0, 220),
               shortsSource: summarizeVideos(shortsSource),
               uploadsSource: summarizeVideos(uploadsSource),
+              deepUploadsSource: summarizeVideos(deepUploadsSource.slice(0, 80)),
               fullSource: summarizeVideos(fullSource),
               classifiedVideos: summarizeVideos(videos),
               classifiedShorts: summarizeVideos(shorts),
