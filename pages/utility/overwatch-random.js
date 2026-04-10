@@ -46,7 +46,7 @@ function buildTeamOrder(orderMode, captainNames, teamCount) {
 
 function Toast({ message }) {
   if (!message) return null;
-  return <div className="fixed right-5 top-24 z-[70] rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-4 py-3 text-sm font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">{message}</div>;
+  return <div className="fixed left-1/2 top-24 z-[70] -translate-x-1/2 rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-4 py-3 text-sm font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">{message}</div>;
 }
 
 function ParticipantChip({ item, onRemove, assignedInfo }) {
@@ -568,7 +568,7 @@ export default function OverwatchRandomPage() {
           <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-7 shadow-2xl shadow-black/30 lg:p-9">
             <div className="text-xs font-bold tracking-[0.45em] text-orange-200/58">UTILITY TOOL</div>
             <div className="mt-4 text-[34px] font-black tracking-tight text-white sm:text-[44px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER22에서는 역할 아이콘을 원래 느낌으로 되돌리고, 등록 명단 칩에 배정 표시를 추가했습니다.</p>
+            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">건의, 오류 제보는 장지수, 장지수 편집자에게 제보해주세요.</p>
           </section>
           <section className="mt-8">
             <OverwatchRandomPicker />
