@@ -51,6 +51,11 @@ function uniqueVideos(videos) {
   });
 }
 
+function isShortLike(video, knownShortIds = []) {
+  const shortSet = new Set(knownShortIds);
+  return shortSet.has(video?.id) || (Number(video?.durationSeconds || 0) > 0 && Number(video.durationSeconds) <= 70);
+}
+
 function excludeIds(videos, blockedIds) {
   const blocked = new Set(blockedIds || []);
   return videos.filter((video) => !blocked.has(video.id));
@@ -203,11 +208,21 @@ export default async function handler(req, res) {
       getVideosByIds(uploadsIds.slice(0, 24), apiKey, false),
     ]);
 
-    let shorts = uniqueVideos(shortsSource).map((video) => ({
+    let shorts = uniqueVideos([
+      ...shortsSource,
+      ...uploadsSource.filter((video) => isShortLike(video, shortsIds)),
+    ]).map((video) => ({
       ...video,
       url: `https://www.youtube.com/shorts/${video.id}`,
     }));
-    let videos = uniqueVideos(excludeIds(uploadsSource, shorts.map((video) => video.id)));
+
+    let videos = uniqueVideos(
+      excludeIds(
+        uploadsSource.filter((video) => !isShortLike(video, shortsIds)),
+        shorts.map((video) => video.id)
+      )
+    );
+
     let full = uniqueVideos(fullSource);
 
     if (!videos.length || !shorts.length || !full.length) {
@@ -221,13 +236,11 @@ export default async function handler(req, res) {
         getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
 
-      const fallbackShorts = uniqueVideos(fallbackMain)
-        .filter((video) => video.durationSeconds > 0 && video.durationSeconds <= 70)
-        .map((video) => ({
-          ...video,
-          url: `https://www.youtube.com/shorts/${video.id}`,
-        }));
-      const fallbackVideos = uniqueVideos(excludeIds(fallbackMain, fallbackShorts.map((video) => video.id)));
+      const fallbackShorts = uniqueVideos(fallbackMain.filter((video) => isShortLike(video, shortsIds))).map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/shorts/${video.id}`,
+      }));
+      const fallbackVideos = uniqueVideos(excludeIds(fallbackMain.filter((video) => !isShortLike(video, shortsIds)), fallbackShorts.map((video) => video.id)));
       const fallbackFull = uniqueVideos(fallbackFullSource);
 
       videos = fillToCount(videos, fallbackVideos, 9);
