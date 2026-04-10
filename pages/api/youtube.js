@@ -59,11 +59,6 @@ function isLongForm(video) {
   return Number(video?.durationSeconds || 0) > 70;
 }
 
-function excludeByIds(videos, idsToExclude) {
-  const blocked = new Set(idsToExclude || []);
-  return videos.filter((video) => !blocked.has(video.id));
-}
-
 async function getChannelInfo(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -188,12 +183,14 @@ export default async function handler(req, res) {
     let videoIds = [];
     let shortsIds = [];
     let fullIds = [];
+    let uploadsIds = [];
 
     try {
-      [videoIds, shortsIds, fullIds] = await Promise.all([
+      [videoIds, shortsIds, fullIds, uploadsIds] = await Promise.all([
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang/videos'),
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang/shorts'),
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
+        fallbackUploads('jisoujang', apiKey),
       ]);
     } catch (e) {
       const [mainFallback, fullFallbackIds] = await Promise.all([
@@ -203,22 +200,28 @@ export default async function handler(req, res) {
       videoIds = mainFallback;
       shortsIds = mainFallback;
       fullIds = fullFallbackIds;
+      uploadsIds = mainFallback;
     }
 
-    let [videosSource, shortsSource, fullSource] = await Promise.all([
+    const [videosSource, shortsSource, fullSource, uploadsSource] = await Promise.all([
       getVideosByIds(videoIds.slice(0, 24), apiKey, false),
       getVideosByIds(shortsIds.slice(0, 24), apiKey, true),
       getVideosByIds(fullIds.slice(0, 24), apiKey, false),
+      getVideosByIds(uploadsIds.slice(0, 24), apiKey, false),
     ]);
 
-    const shortIds = uniqueVideos(shortsSource).map((video) => video.id);
-
-    let videos = uniqueVideos(excludeByIds(videosSource, shortIds));
-    let shorts = uniqueVideos(shortsSource).map((video) => ({
-      ...video,
-      url: `https://www.youtube.com/shorts/${video.id}`,
-    }));
+    let videos = uniqueVideos(videosSource).filter(isLongForm);
+    let shorts = uniqueVideos(shortsSource)
+      .filter(isShortForm)
+      .map((video) => ({
+        ...video,
+        url: `https://www.youtube.com/shorts/${video.id}`,
+      }));
     let full = uniqueVideos(fullSource).filter(isLongForm);
+
+    if (!videos.length) {
+      videos = uniqueVideos(uploadsSource).filter(isLongForm);
+    }
 
     if (!videos.length || !shorts.length || !full.length) {
       const [mainFallback, fullFallbackIds] = await Promise.all([
@@ -231,14 +234,13 @@ export default async function handler(req, res) {
         getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
 
+      const fallbackVideos = uniqueVideos(fallbackMain).filter(isLongForm);
       const fallbackShorts = uniqueVideos(fallbackMain)
         .filter(isShortForm)
         .map((video) => ({
           ...video,
           url: `https://www.youtube.com/shorts/${video.id}`,
         }));
-      const fallbackShortIds = fallbackShorts.map((video) => video.id);
-      const fallbackVideos = uniqueVideos(excludeByIds(fallbackMain, fallbackShortIds));
       const fallbackFull = uniqueVideos(fallbackFullSource).filter(isLongForm);
 
       videos = fillToCount(videos, fallbackVideos, 9);
