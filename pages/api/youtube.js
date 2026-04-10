@@ -194,14 +194,14 @@ export default async function handler(req, res) {
         scrapeTabVideoIds('https://www.youtube.com/@jisoujang_full/videos'),
       ]);
     } catch (e) {
-      const [mainFallback, fullFallback] = await Promise.all([
+      const [mainFallback, fullFallbackIds] = await Promise.all([
         fallbackUploads('jisoujang', apiKey),
         fallbackUploads('jisoujang_full', apiKey),
       ]);
 
       videoIds = mainFallback.filter(Boolean);
       shortsIds = mainFallback.filter(Boolean);
-      fullIds = fullFallback.filter(Boolean);
+      fullIds = fullFallbackIds.filter(Boolean);
     }
 
     let [videos, shorts, full] = await Promise.all([
@@ -218,14 +218,14 @@ export default async function handler(req, res) {
     full = uniqueVideos(full).filter(isLongForm);
 
     if (!videos.length || !shorts.length || !full.length) {
-      const [mainFallback, fullFallback] = await Promise.all([
+      const [mainFallback, fullFallbackIds] = await Promise.all([
         fallbackUploads('jisoujang', apiKey),
         fallbackUploads('jisoujang_full', apiKey),
       ]);
 
-      const [fallbackMain, fallbackFull] = await Promise.all([
+      const [fallbackMain, fallbackFullSource] = await Promise.all([
         getVideosByIds(mainFallback.slice(0, 24), apiKey, false),
-        getVideosByIds(fullFallback.slice(0, 24), apiKey, false),
+        getVideosByIds(fullFallbackIds.slice(0, 24), apiKey, false),
       ]);
 
       const fallbackVideos = uniqueVideos(fallbackMain).filter(isLongForm);
@@ -235,7 +235,7 @@ export default async function handler(req, res) {
           ...video,
           url: `https://www.youtube.com/shorts/${video.id}`,
         }));
-      const fallbackFull = uniqueVideos(fallbackFull).filter(isLongForm);
+      const fallbackFull = uniqueVideos(fallbackFullSource).filter(isLongForm);
 
       videos = fillToCount(videos, fallbackVideos, 9);
       shorts = fillToCount(shorts, fallbackShorts, 8);
