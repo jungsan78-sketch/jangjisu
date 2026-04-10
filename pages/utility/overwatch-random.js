@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const POSITION_META = {
   tank: { label: '탱커', icon: '🛡️', badge: 'from-[#5fb7ff]/28 to-[#1b3558]/38', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]' },
@@ -33,8 +33,7 @@ function getRoleType(role) {
 }
 
 function getRoleLabel(role) {
-  const roleType = getRoleType(role);
-  const meta = POSITION_META[roleType] || POSITION_META.flex;
+  const meta = POSITION_META[getRoleType(role)] || POSITION_META.flex;
   return `${meta.icon} ${role}`;
 }
 
@@ -49,7 +48,7 @@ function ParticipantChip({ item, onRemove }) {
   const meta = POSITION_META[item.position] || POSITION_META.flex;
   return (
     <div className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-2 text-sm ${meta.border} ${meta.badge}`}>
-      <span className="text-sm">{meta.icon}</span>
+      <span>{meta.icon}</span>
       <span className="font-semibold text-white">{item.name}</span>
       <span className={`text-xs ${meta.text}`}>{meta.label}</span>
       <button onClick={() => onRemove(item.name)} className="ml-1 rounded-full px-1 text-white/35 transition hover:text-red-300">×</button>
@@ -57,18 +56,13 @@ function ParticipantChip({ item, onRemove }) {
   );
 }
 
-function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssignment, toggleLock, participants, onSwapRequest }) {
+function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssignment, toggleLock, participants, onSwapRequest, dragSource, setDragSource, onDropSwap }) {
   const headerStyle = TEAM_HEADER_STYLES[(team.teamNo - 1) % TEAM_HEADER_STYLES.length];
 
   const getSlotCandidates = (slotKey, role) => {
     const roleType = getRoleType(role);
     const currentValue = assignments[slotKey] || '';
-    const assignedElsewhere = new Set(
-      Object.entries(assignments)
-        .filter(([key, value]) => key !== slotKey && value)
-        .map(([, value]) => value)
-    );
-
+    const assignedElsewhere = new Set(Object.entries(assignments).filter(([key, value]) => key !== slotKey && value).map(([, value]) => value));
     return participants.filter((item) => {
       const matchRole = item.position === roleType || item.position === 'flex';
       if (!matchRole) return false;
@@ -95,8 +89,19 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
           const locked = Boolean(locks[slotKey]);
           const roleMeta = POSITION_META[getRoleType(role)] || POSITION_META.flex;
           const candidates = getSlotCandidates(slotKey, role);
+          const assigned = assignments[slotKey] || '';
           return (
-            <div key={slotKey} className={`rounded-[20px] border px-4 py-3 transition ${locked ? 'border-cyan-300/30 bg-cyan-300/10' : 'border-white/10 bg-[#111827]'}`}>
+            <div
+              key={slotKey}
+              onDragOver={(e) => {
+                if (dragSource) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                onDropSwap(slotKey);
+              }}
+              className={`rounded-[20px] border px-4 py-3 transition ${locked ? 'border-cyan-300/30 bg-cyan-300/10' : 'border-white/10 bg-[#111827]'} ${dragSource === slotKey ? 'ring-1 ring-cyan-300/40' : ''}`}
+            >
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="text-sm font-bold text-white">{getRoleLabel(role)}</div>
                 <div className="flex items-center gap-2">
@@ -104,11 +109,21 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
                   <button onClick={() => toggleLock(slotKey)} className={`rounded-full px-3 py-1 text-[11px] font-bold transition ${locked ? 'border border-cyan-300/30 bg-cyan-300/15 text-cyan-100' : 'border border-white/10 bg-white/5 text-white/55'}`}>{locked ? '잠금됨' : '잠금'}</button>
                 </div>
               </div>
-              <select value={assignments[slotKey] || ''} onChange={(e) => setManualAssignment(slotKey, e.target.value)} className={`w-full rounded-2xl border border-white/10 bg-[#0d1420] px-3 py-3 text-sm text-white outline-none focus:border-cyan-300/40 ${roleMeta.text}`}>
+
+              {assigned ? (
+                <div
+                  draggable
+                  onDragStart={() => setDragSource(slotKey)}
+                  onDragEnd={() => setDragSource('')}
+                  className="mb-3 cursor-grab rounded-2xl border border-cyan-300/18 bg-cyan-300/8 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing"
+                >
+                  이동: {assigned}
+                </div>
+              ) : null}
+
+              <select value={assigned} onChange={(e) => setManualAssignment(slotKey, e.target.value)} className={`w-full rounded-2xl border border-white/10 bg-[#0d1420] px-3 py-3 text-sm text-white outline-none focus:border-cyan-300/40 ${roleMeta.text}`}>
                 <option value="">선수 선택</option>
-                {candidates.map((item) => (
-                  <option key={`${slotKey}-${item.id}`} value={item.name}>{item.name} · {POSITION_META[item.position].label}</option>
-                ))}
+                {candidates.map((item) => <option key={`${slotKey}-${item.id}`} value={item.name}>{item.name} · {POSITION_META[item.position].label}</option>)}
               </select>
             </div>
           );
@@ -124,6 +139,8 @@ function OverwatchRandomPicker() {
   const [orderMode, setOrderMode] = useState('manual');
   const [captainInputs, setCaptainInputs] = useState(['', '']);
   const [captainOrder, setCaptainOrder] = useState([]);
+  const [displayCaptainOrder, setDisplayCaptainOrder] = useState([]);
+  const [isDrawingCaptains, setIsDrawingCaptains] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [positionInput, setPositionInput] = useState('flex');
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,7 +148,10 @@ function OverwatchRandomPicker() {
   const [assignments, setAssignments] = useState({});
   const [locks, setLocks] = useState({});
   const [swapSource, setSwapSource] = useState('');
+  const [dragSource, setDragSource] = useState('');
   const [duplicateMessage, setDuplicateMessage] = useState('');
+  const drawTimerRef = useRef(null);
+  const drawIntervalRef = useRef(null);
 
   const roleTemplate = useMemo(() => (mode === '6v6' ? ['탱커1', '탱커2', '딜러1', '딜러2', '힐러1', '힐러2'] : ['탱커', '딜러1', '딜러2', '힐러1', '힐러2']), [mode]);
 
@@ -139,6 +159,8 @@ function OverwatchRandomPicker() {
     const base = buildTeamOrder(orderMode, captainInputs, teamCount);
     return captainOrder.length === teamCount ? captainOrder : base;
   }, [captainInputs, captainOrder, orderMode, teamCount]);
+
+  const visibleCaptainOrder = displayCaptainOrder.length === teamCount ? displayCaptainOrder : teamOrder;
 
   const slotOrder = useMemo(() => {
     const orderedTeamNumbers = teamOrder.map((item) => item.teamNo);
@@ -148,6 +170,7 @@ function OverwatchRandomPicker() {
   useEffect(() => {
     setCaptainInputs((prev) => Array.from({ length: teamCount }, (_, index) => prev[index] || ''));
     setCaptainOrder((prev) => prev.filter((item) => item.teamNo <= teamCount));
+    setDisplayCaptainOrder((prev) => prev.filter((item) => item.teamNo <= teamCount));
     setAssignments((prev) => {
       const next = {};
       Object.entries(prev).forEach(([key, value]) => {
@@ -165,6 +188,13 @@ function OverwatchRandomPicker() {
       return next;
     });
   }, [teamCount, roleTemplate]);
+
+  useEffect(() => {
+    return () => {
+      if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
+      if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!duplicateMessage) return;
@@ -244,16 +274,27 @@ function OverwatchRandomPicker() {
   };
 
   const drawCaptainOrder = () => {
-    setCaptainOrder(buildTeamOrder(orderMode === 'manual' ? 'shuffle' : orderMode, captainInputs, teamCount));
+    const hasCaptain = captainInputs.some((name) => name.trim());
+    if (!hasCaptain) return;
+    if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
+    if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
+
+    setIsDrawingCaptains(true);
+    drawIntervalRef.current = setInterval(() => {
+      setDisplayCaptainOrder(buildTeamOrder('shuffle', captainInputs, teamCount));
+    }, 120);
+
+    drawTimerRef.current = setTimeout(() => {
+      if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
+      const finalOrder = buildTeamOrder(orderMode === 'manual' ? 'shuffle' : orderMode, captainInputs, teamCount);
+      setCaptainOrder(finalOrder);
+      setDisplayCaptainOrder(finalOrder);
+      setIsDrawingCaptains(false);
+    }, 1800);
   };
 
   const handleShuffle = () => {
-    const lockedNames = new Set(
-      Object.entries(assignments)
-        .filter(([slotKey, value]) => locks[slotKey] && value)
-        .map(([, value]) => value)
-    );
-
+    const lockedNames = new Set(Object.entries(assignments).filter(([slotKey, value]) => locks[slotKey] && value).map(([, value]) => value));
     const availableByRole = {
       tank: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'tank')),
       dps: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'dps')),
@@ -307,23 +348,31 @@ function OverwatchRandomPicker() {
     setAssignments({});
     setLocks({});
     setCaptainOrder([]);
+    setDisplayCaptainOrder([]);
     setCaptainInputs(Array.from({ length: teamCount }, () => ''));
     setNameInput('');
     setSearchTerm('');
     setSwapSource('');
+    setDragSource('');
   };
 
   const copyResult = async () => {
-    const text = teamOrder
-      .map((team) => {
-        const header = `팀 ${team.teamNo}${team.captain ? ` (${team.captain})` : ''}`;
-        const lines = roleTemplate.map((role) => `${role}: ${assignments[`${team.teamNo}-${role}`] || '-'}`);
-        return [header, ...lines].join('\n');
-      })
-      .join('\n\n');
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {}
+    const text = teamOrder.map((team) => {
+      const header = `팀 ${team.teamNo}${team.captain ? ` (${team.captain})` : ''}`;
+      const lines = roleTemplate.map((role) => `${role}: ${assignments[`${team.teamNo}-${role}`] || '-'}`);
+      return [header, ...lines].join('\n');
+    }).join('\n\n');
+    try { await navigator.clipboard.writeText(text); } catch {}
+  };
+
+  const performSwap = (firstKey, secondKey) => {
+    setAssignments((prev) => {
+      const next = { ...prev };
+      const first = next[firstKey] || '';
+      next[firstKey] = next[secondKey] || '';
+      next[secondKey] = first;
+      return next;
+    });
   };
 
   const handleSwapRequest = (slotKey) => {
@@ -335,14 +384,17 @@ function OverwatchRandomPicker() {
       setSwapSource('');
       return;
     }
-    setAssignments((prev) => {
-      const next = { ...prev };
-      const first = next[swapSource] || '';
-      next[swapSource] = next[slotKey] || '';
-      next[slotKey] = first;
-      return next;
-    });
+    performSwap(swapSource, slotKey);
     setSwapSource('');
+  };
+
+  const handleDropSwap = (targetKey) => {
+    if (!dragSource || dragSource === targetKey) {
+      setDragSource('');
+      return;
+    }
+    performSwap(dragSource, targetKey);
+    setDragSource('');
   };
 
   const totalSlots = teamCount * roleTemplate.length;
@@ -373,11 +425,12 @@ function OverwatchRandomPicker() {
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-5">
-              <div className="text-sm font-bold tracking-[0.18em] text-white/40">팀장 순서 추첨</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-bold tracking-[0.18em] text-white/40">팀장 순서 추첨</div>
+                {isDrawingCaptains ? <div className="rounded-full border border-orange-300/25 bg-orange-300/12 px-3 py-1 text-[11px] font-bold text-orange-100">추첨 중...</div> : null}
+              </div>
               <div className="mt-4 space-y-3">
-                {Array.from({ length: teamCount }, (_, index) => (
-                  <input key={`captain-${index}`} value={captainInputs[index] || ''} onChange={(e) => setCaptainInputs((prev) => { const next = [...prev]; next[index] = e.target.value; return next; })} placeholder={`팀장 이름 ${index + 1}`} className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />
-                ))}
+                {Array.from({ length: teamCount }, (_, index) => <input key={`captain-${index}`} value={captainInputs[index] || ''} onChange={(e) => setCaptainInputs((prev) => { const next = [...prev]; next[index] = e.target.value; return next; })} placeholder={`팀장 이름 ${index + 1}`} className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />)}
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <select value={orderMode} onChange={(e) => setOrderMode(e.target.value)} className="rounded-full border border-white/10 bg-[#111827] px-4 py-2 text-sm text-white outline-none focus:border-cyan-300/40">
@@ -388,9 +441,7 @@ function OverwatchRandomPicker() {
                 <button onClick={drawCaptainOrder} className="rounded-full border border-cyan-300/30 bg-cyan-300/12 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/18">순서 추첨</button>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {(teamOrder.length ? teamOrder : buildTeamOrder('manual', captainInputs, teamCount)).map((team, index) => (
-                  <div key={`${team.teamNo}-${index}`} className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100">{index + 1}. {team.captain || `팀 ${team.teamNo}`}</div>
-                ))}
+                {visibleCaptainOrder.map((team, index) => <div key={`${team.teamNo}-${index}`} className={`rounded-full border px-3 py-2 text-xs font-semibold ${isDrawingCaptains ? 'border-orange-300/20 bg-orange-300/10 text-orange-100 animate-pulse' : 'border-cyan-300/20 bg-cyan-300/10 text-cyan-100'}`}>{index + 1}. {team.captain || `팀 ${team.teamNo}`}</div>)}
               </div>
             </div>
           </div>
@@ -470,12 +521,13 @@ function OverwatchRandomPicker() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-bold tracking-[0.18em] text-white/40">OVERWATCH RANDOM PICKER</div>
-            <div className="mt-2 text-sm leading-6 text-white/58">중복 배정 방지, 잠금 유지, 교환 버튼까지 포함된 팀 편성 보드입니다.</div>
+            <div className="mt-2 text-sm leading-6 text-white/58">중복 배정 방지, 드래그 이동, 교환 버튼까지 포함된 팀 편성 보드입니다.</div>
           </div>
           <div className="flex flex-wrap gap-3">
             <button onClick={handleShuffle} className="rounded-full border border-[#ff4e45]/30 bg-[#ff4e45]/15 px-4 py-2 text-sm font-semibold text-[#ffd0cb] transition hover:bg-[#ff4e45]/22">랜덤 섞기</button>
             <button onClick={handleResetUnlocked} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">잠금 제외 초기화</button>
             {swapSource ? <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-semibold text-cyan-100">교환 대상 선택 중: {swapSource}</div> : null}
+            {dragSource ? <div className="rounded-full border border-orange-300/20 bg-orange-300/10 px-4 py-2 text-xs font-semibold text-orange-100">드래그 이동 중: {dragSource}</div> : null}
           </div>
         </div>
 
@@ -492,6 +544,9 @@ function OverwatchRandomPicker() {
               toggleLock={toggleLock}
               participants={participants}
               onSwapRequest={handleSwapRequest}
+              dragSource={dragSource}
+              setDragSource={setDragSource}
+              onDropSwap={handleDropSwap}
             />
           ))}
         </div>
@@ -520,7 +575,6 @@ export default function OverwatchRandomPage() {
             </a>
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <a href="/" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10">홈으로</a>
-              <a href="https://cafe.naver.com/quaddurupfancafe" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#03C75A]/30 bg-[#03C75A]/15 px-4 py-2 text-sm font-medium text-[#8df0b6] transition hover:bg-[#03C75A]/22">팬카페</a>
               <a href="/utility" className="inline-flex items-center gap-2 rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/15 px-4 py-2 text-sm font-medium text-[#b8d8ff] transition hover:bg-[#3b82f6]/22">유틸리티</a>
             </nav>
           </div>
@@ -529,7 +583,7 @@ export default function OverwatchRandomPage() {
           <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-7 shadow-2xl shadow-black/30 lg:p-9">
             <div className="text-xs font-bold tracking-[0.45em] text-orange-200/58">UTILITY TOOL</div>
             <div className="mt-4 text-[34px] font-black tracking-tight text-white sm:text-[44px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">등록 명단 가독성과 중복 배정 방지를 우선 강화한 VER19입니다. 포지션별 보드, 검색, 빠른 제거, 교환 버튼까지 포함했습니다.</p>
+            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER20에서는 팀장 순서 추첨 연출, 슬롯 드래그 이동, 교환 버튼 유지까지 반영했습니다.</p>
           </section>
           <section className="mt-8">
             <OverwatchRandomPicker />

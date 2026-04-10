@@ -42,7 +42,6 @@ export default function UtilityHomePage() {
             </a>
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <a href="/" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10">홈으로</a>
-              <a href="https://cafe.naver.com/quaddurupfancafe" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#03C75A]/30 bg-[#03C75A]/15 px-4 py-2 text-sm font-medium text-[#8df0b6] transition hover:bg-[#03C75A]/22">팬카페</a>
               <a href="/utility" className="inline-flex items-center gap-2 rounded-full border border-[#3b82f6]/30 bg-[#3b82f6]/15 px-4 py-2 text-sm font-medium text-[#b8d8ff] transition hover:bg-[#3b82f6]/22">유틸리티</a>
             </nav>
           </div>
@@ -59,7 +58,7 @@ export default function UtilityHomePage() {
             <UtilityCard
               href="/utility/overwatch-random"
               title="오버워치 랜덤뽑기"
-              description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 라인 잠금까지 포함한 방송용 팀 편성 툴"
+              description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 드래그 이동까지 포함한 방송용 팀 편성 툴"
               label="실행하기"
             />
           </section>
