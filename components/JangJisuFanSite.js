@@ -110,7 +110,7 @@ function YoutubeTabButton({ label, isActive, onClick, hasNew }) {
     >
       <span>{label}</span>
       {hasNew ? (
-        <span className="absolute -right-1 -top-1 rounded-full border border-[#ff8f88]/35 bg-[#ff4e45]/15 px-2 py-[2px] text-[9px] font-extrabold tracking-[0.18em] text-[#ffd4d1] shadow-[0_0_18px_rgba(255,78,69,0.22)]">
+        <span className="pointer-events-none absolute -right-2 -top-2 inline-flex items-center rounded-full border border-[#ff8f88]/30 bg-[#17090a] px-1.5 py-[2px] text-[8px] font-black tracking-[0.14em] text-[#ffd4d1] shadow-[0_0_12px_rgba(255,78,69,0.18)]">
           NEW
         </span>
       ) : null}
@@ -448,8 +448,7 @@ export default function JangJisuFanSite() {
       <footer className="mt-16 border-t border-white/10 bg-[linear-gradient(180deg,rgba(0,0,0,0.28),rgba(2,8,18,0.68))]">
         <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8">
           <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-6 py-10 text-center shadow-[0_14px_40px_rgba(0,0,0,0.18)]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.42em] text-white/38">JANGJISOU FAN ARCHIVE</div>
-            <div className="mt-3 text-[28px] font-extrabold tracking-[0.18em] text-white sm:text-[34px]">JANGJISOU FAN ARCHIVE</div>
+            <div className="text-[28px] font-extrabold tracking-[0.18em] text-white sm:text-[34px]">JANGJISOU FAN ARCHIVE</div>
             <div className="mx-auto mt-5 h-px w-24 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
             <p className="mt-6 text-sm font-medium tracking-[0.04em] text-white/72">장지수 팬 아카이브 · Edited by 장지수 편집자</p>
             <p className="mt-3 text-sm leading-7 text-white/50">본 사이트는 비영리 팬 아카이브이며, 모든 콘텐츠의 저작권은 원저작권자에게 있습니다.</p>
