@@ -2,18 +2,18 @@ import Head from 'next/head';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const POSITION_META = {
-  tank: { label: '탱커', icon: '🛡️', badge: 'from-[#5fb7ff]/28 to-[#1b3558]/38', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]' },
-  dps: { label: '딜러', icon: '⚔️', badge: 'from-[#ff8a5b]/28 to-[#4a2415]/38', border: 'border-[#ff8a5b]/24', text: 'text-[#ffd1bf]' },
-  support: { label: '힐러', icon: '✚', badge: 'from-[#72f3a0]/28 to-[#17392b]/38', border: 'border-[#72f3a0]/24', text: 'text-[#cbffdc]' },
-  flex: { label: '플렉스', icon: '◈', badge: 'from-[#dca8ff]/28 to-[#342044]/38', border: 'border-[#dca8ff]/24', text: 'text-[#f0d8ff]' },
+  tank: { label: '탱커', icon: 'T', badge: 'from-[#5fb7ff]/28 to-[#1b3558]/38', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]', chip: 'bg-[#5fb7ff]/12' },
+  dps: { label: '딜러', icon: 'D', badge: 'from-[#ff8a5b]/28 to-[#4a2415]/38', border: 'border-[#ff8a5b]/24', text: 'text-[#ffd1bf]', chip: 'bg-[#ff8a5b]/12' },
+  support: { label: '힐러', icon: 'S', badge: 'from-[#72f3a0]/28 to-[#17392b]/38', border: 'border-[#72f3a0]/24', text: 'text-[#cbffdc]', chip: 'bg-[#72f3a0]/12' },
+  random: { label: '랜덤', icon: 'R', badge: 'from-[#dca8ff]/28 to-[#342044]/38', border: 'border-[#dca8ff]/24', text: 'text-[#f0d8ff]', chip: 'bg-[#dca8ff]/12' },
 };
 
 const TEAM_HEADER_STYLES = [
-  'from-cyan-300/18 to-cyan-950/0 border-cyan-300/20',
-  'from-orange-300/18 to-orange-950/0 border-orange-300/20',
-  'from-violet-300/18 to-violet-950/0 border-violet-300/20',
-  'from-emerald-300/18 to-emerald-950/0 border-emerald-300/20',
-  'from-rose-300/18 to-rose-950/0 border-rose-300/20',
+  'from-cyan-300/24 via-cyan-400/10 to-transparent border-cyan-300/25 shadow-[0_10px_28px_rgba(103,232,249,0.08)]',
+  'from-orange-300/24 via-orange-400/10 to-transparent border-orange-300/25 shadow-[0_10px_28px_rgba(251,146,60,0.08)]',
+  'from-violet-300/24 via-violet-400/10 to-transparent border-violet-300/25 shadow-[0_10px_28px_rgba(196,181,253,0.08)]',
+  'from-emerald-300/24 via-emerald-400/10 to-transparent border-emerald-300/25 shadow-[0_10px_28px_rgba(110,231,183,0.08)]',
+  'from-rose-300/24 via-rose-400/10 to-transparent border-rose-300/25 shadow-[0_10px_28px_rgba(253,164,175,0.08)]',
 ];
 
 function shuffleArray(items) {
@@ -29,11 +29,11 @@ function getRoleType(role) {
   if (role.startsWith('탱')) return 'tank';
   if (role.startsWith('딜')) return 'dps';
   if (role.startsWith('힐')) return 'support';
-  return 'flex';
+  return 'random';
 }
 
 function getRoleLabel(role) {
-  const meta = POSITION_META[getRoleType(role)] || POSITION_META.flex;
+  const meta = POSITION_META[getRoleType(role)] || POSITION_META.random;
   return `${meta.icon} ${role}`;
 }
 
@@ -44,11 +44,20 @@ function buildTeamOrder(orderMode, captainNames, teamCount) {
   return base;
 }
 
+function Toast({ message }) {
+  if (!message) return null;
+  return (
+    <div className="fixed right-5 top-24 z-[70] rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-4 py-3 text-sm font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+      {message}
+    </div>
+  );
+}
+
 function ParticipantChip({ item, onRemove }) {
-  const meta = POSITION_META[item.position] || POSITION_META.flex;
+  const meta = POSITION_META[item.position] || POSITION_META.random;
   return (
     <div className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-2 text-sm ${meta.border} ${meta.badge}`}>
-      <span>{meta.icon}</span>
+      <span className={`inline-flex h-6 min-w-[24px] items-center justify-center rounded-full border border-white/10 px-1 text-[11px] font-black text-white ${meta.chip}`}>{meta.icon}</span>
       <span className="font-semibold text-white">{item.name}</span>
       <span className={`text-xs ${meta.text}`}>{meta.label}</span>
       <button onClick={() => onRemove(item.name)} className="ml-1 rounded-full px-1 text-white/35 transition hover:text-red-300">×</button>
@@ -64,7 +73,7 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
     const currentValue = assignments[slotKey] || '';
     const assignedElsewhere = new Set(Object.entries(assignments).filter(([key, value]) => key !== slotKey && value).map(([, value]) => value));
     return participants.filter((item) => {
-      const matchRole = item.position === roleType || item.position === 'flex';
+      const matchRole = item.position === roleType || item.position === 'random';
       if (!matchRole) return false;
       if (item.name === currentValue) return true;
       return !assignedElsewhere.has(item.name);
@@ -87,7 +96,7 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
         {roleTemplate.map((role) => {
           const slotKey = `${team.teamNo}-${role}`;
           const locked = Boolean(locks[slotKey]);
-          const roleMeta = POSITION_META[getRoleType(role)] || POSITION_META.flex;
+          const roleMeta = POSITION_META[getRoleType(role)] || POSITION_META.random;
           const candidates = getSlotCandidates(slotKey, role);
           const assigned = assignments[slotKey] || '';
           return (
@@ -111,13 +120,8 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
               </div>
 
               {assigned ? (
-                <div
-                  draggable
-                  onDragStart={() => setDragSource(slotKey)}
-                  onDragEnd={() => setDragSource('')}
-                  className="mb-3 cursor-grab rounded-2xl border border-cyan-300/18 bg-cyan-300/8 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing"
-                >
-                  이동: {assigned}
+                <div draggable onDragStart={() => setDragSource(slotKey)} onDragEnd={() => setDragSource('')} className="mb-3 cursor-grab rounded-2xl border border-cyan-300/18 bg-cyan-300/8 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing">
+                  드래그 이동: {assigned}
                 </div>
               ) : null}
 
@@ -142,7 +146,7 @@ function OverwatchRandomPicker() {
   const [displayCaptainOrder, setDisplayCaptainOrder] = useState([]);
   const [isDrawingCaptains, setIsDrawingCaptains] = useState(false);
   const [nameInput, setNameInput] = useState('');
-  const [positionInput, setPositionInput] = useState('flex');
+  const [positionInput, setPositionInput] = useState('random');
   const [searchTerm, setSearchTerm] = useState('');
   const [participants, setParticipants] = useState([]);
   const [assignments, setAssignments] = useState({});
@@ -150,6 +154,7 @@ function OverwatchRandomPicker() {
   const [swapSource, setSwapSource] = useState('');
   const [dragSource, setDragSource] = useState('');
   const [duplicateMessage, setDuplicateMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
   const drawTimerRef = useRef(null);
   const drawIntervalRef = useRef(null);
 
@@ -189,11 +194,9 @@ function OverwatchRandomPicker() {
     });
   }, [teamCount, roleTemplate]);
 
-  useEffect(() => {
-    return () => {
-      if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
-      if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
-    };
+  useEffect(() => () => {
+    if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
+    if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
   }, []);
 
   useEffect(() => {
@@ -202,22 +205,27 @@ function OverwatchRandomPicker() {
     return () => clearTimeout(timer);
   }, [duplicateMessage]);
 
-  const groupedParticipants = useMemo(() => {
-    const filtered = participants.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    return {
-      tank: filtered.filter((item) => item.position === 'tank'),
-      dps: filtered.filter((item) => item.position === 'dps'),
-      support: filtered.filter((item) => item.position === 'support'),
-      flex: filtered.filter((item) => item.position === 'flex'),
-    };
-  }, [participants, searchTerm]);
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(''), 1900);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  const groupedParticipants = useMemo(() => ({
+    tank: participants.filter((item) => item.position === 'tank'),
+    dps: participants.filter((item) => item.position === 'dps'),
+    support: participants.filter((item) => item.position === 'support'),
+    random: participants.filter((item) => item.position === 'random'),
+  }), [participants]);
+
+  const filteredParticipants = useMemo(() => participants.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase())), [participants, searchTerm]);
 
   const counts = useMemo(() => ({
     total: participants.length,
     tank: participants.filter((item) => item.position === 'tank').length,
     dps: participants.filter((item) => item.position === 'dps').length,
     support: participants.filter((item) => item.position === 'support').length,
-    flex: participants.filter((item) => item.position === 'flex').length,
+    random: participants.filter((item) => item.position === 'random').length,
   }), [participants]);
 
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
@@ -278,12 +286,10 @@ function OverwatchRandomPicker() {
     if (!hasCaptain) return;
     if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
     if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
-
     setIsDrawingCaptains(true);
     drawIntervalRef.current = setInterval(() => {
       setDisplayCaptainOrder(buildTeamOrder('shuffle', captainInputs, teamCount));
     }, 120);
-
     drawTimerRef.current = setTimeout(() => {
       if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
       const finalOrder = buildTeamOrder(orderMode === 'manual' ? 'shuffle' : orderMode, captainInputs, teamCount);
@@ -299,7 +305,7 @@ function OverwatchRandomPicker() {
       tank: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'tank')),
       dps: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'dps')),
       support: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'support')),
-      flex: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'flex')),
+      random: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'random')),
     };
     const used = new Set(lockedNames);
 
@@ -309,10 +315,10 @@ function OverwatchRandomPicker() {
         used.add(primary.name);
         return primary.name;
       }
-      const flex = availableByRole.flex.find((item) => !used.has(item.name));
-      if (flex) {
-        used.add(flex.name);
-        return flex.name;
+      const random = availableByRole.random.find((item) => !used.has(item.name));
+      if (random) {
+        used.add(random.name);
+        return random.name;
       }
       const fallback = participants.find((item) => !used.has(item.name));
       if (fallback) {
@@ -365,7 +371,13 @@ function OverwatchRandomPicker() {
     try { await navigator.clipboard.writeText(text); } catch {}
   };
 
+  const isSwapAllowed = (firstKey, secondKey) => getRoleType(firstKey.split('-')[1]) === getRoleType(secondKey.split('-')[1]);
+
   const performSwap = (firstKey, secondKey) => {
+    if (!isSwapAllowed(firstKey, secondKey)) {
+      setToastMessage('포지션이 달라서 교환할 수 없습니다.');
+      return;
+    }
     setAssignments((prev) => {
       const next = { ...prev };
       const first = next[firstKey] || '';
@@ -393,6 +405,11 @@ function OverwatchRandomPicker() {
       setDragSource('');
       return;
     }
+    if (!isSwapAllowed(dragSource, targetKey)) {
+      setToastMessage('포지션이 달라서 드래그 이동할 수 없습니다.');
+      setDragSource('');
+      return;
+    }
     performSwap(dragSource, targetKey);
     setDragSource('');
   };
@@ -401,6 +418,8 @@ function OverwatchRandomPicker() {
 
   return (
     <div className="space-y-6">
+      <Toast message={toastMessage} />
+
       <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,20,0.98),rgba(7,10,18,0.98))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.22)] lg:p-6">
           <div className="grid gap-5 lg:grid-cols-2">
@@ -458,12 +477,15 @@ function OverwatchRandomPicker() {
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_180px_auto]">
             <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="이름 입력 (쉼표/엔터 지원)" className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />
             <select value={positionInput} onChange={(e) => setPositionInput(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/40">
-              <option value="tank">🛡️ 탱커</option>
-              <option value="dps">⚔️ 딜러</option>
-              <option value="support">✚ 힐러</option>
-              <option value="flex">◈ 플렉스</option>
+              <option value="tank">T 탱커</option>
+              <option value="dps">D 딜러</option>
+              <option value="support">S 힐러</option>
+              <option value="random">R 랜덤</option>
             </select>
             <button onClick={addParticipant} className="rounded-2xl border border-cyan-300/30 bg-cyan-300/12 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/18">등록</button>
+          </div>
+          <div className="mt-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-xs leading-6 text-white/42">
+            예시) 장지수, 봉준, 김민교 처럼 쉼표로 여러 명을 한 번에 입력해도 등록됩니다.
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">전체 초기화</button>
@@ -489,7 +511,7 @@ function OverwatchRandomPicker() {
             <div className="text-sm font-bold tracking-[0.18em] text-white/40">빠른 검색 / 제거</div>
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="등록된 스트리머 검색" className="mt-4 w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />
             <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
-              {participants.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase())).length ? participants.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase())).map((item) => (
+              {filteredParticipants.length ? filteredParticipants.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#111827] px-4 py-3">
                   <div>
                     <div className="text-sm font-medium text-white">{item.name}</div>
@@ -583,7 +605,7 @@ export default function OverwatchRandomPage() {
           <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-7 shadow-2xl shadow-black/30 lg:p-9">
             <div className="text-xs font-bold tracking-[0.45em] text-orange-200/58">UTILITY TOOL</div>
             <div className="mt-4 text-[34px] font-black tracking-tight text-white sm:text-[44px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER20에서는 팀장 순서 추첨 연출, 슬롯 드래그 이동, 교환 버튼 유지까지 반영했습니다.</p>
+            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER21에서는 팀 헤더 컬러, 아이콘 톤, 랜덤 표기, 토스트 안내, 교환/드래그 포지션 제한까지 마감했습니다.</p>
           </section>
           <section className="mt-8">
             <OverwatchRandomPicker />
