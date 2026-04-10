@@ -37,6 +37,12 @@ function getRoleLabel(role) {
   return `${meta.icon} ${role}`;
 }
 
+function isParticipantAssignableToRole(participant, role) {
+  if (!participant) return false;
+  const roleType = getRoleType(role);
+  return participant.position === roleType || participant.position === 'random';
+}
+
 function buildTeamOrder(orderMode, captainNames, teamCount) {
   const base = Array.from({ length: teamCount }, (_, index) => ({ teamNo: index + 1, captain: captainNames[index] || `팀 ${index + 1}` }));
   if (orderMode === 'shuffle') return shuffleArray(base);
@@ -66,12 +72,10 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
   const headerStyle = TEAM_HEADER_STYLES[(team.teamNo - 1) % TEAM_HEADER_STYLES.length];
 
   const getSlotCandidates = (slotKey, role) => {
-    const roleType = getRoleType(role);
     const currentValue = assignments[slotKey] || '';
     const assignedElsewhere = new Set(Object.entries(assignments).filter(([key, value]) => key !== slotKey && value).map(([, value]) => value));
     return participants.filter((item) => {
-      const matchRole = item.position === roleType || item.position === 'random';
-      if (!matchRole) return false;
+      if (!isParticipantAssignableToRole(item, role)) return false;
       if (item.name === currentValue) return true;
       return !assignedElsewhere.has(item.name);
     });
@@ -186,6 +190,24 @@ function OverwatchRandomPicker() {
       return next;
     });
   }, [teamCount, roleTemplate]);
+
+  useEffect(() => {
+    const participantMap = new Map(participants.map((item) => [item.name, item]));
+    setAssignments((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      Object.entries(next).forEach(([slotKey, value]) => {
+        if (!value) return;
+        const role = slotKey.split('-')[1];
+        const participant = participantMap.get(value);
+        if (!participant || !isParticipantAssignableToRole(participant, role)) {
+          next[slotKey] = '';
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [participants, roleTemplate]);
 
   useEffect(() => () => {
     if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
@@ -307,6 +329,7 @@ function OverwatchRandomPicker() {
       random: shuffleArray(participants.filter((item) => !lockedNames.has(item.name) && item.position === 'random')),
     };
     const used = new Set(lockedNames);
+    let hasEmptySlots = false;
 
     const takePlayer = (roleType) => {
       const primary = availableByRole[roleType].find((item) => !used.has(item.name));
@@ -319,11 +342,7 @@ function OverwatchRandomPicker() {
         used.add(random.name);
         return random.name;
       }
-      const fallback = participants.find((item) => !used.has(item.name));
-      if (fallback) {
-        used.add(fallback.name);
-        return fallback.name;
-      }
+      hasEmptySlots = true;
       return '';
     };
 
@@ -336,6 +355,10 @@ function OverwatchRandomPicker() {
       });
       return next;
     });
+
+    if (hasEmptySlots) {
+      setToastMessage('포지션 인원이 부족해 일부 칸은 비워졌습니다.');
+    }
   };
 
   const handleResetUnlocked = () => {
