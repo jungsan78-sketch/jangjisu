@@ -2,10 +2,10 @@ import Head from 'next/head';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const POSITION_META = {
-  tank: { label: '탱커', icon: 'T', badge: 'from-[#5fb7ff]/28 to-[#1b3558]/38', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]', chip: 'bg-[#5fb7ff]/12' },
-  dps: { label: '딜러', icon: 'D', badge: 'from-[#ff8a5b]/28 to-[#4a2415]/38', border: 'border-[#ff8a5b]/24', text: 'text-[#ffd1bf]', chip: 'bg-[#ff8a5b]/12' },
-  support: { label: '힐러', icon: 'S', badge: 'from-[#72f3a0]/28 to-[#17392b]/38', border: 'border-[#72f3a0]/24', text: 'text-[#cbffdc]', chip: 'bg-[#72f3a0]/12' },
-  random: { label: '랜덤', icon: 'R', badge: 'from-[#dca8ff]/28 to-[#342044]/38', border: 'border-[#dca8ff]/24', text: 'text-[#f0d8ff]', chip: 'bg-[#dca8ff]/12' },
+  tank: { label: '탱커', icon: '🛡️', badge: 'from-[#5fb7ff]/18 to-[#1b3558]/24', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]' },
+  dps: { label: '딜러', icon: '⚔️', badge: 'from-[#ff8a5b]/18 to-[#4a2415]/24', border: 'border-[#ff8a5b]/24', text: 'text-[#ffd1bf]' },
+  support: { label: '힐러', icon: '💚', badge: 'from-[#72f3a0]/18 to-[#17392b]/24', border: 'border-[#72f3a0]/24', text: 'text-[#cbffdc]' },
+  random: { label: '랜덤', icon: '❓', badge: 'from-[#dca8ff]/18 to-[#342044]/24', border: 'border-[#dca8ff]/24', text: 'text-[#f0d8ff]' },
 };
 
 const TEAM_HEADER_STYLES = [
@@ -46,20 +46,17 @@ function buildTeamOrder(orderMode, captainNames, teamCount) {
 
 function Toast({ message }) {
   if (!message) return null;
-  return (
-    <div className="fixed right-5 top-24 z-[70] rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-4 py-3 text-sm font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-      {message}
-    </div>
-  );
+  return <div className="fixed right-5 top-24 z-[70] rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-4 py-3 text-sm font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">{message}</div>;
 }
 
-function ParticipantChip({ item, onRemove }) {
+function ParticipantChip({ item, onRemove, assignedInfo }) {
   const meta = POSITION_META[item.position] || POSITION_META.random;
   return (
-    <div className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-2 text-sm ${meta.border} ${meta.badge}`}>
-      <span className={`inline-flex h-6 min-w-[24px] items-center justify-center rounded-full border border-white/10 px-1 text-[11px] font-black text-white ${meta.chip}`}>{meta.icon}</span>
-      <span className="font-semibold text-white">{item.name}</span>
+    <div className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-2 text-sm ${meta.border} ${meta.badge} ${assignedInfo ? 'opacity-80' : ''}`}>
+      <span className="text-sm">{meta.icon}</span>
+      <span className={`font-semibold ${assignedInfo ? 'text-white/55 line-through' : 'text-white'}`}>{item.name}</span>
       <span className={`text-xs ${meta.text}`}>{meta.label}</span>
+      {assignedInfo ? <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-bold text-cyan-100">{assignedInfo}</span> : null}
       <button onClick={() => onRemove(item.name)} className="ml-1 rounded-full px-1 text-white/35 transition hover:text-red-300">×</button>
     </div>
   );
@@ -119,11 +116,7 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
                 </div>
               </div>
 
-              {assigned ? (
-                <div draggable onDragStart={() => setDragSource(slotKey)} onDragEnd={() => setDragSource('')} className="mb-3 cursor-grab rounded-2xl border border-cyan-300/18 bg-cyan-300/8 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing">
-                  드래그 이동: {assigned}
-                </div>
-              ) : null}
+              {assigned ? <div draggable onDragStart={() => setDragSource(slotKey)} onDragEnd={() => setDragSource('')} className="mb-3 cursor-grab rounded-2xl border border-cyan-300/18 bg-cyan-300/8 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing">드래그 이동: {assigned}</div> : null}
 
               <select value={assigned} onChange={(e) => setManualAssignment(slotKey, e.target.value)} className={`w-full rounded-2xl border border-white/10 bg-[#0d1420] px-3 py-3 text-sm text-white outline-none focus:border-cyan-300/40 ${roleMeta.text}`}>
                 <option value="">선수 선택</option>
@@ -228,6 +221,16 @@ function OverwatchRandomPicker() {
     random: participants.filter((item) => item.position === 'random').length,
   }), [participants]);
 
+  const assignmentInfoByName = useMemo(() => {
+    const map = {};
+    Object.entries(assignments).forEach(([slotKey, value]) => {
+      if (!value) return;
+      const [teamNo, role] = slotKey.split('-');
+      map[value] = `팀 ${teamNo} · ${role}`;
+    });
+    return map;
+  }, [assignments]);
+
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
 
   const addParticipant = () => {
@@ -262,9 +265,7 @@ function OverwatchRandomPicker() {
     });
   };
 
-  const toggleLock = (slotKey) => {
-    setLocks((prev) => ({ ...prev, [slotKey]: !prev[slotKey] }));
-  };
+  const toggleLock = (slotKey) => setLocks((prev) => ({ ...prev, [slotKey]: !prev[slotKey] }));
 
   const setManualAssignment = (slotKey, value) => {
     setAssignments((prev) => {
@@ -287,9 +288,7 @@ function OverwatchRandomPicker() {
     if (drawTimerRef.current) clearTimeout(drawTimerRef.current);
     if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
     setIsDrawingCaptains(true);
-    drawIntervalRef.current = setInterval(() => {
-      setDisplayCaptainOrder(buildTeamOrder('shuffle', captainInputs, teamCount));
-    }, 120);
+    drawIntervalRef.current = setInterval(() => setDisplayCaptainOrder(buildTeamOrder('shuffle', captainInputs, teamCount)), 120);
     drawTimerRef.current = setTimeout(() => {
       if (drawIntervalRef.current) clearInterval(drawIntervalRef.current);
       const finalOrder = buildTeamOrder(orderMode === 'manual' ? 'shuffle' : orderMode, captainInputs, teamCount);
@@ -477,16 +476,14 @@ function OverwatchRandomPicker() {
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_180px_auto]">
             <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="이름 입력 (쉼표/엔터 지원)" className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />
             <select value={positionInput} onChange={(e) => setPositionInput(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/40">
-              <option value="tank">T 탱커</option>
-              <option value="dps">D 딜러</option>
-              <option value="support">S 힐러</option>
-              <option value="random">R 랜덤</option>
+              <option value="tank">🛡️ 탱커</option>
+              <option value="dps">⚔️ 딜러</option>
+              <option value="support">💚 힐러</option>
+              <option value="random">❓ 랜덤</option>
             </select>
             <button onClick={addParticipant} className="rounded-2xl border border-cyan-300/30 bg-cyan-300/12 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/18">등록</button>
           </div>
-          <div className="mt-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-xs leading-6 text-white/42">
-            예시) 장지수, 봉준, 김민교 처럼 쉼표로 여러 명을 한 번에 입력해도 등록됩니다.
-          </div>
+          <div className="mt-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-xs leading-6 text-white/42">예시) 장지수, 봉준, 김민교 처럼 쉼표로 여러 명을 한 번에 입력해도 등록됩니다.</div>
           <div className="mt-4 flex flex-wrap gap-3">
             <button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">전체 초기화</button>
             <button onClick={copyResult} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">결과 복사</button>
@@ -511,30 +508,12 @@ function OverwatchRandomPicker() {
             <div className="text-sm font-bold tracking-[0.18em] text-white/40">빠른 검색 / 제거</div>
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="등록된 스트리머 검색" className="mt-4 w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-cyan-300/40" />
             <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
-              {filteredParticipants.length ? filteredParticipants.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#111827] px-4 py-3">
-                  <div>
-                    <div className="text-sm font-medium text-white">{item.name}</div>
-                    <div className="mt-1 text-xs text-white/45">{POSITION_META[item.position].icon} {POSITION_META[item.position].label}{assignedNames.has(item.name) ? ' · 배정됨' : ''}</div>
-                  </div>
-                  <button onClick={() => removeParticipant(item.name)} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/65 transition hover:bg-white/10 hover:text-red-200">삭제</button>
-                </div>
-              )) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-white/45">검색 결과가 없습니다.</div>}
+              {filteredParticipants.length ? filteredParticipants.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#111827] px-4 py-3"><div><div className="text-sm font-medium text-white">{item.name}</div><div className="mt-1 text-xs text-white/45">{POSITION_META[item.position].icon} {POSITION_META[item.position].label}{assignedNames.has(item.name) ? ` · ${assignmentInfoByName[item.name]}` : ''}</div></div><button onClick={() => removeParticipant(item.name)} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/65 transition hover:bg-white/10 hover:text-red-200">삭제</button></div>) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-white/45">검색 결과가 없습니다.</div>}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-            {Object.entries(POSITION_META).map(([key, meta]) => (
-              <div key={key} className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className={`text-sm font-extrabold ${meta.text}`}>{meta.icon} {meta.label}</div>
-                  <div className="text-xs text-white/38">{groupedParticipants[key].length}명</div>
-                </div>
-                <div className="mt-4 flex min-h-[90px] flex-wrap gap-2">
-                  {groupedParticipants[key].length ? groupedParticipants[key].map((item) => <ParticipantChip key={item.id} item={item} onRemove={removeParticipant} />) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-4 text-sm text-white/38">등록된 인원이 없습니다.</div>}
-                </div>
-              </div>
-            ))}
+            {Object.entries(POSITION_META).map(([key, meta]) => <div key={key} className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-5"><div className="flex items-center justify-between gap-3"><div className={`text-sm font-extrabold ${meta.text}`}>{meta.icon} {meta.label}</div><div className="text-xs text-white/38">{groupedParticipants[key].length}명</div></div><div className="mt-4 flex min-h-[90px] flex-wrap gap-2">{groupedParticipants[key].length ? groupedParticipants[key].map((item) => <ParticipantChip key={item.id} item={item} onRemove={removeParticipant} assignedInfo={assignmentInfoByName[item.name] || ''} />) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-4 text-sm text-white/38">등록된 인원이 없습니다.</div>}</div></div>)}
           </div>
         </div>
       </div>
@@ -554,23 +533,7 @@ function OverwatchRandomPicker() {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
-          {teamOrder.map((team) => (
-            <TeamCard
-              key={team.teamNo}
-              team={team}
-              mode={mode}
-              roleTemplate={roleTemplate}
-              assignments={assignments}
-              locks={locks}
-              setManualAssignment={setManualAssignment}
-              toggleLock={toggleLock}
-              participants={participants}
-              onSwapRequest={handleSwapRequest}
-              dragSource={dragSource}
-              setDragSource={setDragSource}
-              onDropSwap={handleDropSwap}
-            />
-          ))}
+          {teamOrder.map((team) => <TeamCard key={team.teamNo} team={team} mode={mode} roleTemplate={roleTemplate} assignments={assignments} locks={locks} setManualAssignment={setManualAssignment} toggleLock={toggleLock} participants={participants} onSwapRequest={handleSwapRequest} dragSource={dragSource} setDragSource={setDragSource} onDropSwap={handleDropSwap} />)}
         </div>
       </div>
     </div>
@@ -605,7 +568,7 @@ export default function OverwatchRandomPage() {
           <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-7 shadow-2xl shadow-black/30 lg:p-9">
             <div className="text-xs font-bold tracking-[0.45em] text-orange-200/58">UTILITY TOOL</div>
             <div className="mt-4 text-[34px] font-black tracking-tight text-white sm:text-[44px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER21에서는 팀 헤더 컬러, 아이콘 톤, 랜덤 표기, 토스트 안내, 교환/드래그 포지션 제한까지 마감했습니다.</p>
+            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/60">VER22에서는 역할 아이콘을 원래 느낌으로 되돌리고, 등록 명단 칩에 배정 표시를 추가했습니다.</p>
           </section>
           <section className="mt-8">
             <OverwatchRandomPicker />
