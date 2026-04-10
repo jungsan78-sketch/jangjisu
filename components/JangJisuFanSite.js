@@ -110,8 +110,8 @@ function YoutubeTabButton({ label, isActive, onClick, hasNew }) {
     >
       <span>{label}</span>
       {hasNew ? (
-        <span className="pointer-events-none absolute -right-2 -top-2 inline-flex items-center rounded-full border border-[#ff8f88]/30 bg-[#17090a] px-1.5 py-[2px] text-[8px] font-black tracking-[0.14em] text-[#ffd4d1] shadow-[0_0_12px_rgba(255,78,69,0.18)]">
-          NEW
+        <span className="pointer-events-none absolute -right-3 -top-3 text-[11px] leading-none drop-shadow-[0_0_10px_rgba(255,95,95,0.32)] select-none">
+          <span className="inline-block -rotate-[10deg] font-black tracking-[0.06em] text-[#ff8f88]">new</span>
         </span>
       ) : null}
     </button>
