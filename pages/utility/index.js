@@ -1,25 +1,38 @@
 import Head from 'next/head';
 
-function UtilityCard({ href, title, description, label, eyebrow = 'UTILITY', accent = 'orange', preview = null, status = '' }) {
+function UtilityCard({
+  href = '',
+  title,
+  description,
+  label,
+  eyebrow = 'UTILITY',
+  accent = 'orange',
+  preview = null,
+  status = '',
+  disabled = false,
+}) {
   const theme = accent === 'soop'
     ? {
-        border: 'hover:border-cyan-300/35 hover:shadow-[0_24px_50px_rgba(14,123,255,0.14)]',
+        border: disabled
+          ? 'border-cyan-300/18'
+          : 'hover:border-cyan-300/35 hover:shadow-[0_24px_50px_rgba(14,123,255,0.14)]',
         glow: 'bg-[radial-gradient(circle_at_top,rgba(14,123,255,0.26),transparent_22%),radial-gradient(circle_at_top_left,rgba(22,224,216,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]',
         top: 'bg-[linear-gradient(180deg,rgba(14,123,255,0.22),transparent)]',
         badge: 'border-cyan-300/24 bg-cyan-300/10 text-cyan-100',
       }
     : {
-        border: 'hover:border-orange-300/35 hover:shadow-[0_24px_50px_rgba(249,115,22,0.14)]',
+        border: disabled
+          ? 'border-orange-300/18'
+          : 'hover:border-orange-300/35 hover:shadow-[0_24px_50px_rgba(249,115,22,0.14)]',
         glow: 'bg-[radial-gradient(circle_at_top,rgba(251,146,60,0.30),transparent_22%),radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]',
         top: 'bg-[linear-gradient(180deg,rgba(255,160,64,0.26),transparent)]',
         badge: 'border-orange-300/30 bg-orange-300/12 text-orange-100',
       };
 
-  return (
-    <a
-      href={href}
-      className={`group relative block overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-6 transition duration-300 hover:-translate-y-1 ${theme.border}`}
-    >
+  const baseClassName = `group relative block overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-6 transition duration-300 ${disabled ? 'cursor-not-allowed opacity-92' : 'hover:-translate-y-1'} ${theme.border}`;
+
+  const content = (
+    <>
       <div className={`pointer-events-none absolute inset-0 ${theme.glow}`} />
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 opacity-90 ${theme.top}`} />
       {preview ? (
@@ -41,6 +54,20 @@ function UtilityCard({ href, title, description, label, eyebrow = 'UTILITY', acc
           {status ? <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white/65">{status}</div> : null}
         </div>
       </div>
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <div aria-disabled="true" className={baseClassName}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <a href={href} className={baseClassName}>
+      {content}
     </a>
   );
 }
@@ -87,14 +114,14 @@ export default function UtilityHomePage() {
             />
 
             <UtilityCard
-              href="/utility/soop-funding"
-              eyebrow="SOOP PLATFORM"
               title="SOOP 펀딩 복사"
-              description="SOOP API 승인 전 미완성 상태로 먼저 추가한 프리뷰 유틸리티입니다. 숲 아이디 입력, 펀딩 감지, 후원자/메시지 복사 기능을 연결할 예정입니다."
-              label="프리뷰 보기"
+              description="현재 미완성"
+              label="현재 미완성"
               status="미완성"
+              eyebrow="SOOP PLATFORM"
               accent="soop"
-              preview={<img src="/soop-platform.svg" alt="SOOP" className="w-full max-w-[300px] object-contain" />}
+              disabled
+              preview={<img src="/soop-platform.svg" alt="SOOP" className="w-full max-w-[320px] object-contain" />}
             />
           </section>
         </main>

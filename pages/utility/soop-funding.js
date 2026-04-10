@@ -14,7 +14,7 @@ export default function SoopFundingUtilityPage() {
     <>
       <Head>
         <title>SOOP 펀딩 복사 유틸리티 | 장지수 팬 아카이브</title>
-        <meta name="description" content="SOOP API 승인 전 미완성 상태의 펀딩 복사 유틸리티 안내 페이지" />
+        <meta name="description" content="SOOP 미완성 유틸리티 안내 페이지" />
       </Head>
 
       <div className="min-h-screen bg-[#05070c] text-white">
@@ -43,7 +43,7 @@ export default function SoopFundingUtilityPage() {
                 <div className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-bold tracking-[0.28em] text-cyan-100">UTILITY PREVIEW</div>
                 <div className="mt-6 max-w-xl text-[34px] font-black tracking-tight text-white sm:text-[44px]">SOOP 펀딩 복사 유틸리티</div>
                 <p className="mt-5 max-w-xl text-sm leading-8 text-white/62">
-                  SOOP API 승인 전이라 아직 실제 펀딩 데이터는 연결하지 않았고, 우선 유틸리티 메뉴에 올릴 예정인 미완성 프리뷰 페이지로 먼저 추가한 상태입니다.
+                  현재 미완성
                 </p>
 
                 <div className="mt-8 rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
@@ -65,7 +65,7 @@ export default function SoopFundingUtilityPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <div className="text-xs font-bold tracking-[0.28em] text-white/36">SOOP PLATFORM</div>
-                      <div className="mt-3 text-[28px] font-black tracking-tight text-white">API 승인 대기중</div>
+                      <div className="mt-3 text-[28px] font-black tracking-tight text-white">현재 미완성</div>
                     </div>
                     <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-bold text-cyan-100">미완성</div>
                   </div>
