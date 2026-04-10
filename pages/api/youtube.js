@@ -61,6 +61,16 @@ function excludeIds(videos, blockedIds) {
   return videos.filter((video) => !blocked.has(video.id));
 }
 
+function summarizeVideos(videos) {
+  return (videos || []).map((video) => ({
+    id: video.id,
+    title: video.title,
+    url: video.url,
+    durationText: video.durationText,
+    durationSeconds: video.durationSeconds,
+  }));
+}
+
 async function getChannelInfo(channelHandle, apiKey) {
   const channelRes = await fetch(
     `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${channelHandle}&key=${apiKey}`,
@@ -171,6 +181,7 @@ async function fallbackUploads(channelHandle, apiKey) {
 
 export default async function handler(req, res) {
   const apiKey = process.env.YOUTUBE_API_KEY;
+  const debugMode = req.query?.debug === '1';
 
   if (!apiKey) {
     return res.status(200).json({ ok: false, error: 'YOUTUBE_API_KEY is not set' });
@@ -185,6 +196,7 @@ export default async function handler(req, res) {
     let shortsIds = [];
     let fullIds = [];
     let uploadsIds = [];
+    let sourceMode = 'primary';
 
     try {
       [shortsIds, fullIds, uploadsIds] = await Promise.all([
@@ -200,6 +212,7 @@ export default async function handler(req, res) {
       shortsIds = mainFallback;
       fullIds = fullFallbackIds;
       uploadsIds = mainFallback;
+      sourceMode = 'fallback';
     }
 
     const [shortsSource, fullSource, uploadsSource] = await Promise.all([
@@ -267,6 +280,22 @@ export default async function handler(req, res) {
       shorts: shorts.slice(0, 8),
       full: full.slice(0, 9),
       fetchedAt: new Date().toISOString(),
+      ...(debugMode
+        ? {
+            debug: {
+              sourceMode,
+              shortsIds: shortsIds.slice(0, 24),
+              fullIds: fullIds.slice(0, 24),
+              uploadsIds: uploadsIds.slice(0, 24),
+              shortsSource: summarizeVideos(shortsSource),
+              uploadsSource: summarizeVideos(uploadsSource),
+              fullSource: summarizeVideos(fullSource),
+              classifiedVideos: summarizeVideos(videos),
+              classifiedShorts: summarizeVideos(shorts),
+              classifiedFull: summarizeVideos(full),
+            },
+          }
+        : {}),
     });
   } catch (error) {
     return res.status(200).json({ ok: false, error: error.message });
