@@ -632,7 +632,7 @@ function OverwatchRandomPicker() {
             <button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-base font-semibold text-white/80 transition hover:bg-white/10">전체 초기화</button>
             <button onClick={copyResult} className="rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-base font-semibold text-white/80 transition hover:bg-white/10">결과 복사</button>
           </div>
-          <div className="mt-3 text-sm leading-7 text-cyan-100/65">새로고침하거나 나중에 다시 들어와도 전체 초기화 전까지 현재 상태가 유지됩니다.</div>
+          <div className="mt-3 text-base leading-8 text-cyan-100/72">새로고침하거나 나중에 다시 들어와도 전체 초기화 전까지 현재 상태가 유지되며, 팀 배치 후 드래그 이동으로도 슬롯 교환이 가능합니다.</div>
         </div>
       </div>
 
