@@ -1,5 +1,39 @@
 import Head from 'next/head';
 
+function OverwatchPreview() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 select-none">
+      <div className="relative flex h-[92px] w-[92px] items-center justify-center rounded-full border border-white/12 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),rgba(15,20,29,0.18)_52%,transparent_72%)] shadow-[0_18px_34px_rgba(0,0,0,0.28)]">
+        <div className="absolute top-[10px] h-[28px] w-[54px] rounded-t-full border-[7px] border-b-0 border-[#ff8e42] opacity-95" />
+        <div className="absolute bottom-[14px] h-[32px] w-[62px] rounded-b-full border-[7px] border-t-0 border-white/72 opacity-90" />
+        <div className="absolute left-[20px] top-[36px] h-[8px] w-[24px] rotate-[28deg] rounded-full bg-white/82" />
+        <div className="absolute right-[20px] top-[36px] h-[8px] w-[24px] -rotate-[28deg] rounded-full bg-white/82" />
+        <div className="absolute bottom-[26px] h-[10px] w-[10px] rounded-full bg-[#ff8e42] blur-[2px]" />
+      </div>
+      <div className="text-center">
+        <div className="text-[13px] font-black tracking-[0.48em] text-white/38">OVERWATCH</div>
+        <div className="mt-1 text-[28px] font-black tracking-[0.28em] text-white">OVERWATCH</div>
+      </div>
+    </div>
+  );
+}
+
+function SoopPreview() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 select-none">
+      <div className="flex items-center gap-2.5">
+        <span className="text-[66px] font-black leading-none tracking-[-0.08em] text-white">S</span>
+        <span className="relative inline-flex items-center text-[66px] font-black leading-none tracking-[-0.14em]">
+          <span className="bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)] bg-clip-text text-transparent">OO</span>
+          <span className="pointer-events-none absolute left-1/2 top-1/2 h-[10px] w-[58px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,#1780FF_0%,#19E2D8_100%)] opacity-95" />
+        </span>
+        <span className="text-[66px] font-black leading-none tracking-[-0.08em] text-white">P</span>
+      </div>
+      <div className="text-[13px] font-black tracking-[0.42em] text-cyan-100/58">SOOP PLATFORM</div>
+    </div>
+  );
+}
+
 function UtilityCard({
   href = '',
   title,
@@ -111,6 +145,8 @@ export default function UtilityHomePage() {
               title="오버워치 랜덤뽑기"
               description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 드래그 이동까지 포함한 방송용 팀 편성 툴"
               label="실행하기"
+              eyebrow="OVERWATCH TOOL"
+              preview={<OverwatchPreview />}
             />
 
             <UtilityCard
@@ -121,7 +157,7 @@ export default function UtilityHomePage() {
               eyebrow="SOOP PLATFORM"
               accent="soop"
               disabled
-              preview={<span className="text-[72px] font-black leading-none tracking-[0.08em] text-white sm:text-[92px]">SOOP</span>}
+              preview={<SoopPreview />}
             />
           </section>
         </main>
