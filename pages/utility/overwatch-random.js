@@ -1,6 +1,9 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+const STORAGE_KEY = 'jangjisu-overwatch-random-v1';
+const ORDER_MODES = ['manual', 'reverse', 'shuffle'];
+
 const POSITION_META = {
   tank: { label: '탱커', icon: '🛡️', badge: 'from-[#5fb7ff]/18 to-[#1b3558]/24', border: 'border-[#5fb7ff]/24', text: 'text-[#bfe5ff]' },
   dps: { label: '딜러', icon: '⚔️', badge: 'from-[#ff8a5b]/18 to-[#4a2415]/24', border: 'border-[#ff8a5b]/24', text: 'text-[#ffd1bf]' },
@@ -23,6 +26,20 @@ function shuffleArray(items) {
     [next[i], next[j]] = [next[j], next[i]];
   }
   return next;
+}
+
+function normalizeTeamCount(value) {
+  const count = Number(value);
+  if (!Number.isFinite(count)) return 2;
+  return Math.min(10, Math.max(2, count));
+}
+
+function normalizeMode(value) {
+  return value === '6v6' ? '6v6' : '5v5';
+}
+
+function normalizeOrderMode(value) {
+  return ORDER_MODES.includes(value) ? value : 'manual';
 }
 
 function getRoleType(role) {
@@ -48,6 +65,71 @@ function buildTeamOrder(orderMode, captainNames, teamCount) {
   if (orderMode === 'shuffle') return shuffleArray(base);
   if (orderMode === 'reverse') return [...base].reverse();
   return base;
+}
+
+function sanitizeParticipants(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === 'object' && typeof item.name === 'string' && POSITION_META[item.position])
+    .map((item, index) => ({
+      id: String(item.id || `${item.name}-${item.position}-${index}`),
+      name: item.name.trim(),
+      position: item.position,
+    }))
+    .filter((item) => item.name);
+}
+
+function sanitizeStringRecord(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => typeof key === 'string')
+      .map(([key, itemValue]) => [key, typeof itemValue === 'string' ? itemValue : ''])
+  );
+}
+
+function sanitizeBooleanRecord(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter(([key]) => typeof key === 'string').map(([key, itemValue]) => [key, Boolean(itemValue)]));
+}
+
+function sanitizeCaptainInputs(value, teamCount) {
+  const list = Array.isArray(value) ? value.map((item) => (typeof item === 'string' ? item : '')) : [];
+  return Array.from({ length: teamCount }, (_, index) => list[index] || '');
+}
+
+function sanitizeCaptainOrder(value, teamCount) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === 'object')
+    .map((item, index) => ({
+      teamNo: normalizeTeamCount(item.teamNo || index + 1),
+      captain: typeof item.captain === 'string' ? item.captain : `팀 ${index + 1}`,
+    }))
+    .filter((item) => item.teamNo <= teamCount)
+    .slice(0, teamCount);
+}
+
+function readPersistedState() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const teamCount = normalizeTeamCount(parsed?.teamCount);
+    return {
+      teamCount,
+      mode: normalizeMode(parsed?.mode),
+      orderMode: normalizeOrderMode(parsed?.orderMode),
+      captainInputs: sanitizeCaptainInputs(parsed?.captainInputs, teamCount),
+      captainOrder: sanitizeCaptainOrder(parsed?.captainOrder, teamCount),
+      participants: sanitizeParticipants(parsed?.participants),
+      assignments: sanitizeStringRecord(parsed?.assignments),
+      locks: sanitizeBooleanRecord(parsed?.locks),
+    };
+  } catch {
+    return null;
+  }
 }
 
 function Toast({ message }) {
@@ -135,6 +217,10 @@ function TeamCard({ team, mode, roleTemplate, assignments, locks, setManualAssig
 }
 
 function OverwatchRandomPicker() {
+  const persistReadyRef = useRef(false);
+  const drawTimerRef = useRef(null);
+  const drawIntervalRef = useRef(null);
+
   const [teamCount, setTeamCount] = useState(2);
   const [mode, setMode] = useState('5v5');
   const [orderMode, setOrderMode] = useState('manual');
@@ -152,8 +238,6 @@ function OverwatchRandomPicker() {
   const [dragSource, setDragSource] = useState('');
   const [duplicateMessage, setDuplicateMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
-  const drawTimerRef = useRef(null);
-  const drawIntervalRef = useRef(null);
 
   const roleTemplate = useMemo(() => (mode === '6v6' ? ['탱커1', '탱커2', '딜러1', '딜러2', '힐러1', '힐러2'] : ['탱커', '딜러1', '딜러2', '힐러1', '힐러2']), [mode]);
 
@@ -168,6 +252,38 @@ function OverwatchRandomPicker() {
     const orderedTeamNumbers = teamOrder.map((item) => item.teamNo);
     return roleTemplate.flatMap((role) => orderedTeamNumbers.map((teamNo) => `${teamNo}-${role}`));
   }, [roleTemplate, teamOrder]);
+
+  useEffect(() => {
+    const savedState = readPersistedState();
+    if (savedState) {
+      setTeamCount(savedState.teamCount);
+      setMode(savedState.mode);
+      setOrderMode(savedState.orderMode);
+      setCaptainInputs(savedState.captainInputs);
+      setCaptainOrder(savedState.captainOrder);
+      setDisplayCaptainOrder(savedState.captainOrder);
+      setParticipants(savedState.participants);
+      setAssignments(savedState.assignments);
+      setLocks(savedState.locks);
+    }
+    persistReadyRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!persistReadyRef.current || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        teamCount,
+        mode,
+        orderMode,
+        captainInputs,
+        captainOrder,
+        participants,
+        assignments,
+        locks,
+      }));
+    } catch {}
+  }, [teamCount, mode, orderMode, captainInputs, captainOrder, participants, assignments, locks]);
 
   useEffect(() => {
     setCaptainInputs((prev) => Array.from({ length: teamCount }, (_, index) => prev[index] || ''));
@@ -372,6 +488,11 @@ function OverwatchRandomPicker() {
   };
 
   const handleClearAll = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {}
+    }
     setParticipants([]);
     setAssignments({});
     setLocks({});
@@ -511,6 +632,7 @@ function OverwatchRandomPicker() {
             <button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">전체 초기화</button>
             <button onClick={copyResult} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10">결과 복사</button>
           </div>
+          <div className="mt-3 text-xs leading-6 text-cyan-100/55">새로고침하거나 나중에 다시 들어와도 전체 초기화 전까지 현재 상태가 유지됩니다.</div>
         </div>
       </div>
 
