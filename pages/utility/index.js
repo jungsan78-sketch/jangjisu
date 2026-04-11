@@ -2,18 +2,15 @@ import Head from 'next/head';
 
 function OverwatchPreview() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 select-none">
-      <div className="relative flex h-[104px] w-[104px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(15,20,29,0.02)_58%,transparent_72%)] shadow-[0_16px_36px_rgba(0,0,0,0.26)]">
-        <svg viewBox="0 0 256 256" className="h-[96px] w-[96px] drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)]" aria-label="Overwatch logo">
-          <path d="M55 154A92 92 0 0 1 35 128C35 76.6 76.6 35 128 35C179.4 35 221 76.6 221 128A92 92 0 0 1 201 154" fill="none" stroke="#2F3D4E" strokeWidth="20" strokeLinecap="round" />
-          <path d="M74 75A72 72 0 0 1 182 75" fill="none" stroke="#F36F14" strokeWidth="22" strokeLinecap="round" />
-          <path d="M128 87L151 154L128 140L105 154L128 87Z" fill="#2F3D4E" />
-          <path d="M83 132L119 166H137L173 132" fill="none" stroke="#2F3D4E" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="flex items-center justify-center select-none">
+      <div className="relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(14,18,26,0.05)_56%,transparent_74%)] shadow-[0_16px_34px_rgba(0,0,0,0.26)]">
+        <svg viewBox="0 0 256 256" className="h-[98px] w-[98px] object-contain" aria-label="Overwatch logo">
+          <path d="M55 152A92 92 0 0 1 35 128C35 76.6 76.6 35 128 35C179.4 35 221 76.6 221 128A92 92 0 0 1 201 152" fill="none" stroke="#2E3A49" strokeWidth="20" strokeLinecap="round" />
+          <path d="M76 73A70 70 0 0 1 180 73" fill="none" stroke="#F36F14" strokeWidth="22" strokeLinecap="round" />
+          <path d="M128 86L151 154L128 139L105 154L128 86Z" fill="#2E3A49" />
+          <path d="M83 134L118 166H138L173 134" fill="none" stroke="#2E3A49" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="128" cy="174" r="5" fill="#2E3A49" opacity="0.85" />
         </svg>
-      </div>
-      <div className="text-center">
-        <div className="text-[13px] font-black tracking-[0.48em] text-white/38">OVERWATCH</div>
-        <div className="mt-1 text-[28px] font-black tracking-[0.22em] text-white">OVERWATCH</div>
       </div>
     </div>
   );
@@ -21,8 +18,8 @@ function OverwatchPreview() {
 
 function SoopPreview() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 select-none">
-      <svg viewBox="0 0 860 320" className="w-[280px] max-w-full drop-shadow-[0_10px_24px_rgba(0,0,0,0.24)]" aria-label="SOOP logo">
+    <div className="flex items-center justify-center select-none">
+      <svg viewBox="0 0 860 320" className="w-[290px] max-w-full object-contain" aria-label="SOOP logo">
         <path d="M153.8 250.4C92.2 250.4 51.5 222 41.8 173.7H110.2C117.1 192.2 132.4 201.5 152.8 201.5C172.1 201.5 183.7 193.6 183.7 179.8C183.7 164.9 169.3 158.4 138.5 151L111.5 144.7C62.7 133.3 35.7 108.8 35.7 66.9C35.7 15.6 78.2 -19.4 146.9 -19.4C210.9 -19.4 250.7 8 259.5 55.1H194.3C187.5 38 173.5 29.6 153.1 29.6C134.6 29.6 123.4 37.1 123.4 50C123.4 63.3 135.4 69.3 163.7 75.8L190.9 82C245.9 94.8 271.9 118.6 271.9 163.8C271.9 217.8 226.1 250.4 153.8 250.4Z" fill="#F5F7FA" transform="translate(0 36)" />
         <path d="M698.8 -11.9H778.7C827.2 -11.9 858 12.8 858 53.5C858 94.9 827.2 119.2 778.7 119.2H747.1V248.8H698.8V-11.9ZM773.9 79.3C796.4 79.3 808.5 69.6 808.5 53.5C808.5 37.3 796.4 27.7 773.9 27.7H747.1V79.3H773.9Z" fill="#F5F7FA" transform="translate(0 36)" />
         <path fillRule="evenodd" clipRule="evenodd" d="M330 116C330 52.5 381.5 1 445 1C470.2 1 492.4 9.1 510 22.9C527.6 9.1 549.8 1 575 1C638.5 1 690 52.5 690 116C690 179.5 638.5 231 575 231C549.8 231 527.6 222.9 510 209.1C492.4 222.9 470.2 231 445 231C381.5 231 330 179.5 330 116ZM445 51.5C409.4 51.5 380.5 80.4 380.5 116C380.5 151.6 409.4 180.5 445 180.5C480.6 180.5 509.5 151.6 509.5 116C509.5 80.4 480.6 51.5 445 51.5ZM575 51.5C539.4 51.5 510.5 80.4 510.5 116C510.5 151.6 539.4 180.5 575 180.5C610.6 180.5 639.5 151.6 639.5 116C639.5 80.4 610.6 51.5 575 51.5Z" fill="url(#soopGradient)" transform="translate(0 36)" />
@@ -34,7 +31,6 @@ function SoopPreview() {
           </linearGradient>
         </defs>
       </svg>
-      <div className="text-[13px] font-black tracking-[0.42em] text-cyan-100/58">SOOP PLATFORM</div>
     </div>
   );
 }
@@ -44,7 +40,7 @@ function UtilityCard({
   title,
   description,
   label,
-  eyebrow = 'UTILITY',
+  eyebrow = '',
   accent = 'orange',
   preview = null,
   status = '',
@@ -55,7 +51,7 @@ function UtilityCard({
         border: disabled
           ? 'border-cyan-300/18'
           : 'hover:border-cyan-300/35 hover:shadow-[0_24px_50px_rgba(14,123,255,0.14)]',
-        glow: 'bg-[radial-gradient(circle_at_top,rgba(14,123,255,0.28),transparent_22%),radial-gradient(circle_at_top_left,rgba(22,224,216,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]',
+        glow: 'bg-[radial-gradient(circle_at_top,rgba(14,123,255,0.26),transparent_22%),radial-gradient(circle_at_top_left,rgba(22,224,216,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]',
         top: 'bg-[linear-gradient(180deg,rgba(14,123,255,0.22),transparent)]',
         badge: 'border-cyan-300/24 bg-cyan-300/10 text-cyan-100',
       }
@@ -86,8 +82,8 @@ function UtilityCard({
         </>
       )}
       <div className={`relative text-center ${preview ? 'pt-8' : 'pt-44'}`}>
-        <div className="text-xs font-bold tracking-[0.35em] text-white/55">{eyebrow}</div>
-        <div className="mt-3 text-[30px] font-black tracking-[0.08em] text-white sm:text-[38px]">{title}</div>
+        {eyebrow ? <div className="text-xs font-bold tracking-[0.35em] text-white/55">{eyebrow}</div> : null}
+        <div className={`${eyebrow ? 'mt-3' : 'mt-1'} text-[30px] font-black tracking-[0.08em] text-white sm:text-[38px]`}>{title}</div>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/62">{description}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <div className={`inline-flex rounded-full border px-5 py-2 text-sm font-semibold transition ${theme.badge}`}>{label}</div>
@@ -151,7 +147,6 @@ export default function UtilityHomePage() {
               title="오버워치 랜덤뽑기"
               description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 드래그 이동까지 포함한 방송용 팀 편성 툴"
               label="실행하기"
-              eyebrow="OVERWATCH TOOL"
               preview={<OverwatchPreview />}
             />
 
@@ -160,7 +155,6 @@ export default function UtilityHomePage() {
               description="현재 미완성"
               label="현재 미완성"
               status="미완성"
-              eyebrow="SOOP PLATFORM"
               accent="soop"
               disabled
               preview={<SoopPreview />}
