@@ -137,12 +137,26 @@ function Toast({ message }) {
   return <div className="fixed left-1/2 top-24 z-[70] -translate-x-1/2 rounded-2xl border border-orange-300/25 bg-[#1a1010]/95 px-5 py-3 text-base font-semibold text-orange-100 shadow-[0_18px_38px_rgba(0,0,0,0.28)] backdrop-blur-xl">{message}</div>;
 }
 
-function ParticipantChip({ item, onRemove, assignedInfo }) {
+function ParticipantChip({ item, onRemove, assignedInfo, onDragStartChip, onDragEndChip, onBlockedDrag }) {
   const meta = POSITION_META[item.position] || POSITION_META.random;
+  const isAssigned = Boolean(assignedInfo);
+
   return (
-    <div className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3.5 py-2.5 text-[15px] ${meta.border} ${meta.badge} ${assignedInfo ? 'opacity-80' : ''}`}>
+    <div
+      draggable
+      onDragStart={(e) => {
+        if (isAssigned) {
+          e.preventDefault();
+          onBlockedDrag();
+          return;
+        }
+        onDragStartChip(item);
+      }}
+      onDragEnd={onDragEndChip}
+      className={`group inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3.5 py-2.5 text-[15px] ${meta.border} ${meta.badge} ${isAssigned ? 'cursor-not-allowed opacity-80' : 'cursor-grab active:cursor-grabbing'}`}
+    >
       <span className="text-base">{meta.icon}</span>
-      <span className={`font-semibold ${assignedInfo ? 'text-white/55 line-through' : 'text-white'}`}>{item.name}</span>
+      <span className={`font-semibold ${isAssigned ? 'text-white/55 line-through' : 'text-white'}`}>{item.name}</span>
       <span className={`text-sm ${meta.text}`}>{meta.label}</span>
       {assignedInfo ? <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-xs font-bold text-cyan-100">{assignedInfo}</span> : null}
       <button onClick={() => onRemove(item.name)} className="ml-1 rounded-full px-1 text-white/35 transition hover:text-red-300">×</button>
@@ -236,6 +250,7 @@ function OverwatchRandomPicker() {
   const [locks, setLocks] = useState({});
   const [swapSource, setSwapSource] = useState('');
   const [dragSource, setDragSource] = useState('');
+  const [participantDragSource, setParticipantDragSource] = useState('');
   const [duplicateMessage, setDuplicateMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
@@ -371,6 +386,20 @@ function OverwatchRandomPicker() {
 
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
 
+  const handleParticipantDragStart = (item) => {
+    if (assignedNames.has(item.name)) {
+      setToastMessage('이미 배치된 선수입니다.');
+      return;
+    }
+    setParticipantDragSource(item.name);
+  };
+
+  const handleParticipantDrop = (targetPosition) => {
+    if (!participantDragSource) return;
+    setParticipants((prev) => prev.map((item) => (item.name === participantDragSource ? { ...item, position: targetPosition } : item)));
+    setParticipantDragSource('');
+  };
+
   const addParticipant = () => {
     const names = nameInput.split(/\n|,/).map((name) => name.trim()).filter(Boolean);
     if (!names.length) return;
@@ -503,6 +532,7 @@ function OverwatchRandomPicker() {
     setSearchTerm('');
     setSwapSource('');
     setDragSource('');
+    setParticipantDragSource('');
   };
 
   const copyResult = async () => {
@@ -632,7 +662,10 @@ function OverwatchRandomPicker() {
             <button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-base font-semibold text-white/80 transition hover:bg-white/10">전체 초기화</button>
             <button onClick={copyResult} className="rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-base font-semibold text-white/80 transition hover:bg-white/10">결과 복사</button>
           </div>
-          <div className="mt-3 text-base leading-8 text-cyan-100/72">새로고침하거나 나중에 다시 들어와도 전체 초기화 전까지 현재 상태가 유지되며, 팀 배치 후 드래그 이동으로도 슬롯 교환이 가능합니다.</div>
+          <div className="mt-4 rounded-2xl border border-cyan-300/12 bg-cyan-300/[0.06] px-4 py-4 text-base leading-8 text-cyan-100/72">
+            <div>• 새로고침하거나 나중에 다시 들어와도 전체 초기화 전까지 현재 상태가 유지됩니다.</div>
+            <div className="mt-1">• 팀 배치 후 슬롯은 드래그 이동으로도 교환할 수 있습니다.</div>
+          </div>
         </div>
       </div>
 
@@ -658,7 +691,37 @@ function OverwatchRandomPicker() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-            {Object.entries(POSITION_META).map(([key, meta]) => <div key={key} className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6"><div className="flex items-center justify-between gap-3"><div className={`text-base font-extrabold ${meta.text}`}>{meta.icon} {meta.label}</div><div className="text-sm text-white/45">{groupedParticipants[key].length}명</div></div><div className="mt-4 flex min-h-[96px] flex-wrap gap-2">{groupedParticipants[key].length ? groupedParticipants[key].map((item) => <ParticipantChip key={item.id} item={item} onRemove={removeParticipant} assignedInfo={assignmentInfoByName[item.name] || ''} />) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-4 text-base text-white/42">등록된 인원이 없습니다.</div>}</div></div>)}
+            {Object.entries(POSITION_META).map(([key, meta]) => (
+              <div
+                key={key}
+                onDragOver={(e) => {
+                  if (participantDragSource) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleParticipantDrop(key);
+                }}
+                className={`rounded-[24px] border bg-[#0b0f17] p-6 transition ${participantDragSource ? 'border-cyan-300/22 ring-1 ring-cyan-300/12' : 'border-white/10'}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className={`text-base font-extrabold ${meta.text}`}>{meta.icon} {meta.label}</div>
+                  <div className="text-sm text-white/45">{groupedParticipants[key].length}명</div>
+                </div>
+                <div className="mt-4 flex min-h-[96px] flex-wrap gap-2">
+                  {groupedParticipants[key].length ? groupedParticipants[key].map((item) => (
+                    <ParticipantChip
+                      key={item.id}
+                      item={item}
+                      onRemove={removeParticipant}
+                      assignedInfo={assignmentInfoByName[item.name] || ''}
+                      onDragStartChip={handleParticipantDragStart}
+                      onDragEndChip={() => setParticipantDragSource('')}
+                      onBlockedDrag={() => setToastMessage('이미 배치된 선수입니다.')}
+                    />
+                  )) : <div className="rounded-2xl border border-dashed border-white/10 px-4 py-4 text-base text-white/42">등록된 인원이 없습니다.</div>}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
