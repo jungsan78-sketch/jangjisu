@@ -1,11 +1,37 @@
 import Head from 'next/head';
 
+function OverwatchPreview() {
+  return (
+    <div className="relative flex w-full items-center justify-center select-none">
+      <div className="pointer-events-none absolute h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(255,140,58,0.18),rgba(34,42,58,0.10)_42%,transparent_72%)] blur-[2px]" />
+      <img
+        src="/logos/overwatch.png"
+        alt="오버워치"
+        className="relative h-[96px] w-[96px] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.28)]"
+      />
+    </div>
+  );
+}
+
+function SoopPreview() {
+  return (
+    <div className="relative flex w-full items-center justify-center select-none">
+      <div className="pointer-events-none absolute h-[96px] w-[250px] rounded-full bg-[radial-gradient(circle,rgba(25,226,216,0.14),rgba(23,128,255,0.12)_38%,transparent_72%)] blur-[8px]" />
+      <img
+        src="/logos/SOOP.png"
+        alt="SOOP"
+        className="relative max-h-[82px] w-auto max-w-[260px] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.26)]"
+      />
+    </div>
+  );
+}
+
 function UtilityCard({
   href = '',
   title,
   description,
   label,
-  eyebrow = 'UTILITY',
+  eyebrow = '',
   accent = 'orange',
   preview = null,
   status = '',
@@ -36,7 +62,8 @@ function UtilityCard({
       <div className={`pointer-events-none absolute inset-0 ${theme.glow}`} />
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 opacity-90 ${theme.top}`} />
       {preview ? (
-        <div className="relative mx-auto flex h-[168px] max-w-[360px] items-center justify-center rounded-[28px] border border-white/10 bg-[#0f141d] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
+        <div className="relative mx-auto flex h-[168px] max-w-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,14,24,0.98),rgba(7,11,18,0.98))] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
           {preview}
         </div>
       ) : (
@@ -46,8 +73,8 @@ function UtilityCard({
         </>
       )}
       <div className={`relative text-center ${preview ? 'pt-8' : 'pt-44'}`}>
-        <div className="text-xs font-bold tracking-[0.35em] text-white/55">{eyebrow}</div>
-        <div className="mt-3 text-[30px] font-black tracking-[0.08em] text-white sm:text-[38px]">{title}</div>
+        {eyebrow ? <div className="text-xs font-bold tracking-[0.35em] text-white/55">{eyebrow}</div> : null}
+        <div className={`${eyebrow ? 'mt-3' : 'mt-1'} text-[30px] font-black tracking-[0.08em] text-white sm:text-[38px]`}>{title}</div>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/62">{description}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <div className={`inline-flex rounded-full border px-5 py-2 text-sm font-semibold transition ${theme.badge}`}>{label}</div>
@@ -111,6 +138,7 @@ export default function UtilityHomePage() {
               title="오버워치 랜덤뽑기"
               description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 드래그 이동까지 포함한 방송용 팀 편성 툴"
               label="실행하기"
+              preview={<OverwatchPreview />}
             />
 
             <UtilityCard
@@ -118,10 +146,9 @@ export default function UtilityHomePage() {
               description="현재 미완성"
               label="현재 미완성"
               status="미완성"
-              eyebrow="SOOP PLATFORM"
               accent="soop"
               disabled
-              preview={<span className="text-[72px] font-black leading-none tracking-[0.08em] text-white sm:text-[92px]">SOOP</span>}
+              preview={<SoopPreview />}
             />
           </section>
         </main>
