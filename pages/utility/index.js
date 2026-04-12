@@ -3,14 +3,12 @@ import Head from 'next/head';
 function OverwatchPreview() {
   return (
     <div className="flex items-center justify-center select-none">
-      <div className="relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(14,18,26,0.05)_56%,transparent_74%)] shadow-[0_16px_34px_rgba(0,0,0,0.26)]">
-        <svg viewBox="0 0 256 256" className="h-[98px] w-[98px] object-contain" aria-label="Overwatch logo">
-          <path d="M55 152A92 92 0 0 1 35 128C35 76.6 76.6 35 128 35C179.4 35 221 76.6 221 128A92 92 0 0 1 201 152" fill="none" stroke="#2E3A49" strokeWidth="20" strokeLinecap="round" />
-          <path d="M76 73A70 70 0 0 1 180 73" fill="none" stroke="#F36F14" strokeWidth="22" strokeLinecap="round" />
-          <path d="M128 86L151 154L128 139L105 154L128 86Z" fill="#2E3A49" />
-          <path d="M83 134L118 166H138L173 134" fill="none" stroke="#2E3A49" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="128" cy="174" r="5" fill="#2E3A49" opacity="0.85" />
-        </svg>
+      <div className="relative flex h-[116px] w-[116px] items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),rgba(14,18,26,0.06)_58%,transparent_76%)] shadow-[0_18px_34px_rgba(0,0,0,0.28)]">
+        <img
+          src="/logos/overwatch.png"
+          alt="오버워치"
+          className="relative h-[90px] w-[90px] object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.24)]"
+        />
       </div>
     </div>
   );
@@ -19,18 +17,13 @@ function OverwatchPreview() {
 function SoopPreview() {
   return (
     <div className="flex items-center justify-center select-none">
-      <svg viewBox="0 0 860 320" className="w-[290px] max-w-full object-contain" aria-label="SOOP logo">
-        <path d="M153.8 250.4C92.2 250.4 51.5 222 41.8 173.7H110.2C117.1 192.2 132.4 201.5 152.8 201.5C172.1 201.5 183.7 193.6 183.7 179.8C183.7 164.9 169.3 158.4 138.5 151L111.5 144.7C62.7 133.3 35.7 108.8 35.7 66.9C35.7 15.6 78.2 -19.4 146.9 -19.4C210.9 -19.4 250.7 8 259.5 55.1H194.3C187.5 38 173.5 29.6 153.1 29.6C134.6 29.6 123.4 37.1 123.4 50C123.4 63.3 135.4 69.3 163.7 75.8L190.9 82C245.9 94.8 271.9 118.6 271.9 163.8C271.9 217.8 226.1 250.4 153.8 250.4Z" fill="#F5F7FA" transform="translate(0 36)" />
-        <path d="M698.8 -11.9H778.7C827.2 -11.9 858 12.8 858 53.5C858 94.9 827.2 119.2 778.7 119.2H747.1V248.8H698.8V-11.9ZM773.9 79.3C796.4 79.3 808.5 69.6 808.5 53.5C808.5 37.3 796.4 27.7 773.9 27.7H747.1V79.3H773.9Z" fill="#F5F7FA" transform="translate(0 36)" />
-        <path fillRule="evenodd" clipRule="evenodd" d="M330 116C330 52.5 381.5 1 445 1C470.2 1 492.4 9.1 510 22.9C527.6 9.1 549.8 1 575 1C638.5 1 690 52.5 690 116C690 179.5 638.5 231 575 231C549.8 231 527.6 222.9 510 209.1C492.4 222.9 470.2 231 445 231C381.5 231 330 179.5 330 116ZM445 51.5C409.4 51.5 380.5 80.4 380.5 116C380.5 151.6 409.4 180.5 445 180.5C480.6 180.5 509.5 151.6 509.5 116C509.5 80.4 480.6 51.5 445 51.5ZM575 51.5C539.4 51.5 510.5 80.4 510.5 116C510.5 151.6 539.4 180.5 575 180.5C610.6 180.5 639.5 151.6 639.5 116C639.5 80.4 610.6 51.5 575 51.5Z" fill="url(#soopGradient)" transform="translate(0 36)" />
-        <rect x="437" y="126" width="146" height="52" rx="26" fill="url(#soopGradient)" />
-        <defs>
-          <linearGradient id="soopGradient" x1="331.5" y1="142" x2="690" y2="142" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#1780FF" />
-            <stop offset="1" stopColor="#19E2D8" />
-          </linearGradient>
-        </defs>
-      </svg>
+      <div className="relative flex items-center justify-center rounded-[22px] border border-cyan-300/10 bg-[linear-gradient(180deg,rgba(10,20,31,0.96),rgba(7,13,22,0.98))] px-7 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
+        <img
+          src="/logos/SOOP.png"
+          alt="SOOP"
+          className="relative h-[74px] w-auto object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)]"
+        />
+      </div>
     </div>
   );
 }
