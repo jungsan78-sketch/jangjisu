@@ -62,7 +62,7 @@ const TEAM_ACCENTS = [
     header: 'from-amber-300/40 via-amber-400/18 to-amber-500/8 border-amber-200/50',
     badge: 'border-amber-200/55 bg-amber-400/22 text-amber-50',
   },
-];
+};
 
 const MAP_POOL = ['부산', '리장 타워', '일리오스', '왕의 길', '할리우드', '눔바니', '66번 국도', '감시 기지: 지브롤터', '서킷 로얄', '파라이소'];
 const OUTER_CARD = 'rounded-[26px] border border-[#2a4e86]/55 bg-[linear-gradient(180deg,rgba(10,15,25,0.97),rgba(7,10,17,0.98))] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)]';
@@ -377,18 +377,14 @@ export default function OverwatchRandomPage() {
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-[116rem] items-center justify-between gap-4 px-5 py-4 lg:px-8">
             <a href="/" className="block h-14 w-14 overflow-hidden rounded-full border border-[#335b95]/65 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:scale-[1.07] hover:border-cyan-300/40 hover:shadow-[0_0_36px_rgba(96,165,250,0.28)]"><img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" /></a>
+            <div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">오버워치 랜덤뽑기</div>
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <a href="/utility" className="inline-flex items-center gap-2 rounded-full border border-cyan-300/28 bg-cyan-300/12 px-4 py-2.5 text-base font-medium text-cyan-100 transition hover:bg-cyan-300/18">유틸리티</a>
             </nav>
           </div>
         </header>
         <main className="relative mx-auto max-w-[116rem] px-5 py-8 lg:px-8">
-          <section className="rounded-[34px] border border-[#2a4e86]/55 bg-[linear-gradient(145deg,rgba(18,25,39,0.98),rgba(10,12,18,0.98))] p-8 shadow-2xl shadow-black/30 lg:p-10">
-            <div className="text-sm font-bold tracking-[0.42em] text-orange-200/58">UTILITY TOOL</div>
-            <div className="mt-4 text-[38px] font-black tracking-tight text-white sm:text-[52px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-4xl text-base leading-8 text-white/68">버튼 강조, 팀 컬러 강화, 불필요한 검색 제거, 결과 칩 가독성 개선까지 반영한 버전입니다.</p>
-          </section>
-          <section className="mt-8 grid gap-6 xl:grid-cols-[300px_280px_minmax(0,1fr)] items-start">
+          <section className="grid gap-6 xl:grid-cols-[300px_280px_minmax(0,1fr)] items-start">
             <SectionCard title="리모컨" desc="등록, 인원 관리, 팀 수 설정만 왼쪽에 남겼습니다." className="xl:sticky xl:top-24">
               <div className="grid gap-3">
                 <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="스트리머 이름 입력 (쉼표/엔터 지원)" className={FIELD_CLASS} />
