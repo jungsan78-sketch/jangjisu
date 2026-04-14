@@ -5,39 +5,63 @@ const POSITION_META = {
   tank: {
     label: '탱커',
     icon: '🛡️',
-    chip: 'border-sky-300/60 bg-sky-500 text-white shadow-[0_10px_22px_rgba(14,165,233,0.22)]',
+    chip: 'border-sky-200/90 bg-sky-500 text-white shadow-[0_10px_22px_rgba(14,165,233,0.28)]',
+    teamChip: 'border-sky-200/90 bg-sky-500 text-white shadow-[0_10px_22px_rgba(14,165,233,0.24)]',
     card: 'border-sky-400/24 bg-[linear-gradient(180deg,rgba(9,23,42,0.98),rgba(8,13,24,0.98))]',
     slot: 'border-sky-300/24 bg-[linear-gradient(180deg,rgba(13,49,82,0.98),rgba(10,24,41,0.98))] text-sky-50',
   },
   dps: {
     label: '딜러',
     icon: '⚔️',
-    chip: 'border-orange-300/60 bg-orange-500 text-white shadow-[0_10px_22px_rgba(249,115,22,0.22)]',
+    chip: 'border-orange-200/90 bg-orange-500 text-white shadow-[0_10px_22px_rgba(249,115,22,0.28)]',
+    teamChip: 'border-orange-200/90 bg-orange-500 text-white shadow-[0_10px_22px_rgba(249,115,22,0.24)]',
     card: 'border-orange-400/24 bg-[linear-gradient(180deg,rgba(38,19,9,0.98),rgba(18,12,10,0.98))]',
     slot: 'border-orange-300/24 bg-[linear-gradient(180deg,rgba(92,46,12,0.98),rgba(34,18,10,0.98))] text-orange-50',
   },
   support: {
     label: '힐러',
     icon: '💚',
-    chip: 'border-emerald-300/60 bg-emerald-500 text-white shadow-[0_10px_22px_rgba(16,185,129,0.22)]',
+    chip: 'border-emerald-200/90 bg-emerald-500 text-white shadow-[0_10px_22px_rgba(16,185,129,0.28)]',
+    teamChip: 'border-emerald-200/90 bg-emerald-500 text-white shadow-[0_10px_22px_rgba(16,185,129,0.24)]',
     card: 'border-emerald-400/24 bg-[linear-gradient(180deg,rgba(8,30,22,0.98),rgba(8,15,14,0.98))]',
     slot: 'border-emerald-300/24 bg-[linear-gradient(180deg,rgba(13,73,56,0.98),rgba(9,29,22,0.98))] text-emerald-50',
   },
   random: {
     label: '랜덤',
     icon: '❓',
-    chip: 'border-violet-300/60 bg-violet-500 text-white shadow-[0_10px_22px_rgba(139,92,246,0.22)]',
+    chip: 'border-violet-200/90 bg-violet-500 text-white shadow-[0_10px_22px_rgba(139,92,246,0.28)]',
+    teamChip: 'border-violet-200/90 bg-violet-500 text-white shadow-[0_10px_22px_rgba(139,92,246,0.24)]',
     card: 'border-violet-400/24 bg-[linear-gradient(180deg,rgba(25,15,39,0.98),rgba(13,11,19,0.98))]',
     slot: 'border-violet-300/24 bg-[linear-gradient(180deg,rgba(63,33,104,0.98),rgba(21,14,34,0.98))] text-violet-50',
   },
 };
 
 const TEAM_ACCENTS = [
-  'from-sky-300/22 via-sky-400/8 to-transparent border-sky-300/28',
-  'from-orange-300/22 via-orange-400/8 to-transparent border-orange-300/28',
-  'from-emerald-300/22 via-emerald-400/8 to-transparent border-emerald-300/28',
-  'from-violet-300/22 via-violet-400/8 to-transparent border-violet-300/28',
-  'from-rose-300/22 via-rose-400/8 to-transparent border-rose-300/28',
+  {
+    wrapper: 'border-sky-300/32 bg-[linear-gradient(180deg,rgba(15,39,68,0.98),rgba(10,18,30,0.98))]',
+    header: 'from-sky-300/40 via-sky-400/18 to-sky-500/8 border-sky-200/50',
+    badge: 'border-sky-200/55 bg-sky-400/22 text-sky-50',
+  },
+  {
+    wrapper: 'border-rose-300/32 bg-[linear-gradient(180deg,rgba(68,23,31,0.98),rgba(25,12,16,0.98))]',
+    header: 'from-rose-300/40 via-rose-400/18 to-rose-500/8 border-rose-200/50',
+    badge: 'border-rose-200/55 bg-rose-400/22 text-rose-50',
+  },
+  {
+    wrapper: 'border-emerald-300/32 bg-[linear-gradient(180deg,rgba(20,55,44,0.98),rgba(11,20,17,0.98))]',
+    header: 'from-emerald-300/40 via-emerald-400/18 to-emerald-500/8 border-emerald-200/50',
+    badge: 'border-emerald-200/55 bg-emerald-400/22 text-emerald-50',
+  },
+  {
+    wrapper: 'border-violet-300/32 bg-[linear-gradient(180deg,rgba(44,28,76,0.98),rgba(16,12,28,0.98))]',
+    header: 'from-violet-300/40 via-violet-400/18 to-violet-500/8 border-violet-200/50',
+    badge: 'border-violet-200/55 bg-violet-400/22 text-violet-50',
+  },
+  {
+    wrapper: 'border-amber-300/32 bg-[linear-gradient(180deg,rgba(74,49,18,0.98),rgba(24,16,8,0.98))]',
+    header: 'from-amber-300/40 via-amber-400/18 to-amber-500/8 border-amber-200/50',
+    badge: 'border-amber-200/55 bg-amber-400/22 text-amber-50',
+  },
 ];
 
 const MAP_POOL = ['부산', '리장 타워', '일리오스', '왕의 길', '할리우드', '눔바니', '66번 국도', '감시 기지: 지브롤터', '서킷 로얄', '파라이소'];
@@ -91,9 +115,10 @@ function OptionPill({ active, onClick, children, tone = 'blue' }) {
   return <button onClick={onClick} className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${active ? activeClass : idleClass}`}>{children}</button>;
 }
 
-function PersonChip({ item, meta, muted = false, onRemove = null, draggable = false, onDragStart = null, onDragEnd = null }) {
+function PersonChip({ item, meta, muted = false, onRemove = null, draggable = false, onDragStart = null, onDragEnd = null, teamStyle = false }) {
+  const styleClass = teamStyle ? meta.teamChip : meta.chip;
   return (
-    <div draggable={draggable} onDragStart={onDragStart || undefined} onDragEnd={onDragEnd || undefined} className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${meta.chip} ${muted ? 'opacity-55 saturate-50' : ''} ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+    <div draggable={draggable} onDragStart={onDragStart || undefined} onDragEnd={onDragEnd || undefined} className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-black ${styleClass} ${muted ? 'opacity-55 saturate-50' : ''} ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}>
       <span>{item.name}</span>
       {onRemove ? <button onClick={() => onRemove(item.name)} className="rounded-full px-1 text-white/70 transition hover:text-white">×</button> : null}
     </div>
@@ -131,23 +156,23 @@ function RoleLane({ title, type, participants, assignedNames, onRemove, onPartic
 }
 
 function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, onAssign, onToggleLock, dragState, onSlotDragStart, onSlotDragEnd, onSlotDrop, onCaptainChange }) {
-  const accent = TEAM_ACCENTS[(teamNo - 1) % TEAM_ACCENTS.length];
+  const theme = TEAM_ACCENTS[(teamNo - 1) % TEAM_ACCENTS.length];
   const teamNames = roles.map((role) => assignments[`${teamNo}-${role}`]).filter(Boolean);
   return (
-    <div className="rounded-[24px] border border-[#2a4e86]/55 bg-[#0a1019] p-4 shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
-      <div className={`mb-4 rounded-[18px] border bg-gradient-to-r px-4 py-4 ${accent}`}>
+    <div className={`rounded-[24px] border p-4 shadow-[0_18px_42px_rgba(0,0,0,0.24)] ${theme.wrapper}`}>
+      <div className={`mb-4 rounded-[18px] border bg-gradient-to-r px-4 py-4 ${theme.header}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[22px] font-black tracking-tight text-white">TEAM {teamNo}</div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/15 bg-black/15 px-3 py-1 text-xs font-bold text-white/72">팀장</span>
-              <select value={captain || ''} onChange={(e) => onCaptainChange(teamNo, e.target.value)} className="rounded-xl border border-[#335b95]/65 bg-[#0e1724] px-3 py-2 text-sm font-bold text-white outline-none">
+              <span className={`rounded-full border px-3 py-1 text-xs font-bold ${theme.badge}`}>팀장</span>
+              <select value={captain || ''} onChange={(e) => onCaptainChange(teamNo, e.target.value)} className="rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-sm font-bold text-white outline-none">
                 <option value="">팀장 선택</option>
                 {teamNames.map((name) => <option key={`${teamNo}-${name}`} value={name}>{name}</option>)}
               </select>
             </div>
           </div>
-          <div className="rounded-full border border-[#335b95]/70 bg-[#111a28] px-3 py-1 text-xs font-bold tracking-[0.22em] text-[#9dc6ff]">DRAW</div>
+          <div className={`rounded-full border px-3 py-1 text-xs font-bold tracking-[0.22em] ${theme.badge}`}>DRAW</div>
         </div>
       </div>
       <div className="space-y-3">
@@ -159,6 +184,7 @@ function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, o
           const usedNames = new Set(Object.entries(assignments).filter(([slot, name]) => slot !== key && name).map(([, name]) => name));
           const candidates = participants.filter((item) => isAssignable(item, role) && (!usedNames.has(item.name) || item.name === selected));
           const activeDrop = dragState && dragState.slotKey !== key && (dragState.type === 'participant' ? isAssignable(dragState.item, role) : getRoleType(dragState.role) === roleType);
+          const selectedItem = selected ? participants.find((item) => item.name === selected) : null;
           return (
             <div key={key} onDragOver={(e) => { if (dragState) e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); onSlotDrop(key, role); }} className={`rounded-[20px] border px-4 py-4 transition ${selected ? roleMeta.slot : 'border-[#335b95]/60 bg-[#111827] text-white'} ${activeDrop ? 'border-cyan-300/40 ring-2 ring-cyan-300/25' : ''}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -166,12 +192,12 @@ function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, o
                 <button onClick={() => onToggleLock(key)} className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${locks[key] ? 'border border-cyan-300/28 bg-cyan-300/12 text-cyan-100' : 'border border-[#335b95]/65 bg-[#0d1624] text-white/60 hover:bg-[#142133]'}`}>{locks[key] ? '잠금됨' : '잠금'}</button>
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                {selected ? (
-                  <div draggable onDragStart={() => onSlotDragStart({ slotKey: key, role, name: selected })} onDragEnd={onSlotDragEnd} className={`inline-flex cursor-grab items-center gap-2 rounded-xl border px-3 py-2 text-sm font-black active:cursor-grabbing ${roleMeta.chip}`}>
-                    <span>{selected}</span>
-                    {captain === selected ? <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-black">팀장</span> : null}
+                {selectedItem ? (
+                  <div draggable onDragStart={() => onSlotDragStart({ slotKey: key, role, name: selected })} onDragEnd={onSlotDragEnd} className="cursor-grab active:cursor-grabbing">
+                    <PersonChip item={selectedItem} meta={roleMeta} teamStyle />
                   </div>
                 ) : <div className="rounded-xl border border-dashed border-[#335b95]/60 px-3 py-2 text-sm text-white/38">빈 슬롯</div>}
+                {captain === selected ? <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${theme.badge}`}>팀장</span> : null}
               </div>
               <select value={selected} onChange={(e) => onAssign(key, e.target.value)} className="w-full rounded-2xl border border-[#335b95]/65 bg-[#0c1320] px-4 py-3 text-base text-white outline-none focus:border-cyan-300/35">
                 <option value="">선수 선택</option>
@@ -194,21 +220,16 @@ export default function OverwatchRandomPage() {
   const [participants, setParticipants] = useState([]);
   const [assignments, setAssignments] = useState({});
   const [locks, setLocks] = useState({});
-  const [searchTerm, setSearchTerm] = useState('');
   const [dragState, setDragState] = useState(null);
   const [currentMap, setCurrentMap] = useState('');
 
   const roles = useMemo(() => getRoleTemplate(mode), [mode]);
-  const filteredParticipants = useMemo(() => {
-    const lower = searchTerm.trim().toLowerCase();
-    return participants.filter((item) => !lower || item.name.toLowerCase().includes(lower));
-  }, [participants, searchTerm]);
   const grouped = useMemo(() => ({
-    tank: filteredParticipants.filter((item) => item.position === 'tank'),
-    dps: filteredParticipants.filter((item) => item.position === 'dps'),
-    support: filteredParticipants.filter((item) => item.position === 'support'),
-    random: filteredParticipants.filter((item) => item.position === 'random'),
-  }), [filteredParticipants]);
+    tank: participants.filter((item) => item.position === 'tank'),
+    dps: participants.filter((item) => item.position === 'dps'),
+    support: participants.filter((item) => item.position === 'support'),
+    random: participants.filter((item) => item.position === 'random'),
+  }), [participants]);
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
 
   const handleTeamCountChange = (value) => {
@@ -261,13 +282,12 @@ export default function OverwatchRandomPage() {
   const handleToggleLock = (slotKey) => setLocks((prev) => ({ ...prev, [slotKey]: !prev[slotKey] }));
 
   const handleShuffle = () => {
-    const groupedAll = {
-      tank: participants.filter((item) => item.position === 'tank'),
-      dps: participants.filter((item) => item.position === 'dps'),
-      support: participants.filter((item) => item.position === 'support'),
-      random: participants.filter((item) => item.position === 'random'),
+    const pools = {
+      tank: shuffleArray(participants.filter((item) => item.position === 'tank')),
+      dps: shuffleArray(participants.filter((item) => item.position === 'dps')),
+      support: shuffleArray(participants.filter((item) => item.position === 'support')),
+      random: shuffleArray(participants.filter((item) => item.position === 'random')),
     };
-    const pools = { tank: shuffleArray(groupedAll.tank), dps: shuffleArray(groupedAll.dps), support: shuffleArray(groupedAll.support), random: shuffleArray(groupedAll.random) };
     const next = { ...assignments };
     const used = new Set(Object.entries(next).filter(([key, name]) => locks[key] && name).map(([, name]) => name));
     const pull = (type) => {
@@ -366,10 +386,10 @@ export default function OverwatchRandomPage() {
           <section className="rounded-[34px] border border-[#2a4e86]/55 bg-[linear-gradient(145deg,rgba(18,25,39,0.98),rgba(10,12,18,0.98))] p-8 shadow-2xl shadow-black/30 lg:p-10">
             <div className="text-sm font-bold tracking-[0.42em] text-orange-200/58">UTILITY TOOL</div>
             <div className="mt-4 text-[38px] font-black tracking-tight text-white sm:text-[52px]">오버워치 랜덤뽑기</div>
-            <p className="mt-4 max-w-4xl text-base leading-8 text-white/68">리모컨은 더 압축하고, 포지션 보드 버튼들과 결과판 칩 가독성을 높였습니다. 포지션 보드에서는 드래그로 포지션 자체 변경도 가능합니다.</p>
+            <p className="mt-4 max-w-4xl text-base leading-8 text-white/68">버튼 강조, 팀 컬러 강화, 불필요한 검색 제거, 결과 칩 가독성 개선까지 반영한 버전입니다.</p>
           </section>
           <section className="mt-8 grid gap-6 xl:grid-cols-[300px_280px_minmax(0,1fr)] items-start">
-            <SectionCard title="리모컨" desc="등록, 검색, 인원 관리만 왼쪽에 남기고 팀장 입력은 결과판으로 이동했습니다." className="xl:sticky xl:top-24">
+            <SectionCard title="리모컨" desc="등록, 인원 관리, 팀 수 설정만 왼쪽에 남겼습니다." className="xl:sticky xl:top-24">
               <div className="grid gap-3">
                 <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="스트리머 이름 입력 (쉼표/엔터 지원)" className={FIELD_CLASS} />
                 <div className="grid grid-cols-[1fr_auto] gap-3">
@@ -381,7 +401,6 @@ export default function OverwatchRandomPage() {
                   </select>
                   <button onClick={addParticipant} className="rounded-2xl border border-cyan-300/30 bg-cyan-300/14 px-5 py-3 text-base font-bold text-cyan-100 transition hover:bg-cyan-300/20">등록</button>
                 </div>
-                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="포지션 보드 검색" className={FIELD_CLASS} />
               </div>
               <div className="mt-4 rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4">
                 <div className="text-sm text-white/46">등록 인원</div>
@@ -401,13 +420,13 @@ export default function OverwatchRandomPage() {
                 </div>
               </div>
             </SectionCard>
-            <SectionCard title="포지션 보드" desc="드래프트 칩 느낌으로 바꾸고, 여기서 버튼 조작도 바로 할 수 있게 정리했습니다.">
+            <SectionCard title="포지션 보드" desc="검색을 제거하고 조작 버튼을 더 크게, 더 진하게 정리했습니다.">
               <div className="flex flex-wrap gap-2">
-                <button onClick={handleShuffle} className="rounded-2xl border border-orange-300/35 bg-orange-400/16 px-4 py-3 text-sm font-black text-orange-50 transition hover:bg-orange-400/22">랜덤 섞기</button>
-                <button onClick={handleResetUnlocked} className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-3 text-sm font-bold text-white/82 transition hover:bg-[#172334]">잠금 제외 초기화</button>
-                <button onClick={handleFullReset} className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-3 text-sm font-bold text-white/82 transition hover:bg-[#172334]">초기화</button>
-                <button onClick={copyResult} className="rounded-2xl border border-cyan-300/30 bg-cyan-300/14 px-4 py-3 text-sm font-bold text-cyan-100 transition hover:bg-cyan-300/20">결과 복사</button>
-                <button onClick={drawMap} className="rounded-2xl border border-violet-300/35 bg-violet-400/16 px-4 py-3 text-sm font-black text-violet-50 transition hover:bg-violet-400/22">맵 뽑기</button>
+                <button onClick={handleShuffle} className="rounded-2xl border border-orange-200/55 bg-orange-500 px-6 py-4 text-base font-black text-white shadow-[0_14px_30px_rgba(249,115,22,0.28)] transition hover:brightness-110">랜덤 섞기</button>
+                <button onClick={handleResetUnlocked} className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4 text-sm font-bold text-white/82 transition hover:bg-[#172334]">잠금 제외 초기화</button>
+                <button onClick={handleFullReset} className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4 text-sm font-bold text-white/82 transition hover:bg-[#172334]">초기화</button>
+                <button onClick={copyResult} className="rounded-2xl border border-cyan-300/35 bg-cyan-500/18 px-4 py-4 text-sm font-bold text-cyan-100 transition hover:bg-cyan-500/24">결과 복사</button>
+                <button onClick={drawMap} className="rounded-2xl border border-violet-300/35 bg-violet-500/18 px-4 py-4 text-sm font-black text-violet-50 transition hover:bg-violet-500/24">맵 뽑기</button>
               </div>
               {currentMap ? <div className="mt-3 inline-flex rounded-xl border border-violet-300/35 bg-violet-400/16 px-4 py-2 text-sm font-black text-violet-50">현재 맵: {currentMap}</div> : null}
               <div className="mt-4 space-y-4">
@@ -418,7 +437,7 @@ export default function OverwatchRandomPage() {
               </div>
               <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm leading-7 text-cyan-100/80">포지션 보드에서 다른 줄로 드래그하면 포지션이 바뀝니다. 미배정 칩은 슬롯에 직접 드래그할 수 있고, 결과판 칩은 같은 포지션끼리 교체됩니다.</div>
             </SectionCard>
-            <SectionCard title="팀 결과판" desc="팀장은 각 팀 결과판 안에서 선택하고, 결과는 칩형으로 더 또렷하게 보이게 바꿨습니다.">
+            <SectionCard title="팀 결과판" desc="팀마다 컬러를 넣고, 결과 칩도 더 선명한 드래프트 느낌으로 바꿨습니다.">
               <div className="grid gap-4 md:grid-cols-2">
                 {Array.from({ length: teamCount }, (_, idx) => idx + 1).map((teamNo) => (
                   <TeamPanel key={teamNo} teamNo={teamNo} captain={captains[teamNo] || ''} roles={roles} assignments={assignments} locks={locks} participants={participants} onAssign={handleAssign} onToggleLock={handleToggleLock} dragState={dragState} onSlotDragStart={handleSlotDragStart} onSlotDragEnd={handleDragEnd} onSlotDrop={handleSlotDrop} onCaptainChange={(no, value) => setCaptains((prev) => ({ ...prev, [no]: value }))} />
