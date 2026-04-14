@@ -101,9 +101,14 @@ function OptionPill({ active, onClick, children, tone = 'blue' }) {
   );
 }
 
-function PersonChip({ item, meta, muted = false, onRemove = null, compact = false }) {
+function PersonChip({ item, meta, muted = false, onRemove = null, compact = false, draggable = false, onDragStart = null, onDragEnd = null }) {
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} font-semibold ${meta.chip} ${muted ? 'opacity-70' : ''}`}>
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart || undefined}
+      onDragEnd={onDragEnd || undefined}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} font-semibold ${meta.chip} ${muted ? 'opacity-70' : ''} ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
+    >
       <span>{item.name}</span>
       {onRemove ? <button onClick={() => onRemove(item.name)} className="rounded-full px-1 text-white/45 transition hover:text-red-200">×</button> : null}
     </div>
@@ -127,7 +132,7 @@ function RoleBoard({ title, type, participants, onRemove }) {
   );
 }
 
-function WaitingList({ items, assignedNames, searchTerm }) {
+function WaitingList({ items, assignedNames, searchTerm, onParticipantDragStart, onParticipantDragEnd }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -139,7 +144,19 @@ function WaitingList({ items, assignedNames, searchTerm }) {
           <div className="flex flex-wrap gap-2">
             {items.map((item) => {
               const meta = POSITION_META[item.position] || POSITION_META.random;
-              return <PersonChip key={item.id} item={item} meta={meta} muted={assignedNames.has(item.name)} compact />;
+              const isAssigned = assignedNames.has(item.name);
+              return (
+                <PersonChip
+                  key={item.id}
+                  item={item}
+                  meta={meta}
+                  muted={isAssigned}
+                  compact
+                  draggable={!isAssigned}
+                  onDragStart={() => onParticipantDragStart(item)}
+                  onDragEnd={onParticipantDragEnd}
+                />
+              );
             })}
           </div>
         ) : (
@@ -150,7 +167,7 @@ function WaitingList({ items, assignedNames, searchTerm }) {
   );
 }
 
-function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, onAssign, onToggleLock }) {
+function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, onAssign, onToggleLock, dragState, onSlotDragStart, onSlotDragEnd, onSlotDrop }) {
   const accent = TEAM_ACCENTS[(teamNo - 1) % TEAM_ACCENTS.length];
   return (
     <div className="rounded-[26px] border border-[#2a4e86]/55 bg-[#0a1019] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
@@ -171,8 +188,19 @@ function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, o
           const selected = assignments[key] || '';
           const usedNames = new Set(Object.entries(assignments).filter(([slot, name]) => slot !== key && name).map(([, name]) => name));
           const candidates = participants.filter((item) => isAssignable(item, role) && (!usedNames.has(item.name) || item.name === selected));
+          const isActiveDrop = dragState && dragState.slotKey !== key && (dragState.type === 'participant' ? isAssignable(dragState.item, role) : getRoleType(dragState.role) === roleType);
           return (
-            <div key={key} className={`rounded-[20px] border px-4 py-4 ${selected ? roleMeta.slot : 'border-[#335b95]/60 bg-[#111827] text-white'}`}>
+            <div
+              key={key}
+              onDragOver={(e) => {
+                if (dragState) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                onSlotDrop(key, role);
+              }}
+              className={`rounded-[20px] border px-4 py-4 transition ${selected ? roleMeta.slot : 'border-[#335b95]/60 bg-[#111827] text-white'} ${isActiveDrop ? 'ring-2 ring-cyan-300/30 border-cyan-300/40' : ''}`}
+            >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-base font-bold">{roleMeta.icon} {role}</div>
                 <button
@@ -182,6 +210,17 @@ function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, o
                   {locks[key] ? '잠금됨' : '잠금'}
                 </button>
               </div>
+              {selected ? (
+                <div
+                  draggable
+                  onDragStart={() => onSlotDragStart({ slotKey: key, role, name: selected })}
+                  onDragEnd={onSlotDragEnd}
+                  className="mb-3 inline-flex cursor-grab items-center gap-2 rounded-full border border-cyan-300/22 bg-cyan-300/10 px-3 py-2 text-sm font-semibold text-cyan-100 active:cursor-grabbing"
+                >
+                  <span>드래그 이동</span>
+                  <span>{selected}</span>
+                </div>
+              ) : null}
               <select
                 value={selected}
                 onChange={(e) => onAssign(key, e.target.value)}
@@ -210,6 +249,7 @@ export default function OverwatchRandomPage() {
   const [assignments, setAssignments] = useState({});
   const [locks, setLocks] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [dragState, setDragState] = useState(null);
 
   const roles = useMemo(() => getRoleTemplate(mode), [mode]);
   const grouped = useMemo(() => ({
@@ -218,7 +258,6 @@ export default function OverwatchRandomPage() {
     support: participants.filter((item) => item.position === 'support'),
     random: participants.filter((item) => item.position === 'random'),
   }), [participants]);
-  const totalSlots = teamCount * roles.length;
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
   const waitingParticipants = useMemo(() => {
     const lower = searchTerm.trim().toLowerCase();
@@ -319,6 +358,51 @@ export default function OverwatchRandomPage() {
     try { await navigator.clipboard.writeText(text); } catch {}
   };
 
+  const handleParticipantDragStart = (item) => {
+    setDragState({ type: 'participant', item });
+  };
+
+  const handleSlotDragStart = (payload) => {
+    setDragState({ type: 'slot', ...payload });
+  };
+
+  const handleDragEnd = () => {
+    setDragState(null);
+  };
+
+  const handleSlotDrop = (targetSlotKey, targetRole) => {
+    if (!dragState) return;
+
+    if (dragState.type === 'participant') {
+      if (!isAssignable(dragState.item, targetRole)) {
+        setDragState(null);
+        return;
+      }
+      handleAssign(targetSlotKey, dragState.item.name);
+      setDragState(null);
+      return;
+    }
+
+    if (dragState.type === 'slot') {
+      if (dragState.slotKey === targetSlotKey) {
+        setDragState(null);
+        return;
+      }
+      if (getRoleType(dragState.role) !== getRoleType(targetRole)) {
+        setDragState(null);
+        return;
+      }
+      setAssignments((prev) => {
+        const next = { ...prev };
+        const targetName = next[targetSlotKey] || '';
+        next[targetSlotKey] = dragState.name || '';
+        next[dragState.slotKey] = targetName;
+        return next;
+      });
+      setDragState(null);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -363,15 +447,13 @@ export default function OverwatchRandomPage() {
                 </div>
                 <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="대기명단 검색" className={FIELD_CLASS} />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4"><div className="text-sm text-white/46">등록 인원</div><div className="mt-2 text-[28px] font-black text-white">{participants.length}</div></div>
-                <div className="rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4"><div className="text-sm text-white/46">총 슬롯</div><div className="mt-2 text-[28px] font-black text-white">{totalSlots}</div></div>
-              </div>
+              <div className="mt-4 rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4"><div className="text-sm text-white/46">등록 인원</div><div className="mt-2 text-[28px] font-black text-white">{participants.length}</div></div>
               <div className="mt-4 flex flex-wrap gap-2">{Object.entries(POSITION_META).map(([key, meta]) => (<div key={key} className={`rounded-full border px-3 py-2 text-sm font-semibold ${meta.chip}`}>{meta.icon} {meta.label} {grouped[key].length}명</div>))}</div>
             </SectionCard>
 
             <SectionCard title="대기명단 / 포지션 분포" desc="검색 결과와 대기실, 포지션 분포를 가운데에서 바로 확인할 수 있습니다." className="xl:h-full">
-              <WaitingList items={waitingParticipants} assignedNames={assignedNames} searchTerm={searchTerm} />
+              <WaitingList items={waitingParticipants} assignedNames={assignedNames} searchTerm={searchTerm} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} />
+              <div className="mt-3 text-xs text-cyan-100/72">대기실 이름을 슬롯으로 끌어놓거나, 배정된 이름을 같은 포지션 슬롯끼리 드래그해서 교체할 수 있습니다.</div>
               <div className="mt-5 grid gap-4 xl:grid-cols-2">
                 <RoleBoard title="탱커" type="tank" participants={grouped.tank} onRemove={removeParticipant} />
                 <RoleBoard title="딜러" type="dps" participants={grouped.dps} onRemove={removeParticipant} />
@@ -415,7 +497,21 @@ export default function OverwatchRandomPage() {
             <SectionCard title="팀 결과판" desc="팀 수가 3팀, 4팀, 5팀으로 늘어나면 아래로 이어서 보이도록 배치했습니다.">
               <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {Array.from({ length: teamCount }, (_, idx) => idx + 1).map((teamNo) => (
-                  <TeamPanel key={teamNo} teamNo={teamNo} captain={captainInputs[teamNo - 1] || ''} roles={roles} assignments={assignments} locks={locks} participants={participants} onAssign={handleAssign} onToggleLock={handleToggleLock} />
+                  <TeamPanel
+                    key={teamNo}
+                    teamNo={teamNo}
+                    captain={captainInputs[teamNo - 1] || ''}
+                    roles={roles}
+                    assignments={assignments}
+                    locks={locks}
+                    participants={participants}
+                    onAssign={handleAssign}
+                    onToggleLock={handleToggleLock}
+                    dragState={dragState}
+                    onSlotDragStart={handleSlotDragStart}
+                    onSlotDragEnd={handleDragEnd}
+                    onSlotDrop={handleSlotDrop}
+                  />
                 ))}
               </div>
             </SectionCard>
