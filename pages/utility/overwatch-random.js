@@ -62,7 +62,7 @@ const TEAM_ACCENTS = [
     header: 'from-amber-300/40 via-amber-400/18 to-amber-500/8 border-amber-200/50',
     badge: 'border-amber-200/55 bg-amber-400/22 text-amber-50',
   },
-};
+];
 
 const MAP_POOL = ['부산', '리장 타워', '일리오스', '왕의 길', '할리우드', '눔바니', '66번 국도', '감시 기지: 지브롤터', '서킷 로얄', '파라이소'];
 const OUTER_CARD = 'rounded-[26px] border border-[#2a4e86]/55 bg-[linear-gradient(180deg,rgba(10,15,25,0.97),rgba(7,10,17,0.98))] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)]';
