@@ -156,8 +156,8 @@ export default function UtilityHomePage() {
 
             <UtilityCard
               href="/soop-crews"
-              title="숲 크루 목록"
-              description="두 개의 원본 시트를 기반으로 SOOP 크루 목록을 카드형 독립 페이지로 정리하는 프리뷰입니다."
+              title="종겜 크루 목록"
+              description="종합게임 크루 목록을 카드형 독립 페이지로 정리해 보는 1차 레이아웃 프리뷰입니다."
               label="페이지 열기"
               accent="soop"
               preview={<CrewPreview />}
