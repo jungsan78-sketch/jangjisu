@@ -26,6 +26,19 @@ function SoopPreview() {
   );
 }
 
+function CrewPreview() {
+  return (
+    <div className="relative flex w-full items-center justify-center select-none">
+      <div className="pointer-events-none absolute h-[108px] w-[250px] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.18),rgba(6,182,212,0.10)_48%,transparent_74%)] blur-[10px]" />
+      <div className="relative grid grid-cols-3 gap-3 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,14,24,0.98),rgba(7,11,18,0.98))] px-5 py-4 shadow-[0_16px_34px_rgba(0,0,0,0.22)]">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="h-8 w-8 rounded-full border border-cyan-300/18 bg-[linear-gradient(180deg,rgba(59,130,246,0.22),rgba(255,255,255,0.05))]" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function UtilityCard({
   href = '',
   title,
@@ -139,6 +152,15 @@ export default function UtilityHomePage() {
               description="팀 수 2~10팀, 5:5·6:6 전환, 포지션 등록, 팀장 순서 추첨, 드래그 이동까지 포함한 방송용 팀 편성 툴"
               label="실행하기"
               preview={<OverwatchPreview />}
+            />
+
+            <UtilityCard
+              href="/soop-crews"
+              title="숲 크루 목록"
+              description="두 개의 원본 시트를 기반으로 SOOP 크루 목록을 카드형 독립 페이지로 정리하는 프리뷰입니다."
+              label="페이지 열기"
+              accent="soop"
+              preview={<CrewPreview />}
             />
 
             <UtilityCard
