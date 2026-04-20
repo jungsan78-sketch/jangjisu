@@ -1,4 +1,31 @@
 import Head from 'next/head';
+import { useMemo, useState } from 'react';
+
+const WARDEN = {
+  nickname: '장지수',
+  role: '교도소장',
+  image: 'https://stimg.sooplive.com/LOGO/ia/iamquaddurup/iamquaddurup.jpg',
+  station: 'https://www.sooplive.com/station/iamquaddurup',
+};
+
+const PRISON_MEMBERS = [
+  { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong' },
+  { nickname: '치치', image: 'https://stimg.sooplive.com/LOGO/lo/lomioeov/m/lomioeov.webp', station: 'https://www.sooplive.com/station/lomioeov' },
+  { nickname: '시몽', image: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', station: 'https://www.sooplive.com/station/ximong' },
+  { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul' },
+  { nickname: '아야네세나', image: 'https://stimg.sooplive.com/LOGO/ay/ayanesena/ayanesena.jpg', station: 'https://www.sooplive.com/station/ayanesena' },
+  { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122' },
+  { nickname: '채니', image: 'https://stimg.sooplive.com/LOGO/k1/k1baaa/k1baaa.jpg', station: 'https://www.sooplive.com/station/k1baaa' },
+  { nickname: '코로미', image: 'https://stimg.sooplive.com/LOGO/bx/bxroong/bxroong.jpg', station: 'https://www.sooplive.com/station/bxroong' },
+  { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158' },
+  { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212' },
+  { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714' },
+];
+
+const SCHEDULE_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
+const SAMPLE_SCHEDULES = [
+  { day: 15, member: '장지수', title: '장지수용소 방송' },
+];
 
 function NavChip({ href, label, tone = 'steel', icon = '' }) {
   const toneClass = tone === 'warm'
@@ -22,19 +49,47 @@ function SectionTitle({ title, logo }) {
   );
 }
 
+function ScheduleFilterButton({ active, onClick, children }) {
+  return (
+    <button onClick={onClick} className={`rounded-full border px-4 py-2 text-sm font-black transition ${active ? 'border-amber-200/34 bg-amber-300/14 text-amber-50 shadow-[0_0_22px_rgba(245,158,11,0.10)]' : 'border-slate-200/10 bg-white/[0.045] text-slate-200/70 hover:bg-white/[0.075] hover:text-white'}`}>
+      {children}
+    </button>
+  );
+}
+
 function CalendarPreview() {
+  const [selectedMember, setSelectedMember] = useState('전체');
   const days = Array.from({ length: 35 }, (_, index) => index + 1);
+  const visibleSchedules = useMemo(() => SAMPLE_SCHEDULES.filter((item) => selectedMember === '전체' || item.member === selectedMember), [selectedMember]);
+  const scheduleByDay = useMemo(() => {
+    const map = new Map();
+    visibleSchedules.forEach((item) => {
+      const list = map.get(item.day) || [];
+      list.push(item);
+      map.set(item.day, list);
+    });
+    return map;
+  }, [visibleSchedules]);
+
   return (
     <section id="schedule" className="mt-8 rounded-[32px] border border-slate-200/10 bg-white/[0.035] p-6 shadow-xl shadow-black/20 lg:p-8">
       <SectionTitle title="장지수용소 일정표" logo="⛓️" />
       <div className="rounded-[30px] border border-slate-300/14 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.14),transparent_28%),linear-gradient(180deg,rgba(12,14,18,0.98),rgba(5,7,11,0.98))] p-5 shadow-[0_22px_55px_rgba(0,0,0,0.34)] sm:p-7">
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-[24px] font-extrabold tracking-tight text-white sm:text-[30px]">수용소 월간 일정</div>
-            <div className="mt-2 text-sm font-medium text-slate-300/60">장지수용소 전용 팬메이드 일정판</div>
+            <div className="mt-2 text-sm font-medium text-slate-300/60">전체 버튼은 모든 멤버 일정을 한 달력에 합쳐서 보여주고, 멤버 버튼은 해당 멤버 일정만 보여줍니다.</div>
           </div>
           <div className="rounded-full border border-amber-200/18 bg-amber-200/8 px-4 py-2 text-xs font-black tracking-[0.28em] text-amber-100">PRISON SCHEDULE</div>
         </div>
+
+        <div className="mb-5 flex flex-wrap gap-2">
+          <ScheduleFilterButton active={selectedMember === '전체'} onClick={() => setSelectedMember('전체')}>전체</ScheduleFilterButton>
+          {SCHEDULE_MEMBERS.map((member) => (
+            <ScheduleFilterButton key={member.nickname} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)}>{member.nickname}</ScheduleFilterButton>
+          ))}
+        </div>
+
         <div className="rounded-[28px] border border-slate-200/10 bg-[#060910] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
           <div className="mb-4 grid grid-cols-7 gap-3 text-center text-sm font-extrabold text-slate-300/60">
             {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
@@ -42,12 +97,22 @@ function CalendarPreview() {
             ))}
           </div>
           <div className="grid grid-cols-7 gap-3">
-            {days.map((day) => (
-              <div key={day} className={`min-h-[96px] rounded-[20px] border p-4 transition ${day === 15 ? 'border-amber-200/36 bg-[linear-gradient(180deg,rgba(71,50,18,0.88),rgba(14,12,9,0.98))] shadow-[0_0_24px_rgba(245,158,11,0.12)]' : 'border-slate-200/8 bg-[linear-gradient(180deg,rgba(13,17,24,0.95),rgba(7,10,16,0.98))] hover:border-slate-200/16'}`}>
-                <div className="text-[15px] font-extrabold text-slate-100">{day}</div>
-                {day === 15 ? <div className="mt-4 text-sm font-bold leading-6 text-amber-50">장지수용소 방송</div> : null}
-              </div>
-            ))}
+            {days.map((day) => {
+              const schedules = scheduleByDay.get(day) || [];
+              const hasSchedule = schedules.length > 0;
+              return (
+                <div key={day} className={`min-h-[112px] rounded-[20px] border p-3 transition ${hasSchedule ? 'border-amber-200/36 bg-[linear-gradient(180deg,rgba(71,50,18,0.88),rgba(14,12,9,0.98))] shadow-[0_0_24px_rgba(245,158,11,0.12)]' : 'border-slate-200/8 bg-[linear-gradient(180deg,rgba(13,17,24,0.95),rgba(7,10,16,0.98))] hover:border-slate-200/16'}`}>
+                  <div className="text-[15px] font-extrabold text-slate-100">{day}</div>
+                  <div className="mt-3 space-y-2">
+                    {schedules.map((item) => (
+                      <div key={`${item.day}-${item.member}-${item.title}`} className="rounded-xl border border-amber-200/12 bg-black/20 px-2 py-1.5 text-xs font-bold leading-5 text-amber-50">
+                        {item.member} - {item.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -55,13 +120,13 @@ function CalendarPreview() {
   );
 }
 
-function EmptyProfile({ label, large = false }) {
+function ProfileCard({ member, large = false }) {
   return (
-    <div className={`group rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:-translate-y-1 hover:border-white/16 ${large ? 'mx-auto max-w-[360px]' : ''}`}>
-      <div className={`${large ? 'h-28 w-28' : 'h-20 w-20'} mx-auto rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),rgba(255,255,255,0.055)_58%,rgba(255,255,255,0.015)_78%)] shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
-      <div className={`${large ? 'text-xl' : 'text-sm'} mt-4 font-black text-white`}>{label}</div>
-      <div className="mt-3 inline-flex rounded-full border border-amber-200/14 bg-amber-200/8 px-3 py-1 text-[11px] font-bold text-amber-100/80">프로필 입력 예정</div>
-    </div>
+    <a href={member.station} target="_blank" rel="noreferrer" className={`group block rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.055] ${large ? 'mx-auto max-w-[360px]' : ''}`}>
+      <img src={member.image} alt={member.nickname} className={`${large ? 'h-28 w-28' : 'h-20 w-20'} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
+      <div className={`${large ? 'text-xl' : 'text-sm'} mt-4 font-black text-white`}>{member.nickname}</div>
+      <div className="mt-3 inline-flex rounded-full border border-amber-200/14 bg-amber-200/8 px-3 py-1 text-[11px] font-bold text-amber-100/80">방송국 열기</div>
+    </a>
   );
 }
 
@@ -77,19 +142,19 @@ function MemberBoardPreview() {
           </div>
           <div className="rounded-full border border-amber-200/18 bg-amber-200/8 px-4 py-2 text-xs font-black tracking-[0.28em] text-amber-100">WARDEN</div>
         </div>
-        <EmptyProfile label="장지수" large />
+        <ProfileCard member={WARDEN} large />
 
         <div className="mt-8 border-t border-white/10 pt-7">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <div className="text-[24px] font-extrabold tracking-tight text-white sm:text-[30px]">수용생들</div>
-              <div className="mt-2 text-sm font-medium text-slate-300/60">닉네임 / 프로필사진 / 방송국 링크를 받으면 이 칸에 채워집니다.</div>
+              <div className="mt-2 text-sm font-medium text-slate-300/60">프로필을 누르면 해당 SOOP 방송국으로 이동합니다.</div>
             </div>
-            <div className="rounded-full border border-slate-200/12 bg-white/6 px-4 py-2 text-xs font-black tracking-[0.28em] text-slate-100/75">INMATES</div>
+            <div className="rounded-full border border-slate-200/12 bg-white/6 px-4 py-2 text-xs font-black tracking-[0.28em] text-slate-100/75">{PRISON_MEMBERS.length}명</div>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 10 }, (_, index) => (
-              <EmptyProfile key={index} label={`수용생 ${index + 1}`} />
+            {PRISON_MEMBERS.map((member) => (
+              <ProfileCard key={member.nickname} member={member} />
             ))}
           </div>
         </div>
