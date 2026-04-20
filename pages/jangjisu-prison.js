@@ -82,7 +82,7 @@ function isOffSchedule(title) {
 }
 
 function CalendarPreview() {
-  const [selectedMember, setSelectedMember] = useState('장지수');
+  const [selectedMember, setSelectedMember] = useState('전체보기');
   const [mainSchedule, setMainSchedule] = useState({ monthLabel: '', items: [], loaded: false });
 
   useEffect(() => {
@@ -154,7 +154,6 @@ function CalendarPreview() {
               const day = Number(cell.dayNumber);
               const schedules = scheduleByDay.get(day) || [];
               const hasSchedule = schedules.length > 0;
-              const hasOff = schedules.some((item) => isOffSchedule(item.title));
               const isToday = today.getMonth() + 1 === month && today.getDate() === day;
               return (
                 <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border p-3.5 transition-all duration-300 hover:-translate-y-1 ${hasSchedule ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/24 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
@@ -170,10 +169,18 @@ function CalendarPreview() {
                       const off = isOffSchedule(item.title);
                       return (
                         <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 ${off ? 'text-rose-200' : 'text-white'}`}>
-                          <span className={off ? 'text-rose-100' : 'text-cyan-100'}>{item.member}</span>
-                          <span className="px-1.5 text-white/42">-</span>
-                          <span>{item.title}</span>
-                          {off ? <span className="ml-2 rounded-full border border-rose-200/24 bg-rose-400/12 px-2 py-0.5 text-[10px] font-black text-rose-100">휴방</span> : null}
+                          {off ? (
+                            <>
+                              <span className="text-rose-100">{item.member}</span>
+                              <span className="ml-1 text-rose-100">휴방</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-cyan-100">{item.member}</span>
+                              <span className="px-1.5 text-white/42">-</span>
+                              <span>{item.title}</span>
+                            </>
+                          )}
                         </div>
                       );
                     })}
