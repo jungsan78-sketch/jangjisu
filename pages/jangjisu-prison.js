@@ -200,24 +200,21 @@ function CalendarPreview() {
 
 function PlatformButton({ href, type }) {
   const enabled = Boolean(href);
-  const baseClass = 'inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border px-3 text-xs font-black transition duration-300';
+  const src = type === 'youtube' ? '/youtube-logo.svg' : '/soop-logo.svg';
+  const label = type === 'youtube' ? 'YouTube 채널' : 'SOOP 방송국';
   const toneClass = type === 'youtube'
-    ? 'border-red-300/24 bg-red-500/13 text-red-50 hover:border-red-200/42 hover:bg-red-500/22 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
-    : 'border-cyan-200/24 bg-cyan-300/12 text-cyan-50 hover:border-cyan-100/42 hover:bg-cyan-300/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.14)]';
-  const disabledClass = 'pointer-events-none opacity-35 grayscale';
-  const content = type === 'youtube' ? (
-    <span className="flex items-center gap-1.5"><span className="text-[13px]">▶</span><span>YOUTUBE</span></span>
-  ) : (
-    <span className="tracking-[0.14em]">SOOP</span>
-  );
+    ? 'border-red-300/20 bg-red-500/10 hover:border-red-200/42 hover:bg-red-500/16 hover:shadow-[0_0_22px_rgba(239,68,68,0.16)]'
+    : 'border-cyan-200/20 bg-cyan-300/10 hover:border-cyan-100/42 hover:bg-cyan-300/16 hover:shadow-[0_0_22px_rgba(34,211,238,0.14)]';
+  const baseClass = `inline-flex h-11 w-[74px] items-center justify-center rounded-full border px-3 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.04] ${toneClass}`;
+  const icon = <img src={src} alt={label} className="max-h-6 max-w-[52px] object-contain" />;
 
   if (!enabled) {
-    return <span className={`${baseClass} ${toneClass} ${disabledClass}`} title="링크 준비중">{content}</span>;
+    return <span className={`${baseClass} pointer-events-none opacity-30 grayscale`} title={`${label} 준비중`}>{icon}</span>;
   }
 
   return (
-    <a href={href} target="_blank" rel="noreferrer" className={`${baseClass} ${toneClass}`}>
-      {content}
+    <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={baseClass}>
+      {icon}
     </a>
   );
 }
@@ -295,17 +292,11 @@ export default function JangjisuPrisonPage() {
         </header>
 
         <main className="relative mx-auto max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
-          <section className="overflow-hidden rounded-[36px] border border-white/10 bg-white/[0.04] shadow-[0_24px_70px_rgba(0,0,0,0.32)]">
-            <div className="relative min-h-[460px] overflow-hidden lg:min-h-[560px]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(148,163,184,0.20),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(245,158,11,0.14),_transparent_24%),linear-gradient(180deg,_rgba(8,11,18,0.46)_0%,_rgba(5,7,12,0.70)_48%,_rgba(2,5,10,0.92)_100%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(148,163,184,0.12),transparent_68%)] blur-2xl" />
-              <div className="relative z-10 flex min-h-[460px] flex-col items-center justify-center px-6 text-center lg:min-h-[560px]">
-                <div className="text-xs font-black tracking-[0.52em] text-amber-100/46">JANGJISU PRISON FANMADE</div>
-                <div className="mt-7 select-none bg-[linear-gradient(90deg,#ffffff_0%,#dbeafe_25%,#ffffff_50%,#fde68a_75%,#ffffff_100%)] bg-[length:200%_200%] bg-clip-text text-[54px] font-black leading-[1.02] tracking-[0.08em] text-transparent drop-shadow-[0_16px_40px_rgba(0,0,0,0.45)] sm:text-[76px] md:text-[104px]">
-                  장지수용소
-                </div>
-                <p className="mt-6 max-w-2xl text-sm font-semibold leading-8 text-white/68">장지수가 운영하는 버추얼 동아리 전용 팬메이드 서브사이트입니다.</p>
-              </div>
+          <section className="overflow-hidden rounded-[36px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)]" aria-label="장지수용소 대문">
+            <div className="relative min-h-[360px] overflow-hidden sm:min-h-[460px] lg:min-h-[560px]">
+              <img src="/jangjisu-prison-hero.svg" alt="장지수용소" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.12)_58%,rgba(5,7,12,0.46))]" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#05070c] to-transparent" />
             </div>
           </section>
 
