@@ -23,12 +23,13 @@ function detectNewYoutubeTabs() {
   });
 
   if (!hasVideoNew && !hasShortsNew) return null;
-  const message = hasVideoNew && hasShortsNew
-    ? '새로운 편집 영상과 쇼츠가 업로드되었습니다'
-    : hasShortsNew
-      ? '새로운 쇼츠가 업로드되었습니다'
-      : '새로운 편집 영상이 업로드되었습니다';
   const scope = window.location.pathname.includes('jangjisu-prison') ? 'prison' : 'main';
+  const prefix = scope === 'prison' ? '새로운 수감생의 ' : '새로운 ';
+  const message = hasVideoNew && hasShortsNew
+    ? `${prefix}편집 영상과 쇼츠가 업로드되었습니다`
+    : hasShortsNew
+      ? `${prefix}쇼츠가 업로드되었습니다`
+      : `${prefix}편집 영상이 업로드되었습니다`;
   return { message, scope, hash: `${scope}:${hasVideoNew ? 'video' : ''}:${hasShortsNew ? 'shorts' : ''}:${new Date().toISOString().slice(0, 10)}` };
 }
 
@@ -81,7 +82,7 @@ export default function NewYoutubeDomToast() {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[92px] z-[130] flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-0 z-[130] flex items-center justify-center px-4">
       <div className="relative pointer-events-auto max-w-[92vw] overflow-hidden rounded-[26px] border border-red-200/20 bg-[linear-gradient(180deg,rgba(18,23,35,0.95),rgba(8,10,16,0.97))] px-6 py-5 text-center shadow-[0_24px_70px_rgba(0,0,0,0.50),0_0_34px_rgba(239,68,68,0.14)] backdrop-blur-xl animate-[newYoutubeToastIn_360ms_ease-out]">
         <div className="absolute -left-7 -top-7 h-24 w-24 rounded-full bg-red-500/22 blur-2xl" />
         <div className="absolute -right-8 -bottom-8 h-28 w-28 rounded-full bg-amber-300/14 blur-2xl" />
