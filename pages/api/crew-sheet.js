@@ -63,14 +63,14 @@ function parseRows(html = '') {
   return rows;
 }
 
-function isCrewHeader(text = '') {
-  return /^(.+?)\s*\((\d+)\)$/.test(String(text).trim());
-}
-
 function parseCrewHeader(text = '') {
   const match = String(text).trim().match(/^(.+?)\s*\((\d+)\)$/);
   if (!match) return null;
   return { name: match[1].trim(), count: Number(match[2]) };
+}
+
+function isCrewHeader(text = '') {
+  return Boolean(parseCrewHeader(text));
 }
 
 function extractStationId(url = '') {
@@ -83,7 +83,7 @@ function extractStationId(url = '') {
   ];
   for (const pattern of patterns) {
     const match = clean.match(pattern);
-    if (match?.[1]) return match[1];
+    if (match?.[1]) return decodeURIComponent(match[1]).toLowerCase();
   }
   return '';
 }
@@ -100,6 +100,7 @@ function isUsableMember(cell) {
   if (isCrewHeader(cell.text)) return false;
   if (/^\d+$/.test(cell.text)) return false;
   if (/^(new|NEW)$/i.test(cell.text)) return false;
+  if (/^(수정\s*중|점검\s*중)$/i.test(cell.text)) return false;
   if (cell.text.length > 30) return false;
   return true;
 }
@@ -120,33 +121,35 @@ function addMember(crew, cell) {
 function parseCrewsFromHtml(html = '') {
   const rows = parseRows(html);
   const crews = [];
-  const ranges = [];
+  let activeRanges = [];
 
   rows.forEach((cells) => {
     const headers = cells.map((cell) => ({ cell, header: parseCrewHeader(cell.text) })).filter((item) => item.header);
     if (headers.length) {
-      headers.forEach(({ cell, header }, index) => {
+      activeRanges = headers.map(({ cell, header }, index) => {
         const next = headers[index + 1]?.cell?.col;
         const start = cell.col;
         const end = next !== undefined ? next - 1 : start + Math.max(cell.colspan - 1, Math.max(0, header.count - 1));
         const crew = { name: header.name, count: header.count, members: [] };
         crews.push(crew);
-        ranges.push({ start, end, crew });
+        return { start, end, crew };
       });
       return;
     }
 
+    if (!activeRanges.length) return;
     cells.forEach((cell) => {
       if (!isUsableMember(cell)) return;
-      const range = ranges.find((item) => cell.col >= item.start && cell.col <= item.end);
+      const range = activeRanges.find((item) => cell.col >= item.start && cell.col <= item.end);
       if (!range) return;
+      if (range.crew.members.length >= Math.max(1, range.crew.count)) return;
       addMember(range.crew, cell);
     });
   });
 
   return crews
     .map((crew, index) => {
-      const members = crew.members.map((member, memberIndex) => ({ ...member, role: memberIndex === 0 ? 'leader' : 'member' }));
+      const members = crew.members.slice(0, crew.count).map((member, memberIndex) => ({ ...member, role: memberIndex === 0 ? 'leader' : 'member' }));
       return {
         ...crew,
         leader: members[0] || null,
