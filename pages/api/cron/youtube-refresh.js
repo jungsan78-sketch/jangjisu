@@ -11,12 +11,16 @@ function isAuthorized(req) {
   return token === secret || req.query?.secret === secret;
 }
 
+function countItems(payload, keys) {
+  return keys.reduce((sum, key) => sum + (Array.isArray(payload?.[key]) ? payload[key].length : 0), 0);
+}
+
 function isMainUsable(payload) {
-  return payload && payload.ok !== false && (Array.isArray(payload.videos) || Array.isArray(payload.shorts) || Array.isArray(payload.full));
+  return payload && payload.ok !== false && countItems(payload, ['videos', 'shorts', 'full']) > 0;
 }
 
 function isPrisonUsable(payload) {
-  return payload && !payload.missingKey && (Array.isArray(payload.videos) || Array.isArray(payload.shorts));
+  return payload && !payload.missingKey && countItems(payload, ['videos', 'shorts']) > 0;
 }
 
 async function readJson(url) {
@@ -43,11 +47,13 @@ export default async function handler(req, res) {
 
   try {
     const main = await readJson(`${baseUrl}/api/youtube`);
+    result.main.videos = main.videos?.length || 0;
+    result.main.shorts = main.shorts?.length || 0;
+    result.main.full = main.full?.length || 0;
     if (isMainUsable(main)) {
       result.main.ok = await setJsonCache(MAIN_KEY, { ...main, cachedAt: result.refreshedAt }, 60 * 60);
-      result.main.videos = main.videos?.length || 0;
-      result.main.shorts = main.shorts?.length || 0;
-      result.main.full = main.full?.length || 0;
+    } else {
+      result.main.skipped = 'empty-or-unavailable';
     }
   } catch (error) {
     result.main.error = true;
@@ -55,10 +61,12 @@ export default async function handler(req, res) {
 
   try {
     const prison = await readJson(`${baseUrl}/api/prison-youtube`);
+    result.prison.videos = prison.videos?.length || 0;
+    result.prison.shorts = prison.shorts?.length || 0;
     if (isPrisonUsable(prison)) {
       result.prison.ok = await setJsonCache(PRISON_KEY, { ...prison, cachedAt: result.refreshedAt }, 60 * 60 * 2);
-      result.prison.videos = prison.videos?.length || 0;
-      result.prison.shorts = prison.shorts?.length || 0;
+    } else {
+      result.prison.skipped = 'empty-or-unavailable';
     }
   } catch (error) {
     result.prison.error = true;
