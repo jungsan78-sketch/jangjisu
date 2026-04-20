@@ -32,9 +32,24 @@ function normalizeUrl(raw = '') {
   }
 }
 
+function pickBestUrl(candidates = []) {
+  const links = candidates.map(normalizeUrl).filter(Boolean);
+  return links.find((url) => /sooplive\.(com|co\.kr)/i.test(url)) || links.find((url) => /^https?:\/\//i.test(url)) || '';
+}
+
 function getHref(cellHtml = '') {
-  const linkMatch = cellHtml.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/i);
-  return linkMatch ? normalizeUrl(linkMatch[1]) : '';
+  const candidates = [];
+  const patterns = [
+    /<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi,
+    /data-sheets-hyperlink=["']([^"']+)["']/gi,
+    /data-href=["']([^"']+)["']/gi,
+    /data-url=["']([^"']+)["']/gi,
+    /\b(?:https?:)?\/\/[^\s"'<>]+/gi,
+  ];
+  patterns.forEach((pattern) => {
+    [...String(cellHtml || '').matchAll(pattern)].forEach((match) => candidates.push(match[1] || match[0]));
+  });
+  return pickBestUrl(candidates);
 }
 
 function getColspan(cellTag = '') {
@@ -54,7 +69,7 @@ function parseRows(html = '') {
       const cellHtml = cellMatch[3] || '';
       const colspan = getColspan(tagAttrs);
       const text = stripTags(cellHtml);
-      const href = getHref(cellHtml);
+      const href = getHref(`${cellHtml} ${tagAttrs}`);
       cells.push({ col, colspan, text, href, html: cellHtml });
       col += colspan;
     });
@@ -125,6 +140,10 @@ function addMember(crew, cell) {
   });
 }
 
+function countStationLinks(crews = []) {
+  return crews.reduce((sum, crew) => sum + (crew.members || []).filter((member) => member.stationUrl).length, 0);
+}
+
 function parseCrewsFromHtml(html = '') {
   const rows = parseRows(html);
   const crews = [];
@@ -167,8 +186,7 @@ function parseCrewsFromHtml(html = '') {
     .filter((crew) => crew.name && crew.members.length);
 }
 
-async function fetchSheetHtml({ id, gid }) {
-  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:html&gid=${gid}`;
+async function fetchText(url) {
   const res = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -179,12 +197,35 @@ async function fetchSheetHtml({ id, gid }) {
   return res.text();
 }
 
+async function fetchSheetCrews(source) {
+  const urls = [
+    `https://docs.google.com/spreadsheets/d/${source.id}/htmlview?gid=${source.gid}&single=true&widget=false&headers=false`,
+    `https://docs.google.com/spreadsheets/d/${source.id}/gviz/tq?tqx=out:html&gid=${source.gid}`,
+  ];
+
+  const parsed = [];
+  for (const url of urls) {
+    try {
+      const crews = parseCrewsFromHtml(await fetchText(url));
+      parsed.push({ crews, stationLinks: countStationLinks(crews), url });
+    } catch {}
+  }
+  parsed.sort((a, b) => b.stationLinks - a.stationLinks || b.crews.length - a.crews.length);
+  if (!parsed.length) throw new Error('No readable sheet html');
+  return parsed[0];
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
   try {
-    const chunks = await Promise.all(SHEET_SOURCES.map(async (source) => parseCrewsFromHtml(await fetchSheetHtml(source))));
-    const crews = chunks.flat();
-    return res.status(200).json({ crews, source: 'google-sheet-html', updatedAt: new Date().toISOString() });
+    const chunks = await Promise.all(SHEET_SOURCES.map(fetchSheetCrews));
+    const crews = chunks.flatMap((chunk) => chunk.crews);
+    return res.status(200).json({
+      crews,
+      source: 'google-sheet-html',
+      linkCount: countStationLinks(crews),
+      updatedAt: new Date().toISOString(),
+    });
   } catch (error) {
     return res.status(200).json({ crews: [], source: 'fallback', error: true, message: error?.message || 'unknown' });
   }
