@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const WARDEN = {
   nickname: '장지수',
@@ -23,9 +23,6 @@ const PRISON_MEMBERS = [
 ];
 
 const SCHEDULE_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
-const SAMPLE_SCHEDULES = [
-  { day: 15, member: '장지수', title: '장지수용소 방송' },
-];
 
 function NavChip({ href, label, tone = 'steel', icon = '' }) {
   const toneClass = tone === 'warm'
@@ -57,10 +54,63 @@ function ScheduleFilterButton({ active, onClick, children }) {
   );
 }
 
+function parseMonthFromLabel(monthLabel) {
+  const match = String(monthLabel || '').match(/(\d{4})년\s*(\d{1,2})월/);
+  if (!match) {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  }
+  return { year: Number(match[1]), month: Number(match[2]) };
+}
+
+function buildCalendarCells(schedule) {
+  const { year, month } = parseMonthFromLabel(schedule.monthLabel);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const leadingEmpty = new Date(year, month - 1, 1).getDay();
+  const totalCells = Math.ceil((leadingEmpty + daysInMonth) / 7) * 7;
+  const itemMap = new Map((schedule.items || []).map((item) => [Number(item.dayNumber), item]));
+
+  return Array.from({ length: totalCells }, (_, index) => {
+    const day = index - leadingEmpty + 1;
+    if (day < 1 || day > daysInMonth) return null;
+    return itemMap.get(day) || { dayNumber: day, title: '', empty: true };
+  });
+}
+
 function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체');
-  const days = Array.from({ length: 35 }, (_, index) => index + 1);
-  const visibleSchedules = useMemo(() => SAMPLE_SCHEDULES.filter((item) => selectedMember === '전체' || item.member === selectedMember), [selectedMember]);
+  const [mainSchedule, setMainSchedule] = useState({ monthLabel: '', items: [], loaded: false });
+
+  useEffect(() => {
+    let mounted = true;
+    const loadMainSchedule = async () => {
+      try {
+        const res = await fetch('/api/schedule');
+        const json = await res.json();
+        if (!mounted) return;
+        setMainSchedule({
+          monthLabel: json.monthLabel || '',
+          items: Array.isArray(json.items) ? json.items : [],
+          loaded: true,
+        });
+      } catch {
+        if (!mounted) return;
+        setMainSchedule({ monthLabel: '', items: [], loaded: true });
+      }
+    };
+    loadMainSchedule();
+    const timer = setInterval(loadMainSchedule, 60 * 1000);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const calendarCells = useMemo(() => buildCalendarCells(mainSchedule), [mainSchedule]);
+  const jangjisuSchedules = useMemo(() => (mainSchedule.items || [])
+    .filter((item) => !item.empty && String(item.title || '').trim())
+    .map((item) => ({ day: item.dayNumber, member: '장지수', title: item.title })), [mainSchedule]);
+  const visibleSchedules = useMemo(() => jangjisuSchedules.filter((item) => selectedMember === '전체' || item.member === selectedMember), [jangjisuSchedules, selectedMember]);
   const scheduleByDay = useMemo(() => {
     const map = new Map();
     visibleSchedules.forEach((item) => {
@@ -78,9 +128,9 @@ function CalendarPreview() {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-[24px] font-extrabold tracking-tight text-white sm:text-[30px]">수용소 월간 일정</div>
-            <div className="mt-2 text-sm font-medium text-slate-300/60">전체 버튼은 모든 멤버 일정을 한 달력에 합쳐서 보여주고, 멤버 버튼은 해당 멤버 일정만 보여줍니다.</div>
+            <div className="mt-2 text-sm font-medium text-slate-300/60">장지수 일정은 메인 사이트 일정표와 같은 데이터를 자동으로 읽습니다. 전체 버튼은 모든 멤버 일정을 한 달력에 합쳐서 보여줍니다.</div>
           </div>
-          <div className="rounded-full border border-amber-200/18 bg-amber-200/8 px-4 py-2 text-xs font-black tracking-[0.28em] text-amber-100">PRISON SCHEDULE</div>
+          <div className="rounded-full border border-amber-200/18 bg-amber-200/8 px-4 py-2 text-xs font-black tracking-[0.28em] text-amber-100">{mainSchedule.monthLabel || 'PRISON SCHEDULE'}</div>
         </div>
 
         <div className="mb-5 flex flex-wrap gap-2">
@@ -97,7 +147,9 @@ function CalendarPreview() {
             ))}
           </div>
           <div className="grid grid-cols-7 gap-3">
-            {days.map((day) => {
+            {calendarCells.map((cell, index) => {
+              if (!cell) return <div key={`empty-${index}`} className="min-h-[112px] rounded-[20px] border border-slate-200/5 bg-white/[0.015]" />;
+              const day = Number(cell.dayNumber);
               const schedules = scheduleByDay.get(day) || [];
               const hasSchedule = schedules.length > 0;
               return (
@@ -114,6 +166,8 @@ function CalendarPreview() {
               );
             })}
           </div>
+          {!mainSchedule.loaded ? <div className="mt-4 text-sm font-semibold text-slate-300/55">메인 일정표 데이터를 불러오는 중입니다.</div> : null}
+          {mainSchedule.loaded && jangjisuSchedules.length === 0 ? <div className="mt-4 text-sm font-semibold text-slate-300/55">장지수 일정 데이터가 아직 비어 있습니다.</div> : null}
         </div>
       </div>
     </section>
