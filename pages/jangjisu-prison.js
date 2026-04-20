@@ -44,7 +44,7 @@ function PlatformButton({ href, type }) {
   const labelMap = { youtube: 'YouTube 채널', cafe: 'NAVER 팬카페', soop: 'SOOP 방송국' };
   const tone = type === 'youtube' ? 'border-red-300/20 bg-red-500/10 hover:border-red-200/42' : type === 'cafe' ? 'border-emerald-300/20 bg-emerald-400/10 hover:border-emerald-200/42' : 'border-cyan-200/20 bg-cyan-300/10 hover:border-cyan-100/42';
   const cls = `inline-flex h-12 w-14 items-center justify-center rounded-2xl border bg-black/18 px-2 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.04] ${tone}`;
-  const icon = <img src={srcMap[type]} alt={labelMap[type]} className="max-h-8 max-w-[42px] object-contain" />;
+  const icon = <img src={srcMap[type]} alt={labelMap[type]} className={`${type === 'soop' ? '-translate-x-0.5' : ''} max-h-8 max-w-[42px] object-contain`} />;
   if (!href) return <span className={`${cls} pointer-events-none opacity-22`} title={`${labelMap[type]} 준비중`}>{icon}</span>;
   return <a href={href} target="_blank" rel="noreferrer" aria-label={labelMap[type]} title={labelMap[type]} className={cls}>{icon}</a>;
 }
