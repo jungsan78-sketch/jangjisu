@@ -70,7 +70,6 @@ function CrewCard({ crew }) {
             <h2 className="text-[28px] font-black tracking-tight text-white">{crew.name}</h2>
             <span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {crew.leader}</span>
           </div>
-          <p className="mt-2 text-sm font-semibold text-white/52">메모장 기준 고정 데이터 · 프로필/방송국 링크 추후 연결</p>
         </div>
         <div className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">총 {crew.members.length}명</div>
       </div>
@@ -87,7 +86,7 @@ function CrewCard({ crew }) {
             <div key={`${crew.name}-${member}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]">
               <AvatarPlaceholder name={member} />
               <div className="mt-3 text-sm font-black text-white">{member}</div>
-              <div className="mt-2 text-[11px] font-bold text-white/38">수용 멤버</div>
+              <div className="mt-2 text-[11px] font-bold text-white/38">멤버</div>
             </div>
           ))}
         </div>
@@ -133,7 +132,6 @@ export default function JangjisuPrisonCrewsPage() {
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <h1 className="text-[36px] font-black tracking-tight text-white sm:text-[44px]">종겜 크루 목록</h1>
-                <p className="mt-3 text-sm font-semibold leading-7 text-white/58">메모장 기준으로 크루명/수장/멤버명을 그대로 반영했습니다. 프로필 링크와 방송국 링크는 이후 데이터 받으면 카드에 연결됩니다.</p>
               </div>
               <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/76">{CREW_GROUPS.length}개 크루 · {totalMembers}명</div>
             </div>
