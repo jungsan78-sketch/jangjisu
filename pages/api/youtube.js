@@ -204,6 +204,7 @@ async function fallbackUploads(channelHandle, apiKey, maxResults = 24, maxPages 
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
   const apiKey = process.env.YOUTUBE_API_KEY;
   const debugMode = req.query?.debug === '1';
 
