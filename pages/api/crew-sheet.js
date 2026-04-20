@@ -348,7 +348,7 @@ async function fetchSheetCrews(source) {
       linkMaps.push(linkMap);
     } catch {}
   }
-  if (!parsed.length) throw new Error('No readable sheet html');
+  if (!parsed.length) return { crews: [], stationLinks: 0, memberCount: 0, url: '' };
 
   const mergedLinks = mergeLinkMaps(linkMaps);
   parsed.sort((a, b) => b.crews.length - a.crews.length || b.memberCount - a.memberCount || b.stationLinks - a.stationLinks);
@@ -373,14 +373,20 @@ function makeCategoryStats(crews = []) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
   try {
-    const chunks = await Promise.all(SHEET_SOURCES.map(fetchSheetCrews));
-    const crews = chunks.flatMap((chunk) => chunk.crews);
+    const results = await Promise.allSettled(SHEET_SOURCES.map(fetchSheetCrews));
+    const chunks = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+    const crews = chunks.flatMap((chunk) => chunk.crews || []);
     return res.status(200).json({
       crews,
       categories: SHEET_SOURCES.map(({ category, categoryLabel }) => ({ key: category, label: categoryLabel })),
       categoryStats: makeCategoryStats(crews),
-      source: 'google-sheet-html',
+      source: crews.length ? 'google-sheet-html' : 'empty',
       linkCount: countStationLinks(crews),
+      sourceStatus: results.map((result, index) => ({
+        category: SHEET_SOURCES[index].category,
+        ok: result.status === 'fulfilled',
+        crewCount: result.status === 'fulfilled' ? result.value.crews.length : 0,
+      })),
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {
