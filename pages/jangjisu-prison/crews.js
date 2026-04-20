@@ -1,185 +1,106 @@
 import Head from 'next/head';
+import { useMemo, useState } from 'react';
 
-const SHEET_SOURCES = [
-  { id: '1zwIJjl2UTkPREkI37in9e0PAwX9xwFtEU3-ECAYYaeU', gid: '0' },
-  { id: '1-mACl-yykHphsqiSUNPkoC1GHydOYmWX-xHqdRz7DVM', gid: '344917607' },
+const CREW_GROUPS = [
+  { name: '사자회', members: ['춘봉', '필메', '추르미', '또니', '쏭아야', '오봉구', '상득', '뚜닝', '채하', '차투리', '달묘', '오늘님', '쿠아', '감초'] },
+  { name: '조적단', members: ['조디악', '쥐돌이', '설이', '뮤즈', '얼그레', '손진석', '리타', '황정민'] },
+  { name: '오락실', members: ['오아', '멍지수', '치유', '새잎', '히뚜', '도맑음', '만조', '녹초', '빡룡', '후룽카카', '백하', '김옥독', '채윤아'] },
+  { name: '천타버스', members: ['천양', '마다옴', '나나문', '임하밍', '문모모', '한아밍', '카푸', '캬앙', '김웰로', '모카', '달타', '파니'] },
+  { name: '강씨세가', members: ['강만식', '깐숙', '깡담비', '두부랑', '망개', '모요'] },
+  { name: '진드기', members: ['진호', '두칠', '슈슈슈앙', '지맘대로리나', '히키', '솔밍', '찰리씨'] },
+  { name: 'ZZAM지트', members: ['짬타수아', '다키', '도월하', '루센', '숙봉이', '에이레네', '이유진', '햄쏘따', '호진맨', '꼬마거북이', '나솜', '한건수'] },
+  { name: '버컴퍼니', members: ['감스트', '해리', '유설아', '유연서', '망구랑', '니니', '앨리스얌', '킴나니', '바밍'] },
+  { name: '지력사무소', members: ['지피티', '라무', '모나양', '싱유', '물초코', '니니밍', '김병살', '한아련', '김쿼카', '목츄리', '메루', '나몽', '린코'] },
+  { name: '꾸한성', members: ['꾸티뉴', '야무지', '엔쥬', '란다', '셀키', '리카', '철쑤', '구본좌', '영감', '난워니', '다뮤', '딴딴2당', '초귀요미', '밈먀', '밤먀', '서라0'] },
+  { name: '버블란', members: ['박재박', '홍길순', '어쩜냥이', '에요에요', '다시바', '슈니', '공태연', '루루시', '초금비', '유태', '큐티섹시'] },
+  { name: '고래상사', members: ['울산큰고래', '멜로딩딩', '김마렌', '온자두', '삐요코', '견자희', '쏭이', '조아라', '감자가비', '이지수', '밀크티냠', '빡쏘', '최은뽀', '희희덕', '채하나', '히무루'] },
+  { name: '홍신소', members: ['홍타쿠', '잠결', '따스히', '고채린', '모야', '아눙', '죠아써', '라율', '힙비', '하비', '또야몽', '왜냐니', '이깨굴', '현단아', '연아리'] },
+  { name: '가무소', members: ['가습기', '하티하티', '쨈도은', '하루아이', '잼율이', '기찬하', '단수아', '야뿌', '딩굴', '란쵸', '연보라', '토뤼', '연치민', '희꾸미', '정다니', '피너'] },
+  { name: '로스타시티', members: ['로기다', '추멘'] },
+  { name: '버인협회', members: ['조경훈', '아뚱', '해솔', '너보링', '송소미', '비숑', '뀨복', '표우', '부르', '김쁘피', '윤이샘'] },
+].map((crew, index) => ({
+  ...crew,
+  leader: crew.members[0],
+  accentIndex: index,
+}));
+
+const CARD_THEMES = [
+  'from-cyan-300/12 via-slate-200/5 to-transparent',
+  'from-rose-300/12 via-slate-200/5 to-transparent',
+  'from-amber-300/12 via-slate-200/5 to-transparent',
+  'from-violet-300/12 via-slate-200/5 to-transparent',
+  'from-emerald-300/12 via-slate-200/5 to-transparent',
+  'from-sky-300/12 via-slate-200/5 to-transparent',
 ];
 
-const FALLBACK_CREW_GROUPS = [
-  { name: '버컴퍼니', count: 8, accent: 'cyan', members: ['감스트', '혜리', '유설아', '유연서', '망구랑', '니니', '앨리스얌', '킴나니'] },
-  { name: '홍신소', count: 15, accent: 'rose', members: ['홍타쿠', '잠결', '따소히', '고체리', '모아', '야농', '조아썻', '라율', '휘비', '하비', '또야옹', '왜나니', '의깨굴', '현단아', '연아리'] },
-  { name: '지력사무소', count: 13, accent: 'amber', members: ['지피티', '라무', '모나양', '싱유', '물초코', '니니밍', '김병살', '한아련', '김퀴카', '목추리', '메루', '나옹', '린코'] },
-  { name: '가무소', count: 15, accent: 'violet', members: ['가습기', '하티하터', '쩜도은', '하루아이', '젤율이', '기찬하', '단수아', '아뽀', '당곰', '라초', '연보라', '토쿠', '연치민', '정다니', '퍼너'] },
-  { name: '꾸한성', count: 16, accent: 'emerald', members: ['꾸꾸까까', '애교용', '하은비', '오렌지', '푸른별', '도아린', '밤비', '마이카', '유호', '세리나', '도리', '라니', '체르', '솜비', '유닝', '코유'] },
-  { name: '그린캠프', count: 15, accent: 'sky', members: ['굿바이', '헤른', '리엔', '도로시', '벨라', '카요', '노아', '유메', '하린', '리아', '루체', '연비', '하나', '다온', '린비'] },
-];
-
-const CREW_THEME = {
-  cyan: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(11,26,40,0.96),rgba(7,10,16,0.99))]', title: 'text-cyan-50', glow: 'from-cyan-300/18', badge: 'border-white/10 bg-white/8 text-cyan-50', member: 'border-cyan-200/14 bg-cyan-200/8 text-cyan-50' },
-  rose: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(40,18,28,0.96),rgba(12,8,13,0.99))]', title: 'text-rose-50', glow: 'from-rose-300/18', badge: 'border-white/10 bg-white/8 text-rose-50', member: 'border-rose-200/14 bg-rose-200/8 text-rose-50' },
-  amber: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(42,30,14,0.96),rgba(13,10,7,0.99))]', title: 'text-amber-50', glow: 'from-amber-300/18', badge: 'border-white/10 bg-white/8 text-amber-50', member: 'border-amber-200/14 bg-amber-200/8 text-amber-50' },
-  violet: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(31,22,45,0.96),rgba(10,8,16,0.99))]', title: 'text-violet-50', glow: 'from-violet-300/18', badge: 'border-white/10 bg-white/8 text-violet-50', member: 'border-violet-200/14 bg-violet-200/8 text-violet-50' },
-  emerald: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(18,35,28,0.96),rgba(7,11,10,0.99))]', title: 'text-emerald-50', glow: 'from-emerald-300/18', badge: 'border-white/10 bg-white/8 text-emerald-50', member: 'border-emerald-200/14 bg-emerald-200/8 text-emerald-50' },
-  sky: { card: 'border-white/10 bg-[linear-gradient(180deg,rgba(15,28,48,0.96),rgba(7,9,15,0.99))]', title: 'text-sky-50', glow: 'from-sky-300/18', badge: 'border-white/10 bg-white/8 text-sky-50', member: 'border-sky-200/14 bg-sky-200/8 text-sky-50' },
-};
-
-const ACCENTS = ['cyan', 'rose', 'amber', 'violet', 'emerald', 'sky'];
-const NOISE_WORDS = new Set(['NEW', 'new', '시트', '목록', '방송국', '연동', '예정', '종겜', '크루', '일정', '팬메이드']);
-
-function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let cell = '';
-  let quoted = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const next = text[index + 1];
-    if (quoted) {
-      if (char === '"' && next === '"') {
-        cell += '"';
-        index += 1;
-      } else if (char === '"') {
-        quoted = false;
-      } else {
-        cell += char;
-      }
-      continue;
-    }
-    if (char === '"') quoted = true;
-    else if (char === ',') { row.push(cell); cell = ''; }
-    else if (char === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
-    else if (char !== '\r') cell += char;
-  }
-  row.push(cell);
-  rows.push(row);
-  return rows;
-}
-
-function normalizeText(value) {
-  return String(value || '')
-    .replace(/\s+/g, ' ')
-    .replace(/[👑⭐★☆]/g, '')
-    .replace(/\bNEW\b/gi, '')
-    .replace(/\([^)]*\)$/g, '')
-    .trim();
-}
-
-function isCrewHeader(value) {
-  return /^.{2,24}\s*[\(（]\d{1,3}[\)）]$/.test(normalizeText(value));
-}
-
-function parseCrewHeader(value) {
-  const match = normalizeText(value).match(/^(.+?)\s*[\(（](\d{1,3})[\)）]$/);
-  if (!match) return null;
-  return { name: match[1].trim(), count: Number(match[2]) };
-}
-
-function isMemberName(value) {
-  const name = normalizeText(value);
-  if (!name || name.length < 2 || name.length > 14) return false;
-  if (NOISE_WORDS.has(name)) return false;
-  if (/^[\d\W_]+$/.test(name)) return false;
-  if (isCrewHeader(name)) return false;
-  if (/월|일|요일|합계|인원|비고|구분|이름|닉네임|링크|프로필|방송국|크루|목록/.test(name)) return false;
-  return /[가-힣A-Za-z]/.test(name);
-}
-
-function extractCrewsFromGrid(rows) {
-  const crews = [];
-  rows.forEach((row, rowIndex) => {
-    row.forEach((cell, cellIndex) => {
-      const header = parseCrewHeader(cell);
-      if (!header) return;
-      const members = [];
-      for (let scanRow = rowIndex + 1; scanRow < Math.min(rows.length, rowIndex + 9); scanRow += 1) {
-        const scanCell = rows[scanRow]?.[cellIndex] || '';
-        if (isCrewHeader(scanCell)) break;
-        if (isMemberName(scanCell)) members.push(normalizeText(scanCell));
-        const rightCell = rows[scanRow]?.[cellIndex + 1] || '';
-        if (isMemberName(rightCell)) members.push(normalizeText(rightCell));
-      }
-      const uniqueMembers = Array.from(new Set(members));
-      if (uniqueMembers.length) crews.push({ ...header, members: uniqueMembers });
-    });
-  });
-  return crews;
-}
-
-function mergeCrews(crews) {
-  const map = new Map();
-  crews.forEach((crew) => {
-    if (!crew.name) return;
-    const current = map.get(crew.name) || { name: crew.name, count: crew.count || 0, members: [] };
-    current.count = Math.max(current.count, crew.count || 0);
-    current.members = Array.from(new Set([...current.members, ...(crew.members || [])]));
-    map.set(crew.name, current);
-  });
-  return Array.from(map.values()).map((crew, index) => ({
-    ...crew,
-    count: crew.count || crew.members.length,
-    accent: ACCENTS[index % ACCENTS.length],
-  }));
-}
-
-async function fetchSheetCrews() {
-  const allCrews = [];
-  await Promise.all(SHEET_SOURCES.map(async (source) => {
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${source.id}/export?format=csv&gid=${source.gid}`;
-    const response = await fetch(csvUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!response.ok) throw new Error(`sheet fetch failed: ${source.id}`);
-    const text = await response.text();
-    allCrews.push(...extractCrewsFromGrid(parseCsv(text)));
-  }));
-  return mergeCrews(allCrews).filter((crew) => crew.members.length > 0);
-}
-
-function NavChip({ href, label, icon = '' }) {
+function NavButton({ href, children }) {
   return (
-    <a href={href} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm font-semibold text-white/80 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:bg-white/10">
-      {icon ? <span>{icon}</span> : null}
-      <span>{label}</span>
+    <a href={href} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.035))] px-4 py-2 text-sm font-bold text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/10 hover:text-white">
+      {children}
     </a>
   );
 }
 
-function CrewCard({ crew }) {
-  const theme = CREW_THEME[crew.accent] || CREW_THEME.cyan;
+function FilterButton({ active, onClick, children }) {
   return (
-    <section className={`relative overflow-hidden rounded-[30px] border p-5 shadow-[0_18px_46px_rgba(0,0,0,0.26)] ${theme.card}`}>
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b ${theme.glow} to-transparent`} />
-      <div className="relative flex items-center justify-between gap-4">
+    <button onClick={onClick} className={`rounded-full border px-4 py-2 text-sm font-black transition ${active ? 'border-amber-200/35 bg-[linear-gradient(180deg,rgba(245,158,11,0.20),rgba(255,255,255,0.055))] text-amber-50 shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]' : 'border-white/10 bg-white/[0.045] text-white/64 hover:border-white/18 hover:bg-white/[0.075] hover:text-white'}`}>
+      {children}
+    </button>
+  );
+}
+
+function AvatarPlaceholder({ name, leader = false }) {
+  return (
+    <div className={`${leader ? 'h-20 w-20 text-xl' : 'h-14 w-14 text-sm'} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>
+      {name.slice(0, 1)}
+    </div>
+  );
+}
+
+function CrewCard({ crew }) {
+  const glow = CARD_THEMES[crew.accentIndex % CARD_THEMES.length];
+  const normalMembers = crew.members.slice(1);
+
+  return (
+    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.32)]">
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${glow}`} />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className={`text-[27px] font-black tracking-tight ${theme.title}`}>{crew.name}</div>
-          <p className="mt-2 text-sm text-white/52">구글시트 자동 반영</p>
-        </div>
-        <div className={`rounded-full border px-4 py-2 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${theme.badge}`}>{crew.count || crew.members.length}명</div>
-      </div>
-      <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-        {(crew.members || []).map((member) => (
-          <div key={`${crew.name}-${member}`} className="group rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.06]">
-            <div className="mx-auto h-16 w-16 rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),rgba(255,255,255,0.055)_58%,rgba(255,255,255,0.015)_78%)] shadow-[0_10px_20px_rgba(0,0,0,0.20)]" />
-            <div className="mt-4 text-center text-sm font-black text-white">{member}</div>
-            <div className="mt-3 flex justify-center">
-              <div className={`rounded-full border px-3 py-1 text-[11px] font-bold ${theme.member}`}>시트 닉네임</div>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-[28px] font-black tracking-tight text-white">{crew.name}</h2>
+            <span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {crew.leader}</span>
           </div>
-        ))}
+          <p className="mt-2 text-sm font-semibold text-white/52">메모장 기준 고정 데이터 · 프로필/방송국 링크 추후 연결</p>
+        </div>
+        <div className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">총 {crew.members.length}명</div>
+      </div>
+
+      <div className="relative mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
+        <div className="rounded-[28px] border border-amber-200/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(255,255,255,0.025))] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+          <AvatarPlaceholder name={crew.leader} leader />
+          <div className="mt-4 text-xl font-black text-white">{crew.leader}</div>
+          <div className="mt-3 inline-flex rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">CREW LEADER</div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {normalMembers.map((member) => (
+            <div key={`${crew.name}-${member}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]">
+              <AvatarPlaceholder name={member} />
+              <div className="mt-3 text-sm font-black text-white">{member}</div>
+              <div className="mt-2 text-[11px] font-bold text-white/38">수용 멤버</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-export async function getServerSideProps() {
-  try {
-    const crews = await fetchSheetCrews();
-    return { props: { crews: crews.length ? crews : FALLBACK_CREW_GROUPS, synced: crews.length > 0 } };
-  } catch (error) {
-    return { props: { crews: FALLBACK_CREW_GROUPS, synced: false } };
-  }
-}
+export default function JangjisuPrisonCrewsPage() {
+  const [selectedCrew, setSelectedCrew] = useState('전체보기');
+  const visibleCrews = useMemo(() => selectedCrew === '전체보기' ? CREW_GROUPS : CREW_GROUPS.filter((crew) => crew.name === selectedCrew), [selectedCrew]);
+  const totalMembers = CREW_GROUPS.reduce((sum, crew) => sum + crew.members.length, 0);
 
-export default function JangjisuPrisonCrewsPage({ crews = FALLBACK_CREW_GROUPS, synced = false }) {
   return (
     <>
       <Head>
@@ -188,28 +109,47 @@ export default function JangjisuPrisonCrewsPage({ crews = FALLBACK_CREW_GROUPS, 
       </Head>
       <div className="min-h-screen bg-[#05070c] text-white">
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute -top-20 left-[-50px] h-72 w-72 rounded-full bg-cyan-500/8 blur-3xl" />
-          <div className="absolute top-20 right-[-70px] h-80 w-80 rounded-full bg-fuchsia-500/8 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 h-72 w-[30rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
+          <div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" />
+          <div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" />
+          <div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
         </div>
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a href="/jangjisu-prison" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:scale-[1.07] hover:border-white/25 hover:shadow-[0_0_36px_rgba(96,165,250,0.28)]">
+            <a href="/jangjisu-prison" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25">
               <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
             </a>
             <div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div>
             <nav className="flex flex-wrap items-center justify-end gap-3">
-              <NavChip href="/jangjisu-prison" label="장지수용소 홈" icon="↩" />
-              <NavChip href="/" label="SOU 메인" icon="S" />
+              <NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton>
+              <NavButton href="/">S SOU 메인</NavButton>
             </nav>
           </div>
         </header>
+
         <main className="relative mx-auto max-w-7xl px-5 py-8 lg:px-8">
-          <div className="mb-6 rounded-[24px] border border-white/10 bg-white/[0.035] px-5 py-4 text-sm font-semibold text-white/62">
-            {synced ? '구글시트 2개를 읽어서 자동 반영 중입니다.' : '시트 연결 실패 시 임시 저장된 목록을 보여줍니다.'}
-          </div>
+          <section className="mb-7 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_54px_rgba(0,0,0,0.28)]">
+            <div className="text-xs font-black tracking-[0.42em] text-amber-100/45">CREW DIRECTORY</div>
+            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h1 className="text-[36px] font-black tracking-tight text-white sm:text-[44px]">종겜 크루 목록</h1>
+                <p className="mt-3 text-sm font-semibold leading-7 text-white/58">메모장 기준으로 크루명/수장/멤버명을 그대로 반영했습니다. 프로필 링크와 방송국 링크는 이후 데이터 받으면 카드에 연결됩니다.</p>
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/76">{CREW_GROUPS.length}개 크루 · {totalMembers}명</div>
+            </div>
+          </section>
+
+          <section className="mb-7 rounded-[28px] border border-white/10 bg-black/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+            <div className="flex flex-wrap gap-2">
+              <FilterButton active={selectedCrew === '전체보기'} onClick={() => setSelectedCrew('전체보기')}>전체보기</FilterButton>
+              {CREW_GROUPS.map((crew) => (
+                <FilterButton key={crew.name} active={selectedCrew === crew.name} onClick={() => setSelectedCrew(crew.name)}>{crew.name}</FilterButton>
+              ))}
+            </div>
+          </section>
+
           <section className="grid gap-6">
-            {crews.map((crew) => (
+            {visibleCrews.map((crew) => (
               <CrewCard key={crew.name} crew={crew} />
             ))}
           </section>
