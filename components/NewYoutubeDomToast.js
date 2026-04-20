@@ -1,8 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const STORAGE_PREFIX = 'sou-youtube-dom-toast:';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-function detectNewYoutubeTabs() {
+function getRecentItems(items = []) {
+  return (items || []).filter((item) => {
+    const time = new Date(item?.publishedAt || '').getTime();
+    return Number.isFinite(time) && Date.now() - time < DAY_MS;
+  });
+}
+
+function buildIdHash(items = []) {
+  return [...new Set((items || []).map((item) => item?.id).filter(Boolean))].sort().join('|');
+}
+
+async function getRecentYoutubeState(scope) {
+  try {
+    const endpoint = scope === 'prison' ? '/api/prison-youtube' : '/api/youtube';
+    const res = await fetch(endpoint, { cache: 'no-store' });
+    const json = await res.json();
+    const recentVideos = getRecentItems(json.videos);
+    const recentShorts = getRecentItems(json.shorts);
+    const videoHash = buildIdHash(recentVideos);
+    const shortsHash = buildIdHash(recentShorts);
+    return {
+      hasVideoNew: recentVideos.length > 0,
+      hasShortsNew: recentShorts.length > 0,
+      idHash: [videoHash ? `video:${videoHash}` : '', shortsHash ? `shorts:${shortsHash}` : ''].filter(Boolean).join('::'),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function detectNewYoutubeTabs() {
   if (typeof document === 'undefined') return null;
   const sections = [...document.querySelectorAll('section')].filter((section) => {
     const title = section.textContent || '';
@@ -13,24 +44,30 @@ function detectNewYoutubeTabs() {
   if (!source) return null;
 
   const buttons = [...source.querySelectorAll('button')];
-  const hasVideoNew = buttons.some((button) => {
+  const tabHasVideoNew = buttons.some((button) => {
     const text = button.textContent || '';
     return text.includes('영상') && !text.includes('풀영상') && text.toLowerCase().includes('new');
   });
-  const hasShortsNew = buttons.some((button) => {
+  const tabHasShortsNew = buttons.some((button) => {
     const text = button.textContent || '';
     return text.includes('쇼츠') && text.toLowerCase().includes('new');
   });
 
-  if (!hasVideoNew && !hasShortsNew) return null;
+  if (!tabHasVideoNew && !tabHasShortsNew) return null;
   const scope = window.location.pathname.includes('jangjisu-prison') ? 'prison' : 'main';
+  const apiState = await getRecentYoutubeState(scope);
+  const hasVideoNew = apiState?.hasVideoNew ?? tabHasVideoNew;
+  const hasShortsNew = apiState?.hasShortsNew ?? tabHasShortsNew;
+  if (!hasVideoNew && !hasShortsNew) return null;
+
   const prefix = scope === 'prison' ? '새로운 수감생의 ' : '새로운 ';
   const message = hasVideoNew && hasShortsNew
     ? `${prefix}편집 영상과 쇼츠가 업로드되었습니다`
     : hasShortsNew
       ? `${prefix}쇼츠가 업로드되었습니다`
       : `${prefix}편집 영상이 업로드되었습니다`;
-  return { message, scope, hash: `${scope}:${hasVideoNew ? 'video' : ''}:${hasShortsNew ? 'shorts' : ''}:${new Date().toISOString().slice(0, 10)}` };
+  const idHash = apiState?.idHash || `${hasVideoNew ? 'video' : ''}:${hasShortsNew ? 'shorts' : ''}:${new Date().toISOString().slice(0, 10)}`;
+  return { message, scope, hash: `${scope}:${idHash}` };
 }
 
 export default function NewYoutubeDomToast() {
@@ -42,11 +79,14 @@ export default function NewYoutubeDomToast() {
     let closed = false;
     let timer = null;
     let observer = null;
+    let checking = false;
 
-    const tryShow = () => {
-      if (closed) return;
-      const detected = detectNewYoutubeTabs();
-      if (!detected) return;
+    const tryShow = async () => {
+      if (closed || checking) return;
+      checking = true;
+      const detected = await detectNewYoutubeTabs();
+      checking = false;
+      if (closed || !detected) return;
       const storageKey = `${STORAGE_PREFIX}${detected.hash}`;
       try {
         if (window.localStorage.getItem(storageKey)) return;
