@@ -6,6 +6,7 @@ const WARDEN = {
   role: '교도소장',
   image: 'https://stimg.sooplive.com/LOGO/ia/iamquaddurup/iamquaddurup.jpg',
   station: 'https://www.sooplive.com/station/iamquaddurup',
+  youtube: 'https://www.youtube.com/@jisoujang',
 };
 
 const PRISON_MEMBERS = [
@@ -197,13 +198,40 @@ function CalendarPreview() {
   );
 }
 
+function PlatformButton({ href, type }) {
+  const enabled = Boolean(href);
+  const baseClass = 'inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border px-3 text-xs font-black transition duration-300';
+  const toneClass = type === 'youtube'
+    ? 'border-red-300/24 bg-red-500/13 text-red-50 hover:border-red-200/42 hover:bg-red-500/22 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+    : 'border-cyan-200/24 bg-cyan-300/12 text-cyan-50 hover:border-cyan-100/42 hover:bg-cyan-300/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.14)]';
+  const disabledClass = 'pointer-events-none opacity-35 grayscale';
+  const content = type === 'youtube' ? (
+    <span className="flex items-center gap-1.5"><span className="text-[13px]">▶</span><span>YOUTUBE</span></span>
+  ) : (
+    <span className="tracking-[0.14em]">SOOP</span>
+  );
+
+  if (!enabled) {
+    return <span className={`${baseClass} ${toneClass} ${disabledClass}`} title="링크 준비중">{content}</span>;
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={`${baseClass} ${toneClass}`}>
+      {content}
+    </a>
+  );
+}
+
 function ProfileCard({ member, large = false }) {
   return (
-    <a href={member.station} target="_blank" rel="noreferrer" className={`group block rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_32px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:border-white/18 hover:bg-white/[0.065] ${large ? 'mx-auto max-w-[360px]' : ''}`}>
+    <div className={`group block rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_32px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:border-white/18 hover:bg-white/[0.065] ${large ? 'mx-auto max-w-[360px]' : ''}`}>
       <img src={member.image} alt={member.nickname} className={`${large ? 'h-28 w-28' : 'h-20 w-20'} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
       <div className={`${large ? 'text-xl' : 'text-sm'} mt-4 font-black text-white`}>{member.nickname}</div>
-      <div className="mt-3 inline-flex rounded-full border border-amber-200/16 bg-amber-200/10 px-3 py-1 text-[11px] font-black text-amber-100/88">방송국 열기</div>
-    </a>
+      <div className="mt-4 flex items-center justify-center gap-2">
+        <PlatformButton href={member.station} type="soop" />
+        <PlatformButton href={member.youtube} type="youtube" />
+      </div>
+    </div>
   );
 }
 
