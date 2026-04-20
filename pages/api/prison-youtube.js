@@ -8,6 +8,10 @@ const YOUTUBE_CHANNELS = [
   { nickname: '띠꾸', url: 'https://www.youtube.com/@ddikku_0714' },
 ];
 
+const EDITED_VIDEO_KEYWORDS = ['편집', '하이라이트', '레전드', '명장면', '클립', '몰아보기', '요약'];
+const SHORTS_KEYWORDS = ['#shorts', '#쇼츠', 'shorts', '쇼츠'];
+const FIVE_MONTHS_MS = 1000 * 60 * 60 * 24 * 31 * 5;
+
 function getDurationSeconds(duration = '') {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
@@ -24,6 +28,22 @@ function getHandle(url = '') {
 function getChannelId(url = '') {
   const match = url.match(/youtube\.com\/channel\/([^/?#]+)/i);
   return match ? match[1] : '';
+}
+
+function isWithinFiveMonths(publishedAt = '') {
+  if (!publishedAt) return false;
+  return Date.now() - new Date(publishedAt).getTime() <= FIVE_MONTHS_MS;
+}
+
+function isShortsVideo(title, seconds) {
+  const text = String(title || '').toLowerCase();
+  return (seconds > 0 && seconds <= 65) || SHORTS_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()));
+}
+
+function isEditedVideo(title, seconds) {
+  const text = String(title || '').toLowerCase();
+  if (isShortsVideo(title, seconds)) return false;
+  return EDITED_VIDEO_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()));
 }
 
 async function youtubeFetch(path, params, apiKey) {
@@ -64,34 +84,40 @@ async function getChannelVideos(channel, apiKey) {
   const playlist = await youtubeFetch('playlistItems', {
     part: 'snippet,contentDetails',
     playlistId: uploadsId,
-    maxResults: 10,
+    maxResults: 50,
   }, apiKey);
 
-  const videoIds = (playlist.items || []).map((item) => item.contentDetails?.videoId).filter(Boolean);
+  const videoIds = (playlist.items || [])
+    .filter((item) => isWithinFiveMonths(item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt))
+    .map((item) => item.contentDetails?.videoId)
+    .filter(Boolean);
+
   if (!videoIds.length) return [];
 
   const details = await youtubeFetch('videos', {
     part: 'contentDetails,statistics,snippet',
     id: videoIds.join(','),
-    maxResults: 10,
+    maxResults: 50,
   }, apiKey);
 
   return (details.items || []).map((item) => {
     const seconds = getDurationSeconds(item.contentDetails?.duration);
     const title = item.snippet?.title || '';
-    const isShorts = seconds > 0 && seconds <= 65;
+    const shorts = isShortsVideo(title, seconds);
+    const edited = isEditedVideo(title, seconds);
+
     return {
       id: item.id,
       title,
       member: channel.nickname,
       channelTitle: item.snippet?.channelTitle || channel.nickname,
       publishedAt: item.snippet?.publishedAt || '',
-      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || '',
+      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url || '',
       url: `https://www.youtube.com/watch?v=${item.id}`,
-      type: isShorts ? 'shorts' : 'video',
+      type: shorts ? 'shorts' : edited ? 'video' : 'other',
       durationSeconds: seconds,
     };
-  });
+  }).filter((item) => item.type !== 'other');
 }
 
 export default async function handler(req, res) {
@@ -109,7 +135,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       videos: merged.filter((item) => item.type === 'video').slice(0, 16),
-      shorts: merged.filter((item) => item.type === 'shorts').slice(0, 16),
+      shorts: merged.filter((item) => item.type === 'shorts').slice(0, 24),
       missingKey: false,
     });
   } catch (error) {
