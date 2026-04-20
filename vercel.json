@@ -2,12 +2,8 @@
   "headers": [],
   "crons": [
     {
-      "path": "/api/youtube",
+      "path": "/api/cron/youtube-refresh",
       "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/prison-youtube",
-      "schedule": "0 * * * *"
     }
   ]
 }
