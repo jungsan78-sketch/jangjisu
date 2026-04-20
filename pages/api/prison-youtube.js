@@ -8,7 +8,6 @@ const YOUTUBE_CHANNELS = [
   { nickname: '띠꾸', url: 'https://www.youtube.com/@ddikku_0714' },
 ];
 
-const EDITED_VIDEO_KEYWORDS = ['편집', '하이라이트', '레전드', '명장면', '클립', '몰아보기', '요약'];
 const SHORTS_KEYWORDS = ['#shorts', '#쇼츠', 'shorts', '쇼츠'];
 const FIVE_MONTHS_MS = 1000 * 60 * 60 * 24 * 31 * 5;
 
@@ -40,10 +39,8 @@ function isShortsVideo(title, seconds) {
   return (seconds > 0 && seconds <= 65) || SHORTS_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()));
 }
 
-function isEditedVideo(title, seconds) {
-  const text = String(title || '').toLowerCase();
-  if (isShortsVideo(title, seconds)) return false;
-  return EDITED_VIDEO_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()));
+function getBestThumbnail(thumbnails = {}) {
+  return thumbnails.maxres?.url || thumbnails.standard?.url || thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url || '';
 }
 
 async function youtubeFetch(path, params, apiKey) {
@@ -104,7 +101,6 @@ async function getChannelVideos(channel, apiKey) {
     const seconds = getDurationSeconds(item.contentDetails?.duration);
     const title = item.snippet?.title || '';
     const shorts = isShortsVideo(title, seconds);
-    const edited = isEditedVideo(title, seconds);
 
     return {
       id: item.id,
@@ -112,12 +108,12 @@ async function getChannelVideos(channel, apiKey) {
       member: channel.nickname,
       channelTitle: item.snippet?.channelTitle || channel.nickname,
       publishedAt: item.snippet?.publishedAt || '',
-      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url || '',
+      thumbnail: getBestThumbnail(item.snippet?.thumbnails || {}),
       url: `https://www.youtube.com/watch?v=${item.id}`,
-      type: shorts ? 'shorts' : edited ? 'video' : 'other',
+      type: shorts ? 'shorts' : 'video',
       durationSeconds: seconds,
     };
-  }).filter((item) => item.type !== 'other');
+  });
 }
 
 export default async function handler(req, res) {
@@ -134,8 +130,8 @@ export default async function handler(req, res) {
       .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
     return res.status(200).json({
-      videos: merged.filter((item) => item.type === 'video').slice(0, 16),
-      shorts: merged.filter((item) => item.type === 'shorts').slice(0, 24),
+      videos: merged.filter((item) => item.type === 'video').slice(0, 24),
+      shorts: merged.filter((item) => item.type === 'shorts').slice(0, 30),
       missingKey: false,
     });
   } catch (error) {
