@@ -25,3 +25,62 @@ a {
 button {
   cursor: pointer;
 }
+
+section[aria-label="장지수용소 대문"] {
+  position: relative;
+  border-color: rgba(245, 158, 11, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(19, 21, 27, 0.98), rgba(3, 5, 9, 1));
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -80px 100px rgba(0, 0, 0, 0.24) !important;
+}
+
+section[aria-label="장지수용소 대문"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+    inset 0 0 42px rgba(245, 158, 11, 0.055),
+    inset 0 -78px 120px rgba(5, 7, 12, 0.42);
+}
+
+section[aria-label="장지수용소 대문"] > div {
+  position: relative;
+  isolation: isolate;
+}
+
+section[aria-label="장지수용소 대문"] img {
+  filter: contrast(1.055) saturate(1.035) brightness(1.015);
+}
+
+section[aria-label="장지수용소 대문"] > div::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 27%, rgba(255, 255, 255, 0.08), transparent 24%),
+    radial-gradient(circle at 50% 47%, transparent 0 32%, rgba(0, 0, 0, 0.22) 70%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.46), transparent 19%, transparent 81%, rgba(0, 0, 0, 0.50)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.03), transparent 45%, rgba(0, 0, 0, 0.28));
+}
+
+section[aria-label="장지수용소 대문"] > div::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 32%;
+  z-index: 6;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.58)),
+    radial-gradient(ellipse at center bottom, rgba(245, 158, 11, 0.10), transparent 58%);
+}
