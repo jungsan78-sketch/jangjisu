@@ -48,7 +48,7 @@ function SectionTitle({ title, logo }) {
 
 function ScheduleFilterButton({ active, onClick, children }) {
   return (
-    <button onClick={onClick} className={`rounded-full border px-5 py-2.5 text-[15px] font-black transition ${active ? 'border-blue-200/38 bg-[linear-gradient(180deg,rgba(59,130,246,0.26),rgba(255,255,255,0.06))] text-white shadow-[0_0_24px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.12)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:border-white/18 hover:bg-white/[0.09] hover:text-white'}`}>
+    <button onClick={onClick} className={`rounded-full border px-5 py-2.5 text-[15px] font-black transition ${active ? 'border-cyan-200/38 bg-[linear-gradient(180deg,rgba(34,211,238,0.18),rgba(59,130,246,0.10))] text-white shadow-[0_0_24px_rgba(34,211,238,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:border-cyan-200/24 hover:bg-white/[0.09] hover:text-white'}`}>
       {children}
     </button>
   );
@@ -124,55 +124,56 @@ function CalendarPreview() {
   }, [visibleSchedules]);
 
   return (
-    <section id="schedule" className="mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
+    <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
       <SectionTitle title="장지수용소 일정표" logo="⛓️" />
-      <div className="rounded-[32px] border border-[#16345d]/70 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_28%),linear-gradient(180deg,rgba(5,15,29,0.98),rgba(4,8,16,0.99))] p-5 shadow-[0_22px_55px_rgba(0,0,0,0.34)] sm:p-7">
+      <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-[28px] font-black tracking-tight text-white sm:text-[34px]">수용소 월간 일정</div>
+            <div className="text-[26px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[30px]">수용소 월간 일정</div>
             <div className="mt-2 text-[15px] font-semibold leading-7 text-white/68">전체보기는 모든 멤버 일정을 합쳐서 보여주고, 멤버 버튼은 해당 멤버 일정만 표시합니다.</div>
           </div>
-          <div className="rounded-full border border-blue-200/24 bg-blue-300/12 px-4 py-2 text-xs font-black tracking-[0.22em] text-blue-50">{mainSchedule.monthLabel || 'PRISON SCHEDULE'}</div>
+          <div className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-black tracking-[0.22em] text-cyan-100">{mainSchedule.monthLabel || 'PRISON SCHEDULE'}</div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-2 rounded-[24px] border border-white/8 bg-black/18 p-3">
+        <div className="mb-5 flex flex-wrap gap-2 rounded-[24px] border border-white/8 bg-[#05101d] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
           <ScheduleFilterButton active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')}>전체보기</ScheduleFilterButton>
           {SCHEDULE_MEMBERS.map((member) => (
             <ScheduleFilterButton key={member.nickname} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)}>{member.nickname}</ScheduleFilterButton>
           ))}
         </div>
 
-        <div className="rounded-[30px] border border-white/10 bg-[#050b16] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] sm:p-5">
-          <div className="mb-4 grid grid-cols-7 gap-3 text-center text-[15px] font-black text-white/78">
+        <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
+          <div className="mb-4 grid grid-cols-7 gap-3 text-center text-[15px] font-black text-white/68">
             {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
-              <div key={day} className={index === 0 ? 'text-rose-200' : index === 6 ? 'text-sky-200' : ''}>{day}</div>
+              <div key={day} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{day}</div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-3">
             {calendarCells.map((cell, index) => {
-              if (!cell) return <div key={`empty-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border border-white/5 bg-white/[0.014]`} />;
+              if (!cell) return <div key={`empty-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border border-white/5 bg-white/[0.02]`} />;
               const day = Number(cell.dayNumber);
               const schedules = scheduleByDay.get(day) || [];
               const hasSchedule = schedules.length > 0;
               const hasOff = schedules.some((item) => isOffSchedule(item.title));
               const isToday = today.getMonth() + 1 === month && today.getDate() === day;
               return (
-                <div key={day} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border p-3.5 transition ${hasOff ? 'border-rose-300/42 bg-[linear-gradient(180deg,rgba(88,24,32,0.72),rgba(10,13,20,0.99))] shadow-[0_0_28px_rgba(244,63,94,0.12)]' : hasSchedule ? 'border-blue-200/42 bg-[linear-gradient(180deg,rgba(26,57,98,0.92),rgba(7,14,25,0.99))] shadow-[0_0_28px_rgba(59,130,246,0.14)]' : 'border-white/8 bg-[linear-gradient(180deg,rgba(13,20,32,0.98),rgba(7,11,18,0.99))] hover:border-white/14'}`}>
-                  <div className="flex items-start justify-between gap-2">
+                <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border p-3.5 transition-all duration-300 hover:-translate-y-1 ${hasSchedule ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/24 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="relative flex items-start justify-between gap-2">
                     <div className="text-[17px] font-black text-white/95">{day}</div>
                     <div className="flex flex-wrap justify-end gap-1.5">
-                      {isToday ? <span className="rounded-full border border-cyan-200/28 bg-cyan-300/14 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-cyan-50">TODAY</span> : null}
-                      {hasOff ? <span className="rounded-full border border-rose-200/30 bg-rose-400/16 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-rose-50">휴방</span> : null}
+                      {isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-cyan-100">TODAY</span> : null}
                     </div>
                   </div>
-                  <div className="mt-3 space-y-2">
+                  <div className="relative mt-3 space-y-2">
                     {schedules.map((item) => {
                       const off = isOffSchedule(item.title);
                       return (
-                        <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 ${off ? 'text-rose-50' : 'text-white'}`}>
-                          <span className={off ? 'text-rose-100' : 'text-blue-100'}>{item.member}</span>
+                        <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 ${off ? 'text-rose-200' : 'text-white'}`}>
+                          <span className={off ? 'text-rose-100' : 'text-cyan-100'}>{item.member}</span>
                           <span className="px-1.5 text-white/42">-</span>
                           <span>{item.title}</span>
+                          {off ? <span className="ml-2 rounded-full border border-rose-200/24 bg-rose-400/12 px-2 py-0.5 text-[10px] font-black text-rose-100">휴방</span> : null}
                         </div>
                       );
                     })}
@@ -251,8 +252,8 @@ export default function JangjisuPrisonPage() {
             </a>
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <NavChip href="/" label="SOU 메인" icon="↩" />
-              <NavChip href="#schedule" label="일정표" icon="⛓️" tone="warm" />
               <NavChip href="#members" label="멤버표" icon="🪪" />
+              <NavChip href="#schedule" label="일정표" icon="⛓️" tone="warm" />
               <NavChip href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="📋" />
             </nav>
           </div>
@@ -273,8 +274,8 @@ export default function JangjisuPrisonPage() {
             </div>
           </section>
 
-          <CalendarPreview />
           <MemberBoardPreview />
+          <CalendarPreview />
         </main>
       </div>
     </>
