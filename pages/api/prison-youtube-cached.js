@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   try {
     const baseUrl = getBaseUrl(req);
-    const liveRes = await fetch(`${baseUrl}/api/prison-youtube`, { cache: 'no-store' });
+    const liveRes = await fetch(`${baseUrl}/api/prison-youtube`, { cache: 'no-store', headers: { 'x-youtube-cache-bypass': '1' } });
     const live = await liveRes.json();
 
     if (isUsablePayload(live) && isServerCacheEnabled()) {
