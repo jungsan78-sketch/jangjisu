@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 
-const STORAGE_KEY = 'sou:overwatch-random:v5';
+const STORAGE_KEY = 'sou:overwatch-random:v6';
 
 const POSITION_META = {
   tank: { label: '탱커', icon: '🛡️', ring: 'border-sky-300/30', badge: 'border-sky-300/35 bg-sky-300/12 text-sky-100' },
@@ -9,6 +9,13 @@ const POSITION_META = {
   support: { label: '힐러', icon: '💚', ring: 'border-emerald-300/30', badge: 'border-emerald-300/35 bg-emerald-300/12 text-emerald-100' },
   random: { label: '랜덤', icon: '❓', ring: 'border-violet-300/30', badge: 'border-violet-300/35 bg-violet-300/12 text-violet-100' },
 };
+
+const POSITION_OPTIONS = [
+  { value: 'tank', label: '탱커', icon: '🛡️' },
+  { value: 'dps', label: '딜러', icon: '⚔️' },
+  { value: 'support', label: '힐러', icon: '💚' },
+  { value: 'random', label: '랜덤', icon: '❓' },
+];
 
 const TEAM_ACCENTS = [
   { border: 'border-sky-300/24', glow: 'bg-sky-400/10', badge: 'border-sky-300/35 bg-sky-300/12 text-sky-100' },
@@ -65,12 +72,36 @@ function readSavedState() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
     return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function writeSavedState(payload) {
   if (typeof window === 'undefined') return;
   try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); } catch {}
+}
+
+function CustomDropdown({ value, options, onChange, className = '' }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value) || options[0];
+  return (
+    <div className={`relative ${className}`}>
+      <button type="button" onClick={() => setOpen((prev) => !prev)} onBlur={() => setTimeout(() => setOpen(false), 120)} className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0d1523] px-3 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-cyan-300/28 hover:bg-[#121c2d]">
+        <span className="flex min-w-0 items-center gap-2"><span>{selected.icon}</span><span className="truncate">{selected.label}</span></span>
+        <span className="text-white/45">⌄</span>
+      </button>
+      {open ? (
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[70] w-full overflow-hidden rounded-xl border border-white/10 bg-[#070d18] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.45)]">
+          {options.map((option) => (
+            <button key={option.value} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange(option.value); setOpen(false); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-black transition ${option.value === value ? 'bg-blue-500 text-white' : 'text-white/78 hover:bg-white/10 hover:text-white'}`}>
+              <span>{option.icon}</span><span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function PlayerCard({ item, profile, size = 'large', draggable = false, onDragStart, onDragEnd, onClick, onRemove, locked = false, onToggleLock }) {
@@ -80,23 +111,11 @@ function PlayerCard({ item, profile, size = 'large', draggable = false, onDragSt
   const compact = size === 'small';
   const cardSize = compact ? 'w-[112px] min-h-[122px] p-2.5' : 'w-[132px] min-h-[146px] p-3';
   const imageSize = compact ? 'h-14 w-14' : 'h-16 w-16';
-
   return (
-    <button
-      type="button"
-      draggable={draggable && !locked}
-      onDragStart={locked ? undefined : onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      className={`group relative flex ${cardSize} flex-col items-center justify-start rounded-[22px] border ${locked ? 'border-amber-300/45 bg-amber-300/[0.08]' : meta.ring} bg-[linear-gradient(180deg,rgba(255,255,255,0.065),rgba(255,255,255,0.025))] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_28px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-white/24 hover:bg-white/[0.075] ${locked ? 'cursor-pointer' : draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
-    >
-      {onToggleLock ? (
-        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleLock(); }} className={`absolute right-2 top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border px-2 text-[11px] font-black transition ${locked ? 'border-amber-200/45 bg-amber-300/20 text-amber-100' : 'border-white/10 bg-black/35 text-white/50 hover:text-white'}`}>{locked ? '🔒' : '🔓'}</span>
-      ) : null}
+    <button type="button" draggable={draggable && !locked} onDragStart={locked ? undefined : onDragStart} onDragEnd={onDragEnd} onClick={onClick} className={`group relative flex ${cardSize} flex-col items-center justify-start rounded-[22px] border ${locked ? 'border-amber-300/45 bg-amber-300/[0.08]' : meta.ring} bg-[linear-gradient(180deg,rgba(255,255,255,0.065),rgba(255,255,255,0.025))] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_28px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-white/24 hover:bg-white/[0.075] ${locked ? 'cursor-pointer' : draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}>
+      {onToggleLock ? <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleLock(); }} className={`absolute right-2 top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border px-2 text-[11px] font-black transition ${locked ? 'border-amber-200/45 bg-amber-300/20 text-amber-100' : 'border-white/10 bg-black/35 text-white/50 hover:text-white'}`}>{locked ? '🔒' : '🔓'}</span> : null}
       {onRemove ? <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(item.name); }} className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-black/35 text-xs text-white/58 opacity-0 transition hover:text-white group-hover:opacity-100">×</span> : null}
-      <div className={`${imageSize} mt-1 overflow-hidden rounded-full border border-white/12 bg-black/22 shadow-[0_8px_18px_rgba(0,0,0,0.28)]`}>
-        {src ? <img src={src} alt={item.name} onError={() => setFailed(true)} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.015)_62%,transparent)]" />}
-      </div>
+      <div className={`${imageSize} mt-1 overflow-hidden rounded-full border border-white/12 bg-black/22 shadow-[0_8px_18px_rgba(0,0,0,0.28)]`}>{src ? <img src={src} alt={item.name} onError={() => setFailed(true)} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.015)_62%,transparent)]" />}</div>
       <div className={`${compact ? 'mt-2 text-[15px]' : 'mt-3 text-[17px]'} max-w-full truncate font-black leading-tight text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.28)]`}>{item.name}</div>
       <div className={`mt-2 rounded-full border px-2.5 py-1 text-[11px] font-black ${locked ? 'border-amber-200/35 bg-amber-300/12 text-amber-100' : meta.badge}`}>{locked ? '잠금' : `${meta.icon} ${meta.label}`}</div>
     </button>
@@ -121,10 +140,7 @@ function MoveMenu({ target, teams, currentPlayer, currentTeam, currentLocked, on
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/64 px-4 backdrop-blur-sm" onClick={onClose}>
       <div className="max-h-[86vh] w-full max-w-[520px] overflow-y-auto rounded-[28px] border border-white/12 bg-[#090e18] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.55)]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-          <div><div className="text-xs font-black tracking-[0.28em] text-cyan-100/55">PLAYER MOVE</div><div className="mt-2 text-2xl font-black text-white">{target.item.name} 이동</div></div>
-          <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-bold text-white/60 hover:text-white">닫기</button>
-        </div>
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4"><div><div className="text-xs font-black tracking-[0.28em] text-cyan-100/55">PLAYER MOVE</div><div className="mt-2 text-2xl font-black text-white">{target.item.name} 이동</div></div><button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-bold text-white/60 hover:text-white">닫기</button></div>
         <div className="mt-4 grid gap-2">
           {currentPlayer?.slotKey ? <button onClick={onToggleLock} className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${currentLocked ? 'border-amber-200/35 bg-amber-300/16 text-amber-100' : 'border-white/10 bg-white/[0.055] text-white hover:bg-white/10'}`}>{currentLocked ? '🔓 이 선수 잠금 해제' : '🔒 이 선수 잠금'}</button> : null}
           {currentTeam ? <button onClick={onMoveToLobby} className="rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-left text-sm font-black text-white hover:bg-white/10">대기실로 보내기</button> : null}
@@ -149,12 +165,10 @@ export default function OverwatchRandomPage() {
   const [hydrated, setHydrated] = useState(false);
   const [dragState, setDragState] = useState(null);
   const [moveTarget, setMoveTarget] = useState(null);
-
   const roles = useMemo(() => getRoleTemplate(mode), [mode]);
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
   const lobbyPlayers = useMemo(() => participants.filter((item) => !assignedNames.has(item.name)), [participants, assignedNames]);
   const getProfile = (name) => profileMap[normalizeName(name)] || null;
-
   const teams = useMemo(() => Array.from({ length: teamCount }, (_, i) => {
     const teamNo = i + 1;
     const players = roles.map((role) => {
@@ -165,156 +179,28 @@ export default function OverwatchRandomPage() {
     }).filter(Boolean);
     return { teamNo, players };
   }), [teamCount, roles, assignments, participants]);
-
   const currentPlayer = moveTarget ? teams.flatMap((team) => team.players).find((player) => player.id === moveTarget.item.id) : null;
   const currentTeam = moveTarget ? teams.find((team) => team.players.some((player) => player.id === moveTarget.item.id)) : null;
   const currentLocked = Boolean(currentPlayer?.slotKey && slotLocks[currentPlayer.slotKey]);
 
-  useEffect(() => {
-    const saved = readSavedState();
-    if (saved) {
-      if (Number(saved.teamCount) >= 2 && Number(saved.teamCount) <= 10) setTeamCount(Number(saved.teamCount));
-      if (saved.mode === '5v5' || saved.mode === '6v6') setMode(saved.mode);
-      if (Array.isArray(saved.participants)) setParticipants(saved.participants.filter((item) => item?.name && item?.position).map((item, index) => ({ ...item, id: item.id || `saved-${index}-${item.name}` })));
-      if (saved.assignments && typeof saved.assignments === 'object') setAssignments(saved.assignments);
-      if (saved.slotLocks && typeof saved.slotLocks === 'object') setSlotLocks(saved.slotLocks);
-      if (typeof saved.currentMap === 'string') setCurrentMap(saved.currentMap);
-    }
-    setHydrated(true);
-  }, []);
+  useEffect(() => { const saved = readSavedState(); if (saved) { if (Number(saved.teamCount) >= 2 && Number(saved.teamCount) <= 10) setTeamCount(Number(saved.teamCount)); if (saved.mode === '5v5' || saved.mode === '6v6') setMode(saved.mode); if (Array.isArray(saved.participants)) setParticipants(saved.participants.filter((item) => item?.name && item?.position).map((item, index) => ({ ...item, id: item.id || `saved-${index}-${item.name}` }))); if (saved.assignments && typeof saved.assignments === 'object') setAssignments(saved.assignments); if (saved.slotLocks && typeof saved.slotLocks === 'object') setSlotLocks(saved.slotLocks); if (typeof saved.currentMap === 'string') setCurrentMap(saved.currentMap); } setHydrated(true); }, []);
+  useEffect(() => { const baseMap = {}; KNOWN_MEMBER_PROFILES.forEach((member) => { baseMap[normalizeName(member.nickname)] = member; }); setProfileMap(baseMap); let mounted = true; const loadProfiles = async () => { try { const res = await fetch('/api/crew-sheet'); const json = await res.json(); if (!mounted) return; const next = { ...baseMap }; (json.crews || []).forEach((crew) => (crew.members || []).forEach((member) => { const key = normalizeName(member.nickname); if (!key) return; next[key] = { nickname: member.nickname, profileImage: member.profileImage || member.profileImages?.[0] || '' }; })); setProfileMap(next); } catch {} }; loadProfiles(); return () => { mounted = false; }; }, []);
+  useEffect(() => { if (!hydrated) return; writeSavedState({ teamCount, mode, participants, assignments, slotLocks, currentMap }); }, [hydrated, teamCount, mode, participants, assignments, slotLocks, currentMap]);
 
-  useEffect(() => {
-    const baseMap = {};
-    KNOWN_MEMBER_PROFILES.forEach((member) => { baseMap[normalizeName(member.nickname)] = member; });
-    setProfileMap(baseMap);
-    let mounted = true;
-    const loadProfiles = async () => {
-      try {
-        const res = await fetch('/api/crew-sheet');
-        const json = await res.json();
-        if (!mounted) return;
-        const next = { ...baseMap };
-        (json.crews || []).forEach((crew) => (crew.members || []).forEach((member) => {
-          const key = normalizeName(member.nickname);
-          if (!key) return;
-          next[key] = { nickname: member.nickname, profileImage: member.profileImage || member.profileImages?.[0] || '' };
-        }));
-        setProfileMap(next);
-      } catch {}
-    };
-    loadProfiles();
-    return () => { mounted = false; };
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    writeSavedState({ teamCount, mode, participants, assignments, slotLocks, currentMap });
-  }, [hydrated, teamCount, mode, participants, assignments, slotLocks, currentMap]);
-
-  const addParticipant = () => {
-    const names = nameInput.split(/\n|,/).map((v) => v.trim()).filter(Boolean);
-    if (!names.length) return;
-    setParticipants((prev) => {
-      const seen = new Set(prev.map((item) => normalizeName(item.name)));
-      const next = [...prev];
-      names.forEach((name) => {
-        const key = normalizeName(name);
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        next.push({ id: `${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}`, name, position: positionInput });
-      });
-      return next;
-    });
-    setNameInput('');
-  };
-
-  const removeParticipant = (name) => {
-    setParticipants((prev) => prev.filter((item) => item.name !== name));
-    setAssignments((prev) => Object.fromEntries(Object.entries(prev).map(([key, value]) => [key, value === name ? '' : value])));
-  };
-
-  const moveToSlot = (item, slotKey) => {
-    if (slotLocks[slotKey]) return;
-    setAssignments((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((key) => { if (next[key] === item.name) next[key] = ''; });
-      next[slotKey] = item.name;
-      return next;
-    });
-  };
-
-  const moveToTeam = (item, teamNo) => {
-    const emptyRole = roles.find((role) => !assignments[`${teamNo}-${role}`] && !slotLocks[`${teamNo}-${role}`]);
-    const role = emptyRole || roles.find((r) => !slotLocks[`${teamNo}-${r}`]) || roles[0];
-    moveToSlot(item, `${teamNo}-${role}`);
-  };
-
+  const addParticipant = () => { const names = nameInput.split(/\n|,/).map((v) => v.trim()).filter(Boolean); if (!names.length) return; setParticipants((prev) => { const seen = new Set(prev.map((item) => normalizeName(item.name))); const next = [...prev]; names.forEach((name) => { const key = normalizeName(name); if (!key || seen.has(key)) return; seen.add(key); next.push({ id: `${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}`, name, position: positionInput }); }); return next; }); setNameInput(''); };
+  const removeParticipant = (name) => { setParticipants((prev) => prev.filter((item) => item.name !== name)); setAssignments((prev) => Object.fromEntries(Object.entries(prev).map(([key, value]) => [key, value === name ? '' : value]))); };
+  const moveToSlot = (item, slotKey) => { if (slotLocks[slotKey]) return; const roleType = getRoleType(slotKey.split('-').slice(1).join('-')); if (item.position !== roleType && item.position !== 'random') return; setAssignments((prev) => { const next = { ...prev }; Object.keys(next).forEach((key) => { if (next[key] === item.name) next[key] = ''; }); next[slotKey] = item.name; return next; }); };
+  const moveToTeam = (item, teamNo) => { const role = roles.find((r) => !assignments[`${teamNo}-${r}`] && !slotLocks[`${teamNo}-${r}`] && (item.position === getRoleType(r) || item.position === 'random')); if (role) moveToSlot(item, `${teamNo}-${role}`); };
   const moveToLobby = (item) => setAssignments((prev) => Object.fromEntries(Object.entries(prev).map(([key, value]) => [key, value === item.name ? '' : value])));
-
-  const swapPlayers = (a, b) => {
-    setAssignments((prev) => {
-      const next = { ...prev };
-      const aSlot = Object.entries(next).find(([, value]) => value === a.name)?.[0];
-      const bSlot = Object.entries(next).find(([, value]) => value === b.name)?.[0];
-      if ((aSlot && slotLocks[aSlot]) || (bSlot && slotLocks[bSlot])) return next;
-      if (aSlot) next[aSlot] = b.name;
-      if (bSlot) next[bSlot] = a.name;
-      if (!aSlot && bSlot) next[bSlot] = a.name;
-      return next;
-    });
-  };
-
+  const swapPlayers = (a, b) => { setAssignments((prev) => { const next = { ...prev }; const aSlot = Object.entries(next).find(([, value]) => value === a.name)?.[0]; const bSlot = Object.entries(next).find(([, value]) => value === b.name)?.[0]; if ((aSlot && slotLocks[aSlot]) || (bSlot && slotLocks[bSlot])) return next; if (aSlot && bSlot) { const aRole = getRoleType(aSlot.split('-').slice(1).join('-')); const bRole = getRoleType(bSlot.split('-').slice(1).join('-')); if (!((b.position === aRole || b.position === 'random') && (a.position === bRole || a.position === 'random'))) return next; next[aSlot] = b.name; next[bSlot] = a.name; } return next; }); };
   const toggleSlotLock = (slotKey) => setSlotLocks((prev) => ({ ...prev, [slotKey]: !prev[slotKey] }));
-
-  const shuffleTeams = () => {
-    const lockedNames = new Set(Object.entries(assignments).filter(([slotKey, name]) => slotLocks[slotKey] && name).map(([, name]) => name));
-    const pool = shuffle(participants.filter((item) => !lockedNames.has(item.name)));
-    const next = { ...assignments };
-    let index = 0;
-    for (let teamNo = 1; teamNo <= teamCount; teamNo += 1) roles.forEach((role) => {
-      const slotKey = `${teamNo}-${role}`;
-      if (slotLocks[slotKey] && next[slotKey]) return;
-      next[slotKey] = pool[index]?.name || '';
-      index += 1;
-    });
-    setAssignments(next);
-  };
-
+  const shuffleTeams = () => { const lockedNames = new Set(Object.entries(assignments).filter(([slotKey, name]) => slotLocks[slotKey] && name).map(([, name]) => name)); const next = { ...assignments }; Object.keys(next).forEach((slotKey) => { if (!slotLocks[slotKey]) next[slotKey] = ''; }); const pools = { tank: shuffle(participants.filter((item) => item.position === 'tank' && !lockedNames.has(item.name))), dps: shuffle(participants.filter((item) => item.position === 'dps' && !lockedNames.has(item.name))), support: shuffle(participants.filter((item) => item.position === 'support' && !lockedNames.has(item.name))), random: shuffle(participants.filter((item) => item.position === 'random' && !lockedNames.has(item.name))) }; const pull = (type) => { const exact = pools[type].shift(); if (exact) return exact.name; const fallback = pools.random.shift(); return fallback?.name || ''; }; ['tank', 'dps', 'support'].forEach((type) => { const slots = shuffle(Array.from({ length: teamCount }, (_, i) => i + 1).flatMap((teamNo) => roles.filter((role) => getRoleType(role) === type).map((role) => `${teamNo}-${role}`))).filter((slotKey) => !slotLocks[slotKey]); slots.forEach((slotKey) => { next[slotKey] = pull(type); }); }); setAssignments(next); };
   const resetTeams = () => { setAssignments({}); setSlotLocks({}); };
   const clearAll = () => { setParticipants([]); setAssignments({}); setSlotLocks({}); setCurrentMap(''); if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEY); };
-
-  const copyResult = async () => {
-    const text = teams.map((team) => `TEAM ${team.teamNo}\n${roles.map((role) => `${role}: ${assignments[`${team.teamNo}-${role}`] || '-'}`).join('\n')}`).join('\n\n');
-    try { await navigator.clipboard.writeText(text); } catch {}
-  };
-
-  const handleDropToSlot = (teamNo, role) => {
-    if (!dragState?.item) return;
-    const slotKey = `${teamNo}-${role}`;
-    if (slotLocks[slotKey]) return;
-    moveToSlot(dragState.item, slotKey);
-    setDragState(null);
-  };
+  const copyResult = async () => { const text = teams.map((team) => `TEAM ${team.teamNo}\n${roles.map((role) => `${role}: ${assignments[`${team.teamNo}-${role}`] || '-'}`).join('\n')}`).join('\n\n'); try { await navigator.clipboard.writeText(text); } catch {} };
+  const handleDropToSlot = (teamNo, role) => { if (!dragState?.item) return; moveToSlot(dragState.item, `${teamNo}-${role}`); setDragState(null); };
 
   return (
-    <>
-      <Head>
-        <title>오버워치 랜덤뽑기 | 장지수 팬 아카이브</title>
-        <meta name="description" content="방송용 오버워치 랜덤 팀 편성 툴" />
-        <style jsx global>{`select, select option, select optgroup { background: #0b111d !important; color: #f8fafc !important; } select option:checked { background: #1d4ed8 !important; color: #ffffff !important; }`}</style>
-      </Head>
-      <div className="min-h-screen bg-[#05070c] text-white">
-        <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-90px] h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" /><div className="absolute right-[-80px] top-16 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl"><div className="mx-auto flex max-w-[118rem] items-center justify-between gap-4 px-5 py-4 lg:px-8"><a href="/" className="block h-12 w-12 overflow-hidden rounded-full border border-white/10 transition hover:scale-105"><img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" /></a><div className="text-[26px] font-black tracking-tight text-white">오버워치 랜덤뽑기</div><a href="/utility" className="rounded-full border border-cyan-300/28 bg-cyan-300/12 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:bg-cyan-300/18">유틸리티</a></div></header>
-        <main className="relative mx-auto max-w-[118rem] px-5 py-6 lg:px-8">
-          <section className="mb-5 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)]"><div className="flex flex-wrap items-center gap-3"><input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addParticipant(); }} placeholder="스트리머 이름 추가..." className={`${FIELD_CLASS} w-[260px]`} /><select value={positionInput} onChange={(e) => setPositionInput(e.target.value)} className={FIELD_CLASS}><option value="tank">🛡️ 탱커</option><option value="dps">⚔️ 딜러</option><option value="support">💚 힐러</option><option value="random">❓ 랜덤</option></select><button onClick={addParticipant} className="h-11 rounded-xl border border-cyan-300/28 bg-cyan-400/14 px-5 text-sm font-black text-cyan-100 transition hover:bg-cyan-400/20">추가</button><div className="mx-1 h-8 w-px bg-white/10" /><button onClick={() => setMode('5v5')} className={`h-10 rounded-xl border px-4 text-sm font-black ${mode === '5v5' ? 'border-orange-300/40 bg-orange-400/18 text-orange-50' : 'border-white/10 bg-white/5 text-white/58'}`}>5 vs 5</button><button onClick={() => setMode('6v6')} className={`h-10 rounded-xl border px-4 text-sm font-black ${mode === '6v6' ? 'border-orange-300/40 bg-orange-400/18 text-orange-50' : 'border-white/10 bg-white/5 text-white/58'}`}>6 vs 6</button><select value={teamCount} onChange={(e) => setTeamCount(Number(e.target.value))} className={`${FIELD_CLASS} w-[96px]`}>{Array.from({ length: 9 }, (_, i) => i + 2).map((count) => <option key={count} value={count}>{count}팀</option>)}</select><button onClick={shuffleTeams} className="h-11 rounded-xl border border-orange-300/45 bg-orange-500 px-5 text-sm font-black text-white shadow-[0_12px_24px_rgba(249,115,22,0.20)] transition hover:brightness-110">랜덤 섞기</button><button onClick={resetTeams} className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-white/70 transition hover:bg-white/10">팀 초기화</button><button onClick={copyResult} className="h-11 rounded-xl border border-cyan-300/28 bg-cyan-300/12 px-4 text-sm font-bold text-cyan-100 transition hover:bg-cyan-300/18">결과 복사</button><button onClick={() => setCurrentMap(MAP_POOL[Math.floor(Math.random() * MAP_POOL.length)])} className="h-11 rounded-xl border border-violet-300/28 bg-violet-300/12 px-4 text-sm font-bold text-violet-100 transition hover:bg-violet-300/18">맵 뽑기</button><button onClick={clearAll} className="ml-auto h-11 rounded-xl border border-rose-300/24 bg-rose-300/10 px-4 text-sm font-bold text-rose-100/80 transition hover:bg-rose-300/16">전체삭제</button></div><div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-bold text-white/55"><span>등록 {participants.length}명</span><span>대기 {lobbyPlayers.length}명</span><span>배정 {assignedNames.size}명</span><span>잠금 {Object.values(slotLocks).filter(Boolean).length}칸</span>{currentMap ? <span className="rounded-full border border-violet-300/25 bg-violet-300/10 px-3 py-1 text-violet-100">현재 맵: {currentMap}</span> : null}</div></section>
-          <section className="grid gap-5 xl:grid-cols-[minmax(520px,0.95fr)_minmax(680px,1.35fr)]">
-            <section className="min-h-[700px] rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.26)]"><div className="flex items-end justify-between gap-4"><div><div className="text-xs font-black tracking-[0.32em] text-cyan-100/45">WAITING ROOM</div><h2 className="mt-2 text-[34px] font-black tracking-tight text-white">대기실</h2></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/65">{lobbyPlayers.length}명</div></div><div className="mt-5 rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"><div className="grid gap-4">{['tank','dps','support','random'].map((type) => { const list = lobbyPlayers.filter((item) => item.position === type); const meta = POSITION_META[type]; return <div key={type} className="rounded-[24px] border border-white/7 bg-[linear-gradient(180deg,rgba(8,13,23,0.72),rgba(5,8,14,0.54))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]" onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragState?.item) { moveToLobby(dragState.item); setDragState(null); } }}><div className="mb-3 flex items-center justify-between"><div className="text-base font-black text-white">{meta.icon} {meta.label}</div><div className="text-sm font-bold text-white/40">{list.length}명</div></div><div className="flex min-h-[154px] flex-wrap gap-3 rounded-[20px] bg-black/10 p-3">{list.length ? list.map((item) => <PlayerCard key={item.id} item={item} profile={getProfile(item.name)} draggable onDragStart={() => setDragState({ item })} onDragEnd={() => setDragState(null)} onClick={() => setMoveTarget({ item })} onRemove={removeParticipant} />) : <div className="flex min-h-[130px] w-full items-center justify-center rounded-[20px] bg-white/[0.018] text-sm font-bold text-white/26">대기중인 인원이 없습니다.</div>}</div></div>; })}</div></div></section>
-            <section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.26)]"><div className="flex items-end justify-between gap-4"><div><div className="text-xs font-black tracking-[0.32em] text-orange-100/45">TEAM BOARD</div><h2 className="mt-2 text-[34px] font-black tracking-tight text-white">팀 결과판</h2></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/65">{teamCount}팀 · {mode}</div></div><div className="mt-5 grid gap-4 2xl:grid-cols-2">{teams.map((team) => { const theme = TEAM_ACCENTS[(team.teamNo - 1) % TEAM_ACCENTS.length]; return <div key={team.teamNo} className={`relative overflow-hidden rounded-[26px] border ${theme.border} bg-[#0b111d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_32px_rgba(0,0,0,0.24)]`}><div className={`pointer-events-none absolute inset-x-0 top-0 h-24 ${theme.glow}`} /><div className="relative flex items-center justify-between gap-3 border-b border-white/8 pb-3"><div className="text-[24px] font-black text-white">TEAM {team.teamNo}</div><div className={`rounded-full border px-3 py-1 text-xs font-black ${theme.badge}`}>{team.players.length}/{roles.length}</div></div><div className="relative mt-4 flex min-h-[286px] flex-wrap content-start gap-3">{roles.map((role) => { const slotKey = `${team.teamNo}-${role}`; const name = assignments[slotKey]; const item = name ? participants.find((p) => p.name === name) : null; return item ? <PlayerCard key={slotKey} item={item} profile={getProfile(item.name)} size="small" locked={Boolean(slotLocks[slotKey])} onToggleLock={() => toggleSlotLock(slotKey)} draggable onDragStart={() => setDragState({ item })} onDragEnd={() => setDragState(null)} onClick={() => setMoveTarget({ item })} /> : <EmptySlot key={slotKey} role={role} active={Boolean(dragState) && !slotLocks[slotKey]} onDrop={() => handleDropToSlot(team.teamNo, role)} />; })}</div></div>; })}</div></section>
-          </section>
-        </main>
-        <MoveMenu target={moveTarget} teams={teams} currentPlayer={currentPlayer} currentTeam={currentTeam} currentLocked={currentLocked} onClose={() => setMoveTarget(null)} onMoveToLobby={() => { moveToLobby(moveTarget.item); setMoveTarget(null); }} onMoveToTeam={(teamNo) => { moveToTeam(moveTarget.item, teamNo); setMoveTarget(null); }} onSwap={(player) => { swapPlayers(moveTarget.item, player); setMoveTarget(null); }} onToggleLock={() => { if (currentPlayer?.slotKey) toggleSlotLock(currentPlayer.slotKey); }} />
-      </div>
-    </>
+    <><Head><title>오버워치 랜덤뽑기 | 장지수 팬 아카이브</title><meta name="description" content="방송용 오버워치 랜덤 팀 편성 툴" /></Head><div className="min-h-screen bg-[#05070c] text-white"><div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-90px] h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" /><div className="absolute right-[-80px] top-16 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div><header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl"><div className="mx-auto flex max-w-[118rem] items-center justify-between gap-4 px-5 py-4 lg:px-8"><a href="/" className="block h-12 w-12 overflow-hidden rounded-full border border-white/10 transition hover:scale-105"><img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" /></a><div className="text-[26px] font-black tracking-tight text-white">오버워치 랜덤뽑기</div><a href="/utility" className="rounded-full border border-cyan-300/28 bg-cyan-300/12 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:bg-cyan-300/18">유틸리티</a></div></header><main className="relative mx-auto max-w-[118rem] px-5 py-6 lg:px-8"><section className="mb-5 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)]"><div className="flex flex-wrap items-center gap-3"><input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addParticipant(); }} placeholder="스트리머 이름 추가..." className={`${FIELD_CLASS} w-[260px]`} /><CustomDropdown value={positionInput} options={POSITION_OPTIONS} onChange={setPositionInput} className="w-[124px]" /><button onClick={addParticipant} className="h-11 rounded-xl border border-cyan-300/28 bg-cyan-400/14 px-5 text-sm font-black text-cyan-100 transition hover:bg-cyan-400/20">추가</button><div className="mx-1 h-8 w-px bg-white/10" /><button onClick={() => setMode('5v5')} className={`h-10 rounded-xl border px-4 text-sm font-black ${mode === '5v5' ? 'border-orange-300/40 bg-orange-400/18 text-orange-50' : 'border-white/10 bg-white/5 text-white/58'}`}>5 vs 5</button><button onClick={() => setMode('6v6')} className={`h-10 rounded-xl border px-4 text-sm font-black ${mode === '6v6' ? 'border-orange-300/40 bg-orange-400/18 text-orange-50' : 'border-white/10 bg-white/5 text-white/58'}`}>6 vs 6</button><CustomDropdown value={teamCount} options={Array.from({ length: 9 }, (_, i) => ({ value: i + 2, label: `${i + 2}팀`, icon: '🎲' }))} onChange={setTeamCount} className="w-[104px]" /><button onClick={shuffleTeams} className="h-11 rounded-xl border border-orange-300/45 bg-orange-500 px-5 text-sm font-black text-white shadow-[0_12px_24px_rgba(249,115,22,0.20)] transition hover:brightness-110">랜덤 섞기</button><button onClick={resetTeams} className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-white/70 transition hover:bg-white/10">팀 초기화</button><button onClick={copyResult} className="h-11 rounded-xl border border-cyan-300/28 bg-cyan-300/12 px-4 text-sm font-bold text-cyan-100 transition hover:bg-cyan-300/18">결과 복사</button><button onClick={() => setCurrentMap(MAP_POOL[Math.floor(Math.random() * MAP_POOL.length)])} className="h-11 rounded-xl border border-violet-300/28 bg-violet-300/12 px-4 text-sm font-bold text-violet-100 transition hover:bg-violet-300/18">맵 뽑기</button><button onClick={clearAll} className="ml-auto h-11 rounded-xl border border-rose-300/24 bg-rose-300/10 px-4 text-sm font-bold text-rose-100/80 transition hover:bg-rose-300/16">전체삭제</button></div><div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-bold text-white/55"><span>등록 {participants.length}명</span><span>대기 {lobbyPlayers.length}명</span><span>배정 {assignedNames.size}명</span><span>잠금 {Object.values(slotLocks).filter(Boolean).length}칸</span>{currentMap ? <span className="rounded-full border border-violet-300/25 bg-violet-300/10 px-3 py-1 text-violet-100">현재 맵: {currentMap}</span> : null}</div></section><section className="grid gap-5 xl:grid-cols-[minmax(520px,0.95fr)_minmax(680px,1.35fr)]"><section className="min-h-[700px] rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.26)]"><div className="flex items-end justify-between gap-4"><div><div className="text-xs font-black tracking-[0.32em] text-cyan-100/45">WAITING ROOM</div><h2 className="mt-2 text-[34px] font-black tracking-tight text-white">대기실</h2></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/65">{lobbyPlayers.length}명</div></div><div className="mt-5 rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"><div className="grid gap-4">{['tank','dps','support','random'].map((type) => { const list = lobbyPlayers.filter((item) => item.position === type); const meta = POSITION_META[type]; return <div key={type} className="rounded-[24px] border border-white/7 bg-[linear-gradient(180deg,rgba(8,13,23,0.72),rgba(5,8,14,0.54))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]" onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragState?.item) { moveToLobby(dragState.item); setDragState(null); } }}><div className="mb-3 flex items-center justify-between"><div className="text-base font-black text-white">{meta.icon} {meta.label}</div><div className="text-sm font-bold text-white/40">{list.length}명</div></div><div className="flex min-h-[154px] flex-wrap gap-3 rounded-[20px] bg-black/10 p-3">{list.length ? list.map((item) => <PlayerCard key={item.id} item={item} profile={getProfile(item.name)} draggable onDragStart={() => setDragState({ item })} onDragEnd={() => setDragState(null)} onClick={() => setMoveTarget({ item })} onRemove={removeParticipant} />) : <div className="flex min-h-[130px] w-full items-center justify-center rounded-[20px] bg-white/[0.018] text-sm font-bold text-white/26">대기중인 인원이 없습니다.</div>}</div></div>; })}</div></div></section><section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.26)]"><div className="flex items-end justify-between gap-4"><div><div className="text-xs font-black tracking-[0.32em] text-orange-100/45">TEAM BOARD</div><h2 className="mt-2 text-[34px] font-black tracking-tight text-white">팀 결과판</h2></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/65">{teamCount}팀 · {mode}</div></div><div className="mt-5 grid gap-4 2xl:grid-cols-2">{teams.map((team) => { const theme = TEAM_ACCENTS[(team.teamNo - 1) % TEAM_ACCENTS.length]; return <div key={team.teamNo} className={`relative overflow-hidden rounded-[26px] border ${theme.border} bg-[#0b111d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_32px_rgba(0,0,0,0.24)]`}><div className={`pointer-events-none absolute inset-x-0 top-0 h-24 ${theme.glow}`} /><div className="relative flex items-center justify-between gap-3 border-b border-white/8 pb-3"><div className="text-[24px] font-black text-white">TEAM {team.teamNo}</div><div className={`rounded-full border px-3 py-1 text-xs font-black ${theme.badge}`}>{team.players.length}/{roles.length}</div></div><div className="relative mt-4 flex min-h-[286px] flex-wrap content-start gap-3">{roles.map((role) => { const slotKey = `${team.teamNo}-${role}`; const name = assignments[slotKey]; const item = name ? participants.find((p) => p.name === name) : null; return item ? <PlayerCard key={slotKey} item={item} profile={getProfile(item.name)} size="small" locked={Boolean(slotLocks[slotKey])} onToggleLock={() => toggleSlotLock(slotKey)} draggable onDragStart={() => setDragState({ item })} onDragEnd={() => setDragState(null)} onClick={() => setMoveTarget({ item })} /> : <EmptySlot key={slotKey} role={role} active={Boolean(dragState) && !slotLocks[slotKey]} onDrop={() => handleDropToSlot(team.teamNo, role)} />; })}</div></div>; })}</div></section></section></main><MoveMenu target={moveTarget} teams={teams} currentPlayer={currentPlayer} currentTeam={currentTeam} currentLocked={currentLocked} onClose={() => setMoveTarget(null)} onMoveToLobby={() => { moveToLobby(moveTarget.item); setMoveTarget(null); }} onMoveToTeam={(teamNo) => { moveToTeam(moveTarget.item, teamNo); setMoveTarget(null); }} onSwap={(player) => { swapPlayers(moveTarget.item, player); setMoveTarget(null); }} onToggleLock={() => { if (currentPlayer?.slotKey) toggleSlotLock(currentPlayer.slotKey); }} /></div></>
   );
 }
