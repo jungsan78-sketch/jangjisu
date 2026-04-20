@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import NewYoutubeDomToast from '../components/NewYoutubeDomToast';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -10,6 +11,7 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/site-icon.png" />
       </Head>
       <Component {...pageProps} />
+      <NewYoutubeDomToast />
     </>
   );
 }
