@@ -77,6 +77,10 @@ function buildCalendarCells(schedule) {
   });
 }
 
+function isOffSchedule(title) {
+  return String(title || '').includes('휴방');
+}
+
 function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('장지수');
   const [mainSchedule, setMainSchedule] = useState({ monthLabel: '', items: [], loaded: false });
@@ -100,10 +104,15 @@ function CalendarPreview() {
   }, []);
 
   const calendarCells = useMemo(() => buildCalendarCells(mainSchedule), [mainSchedule]);
+  const { month } = useMemo(() => parseMonthFromLabel(mainSchedule.monthLabel), [mainSchedule.monthLabel]);
+  const today = new Date();
   const jangjisuSchedules = useMemo(() => (mainSchedule.items || [])
     .filter((item) => !item.empty && String(item.title || '').trim())
     .map((item) => ({ day: item.dayNumber, member: '장지수', title: item.title })), [mainSchedule]);
-  const visibleSchedules = useMemo(() => jangjisuSchedules.filter((item) => item.member === selectedMember), [jangjisuSchedules, selectedMember]);
+  const allSchedules = useMemo(() => [...jangjisuSchedules], [jangjisuSchedules]);
+  const visibleSchedules = useMemo(() => selectedMember === '전체보기'
+    ? allSchedules
+    : allSchedules.filter((item) => item.member === selectedMember), [allSchedules, selectedMember]);
   const scheduleByDay = useMemo(() => {
     const map = new Map();
     visibleSchedules.forEach((item) => {
@@ -121,12 +130,13 @@ function CalendarPreview() {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-[28px] font-black tracking-tight text-white sm:text-[34px]">수용소 월간 일정</div>
-            <div className="mt-2 text-[15px] font-semibold leading-7 text-white/68">멤버 버튼을 누르면 해당 멤버 일정만 달력에 표시됩니다. 장지수 일정은 메인 사이트 일정표와 같은 데이터를 읽습니다.</div>
+            <div className="mt-2 text-[15px] font-semibold leading-7 text-white/68">전체보기는 모든 멤버 일정을 합쳐서 보여주고, 멤버 버튼은 해당 멤버 일정만 표시합니다.</div>
           </div>
           <div className="rounded-full border border-blue-200/24 bg-blue-300/12 px-4 py-2 text-xs font-black tracking-[0.22em] text-blue-50">{mainSchedule.monthLabel || 'PRISON SCHEDULE'}</div>
         </div>
 
         <div className="mb-5 flex flex-wrap gap-2 rounded-[24px] border border-white/8 bg-black/18 p-3">
+          <ScheduleFilterButton active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')}>전체보기</ScheduleFilterButton>
           {SCHEDULE_MEMBERS.map((member) => (
             <ScheduleFilterButton key={member.nickname} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)}>{member.nickname}</ScheduleFilterButton>
           ))}
@@ -140,26 +150,39 @@ function CalendarPreview() {
           </div>
           <div className="grid grid-cols-7 gap-3">
             {calendarCells.map((cell, index) => {
-              if (!cell) return <div key={`empty-${index}`} className="min-h-[132px] rounded-[22px] border border-white/5 bg-white/[0.014]" />;
+              if (!cell) return <div key={`empty-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border border-white/5 bg-white/[0.014]`} />;
               const day = Number(cell.dayNumber);
               const schedules = scheduleByDay.get(day) || [];
               const hasSchedule = schedules.length > 0;
+              const hasOff = schedules.some((item) => isOffSchedule(item.title));
+              const isToday = today.getMonth() + 1 === month && today.getDate() === day;
               return (
-                <div key={day} className={`min-h-[132px] rounded-[22px] border p-3.5 transition ${hasSchedule ? 'border-blue-200/42 bg-[linear-gradient(180deg,rgba(26,57,98,0.92),rgba(7,14,25,0.99))] shadow-[0_0_28px_rgba(59,130,246,0.14)]' : 'border-white/8 bg-[linear-gradient(180deg,rgba(13,20,32,0.98),rgba(7,11,18,0.99))] hover:border-white/14'}`}>
-                  <div className="text-[17px] font-black text-white/95">{day}</div>
+                <div key={day} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border p-3.5 transition ${hasOff ? 'border-rose-300/42 bg-[linear-gradient(180deg,rgba(88,24,32,0.72),rgba(10,13,20,0.99))] shadow-[0_0_28px_rgba(244,63,94,0.12)]' : hasSchedule ? 'border-blue-200/42 bg-[linear-gradient(180deg,rgba(26,57,98,0.92),rgba(7,14,25,0.99))] shadow-[0_0_28px_rgba(59,130,246,0.14)]' : 'border-white/8 bg-[linear-gradient(180deg,rgba(13,20,32,0.98),rgba(7,11,18,0.99))] hover:border-white/14'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-[17px] font-black text-white/95">{day}</div>
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {isToday ? <span className="rounded-full border border-cyan-200/28 bg-cyan-300/14 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-cyan-50">TODAY</span> : null}
+                      {hasOff ? <span className="rounded-full border border-rose-200/30 bg-rose-400/16 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-rose-50">휴방</span> : null}
+                    </div>
+                  </div>
                   <div className="mt-3 space-y-2">
-                    {schedules.map((item) => (
-                      <div key={`${item.day}-${item.member}-${item.title}`} className="rounded-xl border border-blue-100/22 bg-black/26 px-2.5 py-2 text-[13px] font-black leading-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                        <span className="text-blue-100">{item.member}</span> <span className="text-white/50">-</span> {item.title}
-                      </div>
-                    ))}
+                    {schedules.map((item) => {
+                      const off = isOffSchedule(item.title);
+                      return (
+                        <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 ${off ? 'text-rose-50' : 'text-white'}`}>
+                          <span className={off ? 'text-rose-100' : 'text-blue-100'}>{item.member}</span>
+                          <span className="px-1.5 text-white/42">-</span>
+                          <span>{item.title}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
           </div>
           {!mainSchedule.loaded ? <div className="mt-4 text-sm font-bold text-white/55">메인 일정표 데이터를 불러오는 중입니다.</div> : null}
-          {mainSchedule.loaded && visibleSchedules.length === 0 ? <div className="mt-4 text-sm font-bold text-white/55">선택한 멤버의 일정 데이터가 아직 비어 있습니다.</div> : null}
+          {mainSchedule.loaded && visibleSchedules.length === 0 ? <div className="mt-4 text-sm font-bold text-white/55">선택한 메뉴의 일정 데이터가 아직 비어 있습니다.</div> : null}
         </div>
       </div>
     </section>
