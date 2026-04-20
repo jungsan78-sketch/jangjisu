@@ -88,11 +88,16 @@ function extractStationId(url = '') {
   return '';
 }
 
-function buildProfileImage(stationUrl = '') {
+function buildProfileImages(stationUrl = '') {
   const id = extractStationId(stationUrl);
-  if (!id) return '';
+  if (!id) return [];
   const prefix = id.slice(0, 2).toLowerCase();
-  return `https://stimg.sooplive.com/LOGO/${prefix}/${id}/${id}.jpg`;
+  return [
+    `https://stimg.sooplive.com/LOGO/${prefix}/${id}/${id}.jpg`,
+    `https://stimg.sooplive.com/LOGO/${prefix}/${id}/m/${id}.webp`,
+    `https://stimg.sooplive.com/LOGO/${prefix}/${id}/${id}.webp`,
+    `https://stimg.sooplive.com/LOGO/${prefix}/${id}/m/${id}.jpg`,
+  ];
 }
 
 function isUsableMember(cell) {
@@ -110,11 +115,13 @@ function addMember(crew, cell) {
   if (!nickname || crew.members.some((member) => member.nickname === nickname)) return;
   const stationUrl = cell.href && /sooplive\.(com|co\.kr)/i.test(cell.href) ? cell.href : '';
   const extraUrl = cell.href && !stationUrl ? cell.href : '';
+  const profileImages = buildProfileImages(stationUrl);
   crew.members.push({
     nickname,
     stationUrl,
     extraUrl,
-    profileImage: buildProfileImage(stationUrl),
+    profileImage: profileImages[0] || '',
+    profileImages,
   });
 }
 
