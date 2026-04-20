@@ -2,6 +2,14 @@ const SHEET_SOURCES = [
   {
     id: '1-mACl-yykHphsqiSUNPkoC1GHydOYmWX-xHqdRz7DVM',
     gid: '344917607',
+    category: 'soop',
+    categoryLabel: '숲 종겜 크루',
+  },
+  {
+    id: '1zwIJjl2UTkPREkI37in9e0PAwX9xwFtEU3-ECAYYaeU',
+    gid: '0',
+    category: 'gamcom',
+    categoryLabel: '감컴 종겜 크루',
   },
 ];
 
@@ -272,7 +280,7 @@ function mergeLinkMaps(maps = []) {
   return merged;
 }
 
-function enrichCrewLinks(crews = [], linkMap = new Map()) {
+function enrichCrewLinks(crews = [], linkMap = new Map(), source) {
   return crews.map((crew, crewIndex) => {
     const members = (crew.members || []).map((member, memberIndex) => {
       const stationUrl = member.stationUrl || linkMap.get(member.nickname) || '';
@@ -285,7 +293,14 @@ function enrichCrewLinks(crews = [], linkMap = new Map()) {
         profileImages,
       };
     });
-    return { ...crew, members, leader: members[0] || null, accentIndex: crewIndex };
+    return {
+      ...crew,
+      category: source.category,
+      categoryLabel: source.categoryLabel,
+      members,
+      leader: members[0] || null,
+      accentIndex: crewIndex,
+    };
   });
 }
 
@@ -323,8 +338,20 @@ async function fetchSheetCrews(source) {
   parsed.sort((a, b) => b.crews.length - a.crews.length || b.memberCount - a.memberCount || b.stationLinks - a.stationLinks);
   return {
     ...parsed[0],
-    crews: enrichCrewLinks(parsed[0].crews, mergedLinks),
+    crews: enrichCrewLinks(parsed[0].crews, mergedLinks, source),
   };
+}
+
+function makeCategoryStats(crews = []) {
+  return SHEET_SOURCES.reduce((acc, source) => {
+    const filtered = crews.filter((crew) => crew.category === source.category);
+    acc[source.category] = {
+      label: source.categoryLabel,
+      crewCount: filtered.length,
+      memberCount: countMembers(filtered),
+    };
+    return acc;
+  }, {});
 }
 
 export default async function handler(req, res) {
@@ -334,11 +361,13 @@ export default async function handler(req, res) {
     const crews = chunks.flatMap((chunk) => chunk.crews);
     return res.status(200).json({
       crews,
+      categories: SHEET_SOURCES.map(({ category, categoryLabel }) => ({ key: category, label: categoryLabel })),
+      categoryStats: makeCategoryStats(crews),
       source: 'google-sheet-html',
       linkCount: countStationLinks(crews),
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(200).json({ crews: [], source: 'fallback', error: true, message: error?.message || 'unknown' });
+    return res.status(200).json({ crews: [], categories: [], categoryStats: {}, source: 'fallback', error: true, message: error?.message || 'unknown' });
   }
 }
