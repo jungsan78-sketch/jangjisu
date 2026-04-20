@@ -1,7 +1,7 @@
 import Head from 'next/head';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-const CREW_GROUPS = [
+const FALLBACK_CREW_GROUPS = [
   { name: '사자회', members: ['춘봉', '필메', '추르미', '또니', '쏭아야', '오봉구', '상득', '뚜닝', '채하', '차투리', '달묘', '오늘님', '쿠아', '감초'] },
   { name: '조적단', members: ['조디악', '쥐돌이', '설이', '뮤즈', '얼그레', '손진석', '리타', '황정민'] },
   { name: '오락실', members: ['오아', '멍지수', '치유', '새잎', '히뚜', '도맑음', '만조', '녹초', '빡룡', '후룽카카', '백하', '김옥독', '채윤아'] },
@@ -20,7 +20,8 @@ const CREW_GROUPS = [
   { name: '버인협회', members: ['조경훈', '아뚱', '해솔', '너보링', '송소미', '비숑', '뀨복', '표우', '부르', '김쁘피', '윤이샘'] },
 ].map((crew, index) => ({
   ...crew,
-  leader: crew.members[0],
+  members: crew.members.map((nickname, memberIndex) => ({ nickname, role: memberIndex === 0 ? 'leader' : 'member' })),
+  leader: { nickname: crew.members[0], role: 'leader' },
   accentIndex: index,
 }));
 
@@ -34,125 +35,91 @@ const CARD_THEMES = [
 ];
 
 function NavButton({ href, children }) {
-  return (
-    <a href={href} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.035))] px-4 py-2 text-sm font-bold text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/10 hover:text-white">
-      {children}
-    </a>
-  );
+  return <a href={href} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.035))] px-4 py-2 text-sm font-bold text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/10 hover:text-white">{children}</a>;
 }
 
 function FilterButton({ active, onClick, children }) {
-  return (
-    <button onClick={onClick} className={`rounded-full border px-4 py-2 text-sm font-black transition ${active ? 'border-amber-200/35 bg-[linear-gradient(180deg,rgba(245,158,11,0.20),rgba(255,255,255,0.055))] text-amber-50 shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]' : 'border-white/10 bg-white/[0.045] text-white/64 hover:border-white/18 hover:bg-white/[0.075] hover:text-white'}`}>
-      {children}
-    </button>
-  );
+  return <button onClick={onClick} className={`rounded-full border px-4 py-2 text-sm font-black transition ${active ? 'border-amber-200/35 bg-[linear-gradient(180deg,rgba(245,158,11,0.20),rgba(255,255,255,0.055))] text-amber-50 shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]' : 'border-white/10 bg-white/[0.045] text-white/64 hover:border-white/18 hover:bg-white/[0.075] hover:text-white'}`}>{children}</button>;
 }
 
-function AvatarPlaceholder({ name, leader = false }) {
-  return (
-    <div className={`${leader ? 'h-20 w-20 text-xl' : 'h-14 w-14 text-sm'} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>
-      {name.slice(0, 1)}
-    </div>
-  );
+function Avatar({ member, leader = false }) {
+  const [failed, setFailed] = useState(false);
+  const profileImage = member?.profileImage && !failed ? member.profileImage : '';
+  const sizeClass = leader ? 'h-20 w-20 text-xl' : 'h-14 w-14 text-sm';
+  if (profileImage) {
+    return <img src={profileImage} alt={member.nickname} onError={() => setFailed(true)} className={`${sizeClass} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_26px_rgba(0,0,0,0.26)]`} />;
+  }
+  return <div className={`${sizeClass} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>{String(member?.nickname || '?').slice(0, 1)}</div>;
+}
+
+function MemberLink({ member, leader = false }) {
+  const content = <><Avatar member={member} leader={leader} /><div className={`${leader ? 'text-xl' : 'text-sm'} mt-3 font-black text-white`}>{member.nickname}</div></>;
+  if (!member.stationUrl && !member.extraUrl) return <div>{content}</div>;
+  return <a href={member.stationUrl || member.extraUrl} target="_blank" rel="noreferrer" className="block transition hover:scale-[1.03]" title="방송국 열기">{content}</a>;
 }
 
 function CrewCard({ crew }) {
   const glow = CARD_THEMES[crew.accentIndex % CARD_THEMES.length];
-  const normalMembers = crew.members.slice(1);
+  const leader = crew.leader || crew.members[0];
+  const normalMembers = crew.members.filter((member, index) => index !== 0);
 
-  return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.32)]">
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${glow}`} />
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-[28px] font-black tracking-tight text-white">{crew.name}</h2>
-            <span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {crew.leader}</span>
-          </div>
-        </div>
-        <div className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">총 {crew.members.length}명</div>
+  return <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.32)]">
+    <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${glow}`} />
+    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-3"><h2 className="text-[28px] font-black tracking-tight text-white">{crew.name}</h2><span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {leader?.nickname || '-'}</span></div>
+      <div className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">총 {crew.members.length}명</div>
+    </div>
+    <div className="relative mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
+      <div className="rounded-[28px] border border-amber-200/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(255,255,255,0.025))] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+        <MemberLink member={leader || { nickname: '?' }} leader />
+        <div className="mt-3 inline-flex rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">CREW LEADER</div>
       </div>
-
-      <div className="relative mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
-        <div className="rounded-[28px] border border-amber-200/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(255,255,255,0.025))] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
-          <AvatarPlaceholder name={crew.leader} leader />
-          <div className="mt-4 text-xl font-black text-white">{crew.leader}</div>
-          <div className="mt-3 inline-flex rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">CREW LEADER</div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {normalMembers.map((member) => (
-            <div key={`${crew.name}-${member}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]">
-              <AvatarPlaceholder name={member} />
-              <div className="mt-3 text-sm font-black text-white">{member}</div>
-              <div className="mt-2 text-[11px] font-bold text-white/38">멤버</div>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {normalMembers.map((member) => <div key={`${crew.name}-${member.nickname}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]"><MemberLink member={member} /><div className="mt-2 text-[11px] font-bold text-white/38">멤버</div></div>)}
       </div>
-    </section>
-  );
+    </div>
+  </section>;
 }
 
 export default function JangjisuPrisonCrewsPage() {
   const [selectedCrew, setSelectedCrew] = useState('전체보기');
-  const visibleCrews = useMemo(() => selectedCrew === '전체보기' ? CREW_GROUPS : CREW_GROUPS.filter((crew) => crew.name === selectedCrew), [selectedCrew]);
-  const totalMembers = CREW_GROUPS.reduce((sum, crew) => sum + crew.members.length, 0);
+  const [crewGroups, setCrewGroups] = useState(FALLBACK_CREW_GROUPS);
+  const [sheetState, setSheetState] = useState({ loaded: false, source: 'fallback' });
 
-  return (
-    <>
-      <Head>
-        <title>종겜 크루 목록 | 장지수용소 팬메이드</title>
-        <meta name="description" content="장지수용소 종겜 크루 목록" />
-      </Head>
-      <div className="min-h-screen bg-[#05070c] text-white">
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" />
-          <div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
-        </div>
+  useEffect(() => {
+    let mounted = true;
+    const loadCrews = async () => {
+      try {
+        const res = await fetch('/api/crew-sheet');
+        const json = await res.json();
+        if (!mounted) return;
+        if (Array.isArray(json.crews) && json.crews.length) {
+          setCrewGroups(json.crews.map((crew, index) => ({ ...crew, accentIndex: index })));
+          setSheetState({ loaded: true, source: json.source || 'google-sheet' });
+        } else {
+          setSheetState({ loaded: true, source: 'fallback' });
+        }
+      } catch {
+        if (mounted) setSheetState({ loaded: true, source: 'fallback' });
+      }
+    };
+    loadCrews();
+    return () => { mounted = false; };
+  }, []);
 
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a href="/jangjisu-prison" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25">
-              <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
-            </a>
-            <div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div>
-            <nav className="flex flex-wrap items-center justify-end gap-3">
-              <NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton>
-              <NavButton href="/">S SOU 메인</NavButton>
-            </nav>
-          </div>
-        </header>
+  const visibleCrews = useMemo(() => selectedCrew === '전체보기' ? crewGroups : crewGroups.filter((crew) => crew.name === selectedCrew), [selectedCrew, crewGroups]);
+  const totalMembers = crewGroups.reduce((sum, crew) => sum + crew.members.length, 0);
 
-        <main className="relative mx-auto max-w-7xl px-5 py-8 lg:px-8">
-          <section className="mb-7 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_54px_rgba(0,0,0,0.28)]">
-            <div className="text-xs font-black tracking-[0.42em] text-amber-100/45">CREW DIRECTORY</div>
-            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="text-[36px] font-black tracking-tight text-white sm:text-[44px]">종겜 크루 목록</h1>
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/76">{CREW_GROUPS.length}개 크루 · {totalMembers}명</div>
-            </div>
-          </section>
-
-          <section className="mb-7 rounded-[28px] border border-white/10 bg-black/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-            <div className="flex flex-wrap gap-2">
-              <FilterButton active={selectedCrew === '전체보기'} onClick={() => setSelectedCrew('전체보기')}>전체보기</FilterButton>
-              {CREW_GROUPS.map((crew) => (
-                <FilterButton key={crew.name} active={selectedCrew === crew.name} onClick={() => setSelectedCrew(crew.name)}>{crew.name}</FilterButton>
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-6">
-            {visibleCrews.map((crew) => (
-              <CrewCard key={crew.name} crew={crew} />
-            ))}
-          </section>
-        </main>
-      </div>
-    </>
-  );
+  return <>
+    <Head><title>종겜 크루 목록 | 장지수용소 팬메이드</title><meta name="description" content="장지수용소 종겜 크루 목록" /></Head>
+    <div className="min-h-screen bg-[#05070c] text-white">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" /><div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8"><a href="/jangjisu-prison" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25"><img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" /></a><div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div><nav className="flex flex-wrap items-center justify-end gap-3"><NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton><NavButton href="/">S SOU 메인</NavButton></nav></div></header>
+      <main className="relative mx-auto max-w-7xl px-5 py-8 lg:px-8">
+        <section className="mb-7 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_54px_rgba(0,0,0,0.28)]"><div className="text-xs font-black tracking-[0.42em] text-amber-100/45">CREW DIRECTORY</div><div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><h1 className="text-[36px] font-black tracking-tight text-white sm:text-[44px]">종겜 크루 목록</h1><div className="mt-2 text-sm font-bold text-white/42">{sheetState.source === 'google-sheet-html' ? '구글시트 자동 연동 중' : sheetState.loaded ? '고정 데이터 표시 중' : '구글시트 데이터를 불러오는 중'}</div></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/76">{crewGroups.length}개 크루 · {totalMembers}명</div></div></section>
+        <section className="mb-7 rounded-[28px] border border-white/10 bg-black/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]"><div className="flex flex-wrap gap-2"><FilterButton active={selectedCrew === '전체보기'} onClick={() => setSelectedCrew('전체보기')}>전체보기</FilterButton>{crewGroups.map((crew) => <FilterButton key={crew.name} active={selectedCrew === crew.name} onClick={() => setSelectedCrew(crew.name)}>{crew.name}</FilterButton>)}</div></section>
+        <section className="grid gap-6">{visibleCrews.map((crew) => <CrewCard key={crew.name} crew={crew} />)}</section>
+      </main>
+    </div>
+  </>;
 }
