@@ -5,6 +5,25 @@ const SHEET_SOURCES = [
   },
 ];
 
+const KNOWN_CREW_COUNTS = {
+  사자회: 14,
+  조적단: 8,
+  오락실: 13,
+  천타버스: 12,
+  ZZAM지트: 12,
+  버컴퍼니: 9,
+  지력사무소: 13,
+  꾸한성: 16,
+  버블란: 11,
+  고래상사: 16,
+  홍신소: 15,
+  가무소: 16,
+  로스타시티: 2,
+  버인협회: 11,
+};
+
+const KNOWN_CREW_NAMES = Object.keys(KNOWN_CREW_COUNTS).sort((a, b) => b.length - a.length);
+
 function decodeHtml(value = '') {
   return String(value)
     .replace(/&amp;/g, '&')
@@ -78,10 +97,23 @@ function parseRows(html = '') {
   return rows;
 }
 
+function normalizeCrewName(text = '') {
+  return String(text).replace(/[\s\u200b]+/g, '').replace(/[🦁⭐★☆✅✔️☑️]/g, '').trim();
+}
+
 function parseCrewHeader(text = '') {
-  const match = String(text).trim().match(/^(.+?)\s*\((\d+)\)$/);
-  if (!match) return null;
-  return { name: match[1].trim(), count: Number(match[2]) };
+  const raw = String(text || '').trim();
+  const direct = raw.match(/(.+?)\s*\((\d+)\)/);
+  if (direct) {
+    const cleanName = normalizeCrewName(direct[1]);
+    const knownName = KNOWN_CREW_NAMES.find((name) => normalizeCrewName(name) === cleanName || cleanName.includes(normalizeCrewName(name)));
+    return { name: knownName || direct[1].trim(), count: Number(direct[2]) };
+  }
+
+  const compact = normalizeCrewName(raw);
+  const knownName = KNOWN_CREW_NAMES.find((name) => compact === normalizeCrewName(name) || compact.includes(normalizeCrewName(name)));
+  if (!knownName) return null;
+  return { name: knownName, count: KNOWN_CREW_COUNTS[knownName] };
 }
 
 function isCrewHeader(text = '') {
@@ -144,33 +176,51 @@ function countStationLinks(crews = []) {
   return crews.reduce((sum, crew) => sum + (crew.members || []).filter((member) => member.stationUrl).length, 0);
 }
 
+function makeRangesFromHeaders(headers) {
+  return headers.map(({ cell, header }, index) => {
+    const next = headers[index + 1]?.cell?.col;
+    const start = cell.col;
+    const expectedEnd = start + Math.max(cell.colspan - 1, Math.max(0, header.count - 1));
+    const end = next !== undefined ? next - 1 : expectedEnd;
+    const crew = { name: header.name, count: header.count, members: [] };
+    return { start, end, crew };
+  });
+}
+
 function parseCrewsFromHtml(html = '') {
   const rows = parseRows(html);
   const crews = [];
   let activeRanges = [];
+  let emptyMemberRows = 0;
 
   rows.forEach((cells) => {
     const headers = cells.map((cell) => ({ cell, header: parseCrewHeader(cell.text) })).filter((item) => item.header);
     if (headers.length) {
-      activeRanges = headers.map(({ cell, header }, index) => {
-        const next = headers[index + 1]?.cell?.col;
-        const start = cell.col;
-        const end = next !== undefined ? next - 1 : start + Math.max(cell.colspan - 1, Math.max(0, header.count - 1));
-        const crew = { name: header.name, count: header.count, members: [] };
-        crews.push(crew);
-        return { start, end, crew };
-      });
+      activeRanges = makeRangesFromHeaders(headers);
+      activeRanges.forEach((range) => crews.push(range.crew));
+      emptyMemberRows = 0;
       return;
     }
 
     if (!activeRanges.length) return;
+    let addedInRow = 0;
     cells.forEach((cell) => {
       if (!isUsableMember(cell)) return;
       const range = activeRanges.find((item) => cell.col >= item.start && cell.col <= item.end);
       if (!range) return;
       if (range.crew.members.length >= Math.max(1, range.crew.count)) return;
+      const before = range.crew.members.length;
       addMember(range.crew, cell);
+      if (range.crew.members.length > before) addedInRow += 1;
     });
+
+    if (addedInRow === 0) {
+      emptyMemberRows += 1;
+      if (emptyMemberRows >= 2) activeRanges = [];
+    } else {
+      emptyMemberRows = 0;
+      if (activeRanges.every((range) => range.crew.members.length >= Math.max(1, range.crew.count))) activeRanges = [];
+    }
   });
 
   return crews
