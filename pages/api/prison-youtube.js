@@ -1,5 +1,4 @@
 const YOUTUBE_CHANNELS = [
-  { nickname: '장지수', url: 'https://www.youtube.com/@jisoujang' },
   { nickname: '냥냥두둥', url: 'https://www.youtube.com/channel/UCCAaGF_vfM6QygNRCp4x1dw' },
   { nickname: '치치', url: 'https://www.youtube.com/@chichi0e0' },
   { nickname: '아야네세나', url: 'https://www.youtube.com/@%EC%95%84%EC%95%BC%EB%84%A4%EC%84%B8%EB%82%98' },
@@ -27,6 +26,11 @@ function getHandle(url = '') {
 function getChannelId(url = '') {
   const match = url.match(/youtube\.com\/channel\/([^/?#]+)/i);
   return match ? match[1] : '';
+}
+
+function getChannelTabUrls(url = '') {
+  const base = url.replace(/\/(videos|shorts)\/?$/i, '').replace(/\/$/, '');
+  return { videosUrl: `${base}/videos`, shortsUrl: `${base}/shorts` };
 }
 
 function isWithinFiveMonths(publishedAt = '') {
@@ -97,6 +101,8 @@ async function getChannelVideos(channel, apiKey) {
     maxResults: 50,
   }, apiKey);
 
+  const { videosUrl, shortsUrl } = getChannelTabUrls(channel.url);
+
   return (details.items || []).map((item) => {
     const seconds = getDurationSeconds(item.contentDetails?.duration);
     const title = item.snippet?.title || '';
@@ -110,6 +116,9 @@ async function getChannelVideos(channel, apiKey) {
       publishedAt: item.snippet?.publishedAt || '',
       thumbnail: getBestThumbnail(item.snippet?.thumbnails || {}),
       url: `https://www.youtube.com/watch?v=${item.id}`,
+      channelUrl: channel.url,
+      videosUrl,
+      shortsUrl,
       type: shorts ? 'shorts' : 'video',
       durationSeconds: seconds,
     };
