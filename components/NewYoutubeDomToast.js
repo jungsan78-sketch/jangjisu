@@ -14,27 +14,26 @@ function buildIdHash(items = []) {
   return [...new Set((items || []).map((item) => item?.id).filter(Boolean))].sort().join('|');
 }
 
-async function getRecentYoutubeState(scope) {
-  try {
-    const endpoint = scope === 'prison' ? '/api/prison-youtube' : '/api/youtube';
-    const res = await fetch(endpoint, { cache: 'no-store' });
-    const json = await res.json();
-    const recentVideos = getRecentItems(json.videos);
-    const recentShorts = getRecentItems(json.shorts);
-    const videoHash = buildIdHash(recentVideos);
-    const shortsHash = buildIdHash(recentShorts);
-    return {
-      hasVideoNew: recentVideos.length > 0,
-      hasShortsNew: recentShorts.length > 0,
-      idHash: [videoHash ? `video:${videoHash}` : '', shortsHash ? `shorts:${shortsHash}` : ''].filter(Boolean).join('::'),
-    };
-  } catch {
-    return null;
-  }
+function getPageYoutubeState(scope) {
+  if (typeof window === 'undefined') return null;
+  const data = window.__SOU_YOUTUBE_STATE__?.[scope];
+  if (!data) return null;
+  const recentVideos = getRecentItems(data.videos);
+  const recentShorts = getRecentItems(data.shorts);
+  const videoHash = buildIdHash(recentVideos);
+  const shortsHash = buildIdHash(recentShorts);
+  return {
+    hasVideoNew: recentVideos.length > 0,
+    hasShortsNew: recentShorts.length > 0,
+    idHash: [videoHash ? `video:${videoHash}` : '', shortsHash ? `shorts:${shortsHash}` : ''].filter(Boolean).join('::'),
+  };
 }
 
-async function detectNewYoutubeTabs() {
+function detectNewYoutubeTabs() {
   if (typeof document === 'undefined') return null;
+  const scope = window.location.pathname.includes('jangjisu-prison') ? 'prison' : 'main';
+  const pageState = getPageYoutubeState(scope);
+
   const sections = [...document.querySelectorAll('section')].filter((section) => {
     const title = section.textContent || '';
     return title.includes('YOUTUBE') || section.id === 'youtube' || section.id === 'recent-youtube';
@@ -53,11 +52,8 @@ async function detectNewYoutubeTabs() {
     return text.includes('쇼츠') && text.toLowerCase().includes('new');
   });
 
-  if (!tabHasVideoNew && !tabHasShortsNew) return null;
-  const scope = window.location.pathname.includes('jangjisu-prison') ? 'prison' : 'main';
-  const apiState = await getRecentYoutubeState(scope);
-  const hasVideoNew = apiState?.hasVideoNew ?? tabHasVideoNew;
-  const hasShortsNew = apiState?.hasShortsNew ?? tabHasShortsNew;
+  const hasVideoNew = pageState?.hasVideoNew ?? tabHasVideoNew;
+  const hasShortsNew = pageState?.hasShortsNew ?? tabHasShortsNew;
   if (!hasVideoNew && !hasShortsNew) return null;
 
   const prefix = scope === 'prison' ? '새로운 수감생의 ' : '새로운 ';
@@ -66,7 +62,7 @@ async function detectNewYoutubeTabs() {
     : hasShortsNew
       ? `${prefix}쇼츠가 업로드되었습니다`
       : `${prefix}편집 영상이 업로드되었습니다`;
-  const idHash = apiState?.idHash || `${hasVideoNew ? 'video' : ''}:${hasShortsNew ? 'shorts' : ''}:${new Date().toISOString().slice(0, 10)}`;
+  const idHash = pageState?.idHash || `${hasVideoNew ? 'video' : ''}:${hasShortsNew ? 'shorts' : ''}:${new Date().toISOString().slice(0, 10)}`;
   return { message, scope, hash: `${scope}:${idHash}` };
 }
 
@@ -79,13 +75,10 @@ export default function NewYoutubeDomToast() {
     let closed = false;
     let timer = null;
     let observer = null;
-    let checking = false;
 
-    const tryShow = async () => {
-      if (closed || checking) return;
-      checking = true;
-      const detected = await detectNewYoutubeTabs();
-      checking = false;
+    const tryShow = () => {
+      if (closed) return;
+      const detected = detectNewYoutubeTabs();
       if (closed || !detected) return;
       const storageKey = `${STORAGE_PREFIX}${detected.hash}`;
       try {
@@ -99,6 +92,9 @@ export default function NewYoutubeDomToast() {
       if (observer) observer.disconnect();
     };
 
+    const onYoutubeLoaded = () => tryShow();
+    window.addEventListener('sou-youtube-loaded', onYoutubeLoaded);
+
     const delays = [400, 1200, 2500, 5000];
     const timeouts = delays.map((delay) => window.setTimeout(tryShow, delay));
     observer = new MutationObserver(tryShow);
@@ -106,6 +102,7 @@ export default function NewYoutubeDomToast() {
 
     return () => {
       closed = true;
+      window.removeEventListener('sou-youtube-loaded', onYoutubeLoaded);
       timeouts.forEach((id) => window.clearTimeout(id));
       if (timer) window.clearTimeout(timer);
       if (observer) observer.disconnect();
