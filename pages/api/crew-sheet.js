@@ -13,6 +13,10 @@ const SHEET_SOURCES = [
   },
 ];
 
+const MANUAL_STATION_OVERRIDES = {
+  부르: 'https://www.sooplive.com/station/bureu2002',
+};
+
 const KNOWN_CREW_COUNTS = {
   사자회: 14,
   조적단: 8,
@@ -274,6 +278,7 @@ function extractLinkMapFromHtml(html = '') {
       if (!linkMap.has(cell.text)) linkMap.set(cell.text, cell.href);
     });
   });
+  Object.entries(MANUAL_STATION_OVERRIDES).forEach(([name, url]) => linkMap.set(sanitizeName(name), url));
   return linkMap;
 }
 
@@ -285,6 +290,7 @@ function mergeLinkMaps(maps = []) {
       if (cleanName && !merged.has(cleanName)) merged.set(cleanName, url);
     });
   });
+  Object.entries(MANUAL_STATION_OVERRIDES).forEach(([name, url]) => merged.set(sanitizeName(name), url));
   return merged;
 }
 
@@ -292,7 +298,7 @@ function enrichCrewLinks(crews = [], linkMap = new Map(), source) {
   return crews.map((crew, crewIndex) => {
     const members = (crew.members || []).map((member, memberIndex) => {
       const cleanName = sanitizeName(member.nickname);
-      const stationUrl = member.stationUrl || linkMap.get(cleanName) || '';
+      const stationUrl = member.stationUrl || MANUAL_STATION_OVERRIDES[cleanName] || linkMap.get(cleanName) || '';
       const profileImages = stationUrl ? buildProfileImages(stationUrl) : (member.profileImages || []);
       return {
         ...member,
