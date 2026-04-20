@@ -43,19 +43,29 @@ function FilterButton({ active, onClick, children }) {
 }
 
 function Avatar({ member, leader = false }) {
-  const [failed, setFailed] = useState(false);
-  const profileImage = member?.profileImage && !failed ? member.profileImage : '';
+  const [imageIndex, setImageIndex] = useState(0);
+  const profileImages = member?.profileImages?.length ? member.profileImages : (member?.profileImage ? [member.profileImage] : []);
+  const profileImage = profileImages[imageIndex] || '';
   const sizeClass = leader ? 'h-20 w-20 text-xl' : 'h-14 w-14 text-sm';
   if (profileImage) {
-    return <img src={profileImage} alt={member.nickname} onError={() => setFailed(true)} className={`${sizeClass} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_26px_rgba(0,0,0,0.26)]`} />;
+    return <img src={profileImage} alt={member.nickname} onError={() => setImageIndex((prev) => prev + 1)} className={`${sizeClass} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_26px_rgba(0,0,0,0.26)]`} />;
   }
   return <div className={`${sizeClass} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>{String(member?.nickname || '?').slice(0, 1)}</div>;
 }
 
-function MemberLink({ member, leader = false }) {
-  const content = <><Avatar member={member} leader={leader} /><div className={`${leader ? 'text-xl' : 'text-sm'} mt-3 font-black text-white`}>{member.nickname}</div></>;
-  if (!member.stationUrl && !member.extraUrl) return <div>{content}</div>;
-  return <a href={member.stationUrl || member.extraUrl} target="_blank" rel="noreferrer" className="block transition hover:scale-[1.03]" title="방송국 열기">{content}</a>;
+function SoopButton({ stationUrl, large = false }) {
+  const baseClass = `${large ? 'h-12 w-16' : 'h-10 w-14'} inline-flex items-center justify-center rounded-2xl border px-2 transition duration-300`;
+  const icon = <img src="/soop-logo.svg" alt="SOOP 방송국" className={`${large ? 'max-h-8 max-w-[44px]' : 'max-h-7 max-w-[38px]'} -translate-x-0.5 object-contain`} />;
+  if (!stationUrl) return <span className={`${baseClass} pointer-events-none border-cyan-200/10 bg-white/[0.035] opacity-25 grayscale`} title="방송국 링크 준비중">{icon}</span>;
+  return <a href={stationUrl} target="_blank" rel="noreferrer" aria-label="SOOP 방송국" title="SOOP 방송국" className={`${baseClass} border-cyan-200/20 bg-cyan-300/10 hover:-translate-y-0.5 hover:scale-[1.04] hover:border-cyan-100/42`}>{icon}</a>;
+}
+
+function MemberBlock({ member, leader = false }) {
+  return <div className="text-center">
+    <Avatar member={member} leader={leader} />
+    <div className={`${leader ? 'text-xl' : 'text-sm'} mt-3 font-black text-white`}>{member.nickname}</div>
+    <div className="mt-3 flex justify-center"><SoopButton stationUrl={member.stationUrl} large={leader} /></div>
+  </div>;
 }
 
 function CrewCard({ crew }) {
@@ -71,11 +81,11 @@ function CrewCard({ crew }) {
     </div>
     <div className="relative mt-5 grid gap-4 lg:grid-cols-[260px_1fr]">
       <div className="rounded-[28px] border border-amber-200/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(255,255,255,0.025))] p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
-        <MemberLink member={leader || { nickname: '?' }} leader />
+        <MemberBlock member={leader || { nickname: '?' }} leader />
         <div className="mt-3 inline-flex rounded-full border border-amber-200/20 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">CREW LEADER</div>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {normalMembers.map((member) => <div key={`${crew.name}-${member.nickname}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]"><MemberLink member={member} /><div className="mt-2 text-[11px] font-bold text-white/38">멤버</div></div>)}
+        {normalMembers.map((member) => <div key={`${crew.name}-${member.nickname}`} className="rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] transition duration-300 hover:-translate-y-1 hover:border-white/16 hover:bg-white/[0.065]"><MemberBlock member={member} /><div className="mt-2 text-[11px] font-bold text-white/38">멤버</div></div>)}
       </div>
     </div>
   </section>;
