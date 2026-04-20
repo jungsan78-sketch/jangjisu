@@ -1,5 +1,7 @@
 import Head from 'next/head';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+const STORAGE_KEY = 'sou:overwatch-random:v2';
 
 const POSITION_META = {
   tank: {
@@ -64,9 +66,28 @@ const TEAM_ACCENTS = [
   },
 ];
 
+const KNOWN_MEMBER_PROFILES = [
+  { nickname: '장지수', profileImage: 'https://stimg.sooplive.com/LOGO/ia/iamquaddurup/iamquaddurup.jpg', stationUrl: 'https://www.sooplive.com/station/iamquaddurup' },
+  { nickname: '냥냥두둥', profileImage: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', stationUrl: 'https://www.sooplive.com/station/doodong' },
+  { nickname: '치치', profileImage: 'https://stimg.sooplive.com/LOGO/lo/lomioeov/m/lomioeov.webp', stationUrl: 'https://www.sooplive.com/station/lomioeov' },
+  { nickname: '시몽', profileImage: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', stationUrl: 'https://www.sooplive.com/station/ximong' },
+  { nickname: '유오늘', profileImage: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', stationUrl: 'https://www.sooplive.com/station/youoneul' },
+  { nickname: '아야네세나', profileImage: 'https://stimg.sooplive.com/LOGO/ay/ayanesena/ayanesena.jpg', stationUrl: 'https://www.sooplive.com/station/ayanesena' },
+  { nickname: '포포', profileImage: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', stationUrl: 'https://www.sooplive.com/station/sunza1122' },
+  { nickname: '채니', profileImage: 'https://stimg.sooplive.com/LOGO/k1/k1baaa/k1baaa.jpg', stationUrl: 'https://www.sooplive.com/station/k1baaa' },
+  { nickname: '코로미', profileImage: 'https://stimg.sooplive.com/LOGO/bx/bxroong/bxroong.jpg', stationUrl: 'https://www.sooplive.com/station/bxroong' },
+  { nickname: '구월이', profileImage: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', stationUrl: 'https://www.sooplive.com/station/isq1158' },
+  { nickname: '린링', profileImage: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', stationUrl: 'https://www.sooplive.com/station/mini1212' },
+  { nickname: '띠꾸', profileImage: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', stationUrl: 'https://www.sooplive.com/station/ddikku0714' },
+];
+
 const MAP_POOL = ['부산', '리장 타워', '일리오스', '왕의 길', '할리우드', '눔바니', '66번 국도', '감시 기지: 지브롤터', '서킷 로얄', '파라이소'];
 const OUTER_CARD = 'rounded-[26px] border border-[#2a4e86]/55 bg-[linear-gradient(180deg,rgba(10,15,25,0.97),rgba(7,10,17,0.98))] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)]';
 const FIELD_CLASS = 'w-full rounded-2xl border border-[#335b95]/70 bg-[#101826] px-4 py-3 text-base text-white outline-none placeholder:text-white/28 focus:border-cyan-300/45';
+
+function normalizeName(value = '') {
+  return String(value).replace(/[👑🦁⭐★☆✅✔️☑️🏆🥇🥈🥉🔥💎🎖️]/g, '').replace(/\s+/g, '').trim();
+}
 
 function shuffleArray(items) {
   const next = [...items];
@@ -95,6 +116,26 @@ function isAssignable(participant, role) {
   return participant.position === roleType || participant.position === 'random';
 }
 
+function getSavedState() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(payload) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {}
+}
+
 function SectionCard({ title, desc, children, className = '' }) {
   return (
     <section className={`${OUTER_CARD} ${className}`}>
@@ -115,17 +156,30 @@ function OptionPill({ active, onClick, children, tone = 'blue' }) {
   return <button onClick={onClick} className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${active ? activeClass : idleClass}`}>{children}</button>;
 }
 
-function PersonChip({ item, meta, muted = false, onRemove = null, draggable = false, onDragStart = null, onDragEnd = null, teamStyle = false }) {
+function ProfileAvatar({ name, profile, small = false }) {
+  const [failed, setFailed] = useState(false);
+  const src = !failed && profile?.profileImage ? profile.profileImage : '';
+  const initial = String(name || '?').slice(0, 1);
+  const size = small ? 'h-7 w-7 text-[12px]' : 'h-9 w-9 text-sm';
+
+  if (src) {
+    return <img src={src} alt={name} onError={() => setFailed(true)} className={`${size} shrink-0 rounded-full border border-white/25 object-cover shadow-[0_6px_14px_rgba(0,0,0,0.28)]`} />;
+  }
+  return <span className={`${size} flex shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/22 font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]`}>{initial}</span>;
+}
+
+function PersonChip({ item, meta, muted = false, onRemove = null, draggable = false, onDragStart = null, onDragEnd = null, teamStyle = false, profile = null }) {
   const styleClass = teamStyle ? meta.teamChip : meta.chip;
   return (
-    <div draggable={draggable} onDragStart={onDragStart || undefined} onDragEnd={onDragEnd || undefined} className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-black ${styleClass} ${muted ? 'opacity-55 saturate-50' : ''} ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}>
-      <span>{item.name}</span>
-      {onRemove ? <button onClick={() => onRemove(item.name)} className="rounded-full px-1 text-white/70 transition hover:text-white">×</button> : null}
+    <div draggable={draggable} onDragStart={onDragStart || undefined} onDragEnd={onDragEnd || undefined} className={`inline-flex items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-[17px] font-black leading-none ${styleClass} ${muted ? 'opacity-55 saturate-50' : ''} ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+      <ProfileAvatar name={item.name} profile={profile} small={teamStyle} />
+      <span className="drop-shadow-[0_1px_8px_rgba(0,0,0,0.25)]">{item.name}</span>
+      {onRemove ? <button onClick={() => onRemove(item.name)} className="ml-1 rounded-full px-1 text-white/70 transition hover:text-white">×</button> : null}
     </div>
   );
 }
 
-function RoleLane({ title, type, participants, assignedNames, onRemove, onParticipantDragStart, onParticipantDragEnd, onLaneDrop, dragState }) {
+function RoleLane({ title, type, participants, assignedNames, onRemove, onParticipantDragStart, onParticipantDragEnd, onLaneDrop, dragState, getProfile }) {
   const meta = POSITION_META[type];
   const activeDrop = dragState && dragState.type === 'participant' && dragState.item.position !== type;
   return (
@@ -134,7 +188,7 @@ function RoleLane({ title, type, participants, assignedNames, onRemove, onPartic
         <div className="text-base font-extrabold text-white">{meta.icon} {title}</div>
         <div className="text-sm text-white/48">{participants.length}명</div>
       </div>
-      <div className="mt-3 flex min-h-[52px] flex-wrap gap-2">
+      <div className="mt-3 flex min-h-[58px] flex-wrap gap-2.5">
         {participants.length ? participants.map((item) => {
           const isAssigned = assignedNames.has(item.name);
           return (
@@ -147,6 +201,7 @@ function RoleLane({ title, type, participants, assignedNames, onRemove, onPartic
               draggable={!isAssigned}
               onDragStart={() => onParticipantDragStart(item)}
               onDragEnd={onParticipantDragEnd}
+              profile={getProfile(item.name)}
             />
           );
         }) : <div className="rounded-2xl border border-dashed border-[#335b95]/60 px-4 py-3 text-sm text-white/40">등록된 인원이 없습니다.</div>}
@@ -155,7 +210,7 @@ function RoleLane({ title, type, participants, assignedNames, onRemove, onPartic
   );
 }
 
-function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, onAssign, onToggleLock, dragState, onSlotDragStart, onSlotDragEnd, onSlotDrop, onCaptainChange }) {
+function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, onAssign, onToggleLock, dragState, onSlotDragStart, onSlotDragEnd, onSlotDrop, onCaptainChange, getProfile }) {
   const theme = TEAM_ACCENTS[(teamNo - 1) % TEAM_ACCENTS.length];
   const teamNames = roles.map((role) => assignments[`${teamNo}-${role}`]).filter(Boolean);
   return (
@@ -194,7 +249,7 @@ function TeamPanel({ teamNo, captain, roles, assignments, locks, participants, o
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {selectedItem ? (
                   <div draggable onDragStart={() => onSlotDragStart({ slotKey: key, role, name: selected })} onDragEnd={onSlotDragEnd} className="cursor-grab active:cursor-grabbing">
-                    <PersonChip item={selectedItem} meta={roleMeta} teamStyle />
+                    <PersonChip item={selectedItem} meta={roleMeta} teamStyle profile={getProfile(selectedItem.name)} />
                   </div>
                 ) : <div className="rounded-xl border border-dashed border-[#335b95]/60 px-3 py-2 text-sm text-white/38">빈 슬롯</div>}
                 {captain === selected ? <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${theme.badge}`}>팀장</span> : null}
@@ -222,6 +277,8 @@ export default function OverwatchRandomPage() {
   const [locks, setLocks] = useState({});
   const [dragState, setDragState] = useState(null);
   const [currentMap, setCurrentMap] = useState('');
+  const [profileMap, setProfileMap] = useState({});
+  const [hydrated, setHydrated] = useState(false);
 
   const roles = useMemo(() => getRoleTemplate(mode), [mode]);
   const grouped = useMemo(() => ({
@@ -231,6 +288,59 @@ export default function OverwatchRandomPage() {
     random: participants.filter((item) => item.position === 'random'),
   }), [participants]);
   const assignedNames = useMemo(() => new Set(Object.values(assignments).filter(Boolean)), [assignments]);
+  const getProfile = (name) => profileMap[normalizeName(name)] || null;
+
+  useEffect(() => {
+    const saved = getSavedState();
+    if (saved) {
+      if (Number(saved.teamCount) >= 2 && Number(saved.teamCount) <= 10) setTeamCount(Number(saved.teamCount));
+      if (saved.mode === '5v5' || saved.mode === '6v6') setMode(saved.mode);
+      if (Array.isArray(saved.participants)) setParticipants(saved.participants.filter((item) => item?.name && item?.position).map((item, index) => ({ ...item, id: item.id || `saved-${index}-${item.name}` })));
+      if (saved.assignments && typeof saved.assignments === 'object') setAssignments(saved.assignments);
+      if (saved.locks && typeof saved.locks === 'object') setLocks(saved.locks);
+      if (saved.captains && typeof saved.captains === 'object') setCaptains(saved.captains);
+      if (typeof saved.currentMap === 'string') setCurrentMap(saved.currentMap);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const baseMap = {};
+    KNOWN_MEMBER_PROFILES.forEach((member) => {
+      baseMap[normalizeName(member.nickname)] = member;
+    });
+    setProfileMap(baseMap);
+
+    let mounted = true;
+    const loadProfiles = async () => {
+      try {
+        const res = await fetch('/api/crew-sheet');
+        const json = await res.json();
+        if (!mounted) return;
+        const next = { ...baseMap };
+        (json.crews || []).forEach((crew) => {
+          (crew.members || []).forEach((member) => {
+            const key = normalizeName(member.nickname);
+            if (!key) return;
+            next[key] = {
+              nickname: member.nickname,
+              profileImage: member.profileImage || member.profileImages?.[0] || '',
+              profileImages: member.profileImages || [],
+              stationUrl: member.stationUrl || '',
+            };
+          });
+        });
+        setProfileMap(next);
+      } catch {}
+    };
+    loadProfiles();
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveState({ teamCount, mode, participants, assignments, locks, captains, currentMap });
+  }, [hydrated, teamCount, mode, participants, assignments, locks, captains, currentMap]);
 
   const handleTeamCountChange = (value) => {
     const nextCount = Number(value);
@@ -244,11 +354,12 @@ export default function OverwatchRandomPage() {
     const names = nameInput.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
     if (!names.length) return;
     setParticipants((prev) => {
-      const seen = new Set(prev.map((item) => item.name));
+      const seen = new Set(prev.map((item) => normalizeName(item.name)));
       const next = [...prev];
       names.forEach((name) => {
-        if (seen.has(name)) return;
-        seen.add(name);
+        const key = normalizeName(name);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
         next.push({ id: `${Date.now()}-${name}-${Math.random().toString(36).slice(2, 7)}`, name, position: positionInput });
       });
       return next;
@@ -319,6 +430,15 @@ export default function OverwatchRandomPage() {
     setCurrentMap('');
   };
 
+  const handleClearAll = () => {
+    setParticipants([]);
+    setAssignments({});
+    setLocks({});
+    setCaptains({});
+    setCurrentMap('');
+    if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEY);
+  };
+
   const copyResult = async () => {
     const text = Array.from({ length: teamCount }, (_, idx) => idx + 1).map((teamNo) => {
       const captainText = captains[teamNo] ? ` (팀장: ${captains[teamNo]})` : '';
@@ -387,7 +507,7 @@ export default function OverwatchRandomPage() {
           <section className="grid gap-6 xl:grid-cols-[300px_280px_minmax(0,1fr)] items-start">
             <SectionCard title="리모컨" desc="등록, 인원 관리, 팀 수 설정만 왼쪽에 남겼습니다." className="xl:sticky xl:top-24">
               <div className="grid gap-3">
-                <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="스트리머 이름 입력 (쉼표/엔터 지원)" className={FIELD_CLASS} />
+                <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) addParticipant(); }} placeholder="스트리머 이름 입력 (쉼표/엔터 지원)" className={FIELD_CLASS} />
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                   <select value={positionInput} onChange={(e) => setPositionInput(e.target.value)} className={FIELD_CLASS}>
                     <option value="tank">🛡️ 탱커</option>
@@ -399,7 +519,7 @@ export default function OverwatchRandomPage() {
                 </div>
               </div>
               <div className="mt-4 rounded-2xl border border-[#335b95]/65 bg-[#111a28] px-4 py-4">
-                <div className="text-sm text-white/46">등록 인원</div>
+                <div className="flex items-center justify-between gap-3"><div className="text-sm text-white/46">등록 인원</div><button onClick={handleClearAll} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/55 transition hover:bg-white/10 hover:text-white">전체삭제</button></div>
                 <div className="mt-2 text-[28px] font-black text-white">{participants.length}</div>
                 <div className="mt-4 text-sm font-bold text-white/50">게임 방식</div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
@@ -426,17 +546,17 @@ export default function OverwatchRandomPage() {
               </div>
               {currentMap ? <div className="mt-3 inline-flex rounded-xl border border-violet-300/35 bg-violet-400/16 px-4 py-2 text-sm font-black text-violet-50">현재 맵: {currentMap}</div> : null}
               <div className="mt-4 space-y-4">
-                <RoleLane title="탱커" type="tank" participants={grouped.tank} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} />
-                <RoleLane title="딜러" type="dps" participants={grouped.dps} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} />
-                <RoleLane title="힐러" type="support" participants={grouped.support} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} />
-                <RoleLane title="랜덤" type="random" participants={grouped.random} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} />
+                <RoleLane title="탱커" type="tank" participants={grouped.tank} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} getProfile={getProfile} />
+                <RoleLane title="딜러" type="dps" participants={grouped.dps} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} getProfile={getProfile} />
+                <RoleLane title="힐러" type="support" participants={grouped.support} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} getProfile={getProfile} />
+                <RoleLane title="랜덤" type="random" participants={grouped.random} assignedNames={assignedNames} onRemove={removeParticipant} onParticipantDragStart={handleParticipantDragStart} onParticipantDragEnd={handleDragEnd} onLaneDrop={handleRoleLaneDrop} dragState={dragState} getProfile={getProfile} />
               </div>
-              <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm leading-7 text-cyan-100/80">포지션 보드에서 다른 줄로 드래그하면 포지션이 바뀝니다. 미배정 칩은 슬롯에 직접 드래그할 수 있고, 결과판 칩은 같은 포지션끼리 교체됩니다.</div>
+              <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm leading-7 text-cyan-100/80">포지션 보드에서 다른 줄로 드래그하면 포지션이 바뀝니다. 미배정 칩은 슬롯에 직접 드래그할 수 있고, 결과판 칩은 같은 포지션끼리 교체됩니다. 등록한 인원은 브라우저에 자동 저장됩니다.</div>
             </SectionCard>
             <SectionCard title="팀 결과판" desc="팀마다 컬러를 넣고, 결과 칩도 더 선명한 드래프트 느낌으로 바꿨습니다.">
               <div className="grid gap-4 md:grid-cols-2">
                 {Array.from({ length: teamCount }, (_, idx) => idx + 1).map((teamNo) => (
-                  <TeamPanel key={teamNo} teamNo={teamNo} captain={captains[teamNo] || ''} roles={roles} assignments={assignments} locks={locks} participants={participants} onAssign={handleAssign} onToggleLock={handleToggleLock} dragState={dragState} onSlotDragStart={handleSlotDragStart} onSlotDragEnd={handleDragEnd} onSlotDrop={handleSlotDrop} onCaptainChange={(no, value) => setCaptains((prev) => ({ ...prev, [no]: value }))} />
+                  <TeamPanel key={teamNo} teamNo={teamNo} captain={captains[teamNo] || ''} roles={roles} assignments={assignments} locks={locks} participants={participants} onAssign={handleAssign} onToggleLock={handleToggleLock} dragState={dragState} onSlotDragStart={handleSlotDragStart} onSlotDragEnd={handleDragEnd} onSlotDrop={handleSlotDrop} onCaptainChange={(no, value) => setCaptains((prev) => ({ ...prev, [no]: value }))} getProfile={getProfile} />
                 ))}
               </div>
             </SectionCard>
