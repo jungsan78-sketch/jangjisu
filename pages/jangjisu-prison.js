@@ -55,6 +55,49 @@ function CalendarPreview() {
   );
 }
 
+function EmptyProfile({ label, large = false }) {
+  return (
+    <div className={`group rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016))] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:-translate-y-1 hover:border-white/16 ${large ? 'mx-auto max-w-[360px]' : ''}`}>
+      <div className={`${large ? 'h-28 w-28' : 'h-20 w-20'} mx-auto rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),rgba(255,255,255,0.055)_58%,rgba(255,255,255,0.015)_78%)] shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
+      <div className={`${large ? 'text-xl' : 'text-sm'} mt-4 font-black text-white`}>{label}</div>
+      <div className="mt-3 inline-flex rounded-full border border-amber-200/14 bg-amber-200/8 px-3 py-1 text-[11px] font-bold text-amber-100/80">프로필 입력 예정</div>
+    </div>
+  );
+}
+
+function MemberBoardPreview() {
+  return (
+    <section id="members" className="mt-8 rounded-[32px] border border-slate-200/10 bg-white/[0.035] p-6 shadow-xl shadow-black/20 lg:p-8">
+      <SectionTitle title="장지수용소 멤버표" logo="🪪" />
+      <div className="rounded-[30px] border border-slate-300/14 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_30%),linear-gradient(180deg,rgba(12,14,18,0.98),rgba(5,7,11,0.98))] p-5 shadow-[0_22px_55px_rgba(0,0,0,0.34)] sm:p-7">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-[24px] font-extrabold tracking-tight text-white sm:text-[30px]">교도소장</div>
+            <div className="mt-2 text-sm font-medium text-slate-300/60">수장이자 장지수용소 대표 칸</div>
+          </div>
+          <div className="rounded-full border border-amber-200/18 bg-amber-200/8 px-4 py-2 text-xs font-black tracking-[0.28em] text-amber-100">WARDEN</div>
+        </div>
+        <EmptyProfile label="장지수" large />
+
+        <div className="mt-8 border-t border-white/10 pt-7">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[24px] font-extrabold tracking-tight text-white sm:text-[30px]">수용생들</div>
+              <div className="mt-2 text-sm font-medium text-slate-300/60">닉네임 / 프로필사진 / 방송국 링크를 받으면 이 칸에 채워집니다.</div>
+            </div>
+            <div className="rounded-full border border-slate-200/12 bg-white/6 px-4 py-2 text-xs font-black tracking-[0.28em] text-slate-100/75">INMATES</div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }, (_, index) => (
+              <EmptyProfile key={index} label={`수용생 ${index + 1}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function JangjisuPrisonPage() {
   return (
     <>
@@ -77,6 +120,7 @@ export default function JangjisuPrisonPage() {
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <NavChip href="/" label="SOU 메인" icon="↩" />
               <NavChip href="#schedule" label="일정표" icon="⛓️" tone="warm" />
+              <NavChip href="#members" label="멤버표" icon="🪪" />
               <NavChip href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="📋" />
             </nav>
           </div>
@@ -98,6 +142,7 @@ export default function JangjisuPrisonPage() {
           </section>
 
           <CalendarPreview />
+          <MemberBoardPreview />
         </main>
       </div>
     </>
