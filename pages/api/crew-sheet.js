@@ -147,12 +147,22 @@ function buildProfileImages(stationUrl = '') {
   ];
 }
 
+function isStatusCell(text = '') {
+  const value = String(text || '').trim();
+  return (
+    /수정/.test(value) ||
+    /점검/.test(value) ||
+    /^\d{1,2}\s*\/\s*\d{1,2}/.test(value) ||
+    /마크|엔더런|배틀|골프|내전|공지|일정/.test(value)
+  );
+}
+
 function isUsableMember(cell) {
   if (!cell?.text) return false;
   if (isCrewHeader(cell.text)) return false;
+  if (isStatusCell(cell.text)) return false;
   if (/^\d+$/.test(cell.text)) return false;
   if (/^(new|NEW)$/i.test(cell.text)) return false;
-  if (/^(수정\s*중|점검\s*중)$/i.test(cell.text)) return false;
   if (cell.text.length > 30) return false;
   return true;
 }
@@ -174,6 +184,10 @@ function addMember(crew, cell) {
 
 function countStationLinks(crews = []) {
   return crews.reduce((sum, crew) => sum + (crew.members || []).filter((member) => member.stationUrl).length, 0);
+}
+
+function countMembers(crews = []) {
+  return crews.reduce((sum, crew) => sum + (crew.members || []).length, 0);
 }
 
 function makeRangesFromHeaders(headers) {
@@ -236,6 +250,45 @@ function parseCrewsFromHtml(html = '') {
     .filter((crew) => crew.name && crew.members.length);
 }
 
+function extractLinkMapFromHtml(html = '') {
+  const linkMap = new Map();
+  parseRows(html).forEach((cells) => {
+    cells.forEach((cell) => {
+      if (!isUsableMember(cell)) return;
+      if (!cell.href || !/sooplive\.(com|co\.kr)/i.test(cell.href)) return;
+      if (!linkMap.has(cell.text)) linkMap.set(cell.text, cell.href);
+    });
+  });
+  return linkMap;
+}
+
+function mergeLinkMaps(maps = []) {
+  const merged = new Map();
+  maps.forEach((map) => {
+    map.forEach((url, name) => {
+      if (!merged.has(name)) merged.set(name, url);
+    });
+  });
+  return merged;
+}
+
+function enrichCrewLinks(crews = [], linkMap = new Map()) {
+  return crews.map((crew, crewIndex) => {
+    const members = (crew.members || []).map((member, memberIndex) => {
+      const stationUrl = member.stationUrl || linkMap.get(member.nickname) || '';
+      const profileImages = stationUrl ? buildProfileImages(stationUrl) : (member.profileImages || []);
+      return {
+        ...member,
+        role: memberIndex === 0 ? 'leader' : 'member',
+        stationUrl,
+        profileImage: profileImages[0] || member.profileImage || '',
+        profileImages,
+      };
+    });
+    return { ...crew, members, leader: members[0] || null, accentIndex: crewIndex };
+  });
+}
+
 async function fetchText(url) {
   const res = await fetch(url, {
     headers: {
@@ -254,15 +307,24 @@ async function fetchSheetCrews(source) {
   ];
 
   const parsed = [];
+  const linkMaps = [];
   for (const url of urls) {
     try {
-      const crews = parseCrewsFromHtml(await fetchText(url));
-      parsed.push({ crews, stationLinks: countStationLinks(crews), url });
+      const html = await fetchText(url);
+      const crews = parseCrewsFromHtml(html);
+      const linkMap = extractLinkMapFromHtml(html);
+      parsed.push({ crews, stationLinks: countStationLinks(crews), memberCount: countMembers(crews), url });
+      linkMaps.push(linkMap);
     } catch {}
   }
-  parsed.sort((a, b) => b.stationLinks - a.stationLinks || b.crews.length - a.crews.length);
   if (!parsed.length) throw new Error('No readable sheet html');
-  return parsed[0];
+
+  const mergedLinks = mergeLinkMaps(linkMaps);
+  parsed.sort((a, b) => b.crews.length - a.crews.length || b.memberCount - a.memberCount || b.stationLinks - a.stationLinks);
+  return {
+    ...parsed[0],
+    crews: enrichCrewLinks(parsed[0].crews, mergedLinks),
+  };
 }
 
 export default async function handler(req, res) {
