@@ -20,7 +20,7 @@ function isPrisonUsable(payload) {
 }
 
 async function readJson(url) {
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(url, { cache: 'no-store', headers: { 'x-youtube-cache-bypass': '1' } });
   return res.json();
 }
 
