@@ -185,7 +185,6 @@ function MemberBoardPreview() {
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">교도소장</div>
-            <div className="mt-2 text-sm font-semibold text-white/60">수장이자 장지수용소 대표 칸</div>
           </div>
           <div className="rounded-full border border-amber-200/20 bg-amber-200/10 px-4 py-2 text-xs font-black tracking-[0.22em] text-amber-50">WARDEN</div>
         </div>
@@ -195,7 +194,6 @@ function MemberBoardPreview() {
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">수용생들</div>
-              <div className="mt-2 text-sm font-semibold text-white/60">프로필을 누르면 해당 SOOP 방송국으로 이동합니다.</div>
             </div>
             <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black tracking-[0.22em] text-white/78">{PRISON_MEMBERS.length}명</div>
           </div>
