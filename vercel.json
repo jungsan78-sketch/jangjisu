@@ -1,3 +1,13 @@
 {
-  "headers": []
+  "headers": [],
+  "crons": [
+    {
+      "path": "/api/youtube",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/prison-youtube",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
