@@ -109,3 +109,28 @@ section[aria-label="장지수용소 대문"] > div::after {
     linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.58)),
     radial-gradient(ellipse at center bottom, rgba(245, 158, 11, 0.10), transparent 58%);
 }
+
+#members .mb-5.flex.items-center.justify-between.gap-4 {
+  position: relative;
+  justify-content: center;
+}
+
+#members .mb-5.flex.items-center.justify-between.gap-4 > div:first-child {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+#members .mb-5.flex.items-center.justify-between.gap-4 > div:last-child {
+  position: absolute;
+  right: 0;
+}
+
+@media (max-width: 640px) {
+  #members .mb-5.flex.items-center.justify-between.gap-4 {
+    flex-direction: column;
+  }
+
+  #members .mb-5.flex.items-center.justify-between.gap-4 > div:last-child {
+    position: static;
+  }
+}
