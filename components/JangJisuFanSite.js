@@ -43,6 +43,15 @@ function hasRecentUpload(items = []) {
   return items.some(isRecentUpload);
 }
 
+function shareYoutubeState(scope, payload) {
+  if (typeof window === 'undefined') return;
+  window.__SOU_YOUTUBE_STATE__ = {
+    ...(window.__SOU_YOUTUBE_STATE__ || {}),
+    [scope]: payload,
+  };
+  window.dispatchEvent(new CustomEvent('sou-youtube-loaded', { detail: { scope } }));
+}
+
 function NavChip({ href, label, tone = 'neutral', external = false, icon = '', onClick = null, className = '' }) {
   const toneClass = tone === 'green' ? 'border-[#03C75A]/30 bg-[#03C75A]/15 text-[#8df0b6] hover:bg-[#03C75A]/22' : tone === 'blue' ? 'border-[#3b82f6]/30 bg-[#3b82f6]/15 text-[#b8d8ff] hover:bg-[#3b82f6]/22' : tone === 'red' ? 'border-[#ff4e45]/30 bg-[#ff4e45]/15 text-[#ffb2ae] hover:bg-[#ff4e45]/22' : tone === 'prison' ? 'border-amber-200/26 bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(148,163,184,0.08))] text-amber-100 hover:bg-amber-300/16 hover:shadow-[0_0_30px_rgba(245,158,11,0.16)]' : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
   return (
@@ -165,7 +174,7 @@ export default function JangJisuFanSite() {
     const debugEnabled = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1';
     setIsYoutubeDebugMode(debugEnabled);
     const loadSoop = async () => { try { const res = await fetch('/api/soop'); const json = await res.json(); if (!mounted) return; setData((prev) => ({ ...prev, channel: { ...prev.channel, ...(json.channel || {}) } })); } catch {} };
-    const loadYoutube = async () => { try { const res = await fetch(debugEnabled ? '/api/youtube?debug=1' : '/api/youtube'); const json = await res.json(); if (!mounted) return; setYoutube({ shorts: Array.isArray(json.shorts) ? json.shorts : [], videos: Array.isArray(json.videos) ? json.videos : [], full: Array.isArray(json.full) ? json.full : [], channels: { latest: { url: json.channels?.latest?.url || 'https://www.youtube.com/@jisoujang', videosUrl: json.channels?.latest?.videosUrl || 'https://www.youtube.com/@jisoujang/videos', shortsUrl: json.channels?.latest?.shortsUrl || 'https://www.youtube.com/@jisoujang/shorts' }, full: { url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full', videosUrl: json.channels?.full?.videosUrl || 'https://www.youtube.com/@jisoujang_full/videos' } } }); setYoutubeDebug(json.debug || null); } catch {} };
+    const loadYoutube = async () => { try { const res = await fetch(debugEnabled ? '/api/youtube?debug=1' : '/api/youtube'); const json = await res.json(); if (!mounted) return; const nextYoutube = { shorts: Array.isArray(json.shorts) ? json.shorts : [], videos: Array.isArray(json.videos) ? json.videos : [], full: Array.isArray(json.full) ? json.full : [], channels: { latest: { url: json.channels?.latest?.url || 'https://www.youtube.com/@jisoujang', videosUrl: json.channels?.latest?.videosUrl || 'https://www.youtube.com/@jisoujang/videos', shortsUrl: json.channels?.latest?.shortsUrl || 'https://www.youtube.com/@jisoujang/shorts' }, full: { url: json.channels?.full?.url || 'https://www.youtube.com/@jisoujang_full', videosUrl: json.channels?.full?.videosUrl || 'https://www.youtube.com/@jisoujang_full/videos' } } }; setYoutube(nextYoutube); shareYoutubeState('main', nextYoutube); setYoutubeDebug(json.debug || null); } catch {} };
     const loadSchedule = async () => { try { const res = await fetch('/api/schedule'); const json = await res.json(); if (!mounted) return; setSchedule({ monthLabel: json.monthLabel || '', items: Array.isArray(json.items) ? json.items : [], sourceUrl: json.sourceUrl || '', loaded: true }); } catch {} };
     loadSoop(); loadYoutube(); loadSchedule(); const scheduleTimer = setInterval(loadSchedule, 60 * 1000); return () => { mounted = false; clearInterval(scheduleTimer); };
   }, []);
