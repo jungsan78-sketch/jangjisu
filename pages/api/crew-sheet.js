@@ -47,6 +47,13 @@ function stripTags(value = '') {
   return decodeHtml(String(value).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
+function sanitizeName(value = '') {
+  return String(value)
+    .replace(/[👑🦁⭐★☆✅✔️☑️🏆🥇🥈🥉🔥💎🎖️]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function normalizeUrl(raw = '') {
   const decoded = decodeHtml(raw || '');
   if (!decoded) return '';
@@ -95,7 +102,7 @@ function parseRows(html = '') {
       const tagAttrs = cellMatch[2] || '';
       const cellHtml = cellMatch[3] || '';
       const colspan = getColspan(tagAttrs);
-      const text = stripTags(cellHtml);
+      const text = sanitizeName(stripTags(cellHtml));
       const href = getHref(`${cellHtml} ${tagAttrs}`);
       cells.push({ col, colspan, text, href, html: cellHtml });
       col += colspan;
@@ -106,7 +113,7 @@ function parseRows(html = '') {
 }
 
 function normalizeCrewName(text = '') {
-  return String(text).replace(/[\s\u200b]+/g, '').replace(/[🦁⭐★☆✅✔️☑️]/g, '').trim();
+  return sanitizeName(text).replace(/[\s\u200b]+/g, '').replace(/[🦁⭐★☆✅✔️☑️]/g, '').trim();
 }
 
 function parseCrewHeader(text = '') {
@@ -115,7 +122,7 @@ function parseCrewHeader(text = '') {
   if (direct) {
     const cleanName = normalizeCrewName(direct[1]);
     const knownName = KNOWN_CREW_NAMES.find((name) => normalizeCrewName(name) === cleanName || cleanName.includes(normalizeCrewName(name)));
-    return { name: knownName || direct[1].trim(), count: Number(direct[2]) };
+    return { name: knownName || sanitizeName(direct[1]), count: Number(direct[2]) };
   }
 
   const compact = normalizeCrewName(raw);
@@ -176,7 +183,7 @@ function isUsableMember(cell) {
 }
 
 function addMember(crew, cell) {
-  const nickname = cell.text.trim();
+  const nickname = sanitizeName(cell.text);
   if (!nickname || crew.members.some((member) => member.nickname === nickname)) return;
   const stationUrl = cell.href && /sooplive\.(com|co\.kr)/i.test(cell.href) ? cell.href : '';
   const extraUrl = cell.href && !stationUrl ? cell.href : '';
@@ -274,7 +281,8 @@ function mergeLinkMaps(maps = []) {
   const merged = new Map();
   maps.forEach((map) => {
     map.forEach((url, name) => {
-      if (!merged.has(name)) merged.set(name, url);
+      const cleanName = sanitizeName(name);
+      if (cleanName && !merged.has(cleanName)) merged.set(cleanName, url);
     });
   });
   return merged;
@@ -283,10 +291,12 @@ function mergeLinkMaps(maps = []) {
 function enrichCrewLinks(crews = [], linkMap = new Map(), source) {
   return crews.map((crew, crewIndex) => {
     const members = (crew.members || []).map((member, memberIndex) => {
-      const stationUrl = member.stationUrl || linkMap.get(member.nickname) || '';
+      const cleanName = sanitizeName(member.nickname);
+      const stationUrl = member.stationUrl || linkMap.get(cleanName) || '';
       const profileImages = stationUrl ? buildProfileImages(stationUrl) : (member.profileImages || []);
       return {
         ...member,
+        nickname: cleanName,
         role: memberIndex === 0 ? 'leader' : 'member',
         stationUrl,
         profileImage: profileImages[0] || member.profileImage || '',
