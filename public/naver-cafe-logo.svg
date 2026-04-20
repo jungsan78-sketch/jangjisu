@@ -10,7 +10,6 @@
       <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.15"/>
     </filter>
   </defs>
-  <rect width="360" height="360" rx="72" fill="#fff"/>
   <g filter="url(#s)">
     <path d="M68 132h211c45 0 76 29 76 71s-31 70-76 70h-21c-23 54-78 84-146 72-51-10-91-49-102-100V151c0-11 9-19 20-19h38Z" fill="url(#cup)"/>
     <path d="M279 178h14c20 0 35 12 35 29s-15 29-35 29h-14v-58Z" fill="#fff" opacity="0.96"/>
