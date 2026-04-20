@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" role="img" aria-label="NAVER Cafe">
+  <defs>
+    <linearGradient id="cup" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06d463"/><stop offset="1" stop-color="#00b84d"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#83ee4b"/><stop offset="1" stop-color="#44d63d"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="360" height="360" rx="72" fill="#fff"/>
+  <g filter="url(#s)">
+    <path d="M68 132h211c45 0 76 29 76 71s-31 70-76 70h-21c-23 54-78 84-146 72-51-10-91-49-102-100V151c0-11 9-19 20-19h38Z" fill="url(#cup)"/>
+    <path d="M279 178h14c20 0 35 12 35 29s-15 29-35 29h-14v-58Z" fill="#fff" opacity="0.96"/>
+    <path d="M121 61h136c0 56-45 102-101 102H86v-33c0-38 31-69 69-69h-34Z" fill="url(#leaf)"/>
+    <path d="M112 141c47-3 89-28 130-72" fill="none" stroke="#62e15a" stroke-width="4" opacity="0.55"/>
+  </g>
+</svg>
