@@ -17,6 +17,20 @@ function getDurationSeconds(duration = '') {
   return Number(h || 0) * 3600 + Number(m || 0) * 60 + Number(s || 0);
 }
 
+function formatDuration(seconds = 0) {
+  if (!seconds) return '';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function formatViews(value) {
+  const num = Number(value || 0);
+  if (!num) return '';
+  return new Intl.NumberFormat('ko-KR').format(num);
+}
+
 function getHandle(url = '') {
   const decoded = decodeURIComponent(url);
   const match = decoded.match(/youtube\.com\/@([^/?#]+)/i);
@@ -60,16 +74,13 @@ async function youtubeFetch(path, params, apiKey) {
 async function resolveChannel(channel, apiKey) {
   const directId = getChannelId(channel.url);
   if (directId) return directId;
-
   const handle = getHandle(channel.url);
   if (!handle) return '';
-
   try {
     const byHandle = await youtubeFetch('channels', { part: 'id', forHandle: handle }, apiKey);
     const id = byHandle.items?.[0]?.id;
     if (id) return id;
   } catch {}
-
   const searched = await youtubeFetch('search', { part: 'snippet', type: 'channel', maxResults: 1, q: handle.replace('@', '') }, apiKey);
   return searched.items?.[0]?.snippet?.channelId || '';
 }
@@ -77,37 +88,21 @@ async function resolveChannel(channel, apiKey) {
 async function getChannelVideos(channel, apiKey) {
   const channelId = await resolveChannel(channel, apiKey);
   if (!channelId) return [];
-
   const channelInfo = await youtubeFetch('channels', { part: 'contentDetails,snippet', id: channelId }, apiKey);
   const uploadsId = channelInfo.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
   if (!uploadsId) return [];
-
-  const playlist = await youtubeFetch('playlistItems', {
-    part: 'snippet,contentDetails',
-    playlistId: uploadsId,
-    maxResults: 50,
-  }, apiKey);
-
+  const playlist = await youtubeFetch('playlistItems', { part: 'snippet,contentDetails', playlistId: uploadsId, maxResults: 50 }, apiKey);
   const videoIds = (playlist.items || [])
     .filter((item) => isWithinFiveMonths(item.contentDetails?.videoPublishedAt || item.snippet?.publishedAt))
     .map((item) => item.contentDetails?.videoId)
     .filter(Boolean);
-
   if (!videoIds.length) return [];
-
-  const details = await youtubeFetch('videos', {
-    part: 'contentDetails,statistics,snippet',
-    id: videoIds.join(','),
-    maxResults: 50,
-  }, apiKey);
-
+  const details = await youtubeFetch('videos', { part: 'contentDetails,statistics,snippet', id: videoIds.join(','), maxResults: 50 }, apiKey);
   const { videosUrl, shortsUrl } = getChannelTabUrls(channel.url);
-
   return (details.items || []).map((item) => {
     const seconds = getDurationSeconds(item.contentDetails?.duration);
     const title = item.snippet?.title || '';
     const shorts = isShortsVideo(title, seconds);
-
     return {
       id: item.id,
       title,
@@ -121,6 +116,8 @@ async function getChannelVideos(channel, apiKey) {
       shortsUrl,
       type: shorts ? 'shorts' : 'video',
       durationSeconds: seconds,
+      durationText: formatDuration(seconds),
+      viewsText: formatViews(item.statistics?.viewCount),
     };
   });
 }
@@ -128,21 +125,11 @@ async function getChannelVideos(channel, apiKey) {
 export default async function handler(req, res) {
   const apiKey = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
   res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
-
-  if (!apiKey) {
-    return res.status(200).json({ videos: [], shorts: [], missingKey: true });
-  }
-
+  if (!apiKey) return res.status(200).json({ videos: [], shorts: [], missingKey: true });
   try {
     const results = await Promise.allSettled(YOUTUBE_CHANNELS.map((channel) => getChannelVideos(channel, apiKey)));
-    const merged = results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    return res.status(200).json({
-      videos: merged.filter((item) => item.type === 'video').slice(0, 24),
-      shorts: merged.filter((item) => item.type === 'shorts').slice(0, 30),
-      missingKey: false,
-    });
+    const merged = results.flatMap((result) => (result.status === 'fulfilled' ? result.value : [])).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+    return res.status(200).json({ videos: merged.filter((item) => item.type === 'video').slice(0, 24), shorts: merged.filter((item) => item.type === 'shorts').slice(0, 30), missingKey: false });
   } catch (error) {
     return res.status(200).json({ videos: [], shorts: [], missingKey: false, error: true });
   }
