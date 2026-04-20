@@ -10,17 +10,17 @@ const WARDEN = {
 };
 
 const PRISON_MEMBERS = [
-  { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong' },
-  { nickname: '치치', image: 'https://stimg.sooplive.com/LOGO/lo/lomioeov/m/lomioeov.webp', station: 'https://www.sooplive.com/station/lomioeov' },
+  { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong', youtube: 'https://www.youtube.com/channel/UCCAaGF_vfM6QygNRCp4x1dw', cafe: 'https://cafe.naver.com/meowdoodong' },
+  { nickname: '치치', image: 'https://stimg.sooplive.com/LOGO/lo/lomioeov/m/lomioeov.webp', station: 'https://www.sooplive.com/station/lomioeov', youtube: 'https://www.youtube.com/@chichi0e0' },
   { nickname: '시몽', image: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', station: 'https://www.sooplive.com/station/ximong' },
   { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul' },
-  { nickname: '아야네세나', image: 'https://stimg.sooplive.com/LOGO/ay/ayanesena/ayanesena.jpg', station: 'https://www.sooplive.com/station/ayanesena' },
-  { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122' },
+  { nickname: '아야네세나', image: 'https://stimg.sooplive.com/LOGO/ay/ayanesena/ayanesena.jpg', station: 'https://www.sooplive.com/station/ayanesena', youtube: 'https://www.youtube.com/@%EC%95%84%EC%95%BC%EB%84%A4%EC%84%B8%EB%82%98', cafe: 'https://cafe.naver.com/ayanesena' },
+  { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122', youtube: 'https://www.youtube.com/@%EB%B2%84%ED%8A%9C%EB%B2%84%ED%8F%AC%ED%8F%AC' },
   { nickname: '채니', image: 'https://stimg.sooplive.com/LOGO/k1/k1baaa/k1baaa.jpg', station: 'https://www.sooplive.com/station/k1baaa' },
-  { nickname: '코로미', image: 'https://stimg.sooplive.com/LOGO/bx/bxroong/bxroong.jpg', station: 'https://www.sooplive.com/station/bxroong' },
-  { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158' },
+  { nickname: '코로미', image: 'https://stimg.sooplive.com/LOGO/bx/bxroong/bxroong.jpg', station: 'https://www.sooplive.com/station/bxroong', cafe: 'https://cafe.naver.com/koromieie' },
+  { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol' },
   { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212' },
-  { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714' },
+  { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714', youtube: 'https://www.youtube.com/@ddikku_0714', cafe: 'https://cafe.naver.com/ddikku' },
 ];
 
 const SCHEDULE_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
@@ -110,10 +110,9 @@ function CalendarPreview() {
   const jangjisuSchedules = useMemo(() => (mainSchedule.items || [])
     .filter((item) => !item.empty && String(item.title || '').trim())
     .map((item) => ({ day: item.dayNumber, member: '장지수', title: item.title })), [mainSchedule]);
-  const allSchedules = useMemo(() => [...jangjisuSchedules], [jangjisuSchedules]);
   const visibleSchedules = useMemo(() => selectedMember === '전체보기'
-    ? allSchedules
-    : allSchedules.filter((item) => item.member === selectedMember), [allSchedules, selectedMember]);
+    ? jangjisuSchedules
+    : jangjisuSchedules.filter((item) => item.member === selectedMember), [jangjisuSchedules, selectedMember]);
   const scheduleByDay = useMemo(() => {
     const map = new Map();
     visibleSchedules.forEach((item) => {
@@ -161,27 +160,14 @@ function CalendarPreview() {
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <div className="relative flex items-start justify-between gap-2">
                     <div className="text-[17px] font-black text-white/95">{day}</div>
-                    <div className="flex flex-wrap justify-end gap-1.5">
-                      {isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-cyan-100">TODAY</span> : null}
-                    </div>
+                    <div>{isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black tracking-[0.08em] text-cyan-100">TODAY</span> : null}</div>
                   </div>
                   <div className="relative mt-3 space-y-2">
                     {schedules.map((item) => {
                       const off = isOffSchedule(item.title);
                       return (
                         <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 ${off ? 'text-rose-200' : 'text-white'}`}>
-                          {off ? (
-                            <>
-                              <span className="text-rose-100">{item.member}</span>
-                              <span className="ml-1 text-rose-100">휴방</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-cyan-100">{item.member}</span>
-                              <span className="px-1.5 text-white/42">-</span>
-                              <span>{item.title}</span>
-                            </>
-                          )}
+                          {off ? <><span className="text-rose-100">{item.member}</span><span className="ml-1 text-rose-100">휴방</span></> : <><span className="text-cyan-100">{item.member}</span><span className="px-1.5 text-white/42">-</span><span>{item.title}</span></>}
                         </div>
                       );
                     })}
@@ -200,23 +186,18 @@ function CalendarPreview() {
 
 function PlatformButton({ href, type }) {
   const enabled = Boolean(href);
-  const src = type === 'youtube' ? '/youtube-logo.svg' : '/soop-logo.svg';
-  const label = type === 'youtube' ? 'YouTube 채널' : 'SOOP 방송국';
+  const srcMap = { youtube: '/youtube-logo.svg', cafe: '/naver-cafe-logo.svg', soop: '/soop-logo.svg' };
+  const labelMap = { youtube: 'YouTube 채널', cafe: 'NAVER 팬카페', soop: 'SOOP 방송국' };
   const toneClass = type === 'youtube'
     ? 'border-red-300/20 bg-red-500/10 hover:border-red-200/42 hover:bg-red-500/16 hover:shadow-[0_0_22px_rgba(239,68,68,0.16)]'
-    : 'border-cyan-200/20 bg-cyan-300/10 hover:border-cyan-100/42 hover:bg-cyan-300/16 hover:shadow-[0_0_22px_rgba(34,211,238,0.14)]';
-  const baseClass = `inline-flex h-11 w-[74px] items-center justify-center rounded-full border px-3 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.04] ${toneClass}`;
-  const icon = <img src={src} alt={label} className="max-h-6 max-w-[52px] object-contain" />;
+    : type === 'cafe'
+      ? 'border-emerald-300/20 bg-emerald-400/10 hover:border-emerald-200/42 hover:bg-emerald-400/16 hover:shadow-[0_0_22px_rgba(34,197,94,0.16)]'
+      : 'border-cyan-200/20 bg-cyan-300/10 hover:border-cyan-100/42 hover:bg-cyan-300/16 hover:shadow-[0_0_22px_rgba(34,211,238,0.14)]';
+  const baseClass = `inline-flex h-11 w-[58px] items-center justify-center rounded-full border px-2 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.04] ${toneClass}`;
+  const icon = <img src={srcMap[type]} alt={labelMap[type]} className="max-h-7 max-w-[38px] object-contain" />;
 
-  if (!enabled) {
-    return <span className={`${baseClass} pointer-events-none opacity-30 grayscale`} title={`${label} 준비중`}>{icon}</span>;
-  }
-
-  return (
-    <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={baseClass}>
-      {icon}
-    </a>
-  );
+  if (!enabled) return <span className={`${baseClass} pointer-events-none opacity-25 grayscale`} title={`${labelMap[type]} 준비중`}>{icon}</span>;
+  return <a href={href} target="_blank" rel="noreferrer" aria-label={labelMap[type]} title={labelMap[type]} className={baseClass}>{icon}</a>;
 }
 
 function ProfileCard({ member, large = false }) {
@@ -227,6 +208,7 @@ function ProfileCard({ member, large = false }) {
       <div className="mt-4 flex items-center justify-center gap-2">
         <PlatformButton href={member.station} type="soop" />
         <PlatformButton href={member.youtube} type="youtube" />
+        <PlatformButton href={member.cafe} type="cafe" />
       </div>
     </div>
   );
@@ -237,27 +219,60 @@ function MemberBoardPreview() {
     <section id="members" className="mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
       <SectionTitle title="장지수용소 멤버표" logo="🪪" />
       <div className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.10),transparent_30%),linear-gradient(180deg,rgba(13,17,25,0.98),rgba(5,7,11,0.99))] p-5 shadow-[0_22px_55px_rgba(0,0,0,0.34)] sm:p-7">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">교도소장</div>
-          </div>
-          <div className="rounded-full border border-amber-200/20 bg-amber-200/10 px-4 py-2 text-xs font-black tracking-[0.22em] text-amber-50">WARDEN</div>
-        </div>
+        <div className="mb-5 flex items-center justify-between gap-4"><div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">교도소장</div><div className="rounded-full border border-amber-200/20 bg-amber-200/10 px-4 py-2 text-xs font-black tracking-[0.22em] text-amber-50">WARDEN</div></div>
         <ProfileCard member={WARDEN} large />
-
         <div className="mt-8 border-t border-white/10 pt-7">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">수용생들</div>
-            </div>
-            <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black tracking-[0.22em] text-white/78">{PRISON_MEMBERS.length}명</div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {PRISON_MEMBERS.map((member) => (
-              <ProfileCard key={member.nickname} member={member} />
-            ))}
-          </div>
+          <div className="mb-5 flex items-center justify-between gap-4"><div className="text-[26px] font-black tracking-tight text-white sm:text-[32px]">수용생들</div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black tracking-[0.22em] text-white/78">{PRISON_MEMBERS.length}명</div></div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">{PRISON_MEMBERS.map((member) => <ProfileCard key={member.nickname} member={member} />)}</div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function YoutubeCard({ item }) {
+  return (
+    <a href={item.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] shadow-[0_16px_38px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-1 hover:border-red-200/24 hover:bg-white/[0.065]">
+      <div className="relative aspect-video overflow-hidden bg-black/30">
+        {item.thumbnail ? <img src={item.thumbnail} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : null}
+        <div className="absolute left-3 top-3 rounded-full border border-red-200/22 bg-red-500/18 px-3 py-1 text-xs font-black text-red-50">{item.member}</div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/54 to-transparent opacity-70" />
+      </div>
+      <div className="p-4"><div className="line-clamp-2 min-h-[48px] text-sm font-black leading-6 text-white">{item.title}</div><div className="mt-3 text-xs font-bold text-white/42">{item.channelTitle}</div></div>
+    </a>
+  );
+}
+
+function RecentYoutubeSection() {
+  const [activeTab, setActiveTab] = useState('videos');
+  const [data, setData] = useState({ videos: [], shorts: [], loaded: false, missingKey: false });
+
+  useEffect(() => {
+    let mounted = true;
+    const loadVideos = async () => {
+      try {
+        const res = await fetch('/api/prison-youtube');
+        const json = await res.json();
+        if (!mounted) return;
+        setData({ videos: json.videos || [], shorts: json.shorts || [], loaded: true, missingKey: Boolean(json.missingKey) });
+      } catch {
+        if (!mounted) return;
+        setData({ videos: [], shorts: [], loaded: true, missingKey: false });
+      }
+    };
+    loadVideos();
+    const timer = setInterval(loadVideos, 15 * 60 * 1000);
+    return () => { mounted = false; clearInterval(timer); };
+  }, []);
+
+  const list = activeTab === 'videos' ? data.videos : data.shorts;
+
+  return (
+    <section id="recent-youtube" className="mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
+      <SectionTitle title="수용소 최근 유튜브" logo="▶" />
+      <div className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.12),transparent_30%),linear-gradient(180deg,rgba(13,17,25,0.98),rgba(5,7,11,0.99))] p-5 shadow-[0_22px_55px_rgba(0,0,0,0.34)] sm:p-7">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="text-sm font-semibold leading-7 text-white/62">멤버 유튜브 채널을 API로 모아서 자동 반영합니다.</div><div className="flex gap-2 rounded-full border border-white/10 bg-black/22 p-1.5"><button onClick={() => setActiveTab('videos')} className={`rounded-full px-4 py-2 text-sm font-black transition ${activeTab === 'videos' ? 'bg-red-500/18 text-white shadow-[0_0_18px_rgba(239,68,68,0.12)]' : 'text-white/55 hover:text-white'}`}>최신영상</button><button onClick={() => setActiveTab('shorts')} className={`rounded-full px-4 py-2 text-sm font-black transition ${activeTab === 'shorts' ? 'bg-red-500/18 text-white shadow-[0_0_18px_rgba(239,68,68,0.12)]' : 'text-white/55 hover:text-white'}`}>최신쇼츠</button></div></div>
+        {data.missingKey ? <div className="rounded-[24px] border border-amber-200/16 bg-amber-300/8 p-5 text-sm font-bold leading-7 text-amber-50/82">YouTube API 키가 아직 연결되지 않았습니다. Vercel 환경변수에 <span className="text-white">YOUTUBE_API_KEY</span>를 넣으면 자동으로 영상이 채워집니다.</div> : !data.loaded ? <div className="rounded-[24px] border border-white/10 bg-white/[0.035] p-5 text-sm font-bold text-white/58">유튜브 영상을 불러오는 중입니다.</div> : list.length ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{list.map((item) => <YoutubeCard key={`${activeTab}-${item.id}`} item={item} />)}</div> : <div className="rounded-[24px] border border-white/10 bg-white/[0.035] p-5 text-sm font-bold text-white/58">표시할 영상이 아직 없습니다.</div>}
       </div>
     </section>
   );
@@ -266,42 +281,15 @@ function MemberBoardPreview() {
 export default function JangjisuPrisonPage() {
   return (
     <>
-      <Head>
-        <title>장지수용소 모드 | 장지수용소 팬메이드</title>
-        <meta name="description" content="장지수용소 팬메이드 서브사이트" />
-      </Head>
+      <Head><title>장지수용소 모드 | 장지수용소 팬메이드</title><meta name="description" content="장지수용소 팬메이드 서브사이트" /></Head>
       <div className="min-h-screen bg-[#05070c] text-white">
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute -top-20 left-[-50px] h-72 w-72 rounded-full bg-slate-500/10 blur-3xl" />
-          <div className="absolute top-20 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 h-72 w-[30rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
-        </div>
-
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a href="/" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25">
-              <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
-            </a>
-            <nav className="flex flex-wrap items-center justify-end gap-3">
-              <NavChip href="/" label="SOU 메인" icon="↩" />
-              <NavChip href="#members" label="멤버표" icon="🪪" />
-              <NavChip href="#schedule" label="일정표" icon="⛓️" tone="warm" />
-              <NavChip href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="📋" />
-            </nav>
-          </div>
-        </header>
-
+        <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-20 left-[-50px] h-72 w-72 rounded-full bg-slate-500/10 blur-3xl" /><div className="absolute top-20 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-72 w-[30rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8"><a href="/" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25"><img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" /></a><nav className="flex flex-wrap items-center justify-end gap-3"><NavChip href="/" label="SOU 메인" icon="↩" /><NavChip href="#members" label="멤버표" icon="🪪" /><NavChip href="#schedule" label="일정표" icon="⛓️" tone="warm" /><NavChip href="#recent-youtube" label="최근 유튜브" icon="▶" /><NavChip href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="📋" /></nav></div></header>
         <main className="relative mx-auto max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
-          <section className="overflow-hidden rounded-[36px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)]" aria-label="장지수용소 대문">
-            <div className="relative min-h-[360px] overflow-hidden sm:min-h-[460px] lg:min-h-[560px]">
-              <img src="/jangjisu-prison-hero.svg" alt="장지수용소" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.12)_58%,rgba(5,7,12,0.46))]" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#05070c] to-transparent" />
-            </div>
-          </section>
-
+          <section className="overflow-hidden rounded-[36px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)]" aria-label="장지수용소 대문"><div className="relative min-h-[360px] overflow-hidden sm:min-h-[460px] lg:min-h-[560px]"><img src="/jangjisu-prison-hero.svg" alt="장지수용소" className="absolute inset-0 h-full w-full object-cover" /><div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.12)_58%,rgba(5,7,12,0.46))]" /><div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#05070c] to-transparent" /></div></section>
           <MemberBoardPreview />
           <CalendarPreview />
+          <RecentYoutubeSection />
         </main>
       </div>
     </>
