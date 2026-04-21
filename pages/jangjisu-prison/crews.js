@@ -25,6 +25,10 @@ const CARD_THEMES = [
   'from-sky-300/12 via-slate-200/5 to-transparent',
 ];
 
+function displayNickname(nickname = '') {
+  return String(nickname).replace(/\s*\(거미\)\s*/g, '').trim();
+}
+
 function NavButton({ href, children }) {
   return <a href={href} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.035))] px-4 py-2 text-sm font-bold text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/10 hover:text-white">{children}</a>;
 }
@@ -42,10 +46,11 @@ function Avatar({ member, leader = false }) {
   const profileImages = member?.profileImages?.length ? member.profileImages : (member?.profileImage ? [member.profileImage] : []);
   const profileImage = profileImages[imageIndex] || '';
   const sizeClass = leader ? 'h-24 w-24 text-2xl' : 'h-20 w-20 text-xl';
+  const name = displayNickname(member?.nickname || '?');
   if (profileImage) {
-    return <img src={profileImage} alt={member.nickname} onError={() => setImageIndex((prev) => prev + 1)} className={`${sizeClass} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_26px_rgba(0,0,0,0.26)]`} />;
+    return <img src={profileImage} alt={name} onError={() => setImageIndex((prev) => prev + 1)} className={`${sizeClass} mx-auto rounded-full border border-white/10 object-cover shadow-[0_12px_26px_rgba(0,0,0,0.26)]`} />;
   }
-  return <div className={`${sizeClass} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>{String(member?.nickname || '?').slice(0, 1)}</div>;
+  return <div className={`${sizeClass} mx-auto flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0.075)_55%,rgba(255,255,255,0.02)_78%)] font-black text-white shadow-[0_12px_26px_rgba(0,0,0,0.26)]`}>{name.slice(0, 1)}</div>;
 }
 
 function SoopButton({ stationUrl, large = false }) {
@@ -58,7 +63,7 @@ function SoopButton({ stationUrl, large = false }) {
 function MemberBlock({ member, leader = false }) {
   return <div className="text-center">
     <Avatar member={member} leader={leader} />
-    <div className={`${leader ? 'text-[22px]' : 'text-[17px]'} mt-3 break-keep font-black leading-snug text-white`}>{member.nickname}</div>
+    <div className={`${leader ? 'text-[22px]' : 'text-[17px]'} mt-3 break-keep font-black leading-snug text-white`}>{displayNickname(member.nickname)}</div>
     <div className="mt-3 flex justify-center"><SoopButton stationUrl={member.stationUrl} large={leader} /></div>
   </div>;
 }
@@ -71,7 +76,7 @@ function CrewCard({ crew }) {
   return <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.32)] transition duration-300 hover:border-white/16 hover:shadow-[0_26px_70px_rgba(0,0,0,0.38)]">
     <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${glow}`} />
     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-3"><h2 className="text-[30px] font-black tracking-tight text-white">{crew.name}</h2><span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {leader?.nickname || '-'}</span><span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-white/52">{crew.categoryLabel || CATEGORY_LABELS[crew.category] || '종겜 크루'}</span></div>
+      <div className="flex flex-wrap items-center gap-3"><h2 className="text-[30px] font-black tracking-tight text-white">{crew.name}</h2><span className="rounded-full border border-amber-200/18 bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100">수장 {displayNickname(leader?.nickname || '-')}</span><span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-white/52">{crew.categoryLabel || CATEGORY_LABELS[crew.category] || '종겜 크루'}</span></div>
       <div className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm font-black text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">총 {crew.members.length}명</div>
     </div>
     <div className="relative mt-5 grid gap-4 lg:grid-cols-[190px_1fr]">
