@@ -15,22 +15,54 @@ const SHEET_SOURCES = [
 
 const MANUAL_STATION_OVERRIDES = {
   부르: 'https://www.sooplive.com/station/bureu2002',
+  모요: 'https://www.sooplive.com/station/duvl123',
+  츄르: 'https://www.sooplive.com/station/chur1004',
+  나솜: 'https://www.sooplive.co.kr/station/qzaads1',
+  온유일: 'https://www.sooplive.com/station/oneon1y',
+  큐티섹시: 'https://www.sooplive.com/station/nnojoke486',
 };
+
+const MANUAL_CREW_ADDITIONS = {
+  강씨세가: [
+    { nickname: '모요', stationUrl: MANUAL_STATION_OVERRIDES.모요 },
+  ],
+  조적단: [
+    { nickname: '츄르', stationUrl: MANUAL_STATION_OVERRIDES.츄르 },
+  ],
+  ZZAM지트: [
+    { nickname: '나솜', stationUrl: MANUAL_STATION_OVERRIDES.나솜 },
+  ],
+  로스타시티: [
+    { nickname: '온유일', stationUrl: MANUAL_STATION_OVERRIDES.온유일 },
+  ],
+  버블란: [
+    { nickname: '큐티섹시', stationUrl: MANUAL_STATION_OVERRIDES.큐티섹시 },
+  ],
+};
+
+const BLOCKED_MEMBER_NAMES = new Set([
+  '제보하기',
+  '인원모집',
+  '공주구함',
+]);
+
+const PLACEHOLDER_NAME_PATTERN = /(구함|모집|제보|문의|추가|예정|미정|공석|대기|준비중|업데이트|수정|점검|공지|일정)/;
 
 const KNOWN_CREW_COUNTS = {
   사자회: 14,
-  조적단: 8,
+  조적단: 9,
   오락실: 13,
+  강씨세가: 9,
   천타버스: 12,
-  ZZAM지트: 12,
-  버컴퍼니: 9,
+  ZZAM지트: 13,
+  버컴퍼니: 8,
   지력사무소: 13,
   꾸한성: 16,
-  버블란: 11,
+  버블란: 12,
   고래상사: 16,
   홍신소: 15,
   가무소: 16,
-  로스타시티: 2,
+  로스타시티: 3,
   버인협회: 11,
 };
 
@@ -48,7 +80,12 @@ function decodeHtml(value = '') {
 }
 
 function stripTags(value = '') {
-  return decodeHtml(String(value).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  return decodeHtml(
+    String(value)
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+  ).replace(/\s+/g, ' ').trim();
 }
 
 function sanitizeName(value = '') {
@@ -56,6 +93,10 @@ function sanitizeName(value = '') {
     .replace(/[👑🦁⭐★☆✅✔️☑️🏆🥇🥈🥉🔥💎🎖️]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function normalizeName(value = '') {
+  return sanitizeName(value).replace(/[\s\u200b]+/g, '').trim();
 }
 
 function normalizeUrl(raw = '') {
@@ -72,7 +113,7 @@ function normalizeUrl(raw = '') {
 
 function pickBestUrl(candidates = []) {
   const links = candidates.map(normalizeUrl).filter(Boolean);
-  return links.find((url) => /sooplive\.(com|co\.kr)/i.test(url)) || links.find((url) => /^https?:\/\//i.test(url)) || '';
+  return links.find((url) => /sooplive\.(com|co\.kr)/i.test(url)) || '';
 }
 
 function getHref(cellHtml = '') {
@@ -116,21 +157,17 @@ function parseRows(html = '') {
   return rows;
 }
 
-function normalizeCrewName(text = '') {
-  return sanitizeName(text).replace(/[\s\u200b]+/g, '').replace(/[🦁⭐★☆✅✔️☑️]/g, '').trim();
-}
-
 function parseCrewHeader(text = '') {
   const raw = String(text || '').trim();
   const direct = raw.match(/(.+?)\s*\((\d+)\)/);
   if (direct) {
-    const cleanName = normalizeCrewName(direct[1]);
-    const knownName = KNOWN_CREW_NAMES.find((name) => normalizeCrewName(name) === cleanName || cleanName.includes(normalizeCrewName(name)));
+    const cleanName = normalizeName(direct[1]);
+    const knownName = KNOWN_CREW_NAMES.find((name) => cleanName === normalizeName(name) || cleanName.includes(normalizeName(name)));
     return { name: knownName || sanitizeName(direct[1]), count: Number(direct[2]) };
   }
 
-  const compact = normalizeCrewName(raw);
-  const knownName = KNOWN_CREW_NAMES.find((name) => compact === normalizeCrewName(name) || compact.includes(normalizeCrewName(name)));
+  const compact = normalizeName(raw);
+  const knownName = KNOWN_CREW_NAMES.find((name) => compact === normalizeName(name) || compact.includes(normalizeName(name)));
   if (!knownName) return null;
   return { name: knownName, count: KNOWN_CREW_COUNTS[knownName] };
 }
@@ -177,28 +214,34 @@ function isStatusCell(text = '') {
 }
 
 function isUsableMember(cell) {
-  if (!cell?.text) return false;
-  if (isCrewHeader(cell.text)) return false;
-  if (isStatusCell(cell.text)) return false;
-  if (/^\d+$/.test(cell.text)) return false;
-  if (/^(new|NEW)$/i.test(cell.text)) return false;
-  if (cell.text.length > 30) return false;
+  const text = sanitizeName(cell?.text || '');
+  if (!text) return false;
+  if (isCrewHeader(text)) return false;
+  if (isStatusCell(text)) return false;
+  if (BLOCKED_MEMBER_NAMES.has(text)) return false;
+  if (PLACEHOLDER_NAME_PATTERN.test(text)) return false;
+  if (/^\d+$/.test(text)) return false;
+  if (/^(new|NEW)$/i.test(text)) return false;
+  if (text.length > 30) return false;
   return true;
+}
+
+function makeMember(nickname, stationUrl = '') {
+  const profileImages = buildProfileImages(stationUrl);
+  return {
+    nickname: sanitizeName(nickname),
+    stationUrl,
+    extraUrl: '',
+    profileImage: profileImages[0] || '',
+    profileImages,
+  };
 }
 
 function addMember(crew, cell) {
   const nickname = sanitizeName(cell.text);
-  if (!nickname || crew.members.some((member) => member.nickname === nickname)) return;
-  const stationUrl = cell.href && /sooplive\.(com|co\.kr)/i.test(cell.href) ? cell.href : '';
-  const extraUrl = cell.href && !stationUrl ? cell.href : '';
-  const profileImages = buildProfileImages(stationUrl);
-  crew.members.push({
-    nickname,
-    stationUrl,
-    extraUrl,
-    profileImage: profileImages[0] || '',
-    profileImages,
-  });
+  if (!nickname || crew.members.some((member) => normalizeName(member.nickname) === normalizeName(nickname))) return;
+  const stationUrl = cell.href && /sooplive\.(com|co\.kr)/i.test(cell.href) ? cell.href : MANUAL_STATION_OVERRIDES[nickname] || '';
+  crew.members.push(makeMember(nickname, stationUrl));
 }
 
 function countStationLinks(crews = []) {
@@ -215,7 +258,7 @@ function makeRangesFromHeaders(headers) {
     const start = cell.col;
     const expectedEnd = start + Math.max(cell.colspan - 1, Math.max(0, header.count - 1));
     const end = next !== undefined ? next - 1 : expectedEnd;
-    const crew = { name: header.name, count: header.count, members: [] };
+    const crew = { name: header.name, count: KNOWN_CREW_COUNTS[header.name] || header.count, members: [] };
     return { start, end, crew };
   });
 }
@@ -257,15 +300,7 @@ function parseCrewsFromHtml(html = '') {
   });
 
   return crews
-    .map((crew, index) => {
-      const members = crew.members.slice(0, crew.count).map((member, memberIndex) => ({ ...member, role: memberIndex === 0 ? 'leader' : 'member' }));
-      return {
-        ...crew,
-        leader: members[0] || null,
-        members,
-        accentIndex: index,
-      };
-    })
+    .map((crew, index) => ({ ...crew, accentIndex: index }))
     .filter((crew) => crew.name && crew.members.length);
 }
 
@@ -275,7 +310,8 @@ function extractLinkMapFromHtml(html = '') {
     cells.forEach((cell) => {
       if (!isUsableMember(cell)) return;
       if (!cell.href || !/sooplive\.(com|co\.kr)/i.test(cell.href)) return;
-      if (!linkMap.has(cell.text)) linkMap.set(cell.text, cell.href);
+      const cleanName = sanitizeName(cell.text);
+      if (!linkMap.has(cleanName)) linkMap.set(cleanName, cell.href);
     });
   });
   Object.entries(MANUAL_STATION_OVERRIDES).forEach(([name, url]) => linkMap.set(sanitizeName(name), url));
@@ -294,30 +330,49 @@ function mergeLinkMaps(maps = []) {
   return merged;
 }
 
-function enrichCrewLinks(crews = [], linkMap = new Map(), source) {
-  return crews.map((crew, crewIndex) => {
-    const members = (crew.members || []).map((member, memberIndex) => {
-      const cleanName = sanitizeName(member.nickname);
-      const stationUrl = member.stationUrl || MANUAL_STATION_OVERRIDES[cleanName] || linkMap.get(cleanName) || '';
-      const profileImages = stationUrl ? buildProfileImages(stationUrl) : (member.profileImages || []);
-      return {
-        ...member,
-        nickname: cleanName,
-        role: memberIndex === 0 ? 'leader' : 'member',
-        stationUrl,
-        profileImage: profileImages[0] || member.profileImage || '',
-        profileImages,
-      };
+function applyManualAdditions(crews = []) {
+  const map = new Map(crews.map((crew) => [crew.name, crew]));
+  Object.entries(MANUAL_CREW_ADDITIONS).forEach(([crewName, members]) => {
+    const crew = map.get(crewName);
+    if (!crew) return;
+    members.forEach((member) => {
+      const nickname = sanitizeName(member.nickname);
+      if (!nickname || crew.members.some((item) => normalizeName(item.nickname) === normalizeName(nickname))) return;
+      crew.members.push(makeMember(nickname, member.stationUrl));
     });
+    crew.count = Math.max(KNOWN_CREW_COUNTS[crewName] || crew.count || 0, crew.members.length);
+  });
+  return crews;
+}
+
+function enrichCrewLinks(crews = [], linkMap = new Map(), source) {
+  return applyManualAdditions(crews).map((crew, crewIndex) => {
+    const members = (crew.members || [])
+      .map((member) => {
+        const cleanName = sanitizeName(member.nickname);
+        const stationUrl = member.stationUrl || MANUAL_STATION_OVERRIDES[cleanName] || linkMap.get(cleanName) || '';
+        const profileImages = stationUrl ? buildProfileImages(stationUrl) : [];
+        return {
+          ...member,
+          nickname: cleanName,
+          stationUrl,
+          profileImage: profileImages[0] || '',
+          profileImages,
+        };
+      })
+      .filter((member) => member.stationUrl && !BLOCKED_MEMBER_NAMES.has(member.nickname) && !PLACEHOLDER_NAME_PATTERN.test(member.nickname))
+      .map((member, memberIndex) => ({ ...member, role: memberIndex === 0 ? 'leader' : 'member' }));
+
     return {
       ...crew,
+      count: KNOWN_CREW_COUNTS[crew.name] || Math.max(crew.count || 0, members.length),
       category: source.category,
       categoryLabel: source.categoryLabel,
       members,
       leader: members[0] || null,
       accentIndex: crewIndex,
     };
-  });
+  }).filter((crew) => crew.members.length);
 }
 
 async function fetchText(url) {
@@ -371,7 +426,7 @@ function makeCategoryStats(crews = []) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
+  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
   try {
     const results = await Promise.allSettled(SHEET_SOURCES.map(fetchSheetCrews));
     const chunks = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
