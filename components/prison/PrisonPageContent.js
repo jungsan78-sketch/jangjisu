@@ -51,7 +51,7 @@ export default function PrisonPageContent() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-5 sm:py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:px-8">
+        <div className="mx-auto flex max-w-[1700px] flex-col gap-3 px-4 py-3 sm:px-5 sm:py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:px-8">
           <a href="/" className="block h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25 sm:h-14 sm:w-14">
             <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
           </a>
@@ -70,7 +70,7 @@ export default function PrisonPageContent() {
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-7xl px-4 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <main className="relative mx-auto max-w-[1700px] px-4 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
         <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
           <div className="relative overflow-hidden">
             <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
