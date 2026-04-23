@@ -125,6 +125,9 @@ export default function CalendarPreview() {
               const offDay = selectedMember === '전체보기'
                 ? list.some((item) => item.member === '장지수' && String(item.title || '').includes('휴방'))
                 : list.some((item) => String(item.title || '').includes('휴방'));
+              const displayLimit = selectedMember === '전체보기' ? 3 : 3;
+              const visibleItems = list.slice(0, displayLimit);
+              const hiddenCount = Math.max(0, list.length - displayLimit);
 
               return (
                 <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[92px] sm:min-h-[160px]' : 'min-h-[82px] sm:min-h-[132px]'} rounded-[16px] border p-2 transition-all duration-300 hover:-translate-y-1 sm:rounded-[22px] sm:p-3.5 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
@@ -134,10 +137,11 @@ export default function CalendarPreview() {
                     {isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 sm:px-2 sm:text-[10px] sm:tracking-[0.18em]">TODAY</span> : hasItem ? <span className={`mt-1 h-2 w-2 rounded-full sm:mt-1.5 sm:h-2.5 sm:w-2.5 ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
                   </div>
                   <div className="relative mt-2 space-y-1 sm:mt-4 sm:space-y-2">
-                    {list.slice(0, selectedMember === '전체보기' ? 2 : 3).map((item) => {
+                    {visibleItems.map((item) => {
                       const off = String(item.title || '').includes('휴방');
                       return <div key={`${item.day}-${item.member}-${item.title}`} className={`line-clamp-2 text-[9px] font-black leading-4 break-keep sm:text-[13px] sm:leading-6 ${off ? 'text-rose-100' : 'text-white/92'}`}>{off ? <><span>{item.member}</span><span className="ml-1">휴방</span></> : <><span className="text-cyan-100">{item.member}</span><span className="px-1 text-white/42 sm:px-1.5">-</span><span>{item.title}</span></>}</div>;
                     })}
+                    {hiddenCount > 0 ? <div className="text-[9px] font-black leading-4 text-white/55 sm:text-[12px] sm:leading-5">+{hiddenCount} 더보기</div> : null}
                   </div>
                 </div>
               );
