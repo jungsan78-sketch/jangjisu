@@ -1,77 +1,135 @@
-import { detectMonthFromRows, fetchRowsByGid, parseScheduleListRows, parseScheduleRows, pickBestSchedule } from '../../lib/scheduleSheet';
+import { detectMonthFromRows, fetchRowsByGid } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current:v2';
+const CACHE_KEY = 'schedule:ddikku:current:v3';
 const CACHE_TTL_SECONDS = 60 * 30;
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-function normalizeSegment(text) {
-  return String(text || '')
-    .replace(/^\s*[23]부\s*/u, '')
-    .replace(/^\s*[:：\-–—]\s*/u, '')
-    .replace(/\s{2,}/g, ' ')
+function normalizeText(value) {
+  return String(value || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-function extractAllowedParts(title) {
-  const source = String(title || '')
-    .replace(/\r/g, '\n')
-    .replace(/\s*\/\s*/g, '\n')
-    .replace(/\s*\\\s*/g, '\n')
-    .replace(/([1234]부)/gu, '\n$1');
-
-  const segments = source
-    .split('\n')
-    .map((segment) => String(segment || '').trim())
-    .filter(Boolean);
-
-  const parts = [];
-
-  segments.forEach((segment) => {
-    if (/^휴방/u.test(segment) || /\b휴방\b/u.test(segment)) {
-      parts.push('휴방');
-      return;
-    }
-
-    if (!/^[23]부/u.test(segment)) return;
-
-    const normalized = normalizeSegment(segment)
-      .replace(/\s*[14]부.*$/u, '')
-      .trim();
-
-    if (normalized) parts.push(normalized);
-  });
-
-  return Array.from(new Set(parts)).join('/');
+function normalizePartText(value) {
+  return normalizeText(value)
+    .replace(/^\s*[23]부\s*/u, '')
+    .replace(/^\s*[:：\-–—]\s*/u, '')
+    .trim();
 }
 
-function mergeFilteredItems(primaryItems = [], fallbackItems = []) {
-  const fallbackMap = new Map(fallbackItems.map((item) => [Number(item.dayNumber), item]));
+function buildEmptyMonthItems(targetYear, targetMonth) {
+  const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+  const items = [];
 
-  return primaryItems.map((item) => {
-    const primaryTitle = extractAllowedParts(item?.title || '');
-    const fallbackTitle = extractAllowedParts(fallbackMap.get(Number(item.dayNumber))?.title || '');
-    const title = primaryTitle || fallbackTitle;
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dateObject = new Date(targetYear, targetMonth - 1, day);
+    items.push({
+      dayNumber: day,
+      day: DAY_LABELS[dateObject.getDay()],
+      date: `${targetMonth}월 ${day}일`,
+      title: '',
+      empty: true,
+    });
+  }
 
-    return {
-      ...item,
-      title,
-      empty: !title,
-    };
+  return items;
+}
+
+function isDateRow(row) {
+  const numericCount = row.filter((cell) => /^\d{1,2}$/.test(normalizeText(cell))).length;
+  return numericCount >= 4;
+}
+
+function extractDayColumns(row, daysInMonth) {
+  const dayColumns = [];
+  row.forEach((cell, columnIndex) => {
+    const text = normalizeText(cell);
+    if (!/^\d{1,2}$/.test(text)) return;
+    const day = Number(text);
+    if (day < 1 || day > daysInMonth) return;
+    dayColumns.push({ day, columnIndex });
   });
+  return dayColumns.sort((a, b) => a.columnIndex - b.columnIndex);
+}
+
+function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclusive) {
+  const collected = [];
+  let hasOffDay = false;
+
+  blockRows.forEach((row) => {
+    for (let columnIndex = Math.max(0, startColumnIndex - 1); columnIndex < endColumnIndexExclusive; columnIndex += 1) {
+      const cell = normalizeText(row[columnIndex]);
+      if (!cell) continue;
+
+      if (/휴방/u.test(cell)) {
+        hasOffDay = true;
+      }
+
+      const labeledPart = cell.match(/^([23])부\s*(.*)$/u);
+      if (labeledPart) {
+        const normalized = normalizePartText(labeledPart[2]);
+        if (normalized) collected.push(normalized);
+        continue;
+      }
+
+      const previous = normalizeText(row[columnIndex - 1]);
+      if (/^[23]부$/u.test(previous)) {
+        const normalized = normalizePartText(cell);
+        if (normalized) collected.push(normalized);
+      }
+    }
+  });
+
+  const uniqueParts = Array.from(new Set(collected.filter(Boolean)));
+  if (uniqueParts.length > 0) {
+    return uniqueParts.join('/');
+  }
+  if (hasOffDay) {
+    return '휴방';
+  }
+  return '';
+}
+
+function parseDdikkuRows(rows, targetYear, targetMonth) {
+  const items = buildEmptyMonthItems(targetYear, targetMonth);
+  const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex];
+    if (!isDateRow(row)) continue;
+
+    const dayColumns = extractDayColumns(row, daysInMonth);
+    if (dayColumns.length === 0) continue;
+
+    const blockRows = [];
+    let nextRowIndex = rowIndex + 1;
+    while (nextRowIndex < rows.length && !isDateRow(rows[nextRowIndex])) {
+      blockRows.push(rows[nextRowIndex]);
+      nextRowIndex += 1;
+    }
+
+    dayColumns.forEach(({ day, columnIndex }, index) => {
+      const nextColumnIndex = dayColumns[index + 1]?.columnIndex ?? row.length;
+      const title = extractPartsFromBlock(blockRows, columnIndex, nextColumnIndex);
+      const target = items[day - 1];
+      if (!target) return;
+      target.title = title;
+      target.empty = !title;
+    });
+  }
+
+  return items;
 }
 
 async function buildFreshScheduleResponse() {
   const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
   const detected = detectMonthFromRows(rows, new Date());
-
-  const gridItems = parseScheduleRows(rows, detected.year, detected.month);
-  const listItems = parseScheduleListRows(rows, detected.year, detected.month);
-  const mergedItems = mergeFilteredItems(gridItems, listItems);
-  const listFilteredItems = mergeFilteredItems(listItems, gridItems);
-  const items = pickBestSchedule([mergedItems, listFilteredItems]);
+  const items = parseDdikkuRows(rows, detected.year, detected.month);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return {
