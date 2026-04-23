@@ -10,14 +10,13 @@ export default function WeeklyAllScheduleView({ dates, onMoveDay, groupedSchedul
 
   return (
     <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
-      <div className="mb-4 flex flex-col gap-3 rounded-[20px] border border-white/8 bg-white/[0.03] p-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:rounded-[24px] sm:p-4">
-        <div>
-          <div className="text-[11px] font-black tracking-[0.2em] text-cyan-200/65 sm:text-xs">ALL MEMBERS · WEEKLY CALENDAR</div>
-          <div className="mt-1 text-[18px] font-black text-white sm:text-[24px]">TODAY 기준 전체 일정</div>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button type="button" onClick={() => onMoveDay(-1)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-black text-white/78 transition hover:bg-white/[0.08] hover:text-white sm:px-4 sm:text-xs">← 하루 전</button>
-          <button type="button" onClick={() => onMoveDay(1)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-black text-white/78 transition hover:bg-white/[0.08] hover:text-white sm:px-4 sm:text-xs">하루 후 →</button>
+      <div className="mb-4 rounded-[20px] border border-white/8 bg-white/[0.03] p-3 sm:mb-5 sm:rounded-[24px] sm:p-4">
+        <div className="text-[11px] font-black tracking-[0.2em] text-cyan-200/65 sm:text-xs">ALL MEMBERS · WEEKLY CALENDAR</div>
+        <div className="mt-1 text-[18px] font-black text-white sm:text-[24px]">전체 일정 주간 보기</div>
+        <div className="mt-4 flex items-center justify-center gap-3 sm:mt-5 sm:gap-4">
+          <button type="button" onClick={() => onMoveDay(-1)} className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black text-white/78 transition hover:bg-white/[0.08] hover:text-white sm:px-5 sm:text-xs">← 이전 날짜</button>
+          <div className="text-[11px] font-black tracking-[0.16em] text-white/34 sm:text-xs sm:tracking-[0.22em]">TODAY CENTER</div>
+          <button type="button" onClick={() => onMoveDay(1)} className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black text-white/78 transition hover:bg-white/[0.08] hover:text-white sm:px-5 sm:text-xs">다음 날짜 →</button>
         </div>
       </div>
 
