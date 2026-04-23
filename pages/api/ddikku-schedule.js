@@ -4,9 +4,19 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current:v4';
+const CACHE_KEY = 'schedule:ddikku:current:v5';
 const CACHE_TTL_SECONDS = 60 * 30;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const IGNORED_FALLBACK_TEXTS = new Set([
+  '띠어트 (영공)',
+  '띠어트(영공)',
+  '꾸어르(후열소통)',
+  '꾸어르 (후열소통)',
+  '1부',
+  '2부',
+  '3부',
+  '4부',
+]);
 
 function normalizeText(value) {
   return String(value || '')
@@ -57,8 +67,18 @@ function extractDayColumns(row, daysInMonth) {
   return dayColumns.sort((a, b) => a.columnIndex - b.columnIndex);
 }
 
+function isIgnoredFallbackText(text) {
+  const normalized = normalizeText(text);
+  if (!normalized) return true;
+  if (IGNORED_FALLBACK_TEXTS.has(normalized)) return true;
+  if (/^[1234]부$/u.test(normalized)) return true;
+  if (/^(월요일|화요일|수요일|목요일|금요일|토요일|일요일)$/u.test(normalized)) return true;
+  return false;
+}
+
 function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclusive) {
   const collected = [];
+  const fallbackTexts = [];
   let hasOffDay = false;
 
   blockRows.forEach((row) => {
@@ -81,17 +101,32 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
       if (/^[23]부$/u.test(previous)) {
         const normalized = normalizePartText(cell);
         if (normalized) collected.push(normalized);
+        continue;
+      }
+
+      if (!isIgnoredFallbackText(cell)) {
+        fallbackTexts.push(cell);
       }
     }
   });
 
   const uniqueParts = Array.from(new Set(collected.filter(Boolean)));
+  const uniqueFallbackTexts = Array.from(new Set(fallbackTexts.filter(Boolean)));
+  const offReasonCandidates = uniqueFallbackTexts.filter((text) => !/휴방/u.test(text));
+
   if (uniqueParts.length > 0) {
     return uniqueParts.join('/');
   }
+
   if (hasOffDay) {
-    return '휴방';
+    const reason = offReasonCandidates.join('/');
+    return reason ? `휴방/${reason}` : '휴방';
   }
+
+  if (uniqueFallbackTexts.length > 0) {
+    return uniqueFallbackTexts.join('/');
+  }
+
   return '';
 }
 
