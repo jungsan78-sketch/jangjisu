@@ -4,7 +4,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current';
+const CACHE_KEY = 'schedule:ddikku:current:v2';
 const CACHE_TTL_SECONDS = 60 * 30;
 
 function normalizeSegment(text) {
