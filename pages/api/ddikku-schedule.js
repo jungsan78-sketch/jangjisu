@@ -4,7 +4,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current:v3';
+const CACHE_KEY = 'schedule:ddikku:current:v4';
 const CACHE_TTL_SECONDS = 60 * 30;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -62,7 +62,7 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
   let hasOffDay = false;
 
   blockRows.forEach((row) => {
-    for (let columnIndex = Math.max(0, startColumnIndex - 1); columnIndex < endColumnIndexExclusive; columnIndex += 1) {
+    for (let columnIndex = startColumnIndex; columnIndex < endColumnIndexExclusive; columnIndex += 1) {
       const cell = normalizeText(row[columnIndex]);
       if (!cell) continue;
 
