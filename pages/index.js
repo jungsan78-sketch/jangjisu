@@ -13,9 +13,46 @@ export default function Home() {
       }
     };
 
+    let didActivateShorts = false;
+    const prioritizeYoutubeTabs = () => {
+      const youtubeSection = document.getElementById('youtube');
+      if (!youtubeSection) return false;
+
+      const buttons = Array.from(youtubeSection.querySelectorAll('button'));
+      const shortsButton = buttons.find((button) => button.textContent?.trim() === '쇼츠');
+      const videoButton = buttons.find((button) => button.textContent?.trim() === '영상');
+      const fullButton = buttons.find((button) => button.textContent?.trim() === '풀영상');
+
+      if (!shortsButton) return false;
+
+      shortsButton.style.order = '0';
+      if (videoButton) videoButton.style.order = '1';
+      if (fullButton) fullButton.style.order = '2';
+
+      if (!didActivateShorts) {
+        didActivateShorts = true;
+        shortsButton.click();
+      }
+
+      return true;
+    };
+
     moveUtilityMenu();
-    const timer = setTimeout(moveUtilityMenu, 600);
-    return () => clearTimeout(timer);
+    prioritizeYoutubeTabs();
+
+    const utilityTimer = setTimeout(moveUtilityMenu, 600);
+    const youtubeInterval = setInterval(() => {
+      if (prioritizeYoutubeTabs() && didActivateShorts) {
+        clearInterval(youtubeInterval);
+      }
+    }, 300);
+    const youtubeTimeout = setTimeout(() => clearInterval(youtubeInterval), 4000);
+
+    return () => {
+      clearTimeout(utilityTimer);
+      clearInterval(youtubeInterval);
+      clearTimeout(youtubeTimeout);
+    };
   }, []);
 
   return (
