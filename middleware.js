@@ -4,6 +4,12 @@ export function middleware(request) {
   const { pathname } = request.nextUrl;
   const bypass = request.headers.get('x-youtube-cache-bypass') === '1' || request.nextUrl.searchParams.get('live') === '1';
 
+  if (pathname === '/jangjisu-prison') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/jangjisu-prison-v2';
+    return NextResponse.rewrite(url);
+  }
+
   if (!bypass && pathname === '/api/youtube') {
     const url = request.nextUrl.clone();
     url.pathname = '/api/youtube-cached';
@@ -20,5 +26,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/api/youtube', '/api/prison-youtube'],
+  matcher: ['/jangjisu-prison', '/api/youtube', '/api/prison-youtube'],
 };
