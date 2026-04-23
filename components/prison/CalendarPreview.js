@@ -40,7 +40,7 @@ function shiftDay(value, days) {
 }
 
 function buildCenteredWeekDates(centerDate) {
-  return Array.from({ length: 7 }, (_, index) => shiftDay(centerDate, index - 3));
+  return Array.from({ length: 5 }, (_, index) => shiftDay(centerDate, index - 2));
 }
 
 function DayDetailModal({ isOpen, month, day, items, onClose }) {
