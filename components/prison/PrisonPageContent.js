@@ -14,7 +14,7 @@ function NavChip({ href, label, tone = 'neutral', icon = '', external = false })
           : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] ${toneClass}`}>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-semibold backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] sm:gap-2 sm:px-4 sm:text-sm ${toneClass}`}>
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
@@ -23,12 +23,12 @@ function NavChip({ href, label, tone = 'neutral', icon = '', external = false })
 
 function NoticeSection() {
   return (
-    <section id="notice" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-200/18 bg-amber-200/10 text-lg text-amber-100">📢</span>
-        <h3 className="text-[28px] font-black tracking-tight text-white sm:text-[34px]">공지</h3>
+    <section id="notice" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
+      <div className="mb-4 flex items-center gap-3 sm:mb-5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-amber-200/18 bg-amber-200/10 text-base text-amber-100 sm:h-10 sm:w-10 sm:text-lg">📢</span>
+        <h3 className="text-[24px] font-black tracking-tight text-white sm:text-[34px]">공지</h3>
       </div>
-      <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-white/65">점검중</div>
+      <div className="rounded-[20px] border border-white/10 bg-[#0b0f17] p-5 text-sm text-white/65 sm:rounded-[24px] sm:p-6">점검중</div>
     </section>
   );
 }
@@ -45,37 +45,37 @@ export default function PrisonPageContent() {
       `}</style>
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-20 left-[-50px] h-72 w-72 rounded-full bg-slate-500/10 blur-3xl" />
-        <div className="absolute top-20 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-72 w-[30rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" />
+        <div className="absolute -top-20 left-[-50px] h-56 w-56 rounded-full bg-slate-500/10 blur-3xl sm:h-72 sm:w-72" />
+        <div className="absolute top-20 right-[-70px] h-64 w-64 rounded-full bg-amber-500/8 blur-3xl sm:h-80 sm:w-80" />
+        <div className="absolute bottom-0 left-1/2 h-56 w-[18rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl sm:h-72 sm:w-[30rem]" />
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-start justify-between gap-4 px-5 py-4 lg:px-8">
-          <a href="/" className="block h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-5 sm:py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4 lg:px-8">
+          <a href="/" className="block h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.07] hover:border-white/25 sm:h-14 sm:w-14">
             <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
           </a>
-          <nav className="flex flex-col items-end gap-2">
-            <div className="flex flex-wrap items-center justify-end gap-3">
+          <nav className="flex w-full flex-col gap-2 lg:items-end">
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end lg:gap-3">
               <NavChip href="#schedule" label="일정" tone="blue" icon="⛓️" />
               <NavChip href="#notice" label="공지" tone="blue" icon="📢" />
               <NavChip href="#recent-youtube" label="YOUTUBE" tone="red" icon="▶" />
               <NavChip href="/utility" label="유틸리티" tone="blue" icon="🛠️" />
               <NavChip href="/jangjisu-prison/crews" label="종겜 크루 목록" tone="green" icon="👥" />
             </div>
-            <div className="flex w-full justify-end">
+            <div className="flex w-full justify-start lg:justify-end">
               <NavChip href="/" label="SOU 메인" tone="prison" icon="↩" />
             </div>
           </nav>
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-7xl px-5 py-6 lg:px-8 lg:py-8">
-        <section className="overflow-hidden rounded-[36px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)]" aria-label="장지수용소 대문">
+      <main className="relative mx-auto max-w-7xl px-4 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+        <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
           <div className="relative overflow-hidden">
             <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,12,0.18),transparent_16%,transparent_84%,rgba(5,7,12,0.18)),linear-gradient(180deg,rgba(0,0,0,0.015),transparent_52%,rgba(5,7,12,0.14))]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#05070c]/45 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#05070c]/45 to-transparent sm:h-16" />
           </div>
         </section>
 
