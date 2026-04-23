@@ -39,8 +39,8 @@ function shiftDay(value, days) {
   return startOfDay(next);
 }
 
-function buildWeeklyDates(baseDate) {
-  return Array.from({ length: 7 }, (_, index) => shiftDay(baseDate, index));
+function buildCenteredWeekDates(centerDate) {
+  return Array.from({ length: 7 }, (_, index) => shiftDay(centerDate, index - 3));
 }
 
 function DayDetailModal({ isOpen, month, day, items, onClose }) {
@@ -85,7 +85,7 @@ export default function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체보기');
   const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], loaded: false }])));
   const [detailModal, setDetailModal] = useState({ isOpen: false, day: null, items: [] });
-  const [weekBaseDate, setWeekBaseDate] = useState(() => startOfDay(shiftDay(new Date(), -6)));
+  const [centerDate, setCenterDate] = useState(() => startOfDay(new Date()));
 
   useEffect(() => {
     let mounted = true;
@@ -157,7 +157,7 @@ export default function CalendarPreview() {
     });
     return map;
   }, [visible]);
-  const weeklyDates = useMemo(() => buildWeeklyDates(weekBaseDate), [weekBaseDate]);
+  const weeklyDates = useMemo(() => buildCenteredWeekDates(centerDate), [centerDate]);
   const weeklyGroupedSchedules = useMemo(() => {
     const map = new Map();
     schedules.forEach((item) => {
@@ -186,7 +186,7 @@ export default function CalendarPreview() {
             ))}
           </div>
 
-          {selectedMember === '전체보기' ? <WeeklyAllScheduleView dates={weeklyDates} onMoveWeek={(days) => setWeekBaseDate((prev) => shiftDay(prev, days))} groupedSchedules={weeklyGroupedSchedules} /> : <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
+          {selectedMember === '전체보기' ? <WeeklyAllScheduleView dates={weeklyDates} onMoveDay={(days) => setCenterDate((prev) => shiftDay(prev, days))} groupedSchedules={weeklyGroupedSchedules} /> : <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-black text-white/58 sm:mb-4 sm:gap-3 sm:text-[15px]">
               {WEEKDAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
             </div>
