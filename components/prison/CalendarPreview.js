@@ -32,7 +32,7 @@ export default function CalendarPreview() {
     let mounted = true;
     const load = async () => {
       const results = await Promise.allSettled(
-        PRISON_SCHEDULE_SOURCES.map((source) => fetch(source.endpoint).then((res) => res.json()))
+        PRISON_SCHEDULE_SOURCES.map((source) => fetch(source.endpoint).then((res) => res.json())),
       );
       if (!mounted) return;
 
@@ -56,7 +56,11 @@ export default function CalendarPreview() {
     };
   }, []);
 
-  const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => ({ ...source, ...(scheduleState[source.key] || { monthLabel: '', items: [], loaded: false }) })), [scheduleState]);
+  const scheduleEntries = useMemo(
+    () => PRISON_SCHEDULE_SOURCES.map((source) => ({ ...source, ...(scheduleState[source.key] || { monthLabel: '', items: [], loaded: false }) })),
+    [scheduleState],
+  );
+
   const calendarSchedule = useMemo(() => {
     const monthLabel = scheduleEntries.find((entry) => entry.monthLabel)?.monthLabel || '';
     const itemMap = new Map();
@@ -91,28 +95,28 @@ export default function CalendarPreview() {
   const isLoaded = scheduleEntries.every((entry) => entry.loaded);
 
   return (
-    <section id="schedule" className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20 lg:p-8">
-      <div className="rounded-[30px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:p-7">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="text-[28px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[34px]">{month}월 달력</div>
-          <div className="text-xs font-black tracking-[0.45em] text-white/35 sm:text-sm">{year}</div>
+    <section id="schedule" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
+      <div className="rounded-[24px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:rounded-[30px] sm:p-5 lg:p-7">
+        <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+          <div className="text-[22px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[34px]">{month}월 달력</div>
+          <div className="text-[10px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{year}</div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-2 rounded-[24px] border border-white/8 bg-[#05101d] p-3">
-          <button onClick={() => setSelectedMember('전체보기')} className={`rounded-full border px-5 py-2.5 text-[15px] font-black transition ${selectedMember === '전체보기' ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>전체보기</button>
+        <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] border border-white/8 bg-[#05101d] p-2.5 sm:mb-5 sm:rounded-[24px] sm:p-3">
+          <button onClick={() => setSelectedMember('전체보기')} className={`rounded-full border px-3 py-2 text-[12px] font-black transition sm:px-5 sm:py-2.5 sm:text-[15px] ${selectedMember === '전체보기' ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>전체보기</button>
           {SCHEDULE_MEMBERS.map((member) => (
-            <button key={member.nickname} onClick={() => setSelectedMember(member.nickname)} className={`rounded-full border px-5 py-2.5 text-[15px] font-black transition ${selectedMember === member.nickname ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>{member.nickname}</button>
+            <button key={member.nickname} onClick={() => setSelectedMember(member.nickname)} className={`rounded-full border px-3 py-2 text-[12px] font-black transition sm:px-5 sm:py-2.5 sm:text-[15px] ${selectedMember === member.nickname ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>{member.nickname}</button>
           ))}
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-[#05101d] p-4 sm:p-5">
-          <div className="mb-4 grid grid-cols-7 gap-3 text-center text-[15px] font-black text-white/58">
+        <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
+          <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-black text-white/58 sm:mb-4 sm:gap-3 sm:text-[15px]">
             {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
           </div>
 
-          <div className="grid grid-cols-7 gap-3">
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
             {cells.map((cell, index) => {
-              if (!cell) return <div key={`e-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border border-white/5 bg-white/[0.02]`} />;
+              if (!cell) return <div key={`e-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[92px] sm:min-h-[160px]' : 'min-h-[82px] sm:min-h-[132px]'} rounded-[16px] border border-white/5 bg-white/[0.02] sm:rounded-[22px]`} />;
 
               const day = Number(cell.dayNumber);
               const list = byDay.get(day) || [];
@@ -123,16 +127,16 @@ export default function CalendarPreview() {
                 : list.some((item) => String(item.title || '').includes('휴방'));
 
               return (
-                <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[160px]' : 'min-h-[132px]'} rounded-[22px] border p-3.5 transition-all duration-300 hover:-translate-y-1 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <div className="relative flex items-start justify-between gap-2">
-                    <div className={`text-[17px] font-black ${day === 5 || day === 12 || day === 19 || day === 26 ? 'text-[#ff8e8e]' : day === 4 || day === 11 || day === 18 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
-                    {isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black tracking-[0.18em] text-cyan-100">TODAY</span> : hasItem ? <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
+                <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[92px] sm:min-h-[160px]' : 'min-h-[82px] sm:min-h-[132px]'} rounded-[16px] border p-2 transition-all duration-300 hover:-translate-y-1 sm:rounded-[22px] sm:p-3.5 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:h-14" />
+                  <div className="relative flex items-start justify-between gap-1 sm:gap-2">
+                    <div className={`text-[12px] font-black sm:text-[17px] ${day === 5 || day === 12 || day === 19 || day === 26 ? 'text-[#ff8e8e]' : day === 4 || day === 11 || day === 18 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                    {isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 sm:px-2 sm:text-[10px] sm:tracking-[0.18em]">TODAY</span> : hasItem ? <span className={`mt-1 h-2 w-2 rounded-full sm:mt-1.5 sm:h-2.5 sm:w-2.5 ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
                   </div>
-                  <div className="relative mt-4 space-y-2">
-                    {list.map((item) => {
+                  <div className="relative mt-2 space-y-1 sm:mt-4 sm:space-y-2">
+                    {list.slice(0, selectedMember === '전체보기' ? 2 : 3).map((item) => {
                       const off = String(item.title || '').includes('휴방');
-                      return <div key={`${item.day}-${item.member}-${item.title}`} className={`text-[13px] font-black leading-6 break-keep ${off ? 'text-rose-100' : 'text-white/92'}`}>{off ? <><span>{item.member}</span><span className="ml-1">휴방</span></> : <><span className="text-cyan-100">{item.member}</span><span className="px-1.5 text-white/42">-</span><span>{item.title}</span></>}</div>;
+                      return <div key={`${item.day}-${item.member}-${item.title}`} className={`line-clamp-2 text-[9px] font-black leading-4 break-keep sm:text-[13px] sm:leading-6 ${off ? 'text-rose-100' : 'text-white/92'}`}>{off ? <><span>{item.member}</span><span className="ml-1">휴방</span></> : <><span className="text-cyan-100">{item.member}</span><span className="px-1 text-white/42 sm:px-1.5">-</span><span>{item.title}</span></>}</div>;
                     })}
                   </div>
                 </div>
