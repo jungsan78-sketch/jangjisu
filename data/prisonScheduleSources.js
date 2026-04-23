@@ -19,4 +19,9 @@ export const PRISON_SCHEDULE_SOURCES = [
     member: '포포',
     endpoint: '/api/popo-schedule',
   },
+  {
+    key: 'ddikku',
+    member: '띠꾸',
+    endpoint: '/api/ddikku-schedule',
+  },
 ];
