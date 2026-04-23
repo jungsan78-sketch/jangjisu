@@ -14,4 +14,9 @@ export const PRISON_SCHEDULE_SOURCES = [
     member: '린링',
     endpoint: '/api/rinring-schedule',
   },
+  {
+    key: 'popo',
+    member: '포포',
+    endpoint: '/api/popo-schedule',
+  },
 ];
