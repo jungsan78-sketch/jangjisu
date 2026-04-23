@@ -19,23 +19,46 @@ function extractAllowedParts(title) {
   const source = String(title || '')
     .replace(/\r/g, '\n')
     .replace(/\s*\/\s*/g, '\n')
-    .replace(/\s*\\\s*/g, '\n');
+    .replace(/\s*\\\s*/g, '\n')
+    .replace(/([1234]부)/gu, '\n$1');
 
-  const matches = [...source.matchAll(/(?:^|\n|\s)([23]부)\s*([^\n]*?)(?=(?:\n|\s+[1234]부\s)|$)/gu)];
-  const parts = matches
-    .map((match) => normalizeSegment(match[2]))
+  const segments = source
+    .split('\n')
+    .map((segment) => String(segment || '').trim())
     .filter(Boolean);
+
+  const parts = [];
+
+  segments.forEach((segment) => {
+    if (/^휴방/u.test(segment) || /\b휴방\b/u.test(segment)) {
+      parts.push('휴방');
+      return;
+    }
+
+    if (!/^[23]부/u.test(segment)) return;
+
+    const normalized = normalizeSegment(segment)
+      .replace(/\s*[14]부.*$/u, '')
+      .trim();
+
+    if (normalized) parts.push(normalized);
+  });
 
   return Array.from(new Set(parts)).join('/');
 }
 
-function mapFilteredItems(items = []) {
-  return items.map((item) => {
-    const filteredTitle = extractAllowedParts(item?.title || '');
+function mergeFilteredItems(primaryItems = [], fallbackItems = []) {
+  const fallbackMap = new Map(fallbackItems.map((item) => [Number(item.dayNumber), item]));
+
+  return primaryItems.map((item) => {
+    const primaryTitle = extractAllowedParts(item?.title || '');
+    const fallbackTitle = extractAllowedParts(fallbackMap.get(Number(item.dayNumber))?.title || '');
+    const title = primaryTitle || fallbackTitle;
+
     return {
       ...item,
-      title: filteredTitle,
-      empty: !filteredTitle,
+      title,
+      empty: !title,
     };
   });
 }
@@ -44,9 +67,11 @@ async function buildFreshScheduleResponse() {
   const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
   const detected = detectMonthFromRows(rows, new Date());
 
-  const gridItems = mapFilteredItems(parseScheduleRows(rows, detected.year, detected.month));
-  const listItems = mapFilteredItems(parseScheduleListRows(rows, detected.year, detected.month));
-  const items = pickBestSchedule([gridItems, listItems]);
+  const gridItems = parseScheduleRows(rows, detected.year, detected.month);
+  const listItems = parseScheduleListRows(rows, detected.year, detected.month);
+  const mergedItems = mergeFilteredItems(gridItems, listItems);
+  const listFilteredItems = mergeFilteredItems(listItems, gridItems);
+  const items = pickBestSchedule([mergedItems, listFilteredItems]);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return {
