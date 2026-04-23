@@ -4,7 +4,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current:v5';
+const CACHE_KEY = 'schedule:ddikku:current:v6';
 const CACHE_TTL_SECONDS = 60 * 30;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
@@ -30,6 +30,14 @@ function normalizePartText(value) {
     .replace(/^\s*[23]부\s*/u, '')
     .replace(/^\s*[:：\-–—]\s*/u, '')
     .trim();
+}
+
+function splitCellLines(value) {
+  return String(value || '')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map((line) => normalizeText(line))
+    .filter(Boolean);
 }
 
 function buildEmptyMonthItems(targetYear, targetMonth) {
@@ -86,7 +94,8 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
       const cell = normalizeText(row[columnIndex]);
       if (!cell) continue;
 
-      if (/휴방/u.test(cell)) {
+      const cellLines = splitCellLines(row[columnIndex]);
+      if (cellLines.some((line) => /휴방/u.test(line))) {
         hasOffDay = true;
       }
 
@@ -104,9 +113,11 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
         continue;
       }
 
-      if (!isIgnoredFallbackText(cell)) {
-        fallbackTexts.push(cell);
-      }
+      cellLines.forEach((line) => {
+        if (!isIgnoredFallbackText(line)) {
+          fallbackTexts.push(line);
+        }
+      });
     }
   });
 
