@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PRISON_SCHEDULE_SOURCES } from '../../data/prisonScheduleSources';
 import { SCHEDULE_MEMBERS } from '../../data/prisonMembers';
+import WeeklyAllScheduleView from './WeeklyAllScheduleView';
+
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function parseMonthFromLabel(label) {
   const m = String(label || '').match(/(\d{4})년\s*(\d{1,2})월/);
@@ -22,6 +25,22 @@ function buildCalendarCells(schedule) {
     if (day < 1 || day > days) return null;
     return map.get(day) || { dayNumber: day, title: '', empty: true };
   });
+}
+
+function startOfDay(value) {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function shiftDay(value, days) {
+  const next = new Date(value);
+  next.setDate(next.getDate() + days);
+  return startOfDay(next);
+}
+
+function buildWeeklyDates(baseDate) {
+  return Array.from({ length: 7 }, (_, index) => shiftDay(baseDate, index));
 }
 
 function DayDetailModal({ isOpen, month, day, items, onClose }) {
@@ -66,6 +85,7 @@ export default function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체보기');
   const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], loaded: false }])));
   const [detailModal, setDetailModal] = useState({ isOpen: false, day: null, items: [] });
+  const [weekBaseDate, setWeekBaseDate] = useState(() => startOfDay(shiftDay(new Date(), -6)));
 
   useEffect(() => {
     let mounted = true;
@@ -118,8 +138,14 @@ export default function CalendarPreview() {
   const { year, month } = useMemo(() => parseMonthFromLabel(calendarSchedule.monthLabel), [calendarSchedule.monthLabel]);
   const today = new Date();
   const schedules = useMemo(
-    () => scheduleEntries.flatMap((entry) => (entry.items || []).filter((item) => !item.empty && String(item.title || '').trim()).map((item) => ({ day: item.dayNumber, member: entry.member, title: item.title }))),
-    [scheduleEntries],
+    () => scheduleEntries.flatMap((entry) => (entry.items || []).filter((item) => !item.empty && String(item.title || '').trim()).map((item) => ({
+      day: item.dayNumber,
+      member: entry.member,
+      title: item.title,
+      year,
+      month,
+    }))),
+    [scheduleEntries, year, month],
   );
   const visible = selectedMember === '전체보기' ? schedules : schedules.filter((item) => item.member === selectedMember);
   const byDay = useMemo(() => {
@@ -131,6 +157,17 @@ export default function CalendarPreview() {
     });
     return map;
   }, [visible]);
+  const weeklyDates = useMemo(() => buildWeeklyDates(weekBaseDate), [weekBaseDate]);
+  const weeklyGroupedSchedules = useMemo(() => {
+    const map = new Map();
+    schedules.forEach((item) => {
+      const key = `${item.year}-${item.month}-${item.day}`;
+      const list = map.get(key) || [];
+      list.push(item);
+      map.set(key, list);
+    });
+    return map;
+  }, [schedules]);
   const isLoaded = scheduleEntries.every((entry) => entry.loaded);
 
   return (
@@ -149,28 +186,26 @@ export default function CalendarPreview() {
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
+          {selectedMember === '전체보기' ? <WeeklyAllScheduleView dates={weeklyDates} onMoveWeek={(days) => setWeekBaseDate((prev) => shiftDay(prev, days))} groupedSchedules={weeklyGroupedSchedules} /> : <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-black text-white/58 sm:mb-4 sm:gap-3 sm:text-[15px]">
-              {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
+              {WEEKDAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
             </div>
 
             <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
               {cells.map((cell, index) => {
-                if (!cell) return <div key={`e-${index}`} className={`${selectedMember === '전체보기' ? 'min-h-[92px] sm:min-h-[160px]' : 'min-h-[82px] sm:min-h-[132px]'} rounded-[16px] border border-white/5 bg-white/[0.02] sm:rounded-[22px]`} />;
+                if (!cell) return <div key={`e-${index}`} className="min-h-[82px] rounded-[16px] border border-white/5 bg-white/[0.02] sm:min-h-[132px] sm:rounded-[22px]" />;
 
                 const day = Number(cell.dayNumber);
                 const list = byDay.get(day) || [];
                 const isToday = today.getMonth() + 1 === month && today.getDate() === day;
                 const hasItem = list.length > 0;
-                const offDay = selectedMember === '전체보기'
-                  ? list.some((item) => item.member === '장지수' && String(item.title || '').includes('휴방'))
-                  : list.some((item) => String(item.title || '').includes('휴방'));
+                const offDay = list.some((item) => String(item.title || '').includes('휴방'));
                 const displayLimit = 3;
                 const visibleItems = list.slice(0, displayLimit);
                 const hiddenCount = Math.max(0, list.length - displayLimit);
 
                 return (
-                  <div key={day} className={`group relative overflow-hidden ${selectedMember === '전체보기' ? 'min-h-[92px] sm:min-h-[160px]' : 'min-h-[82px] sm:min-h-[132px]'} rounded-[16px] border p-2 transition-all duration-300 hover:-translate-y-1 sm:rounded-[22px] sm:p-3.5 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
+                  <div key={day} className={`group relative overflow-hidden min-h-[82px] rounded-[16px] border p-2 transition-all duration-300 hover:-translate-y-1 sm:min-h-[132px] sm:rounded-[22px] sm:p-3.5 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[0_0_0_1px_rgba(103,232,249,0.18),0_0_22px_rgba(34,211,238,0.12)]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] hover:border-orange-200/30 hover:shadow-[0_14px_30px_rgba(251,146,60,0.10)]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] hover:border-cyan-300/20 hover:shadow-[0_14px_30px_rgba(56,189,248,0.08)]' : 'border-white/8 bg-[#07111f] hover:border-white/12 hover:bg-[#091729]'}`}>
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_72%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:h-14" />
                     <div className="relative flex items-start justify-between gap-1 sm:gap-2">
                       <div className={`text-[12px] font-black sm:text-[17px] ${day === 5 || day === 12 || day === 19 || day === 26 ? 'text-[#ff8e8e]' : day === 4 || day === 11 || day === 18 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
@@ -190,7 +225,7 @@ export default function CalendarPreview() {
 
             {!isLoaded ? <div className="mt-4 text-sm font-bold text-white/55">멤버 일정표 데이터를 불러오는 중입니다.</div> : null}
             {isLoaded && visible.length === 0 ? <div className="mt-4 text-sm font-bold text-white/55">선택한 메뉴의 일정 데이터가 아직 비어 있습니다.</div> : null}
-          </div>
+          </div>}
         </div>
       </section>
 
