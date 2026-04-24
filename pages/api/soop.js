@@ -1,3 +1,5 @@
+import { fetchLiveStatusPayload } from '../../lib/soop/liveStatus';
+
 const fallback = {
   ok: false,
   channel: {
@@ -15,15 +17,37 @@ const fallback = {
   pinnedPosts: [],
 };
 
+async function enrichWithLiveStatus(payload) {
+  try {
+    const live = await fetchLiveStatusPayload();
+    const status = live.statuses?.장지수;
+    if (!status) return payload;
+    return {
+      ...payload,
+      channel: {
+        ...payload.channel,
+        isLive: typeof status.isLive === 'boolean' ? status.isLive : payload.channel?.isLive ?? null,
+        liveTitle: status.title || payload.channel?.liveTitle || '',
+        liveUrl: status.liveUrl || payload.channel?.soopUrl || payload.channel?.liveUrl || '',
+      },
+      liveSource: live.source,
+      liveFetchedAt: live.fetchedAt,
+    };
+  } catch {
+    return payload;
+  }
+}
+
 export default async function handler(req, res) {
   const collectorUrl = process.env.SOOP_COLLECTOR_URL;
 
   if (!collectorUrl) {
-    return res.status(200).json({
+    const payload = await enrichWithLiveStatus({
       ...fallback,
       fetchedAt: new Date().toISOString(),
       error: 'SOOP_COLLECTOR_URL is not set',
     });
+    return res.status(200).json(payload);
   }
 
   try {
@@ -35,13 +59,15 @@ export default async function handler(req, res) {
     if (!upstream.ok) throw new Error(`collector returned ${upstream.status}`);
 
     const data = await upstream.json();
+    const payload = await enrichWithLiveStatus(data);
     res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
-    return res.status(200).json(data);
+    return res.status(200).json(payload);
   } catch (error) {
-    return res.status(200).json({
+    const payload = await enrichWithLiveStatus({
       ...fallback,
       fetchedAt: new Date().toISOString(),
       error: error.message,
     });
+    return res.status(200).json(payload);
   }
 }
