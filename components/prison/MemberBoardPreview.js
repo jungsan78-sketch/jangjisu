@@ -35,11 +35,11 @@ function LiveBadge({ status }) {
   return <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1 text-[10px] font-black tracking-[0.14em] text-white/42 sm:text-[11px]"><span className="h-2 w-2 rounded-full bg-white/20" />CHECKING</div>;
 }
 
-function LiveHoverCard({ member, status }) {
+function LiveHoverCard({ member, status, large = false }) {
   if (!status?.isLive) return null;
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 hidden w-[220px] -translate-x-1/2 overflow-hidden rounded-[20px] border border-rose-300/20 bg-[linear-gradient(180deg,rgba(12,18,31,0.98),rgba(5,10,18,0.98))] shadow-[0_24px_60px_rgba(0,0,0,0.38)] profile-hover:block">
+    <div className={`pointer-events-none absolute left-1/2 z-20 hidden -translate-x-1/2 overflow-hidden rounded-[20px] border border-rose-300/20 bg-[linear-gradient(180deg,rgba(12,18,31,0.98),rgba(5,10,18,0.98))] shadow-[0_24px_60px_rgba(0,0,0,0.38)] group-hover:block ${large ? 'bottom-[calc(100%+14px)] w-[260px]' : 'bottom-[calc(100%+12px)] w-[220px]'}`}>
       <div className="aspect-[16/9] w-full bg-[#09101d]">
         {status.thumbnailUrl ? <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white/40">썸네일 없음</div>}
       </div>
@@ -54,14 +54,11 @@ function LiveHoverCard({ member, status }) {
   );
 }
 
-function ProfileImageWithHover({ member, status, large = false }) {
+function ProfileImage({ member, status, large = false }) {
   const isLive = status?.isLive === true;
 
   return (
-    <div className="profile-hover relative mx-auto w-fit">
-      <img src={member.image} alt={member.nickname} className={`${large ? 'h-24 w-24 sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-20 sm:w-20'} mx-auto rounded-full border ${isLive ? 'border-rose-200/18' : 'border-white/10'} object-cover shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
-      <LiveHoverCard member={member} status={status} />
-    </div>
+    <img src={member.image} alt={member.nickname} className={`${large ? 'h-24 w-24 sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-20 sm:w-20'} mx-auto rounded-full border ${isLive ? 'border-rose-200/18' : 'border-white/10'} object-cover shadow-[0_12px_24px_rgba(0,0,0,0.22)]`} />
   );
 }
 
@@ -72,9 +69,10 @@ function ProfileCard({ member, status, large = false }) {
   const wrapperProps = isLive && liveHref ? { href: liveHref, target: '_blank', rel: 'noreferrer', title: `${member.nickname} 방송 입장` } : {};
 
   return (
-    <div className="relative">
+    <div className="group relative">
+      <LiveHoverCard member={member} status={status} large={large} />
       <Wrapper {...wrapperProps} className={`block rounded-[22px] border ${isLive ? 'border-rose-300/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018)),radial-gradient(circle_at_top,rgba(244,63,94,0.12),transparent_38%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_32px_rgba(0,0,0,0.18),0_0_0_1px_rgba(244,63,94,0.06)]' : 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_32px_rgba(0,0,0,0.18)]'} p-3 text-center transition hover:-translate-y-1 hover:border-white/18 hover:bg-white/[0.065] sm:rounded-[26px] sm:p-4 ${large ? 'mx-auto w-full max-w-[320px] sm:max-w-[360px]' : ''}`}>
-        <ProfileImageWithHover member={member} status={status} large={large} />
+        <ProfileImage member={member} status={status} large={large} />
         <div className={`${large ? 'text-lg sm:text-xl' : 'text-[13px] sm:text-sm'} mt-3 font-black text-white sm:mt-4`}>{member.nickname}</div>
         <LiveBadge status={status} />
         {isLive && status?.title ? <div className="mt-2 line-clamp-2 text-[11px] font-semibold leading-5 text-rose-50/92 sm:text-[12px]">{status.title}</div> : null}
