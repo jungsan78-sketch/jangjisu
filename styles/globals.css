@@ -324,10 +324,10 @@ section[aria-label="장지수용소 대문"] > div::after {
 }
 
 .sou-live-snapshot-bottom {
-  padding: 12px 14px 14px;
+  padding: 13px 14px 15px;
   color: #fff;
-  font-size: 14px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 950;
   line-height: 1.45;
   text-align: left;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.62);
