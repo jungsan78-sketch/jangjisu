@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useEffect } from 'react';
 import JangJisuFanSite from '../components/JangJisuFanSite';
+import MainJangJisuNoticeSection from '../components/MainJangJisuNoticeSection';
 
 export default function Home() {
   useEffect(() => {
@@ -11,6 +12,12 @@ export default function Home() {
       if (utilityLink && fanCafeLink && fanCafeLink.parentElement === utilityLink.parentElement) {
         fanCafeLink.insertAdjacentElement('afterend', utilityLink);
       }
+    };
+
+    const removeOldNoticePlaceholder = () => {
+      const noticeSections = Array.from(document.querySelectorAll('section#notice'));
+      const placeholder = noticeSections.find((section) => section.textContent?.includes('SOOP 탭은 점검 중'));
+      if (placeholder) placeholder.remove();
     };
 
     let didActivateShorts = false;
@@ -38,9 +45,11 @@ export default function Home() {
     };
 
     moveUtilityMenu();
+    removeOldNoticePlaceholder();
     prioritizeYoutubeTabs();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 600);
+    const noticeTimer = setTimeout(removeOldNoticePlaceholder, 600);
     const youtubeInterval = setInterval(() => {
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
@@ -50,6 +59,7 @@ export default function Home() {
 
     return () => {
       clearTimeout(utilityTimer);
+      clearTimeout(noticeTimer);
       clearInterval(youtubeInterval);
       clearTimeout(youtubeTimeout);
     };
@@ -63,6 +73,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <JangJisuFanSite />
+      <MainJangJisuNoticeSection />
     </>
   );
 }
