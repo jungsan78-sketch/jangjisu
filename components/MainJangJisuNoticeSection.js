@@ -73,7 +73,7 @@ export default function MainJangJisuNoticeSection() {
   }, []);
 
   return (
-    <section id="main-notice" className="relative mx-auto mt-8 max-w-7xl rounded-[32px] border border-white/10 bg-white/[0.04] p-6 text-white shadow-xl shadow-black/20 lg:p-8">
+    <section id="notice" className="relative mx-auto mt-8 max-w-7xl rounded-[32px] border border-white/10 bg-white/[0.04] p-6 text-white shadow-xl shadow-black/20 lg:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-200/20 bg-blue-500/12 text-lg text-blue-100">📢</span>
