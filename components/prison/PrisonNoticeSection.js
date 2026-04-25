@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const INITIAL_VISIBLE_COUNT = 9;
+const ALL_MEMBERS = '전체';
 
 function formatRelativeTime(value) {
   if (!value) return '';
@@ -70,6 +71,7 @@ export default function PrisonNoticeSection() {
   const [notices, setNotices] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(ALL_MEMBERS);
 
   useEffect(() => {
     let mounted = true;
@@ -94,12 +96,32 @@ export default function PrisonNoticeSection() {
     };
   }, []);
 
-  const visibleNotices = useMemo(() => {
-    const items = notices.slice(0, 36);
-    return expanded ? items : items.slice(0, INITIAL_VISIBLE_COUNT);
-  }, [expanded, notices]);
+  const members = useMemo(() => {
+    const seen = new Set();
+    return notices.reduce((acc, item) => {
+      if (!item.member || seen.has(item.member)) return acc;
+      seen.add(item.member);
+      acc.push(item.member);
+      return acc;
+    }, []);
+  }, [notices]);
 
-  const hiddenCount = Math.max(0, Math.min(notices.length, 36) - INITIAL_VISIBLE_COUNT);
+  const filteredNotices = useMemo(() => {
+    if (selectedMember === ALL_MEMBERS) return notices;
+    return notices.filter((item) => item.member === selectedMember);
+  }, [notices, selectedMember]);
+
+  const visibleNotices = useMemo(() => {
+    const items = filteredNotices.slice(0, 36);
+    return expanded ? items : items.slice(0, INITIAL_VISIBLE_COUNT);
+  }, [expanded, filteredNotices]);
+
+  const hiddenCount = Math.max(0, Math.min(filteredNotices.length, 36) - INITIAL_VISIBLE_COUNT);
+
+  const handleFilterClick = (member) => {
+    setSelectedMember(member);
+    setExpanded(false);
+  };
 
   return (
     <section id="notice" className="mt-6 overflow-visible rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.028))] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
@@ -115,6 +137,19 @@ export default function PrisonNoticeSection() {
           <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-black text-white/55">총 {notices.length}개 수집</div>
         ) : null}
       </div>
+
+      {members.length ? (
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+          {[ALL_MEMBERS, ...members].map((member) => {
+            const active = selectedMember === member;
+            return (
+              <button key={member} type="button" onClick={() => handleFilterClick(member)} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black transition sm:text-sm ${active ? 'border-cyan-100/35 bg-cyan-100/16 text-cyan-50 shadow-[0_0_24px_rgba(103,232,249,0.10)]' : 'border-white/10 bg-black/16 text-white/52 hover:border-white/18 hover:bg-white/[0.06] hover:text-white/82'}`}>
+                {member}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {!loaded ? (
         <div className="rounded-[20px] border border-white/10 bg-[#0b0f17] p-5 text-sm font-semibold text-white/65 sm:rounded-[24px] sm:p-6">최근 게시글을 불러오는 중입니다.</div>
