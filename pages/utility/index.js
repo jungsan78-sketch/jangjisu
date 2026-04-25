@@ -16,7 +16,7 @@ function OverwatchPreview() {
 function SoopPreview() {
   return (
     <div className="relative flex w-full items-center justify-center select-none">
-      <div className="pointer-events-none absolute h-[96px] w-[250px] rounded-full bg-[radial-gradient(circle,rgba(25,226,216,0.14),rgba(23,128,255,0.12)_38%,transparent_72%)] blur-[8px]" />
+      <div className="pointer-events-none absolute h-[96px] w-[250px] rounded-full bg-[radial-gradient(circle,rgba(25,226,216,0.16),rgba(23,128,255,0.16)_38%,transparent_72%)] blur-[8px]" />
       <img
         src="/logos/SOOP.png"
         alt="SOOP"
@@ -41,10 +41,10 @@ function UtilityCard({
     ? {
         border: disabled
           ? 'border-cyan-300/18'
-          : 'hover:border-cyan-300/35 hover:shadow-[0_24px_50px_rgba(14,123,255,0.14)]',
-        glow: 'bg-[radial-gradient(circle_at_top,rgba(14,123,255,0.26),transparent_22%),radial-gradient(circle_at_top_left,rgba(22,224,216,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]',
-        top: 'bg-[linear-gradient(180deg,rgba(14,123,255,0.22),transparent)]',
-        badge: 'border-cyan-300/24 bg-cyan-300/10 text-cyan-100',
+          : 'hover:border-cyan-300/45 hover:shadow-[0_28px_70px_rgba(14,123,255,0.20)]',
+        glow: 'bg-[radial-gradient(circle_at_top,rgba(14,123,255,0.30),transparent_22%),radial-gradient(circle_at_top_left,rgba(22,224,216,0.20),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.012))]',
+        top: 'bg-[linear-gradient(180deg,rgba(14,123,255,0.26),transparent)]',
+        badge: 'border-cyan-300/30 bg-cyan-300/12 text-cyan-50',
       }
     : {
         border: disabled
@@ -55,15 +55,15 @@ function UtilityCard({
         badge: 'border-orange-300/30 bg-orange-300/12 text-orange-100',
       };
 
-  const baseClassName = `group relative block overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-6 transition duration-300 ${disabled ? 'cursor-not-allowed opacity-92' : 'hover:-translate-y-1'} ${theme.border}`;
+  const baseClassName = `group relative block overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,rgba(30,34,43,0.98),rgba(10,12,18,0.98))] p-6 transition duration-300 ${disabled ? 'cursor-not-allowed opacity-92' : 'hover:-translate-y-1 active:scale-[0.985]'} ${theme.border}`;
 
   const content = (
     <>
       <div className={`pointer-events-none absolute inset-0 ${theme.glow}`} />
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 opacity-90 ${theme.top}`} />
       {preview ? (
-        <div className="relative mx-auto flex h-[168px] max-w-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,14,24,0.98),rgba(7,11,18,0.98))] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
-          <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+        <div className="relative mx-auto flex h-[168px] max-w-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,14,24,0.98),rgba(7,11,18,0.98))] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.24)] transition duration-300 group-hover:scale-[1.015]">
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_48%)]" />
           {preview}
         </div>
       ) : (
@@ -73,12 +73,12 @@ function UtilityCard({
         </>
       )}
       <div className={`relative text-center ${preview ? 'pt-8' : 'pt-44'}`}>
-        {eyebrow ? <div className="text-xs font-bold tracking-[0.35em] text-white/55">{eyebrow}</div> : null}
-        <div className={`${eyebrow ? 'mt-3' : 'mt-1'} text-[30px] font-black tracking-[0.08em] text-white sm:text-[38px]`}>{title}</div>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/62">{description}</p>
+        {eyebrow ? <div className="text-xs font-black tracking-[0.32em] text-white/58">{eyebrow}</div> : null}
+        <div className={`${eyebrow ? 'mt-3' : 'mt-1'} text-[30px] font-black tracking-[0.04em] text-white sm:text-[38px]`}>{title}</div>
+        <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-7 text-white/62">{description}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <div className={`inline-flex rounded-full border px-5 py-2 text-sm font-semibold transition ${theme.badge}`}>{label}</div>
-          {status ? <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white/65">{status}</div> : null}
+          <div className={`inline-flex rounded-full border px-5 py-2 text-sm font-black transition ${theme.badge}`}>{label}</div>
+          {status ? <div className="inline-flex rounded-full border border-emerald-200/20 bg-emerald-300/10 px-4 py-2 text-xs font-black text-emerald-100/85">{status}</div> : null}
         </div>
       </div>
     </>
@@ -144,9 +144,9 @@ export default function UtilityHomePage() {
             <UtilityCard
               href="/utility/soop-funding-memo"
               title="SOOP 펀딩 자동 메모장"
-              description="유효개수 기준으로 후원 로그를 장지수*10,냥냥두둥*20 형태의 핀볼 복붙용 메모로 변환합니다. 현재는 샘플/수동입력 테스트 버전입니다."
-              label="베타 열기"
-              status="미완성 베타"
+              description="스트리머 전용 SOOP 파트너 프로그램입니다. 별풍선 후원을 핀볼 복붙용 메모로 자동 변환하고, 후원자 순위까지 한 화면에서 관리합니다."
+              label="스트리머 전용 열기"
+              status="SOOP 파트너"
               accent="soop"
               preview={<SoopPreview />}
             />
