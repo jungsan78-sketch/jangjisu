@@ -1,22 +1,21 @@
 import { useEffect } from 'react';
-
-const PRISON_MEMBERS = [
-  { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong', youtube: 'https://www.youtube.com/channel/UCCAaGF_vfM6QygNRCp4x1dw', cafe: 'https://cafe.naver.com/meowdoodong' },
-  { nickname: '치치', image: 'https://stimg.sooplive.com/LOGO/lo/lomioeov/m/lomioeov.webp', station: 'https://www.sooplive.com/station/lomioeov', youtube: 'https://www.youtube.com/@chichi0e0' },
-  { nickname: '시몽', image: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', station: 'https://www.sooplive.com/station/ximong' },
-  { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul' },
-  { nickname: '아야네세나', image: 'https://stimg.sooplive.com/LOGO/ay/ayanesena/ayanesena.jpg', station: 'https://www.sooplive.com/station/ayanesena', youtube: 'https://www.youtube.com/@%EC%95%84%EC%95%BC%EB%84%A4%EC%84%B8%EB%82%98', cafe: 'https://cafe.naver.com/ayanesena' },
-  { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122', youtube: 'https://www.youtube.com/@%EB%B2%84%ED%8A%9C%EB%B2%84%ED%8F%AC%ED%8F%AC' },
-  { nickname: '채니', image: 'https://stimg.sooplive.com/LOGO/k1/k1baaa/k1baaa.jpg', station: 'https://www.sooplive.com/station/k1baaa' },
-  { nickname: '코로미', image: 'https://stimg.sooplive.com/LOGO/bx/bxroong/bxroong.jpg', station: 'https://www.sooplive.com/station/bxroong', cafe: 'https://cafe.naver.com/koromieie' },
-  { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol' },
-  { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212' },
-  { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714', youtube: 'https://www.youtube.com/@ddikku_0714', cafe: 'https://cafe.naver.com/ddikku' },
-];
+import { PRISON_MEMBERS } from '../data/prisonMembers';
 
 function extractStationId(href = '') {
   const match = String(href).match(/\/station\/([^/?#]+)/i);
   return match ? decodeURIComponent(match[1]).toLowerCase() : '';
+}
+
+function escapeHtml(value = '') {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function formatCount(value) {
+  const count = Number(value || 0);
+  if (!Number.isFinite(count) || count <= 0) return '0';
+  if (count >= 10000) return `${Math.floor(count / 1000) / 10}만`;
+  if (count >= 1000) return `${Math.floor(count / 100) / 10}천`;
+  return count.toLocaleString('ko-KR');
 }
 
 function makeStatusMap(payload) {
@@ -28,21 +27,13 @@ function makeStatusMap(payload) {
   return map;
 }
 
-function escapeHtml(value = '') {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function formatCount(value) {
-  const count = Number(value || 0);
-  if (!Number.isFinite(count) || count <= 0) return '0';
-  if (count >= 10000) return `${Math.floor(count / 1000) / 10}만`;
-  if (count >= 1000) return `${Math.floor(count / 100) / 10}천`;
-  return count.toLocaleString('ko-KR');
+function makePostMap(payload) {
+  const map = new Map();
+  Object.values(payload?.posts || {}).forEach((post) => {
+    const stationId = String(post?.stationId || '').toLowerCase();
+    if (stationId) map.set(stationId, post);
+  });
+  return map;
 }
 
 function resolveLiveHref(member, status) {
@@ -53,29 +44,29 @@ function resolveLiveHref(member, status) {
   return member.station;
 }
 
-function injectLiveGridStyle() {
-  if (document.getElementById('sou-member-live-grid-style')) return;
-  const style = document.createElement('style');
-  style.id = 'sou-member-live-grid-style';
+function injectStyle() {
+  let style = document.getElementById('sou-member-live-grid-style');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'sou-member-live-grid-style';
+    document.head.appendChild(style);
+  }
   style.textContent = `
     header > div, main { max-width: 1120px !important; }
     main { width: 100% !important; }
-    #notice { display: none !important; }
-    a[href="#notice"] { display: none !important; }
+    #notice, a[href="#notice"] { display: none !important; }
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
     #schedule button:hover { transform: none !important; }
-    #schedule button > * { pointer-events: none; }
     #schedule .sou-schedule-range-hidden { display: none !important; }
     #members.sou-member-live-section { margin-top: 30px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
-    .sou-member-live-head { display: none !important; }
     .sou-member-live-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-    .sou-member-live-card { min-height: 300px; border: 1px solid rgba(255,255,255,.10); border-radius: 24px; background: linear-gradient(180deg, rgba(17,24,39,.72), rgba(5,9,16,.97)); overflow: hidden; box-shadow: 0 16px 38px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+    .sou-member-live-card { min-height: 300px; overflow: hidden; border: 1px solid rgba(255,255,255,.10); border-radius: 24px; background: linear-gradient(180deg, rgba(17,24,39,.72), rgba(5,9,16,.97)); box-shadow: 0 16px 38px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
     .sou-member-live-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.20); box-shadow: 0 20px 46px rgba(0,0,0,.36), 0 0 22px rgba(56,189,248,.08); }
     .sou-member-live-card.is-live { border-color: rgba(248,113,113,.34); background: radial-gradient(circle at top, rgba(239,68,68,.18), transparent 44%), linear-gradient(180deg, rgba(24,13,18,.90), rgba(5,9,16,.97)); }
-    .sou-member-live-media { position: relative; aspect-ratio: 16 / 9; display: block; background: #080d17; overflow: hidden; text-decoration: none; }
+    .sou-member-live-media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: #080d17; text-decoration: none; }
     .sou-member-live-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
     .sou-member-live-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.70); font-size: 15px; font-weight: 950; text-align: center; background: radial-gradient(circle at top, rgba(56,189,248,.08), transparent 46%), linear-gradient(180deg, #0a1020, #060a12); }
-    .sou-member-live-viewers { position: absolute; left: 10px; top: 10px; border-radius: 999px; background: rgba(0,0,0,.74); padding: 6px 9px; color: #fff; font-size: 12px; font-weight: 950; box-shadow: 0 8px 18px rgba(0,0,0,.32); }
+    .sou-member-live-viewers { position: absolute; left: 10px; top: 10px; border-radius: 999px; background: rgba(0,0,0,.74); padding: 6px 9px; color: #fff; font-size: 12px; font-weight: 950; }
     .sou-member-live-body { padding: 13px 13px 14px; }
     .sou-member-live-profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .sou-member-live-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(34,211,238,.90); box-shadow: 0 0 15px rgba(34,211,238,.16); flex: 0 0 auto; }
@@ -87,97 +78,86 @@ function injectLiveGridStyle() {
     .sou-member-live-action.soop { color: #7dd3fc; }
     .sou-member-live-action.youtube { color: #fecaca; }
     .sou-member-live-action.cafe { color: #bbf7d0; }
-    .sou-member-live-recent { margin-top: 12px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; color: rgba(255,255,255,.64); font-size: 12px; font-weight: 900; line-height: 1.45; min-height: 35px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .sou-member-live-recent { margin-top: 12px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; color: rgba(255,255,255,.64); font-size: 12px; font-weight: 900; line-height: 1.45; min-height: 35px; display: block; text-decoration: none; overflow: hidden; }
+    .sou-member-live-recent-title { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .sou-member-live-recent-meta { margin-top: 3px; color: rgba(255,255,255,.42); font-size: 11px; }
     @media (max-width: 1180px) { .sou-member-live-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 760px) { header > div, main { max-width: 100% !important; } .sou-member-live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 460px) { .sou-member-live-grid { grid-template-columns: 1fr; } }
   `;
-  document.head.appendChild(style);
 }
 
-function renderMemberCard(member, statusMap) {
+function renderRecentPost(post) {
+  if (!post?.title) return '<div class="sou-member-live-recent"><div class="sou-member-live-recent-title">최근 방송국게시글 확인중</div></div>';
+  const meta = [post.viewCount ? `조회 ${formatCount(post.viewCount)}` : '', post.okCount ? `업 ${formatCount(post.okCount)}` : ''].filter(Boolean).join(' · ');
+  const inner = `<div class="sou-member-live-recent-title">최근글 · ${escapeHtml(post.title)}</div>${meta ? `<div class="sou-member-live-recent-meta">${escapeHtml(meta)}</div>` : ''}`;
+  if (!post.url) return `<div class="sou-member-live-recent">${inner}</div>`;
+  return `<a class="sou-member-live-recent" href="${escapeHtml(post.url)}" target="_blank" rel="noreferrer">${inner}</a>`;
+}
+
+function renderMemberCard(member, statusMap, postMap) {
   const stationId = extractStationId(member.station);
   const status = statusMap.get(stationId);
+  const post = postMap.get(stationId);
   const isLive = Boolean(status?.isLive);
   const href = resolveLiveHref(member, status);
   const title = String(status?.title || '').trim();
   const thumb = String(status?.thumbnailUrl || '').trim();
   const viewerCount = Number(status?.viewerCount || 0);
   const topicText = isLive ? (title || '방송 정보 확인중입니다') : '방송을 하지 않고 있습니다';
-  const media = isLive && thumb
-    ? `<img class="sou-member-live-thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(topicText)}" loading="lazy" />`
-    : `<div class="sou-member-live-empty">${escapeHtml(topicText)}</div>`;
-
-  return `
-    <article class="sou-member-live-card ${isLive ? 'is-live' : 'is-off'}" data-station-id="${escapeHtml(stationId)}">
-      <a class="sou-member-live-media" href="${escapeHtml(href)}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${member.nickname} 방송 바로가기`)}">
-        ${media}
-        ${isLive && viewerCount > 0 ? `<span class="sou-member-live-viewers">${formatCount(viewerCount)}명</span>` : ''}
-      </a>
-      <div class="sou-member-live-body">
-        <div class="sou-member-live-profile">
-          <img class="sou-member-live-avatar" src="${escapeHtml(member.image)}" alt="${escapeHtml(member.nickname)}" loading="lazy" />
-          <div class="sou-member-live-name">${escapeHtml(member.nickname)}</div>
-        </div>
-        <div class="sou-member-live-topic">${escapeHtml(topicText)}</div>
-        <div class="sou-member-live-actions">
-          <a class="sou-member-live-action soop" href="${escapeHtml(href)}" target="_blank" rel="noreferrer">SOOP</a>
-          ${member.youtube ? `<a class="sou-member-live-action youtube" href="${escapeHtml(member.youtube)}" target="_blank" rel="noreferrer">유튜브</a>` : '<span class="sou-member-live-action">유튜브</span>'}
-          ${member.cafe ? `<a class="sou-member-live-action cafe" href="${escapeHtml(member.cafe)}" target="_blank" rel="noreferrer">팬카페</a>` : '<span class="sou-member-live-action">팬카페</span>'}
-        </div>
-        <div class="sou-member-live-recent">최근 방송국게시글 확인중</div>
-      </div>
-    </article>
-  `;
+  const media = isLive && thumb ? `<img class="sou-member-live-thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(topicText)}" loading="lazy" />` : `<div class="sou-member-live-empty">${escapeHtml(topicText)}</div>`;
+  return `<article class="sou-member-live-card ${isLive ? 'is-live' : 'is-off'}" data-station-id="${escapeHtml(stationId)}"><a class="sou-member-live-media" href="${escapeHtml(href)}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(`${member.nickname} 방송 바로가기`)}">${media}${isLive && viewerCount > 0 ? `<span class="sou-member-live-viewers">${formatCount(viewerCount)}명</span>` : ''}</a><div class="sou-member-live-body"><div class="sou-member-live-profile"><img class="sou-member-live-avatar" src="${escapeHtml(member.image)}" alt="${escapeHtml(member.nickname)}" loading="lazy" /><div class="sou-member-live-name">${escapeHtml(member.nickname)}</div></div><div class="sou-member-live-topic">${escapeHtml(topicText)}</div><div class="sou-member-live-actions"><a class="sou-member-live-action soop" href="${escapeHtml(href)}" target="_blank" rel="noreferrer">SOOP</a>${member.youtube ? `<a class="sou-member-live-action youtube" href="${escapeHtml(member.youtube)}" target="_blank" rel="noreferrer">유튜브</a>` : '<span class="sou-member-live-action">유튜브</span>'}${member.cafe ? `<a class="sou-member-live-action cafe" href="${escapeHtml(member.cafe)}" target="_blank" rel="noreferrer">팬카페</a>` : '<span class="sou-member-live-action">팬카페</span>'}</div>${renderRecentPost(post)}</div></article>`;
 }
 
-function renderMemberLiveGrid(statusMap = new Map()) {
+function renderGrid(statusMap = new Map(), postMap = new Map()) {
   const section = document.getElementById('members');
   if (!section) return;
-  injectLiveGridStyle();
+  injectStyle();
   section.className = 'sou-member-live-section';
-  section.innerHTML = `<div class="sou-member-live-grid">${PRISON_MEMBERS.map((member) => renderMemberCard(member, statusMap)).join('')}</div>`;
+  section.innerHTML = `<div class="sou-member-live-grid">${PRISON_MEMBERS.map((member) => renderMemberCard(member, statusMap, postMap)).join('')}</div>`;
 }
 
-function hideNoticeSection() {
-  const notice = document.getElementById('notice');
-  if (notice) notice.style.display = 'none';
-  document.querySelectorAll('a[href="#notice"]').forEach((anchor) => { anchor.style.display = 'none'; });
+function hideNotice() {
+  document.getElementById('notice')?.style.setProperty('display', 'none', 'important');
+  document.querySelectorAll('a[href="#notice"]').forEach((anchor) => anchor.style.setProperty('display', 'none', 'important'));
 }
 
 function isWholeViewSelected(schedule) {
-  return [...schedule.querySelectorAll('button')].some((button) => {
-    const text = String(button.textContent || '').replace(/\s+/g, '').trim();
-    const selected = /border-amber|bg-amber|text-white|active|selected/.test(String(button.className || '')) || button.getAttribute('aria-pressed') === 'true';
-    return text === '전체보기' && selected;
-  });
+  return [...schedule.querySelectorAll('button')].some((button) => String(button.textContent || '').replace(/\s+/g, '').trim() === '전체보기' && /border-amber|bg-amber|text-white|active|selected/.test(String(button.className || '')));
 }
 
-function reduceScheduleWholeViewRange() {
+function compactScheduleRange() {
   const schedule = document.getElementById('schedule');
-  if (!schedule || !isWholeViewSelected(schedule)) return;
+  if (!schedule) return;
   schedule.querySelectorAll('.sou-schedule-range-hidden').forEach((element) => element.classList.remove('sou-schedule-range-hidden'));
-
-  const groups = [...schedule.querySelectorAll('div')].filter((group) => {
-    const children = [...group.children].filter((child) => child instanceof HTMLElement);
-    if (children.length !== 5) return false;
-    if (children.some((child) => child.tagName === 'BUTTON')) return false;
-    const text = children.map((child) => child.textContent || '').join(' ');
-    const hasDateText = /(오늘|TODAY|\d{1,2}\s*일|월|화|수|목|금|토|일요일)/.test(text);
-    const hasCardShape = children.every((child) => /rounded|border|bg-|shadow|p-/.test(String(child.className || '')));
-    return hasDateText && hasCardShape;
+  schedule.querySelectorAll('[data-sou-schedule-compact-row="true"]').forEach((element) => {
+    element.style.gridTemplateColumns = '';
+    element.removeAttribute('data-sou-schedule-compact-row');
   });
-
-  groups.forEach((group) => {
-    const children = [...group.children].filter((child) => child instanceof HTMLElement);
-    if (children.length === 5) {
-      children[0].classList.add('sou-schedule-range-hidden');
-      children[4].classList.add('sou-schedule-range-hidden');
-    }
+  if (!isWholeViewSelected(schedule)) return;
+  const cards = [...schedule.querySelectorAll('div')].filter((element) => {
+    const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+    const rect = element.getBoundingClientRect();
+    return /\d{1,2}\s*일/.test(text) && rect.width >= 100 && rect.height >= 130 && !element.querySelector('button');
+  }).filter((element, index, array) => !array.some((other) => other !== element && other.contains(element)));
+  const rows = new Map();
+  cards.forEach((card) => {
+    const rowKey = Math.round(card.getBoundingClientRect().top / 20) * 20;
+    rows.set(rowKey, [...(rows.get(rowKey) || []), card]);
   });
+  const row = [...rows.values()].filter((items) => items.length >= 5).sort((a, b) => b.length - a.length)[0];
+  if (!row) return;
+  row.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+  row[0].classList.add('sou-schedule-range-hidden');
+  row[row.length - 1].classList.add('sou-schedule-range-hidden');
+  const parent = row[0].parentElement;
+  if (parent && parent === row[row.length - 1].parentElement) {
+    parent.setAttribute('data-sou-schedule-compact-row', 'true');
+    parent.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+  }
 }
 
-function stabilizeScheduleButtons() {
+function stabilizeSchedule() {
   const schedule = document.getElementById('schedule');
   if (!schedule) return;
   schedule.querySelectorAll('button').forEach((button) => {
@@ -185,56 +165,44 @@ function stabilizeScheduleButtons() {
     button.style.minHeight = '40px';
     button.style.minWidth = button.textContent?.includes('전체보기') ? '104px' : '86px';
   });
-  reduceScheduleWholeViewRange();
+  compactScheduleRange();
 }
 
 export default function PrisonLiveStatusHydrator() {
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    if (!window.location.pathname.startsWith('/jangjisu-prison')) return undefined;
-
+    if (typeof window === 'undefined' || !window.location.pathname.startsWith('/jangjisu-prison')) return undefined;
     let disposed = false;
-    let timer = null;
-    let scheduleTimer = null;
-
+    let statusMap = new Map();
+    let postMap = new Map();
+    const paint = () => { hideNotice(); stabilizeSchedule(); renderGrid(statusMap, postMap); stabilizeSchedule(); };
     const load = async () => {
       try {
-        injectLiveGridStyle();
-        hideNoticeSection();
-        stabilizeScheduleButtons();
-        renderMemberLiveGrid(new Map());
-        const response = await fetch(`/api/soop-live-status?t=${Date.now()}`, { cache: 'no-store' });
-        const payload = await response.json();
-        if (disposed) return;
-        renderMemberLiveGrid(makeStatusMap(payload));
-        stabilizeScheduleButtons();
+        injectStyle();
+        paint();
+        const [liveResult, postResult] = await Promise.allSettled([
+          fetch(`/api/soop-live-status?t=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`/api/soop-station-posts?t=${Date.now()}`, { cache: 'no-store' }),
+        ]);
+        if (liveResult.status === 'fulfilled') statusMap = makeStatusMap(await liveResult.value.json());
+        if (postResult.status === 'fulfilled') postMap = makePostMap(await postResult.value.json());
+        if (!disposed) paint();
       } catch {
-        if (!disposed) {
-          renderMemberLiveGrid(new Map());
-          stabilizeScheduleButtons();
-        }
+        if (!disposed) paint();
       }
     };
-
-    const handleScheduleClick = (event) => {
-      if (event.target?.closest?.('#schedule')) {
-        window.setTimeout(stabilizeScheduleButtons, 0);
-        window.setTimeout(stabilizeScheduleButtons, 120);
-      }
+    const onClick = (event) => {
+      if (event.target?.closest?.('#schedule')) [0, 120, 360, 700].forEach((delay) => window.setTimeout(stabilizeSchedule, delay));
     };
-
-    document.addEventListener('click', handleScheduleClick, true);
+    document.addEventListener('click', onClick, true);
     load();
-    timer = window.setInterval(load, 60000);
-    scheduleTimer = window.setInterval(stabilizeScheduleButtons, 1200);
-
+    const timer = window.setInterval(load, 60000);
+    const scheduleTimer = window.setInterval(stabilizeSchedule, 800);
     return () => {
       disposed = true;
-      document.removeEventListener('click', handleScheduleClick, true);
-      if (timer) window.clearInterval(timer);
-      if (scheduleTimer) window.clearInterval(scheduleTimer);
+      document.removeEventListener('click', onClick, true);
+      window.clearInterval(timer);
+      window.clearInterval(scheduleTimer);
     };
   }, []);
-
   return null;
 }
