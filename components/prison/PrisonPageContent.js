@@ -46,6 +46,7 @@ export default function PrisonPageContent() {
           </a>
           <nav className="flex w-full flex-col gap-2 lg:items-end">
             <div className="flex flex-wrap items-center gap-2 lg:justify-end lg:gap-3">
+              <NavChip href="#members" label="멤버표" tone="blue" icon="🪪" />
               <NavChip href="#schedule" label="일정" tone="blue" icon="⛓️" />
               <NavChip href="#notice" label="공지" tone="blue" icon="📢" />
               <NavChip href="#recent-youtube" label="YOUTUBE" tone="red" icon="▶" />
