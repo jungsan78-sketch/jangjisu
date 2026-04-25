@@ -39,6 +39,32 @@ function removeLiveSnapshot(card) {
   card?.querySelectorAll('.sou-live-snapshot').forEach((snapshot) => snapshot.remove());
 }
 
+function normalizeTitle(value = '') {
+  return String(value).replace(/\s+/g, ' ').trim();
+}
+
+function hideDuplicateLiveTitle(card, status) {
+  if (!card) return;
+  card.querySelectorAll('[data-sou-hidden-live-title="true"]').forEach((element) => {
+    element.style.display = '';
+    element.removeAttribute('data-sou-hidden-live-title');
+  });
+
+  const title = normalizeTitle(status?.title);
+  if (!title) return;
+
+  const protectedSelectors = 'a, button, img, .sou-live-snapshot, .sou-live-snapshot *';
+  const candidates = [...card.querySelectorAll('div, p, span')];
+  candidates.forEach((element) => {
+    if (element.matches(protectedSelectors) || element.closest('.sou-live-snapshot')) return;
+    if (element.children.length > 0) return;
+    const text = normalizeTitle(element.textContent || '');
+    if (!text || text !== title) return;
+    element.style.display = 'none';
+    element.setAttribute('data-sou-hidden-live-title', 'true');
+  });
+}
+
 function formatViewerCount(value) {
   const count = Number(value || 0);
   if (!Number.isFinite(count) || count <= 0) return '';
@@ -96,14 +122,15 @@ function makeLiveSnapshot(status) {
   bottom.textContent = title;
 
   media.appendChild(top);
-  media.appendChild(bottom);
   wrapper.appendChild(media);
+  wrapper.appendChild(bottom);
   return wrapper;
 }
 
 function updateLiveSnapshot(card, status, isLive) {
   if (!card) return;
   removeLiveSnapshot(card);
+  hideDuplicateLiveTitle(card, isLive ? status : null);
   if (!isLive) return;
 
   const snapshot = makeLiveSnapshot(status);
@@ -127,7 +154,7 @@ function applyCardState(anchor, status) {
   anchor.style.position = '';
   anchor.setAttribute('data-sou-station-id', stationId);
   anchor.setAttribute('data-sou-live-status', isLive ? 'on' : 'off');
-  anchor.setAttribute('title', isLive ? `방송중${status?.title ? ` · ${status.title}` : ''}` : '방송 OFF');
+  anchor.removeAttribute('title');
 
   if (card) {
     card.setAttribute('data-sou-live-card', isLive ? 'on' : 'off');
