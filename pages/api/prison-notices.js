@@ -1,7 +1,7 @@
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { fetchRecentPrisonNotices } from '../../lib/board/prisonNotices';
 
-const CACHE_KEY = 'soop:prison-notices:crawl:v1';
+const CACHE_KEY = 'soop:prison-notices:chapi:v1';
 const CACHE_TTL_SECONDS = 300;
 
 export default async function handler(req, res) {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const notices = await fetchRecentPrisonNotices();
     const payload = {
       notices,
-      source: 'soop_board_crawl',
+      source: 'soop_chapi_board',
       fetchedAt: new Date().toISOString(),
     };
     await setCachedJson(CACHE_KEY, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
