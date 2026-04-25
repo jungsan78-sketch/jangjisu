@@ -234,6 +234,114 @@ section[aria-label="장지수용소 대문"] > div::after {
     0 0 36px rgba(239, 68, 68, 0.12) !important;
 }
 
+.sou-live-snapshot {
+  display: block;
+  margin: 16px 0 14px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #05070c;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.sou-live-snapshot:hover {
+  transform: translateY(-2px);
+  border-color: rgba(252, 165, 165, 0.45);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.42), 0 0 28px rgba(239, 68, 68, 0.18);
+}
+
+.sou-live-snapshot-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  min-height: 138px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(3, 7, 18, 0.96));
+}
+
+.sou-live-snapshot-media img,
+.sou-live-snapshot-empty {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.sou-live-snapshot-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.26), transparent 38%, rgba(0, 0, 0, 0.82));
+}
+
+.sou-live-snapshot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.sou-live-snapshot-top {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.sou-live-snapshot-live {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.94);
+  color: #fff;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.34), 0 0 18px rgba(239, 68, 68, 0.32);
+}
+
+.sou-live-snapshot-viewers {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(8px);
+}
+
+.sou-live-snapshot-bottom {
+  position: absolute;
+  z-index: 2;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: left;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.82);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 @media (max-width: 640px) {
   #members .mb-5.flex.items-center.justify-between.gap-4 {
     flex-direction: column;
