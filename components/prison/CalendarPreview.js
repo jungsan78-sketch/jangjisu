@@ -43,6 +43,15 @@ function buildCenteredWeekDates(centerDate) {
   return Array.from({ length: 5 }, (_, index) => shiftDay(centerDate, index - 2));
 }
 
+function FilterButton({ label, image, active, onClick }) {
+  return (
+    <button onClick={onClick} className={`inline-flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-[12px] font-black transition sm:py-2 sm:pl-2 sm:pr-4 sm:text-[15px] ${active ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>
+      {image ? <img src={image} alt="" className="h-6 w-6 rounded-full border border-white/12 object-cover sm:h-7 sm:w-7" loading="lazy" /> : <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/12 bg-white/[0.07] text-[10px] sm:h-7 sm:w-7">ALL</span>}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function DayDetailModal({ isOpen, month, day, items, onClose }) {
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -180,9 +189,9 @@ export default function CalendarPreview() {
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] border border-white/8 bg-[#05101d] p-2.5 sm:mb-5 sm:rounded-[24px] sm:p-3">
-            <button onClick={() => setSelectedMember('전체보기')} className={`rounded-full border px-3 py-2 text-[12px] font-black transition sm:px-5 sm:py-2.5 sm:text-[15px] ${selectedMember === '전체보기' ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>전체보기</button>
+            <FilterButton label="전체보기" active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')} />
             {SCHEDULE_MEMBERS.map((member) => (
-              <button key={member.nickname} onClick={() => setSelectedMember(member.nickname)} className={`rounded-full border px-3 py-2 text-[12px] font-black transition sm:px-5 sm:py-2.5 sm:text-[15px] ${selectedMember === member.nickname ? 'border-amber-200/32 bg-amber-300/12 text-white shadow-[0_0_18px_rgba(245,158,11,0.10)]' : 'border-white/10 bg-white/[0.06] text-white/72 hover:bg-white/10'}`}>{member.nickname}</button>
+              <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />
             ))}
           </div>
 
