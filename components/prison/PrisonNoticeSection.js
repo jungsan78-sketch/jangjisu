@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { PRISON_MEMBERS, WARDEN } from '../../data/prisonMembers';
 
 const INITIAL_VISIBLE_COUNT = 9;
 const ALL_MEMBERS = '전체';
+const MEMBER_ORDER = [WARDEN, ...PRISON_MEMBERS];
+const MEMBER_IMAGE_MAP = Object.fromEntries(MEMBER_ORDER.map((member) => [member.nickname, member.image]));
 
 function formatRelativeTime(value) {
   if (!value) return '';
@@ -17,6 +20,15 @@ function formatRelativeTime(value) {
   if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))}분 전`;
   if (diffMs < day) return `${Math.max(1, Math.floor(diffMs / hour))}시간 전`;
   return `${Math.floor(diffMs / day)}일 전`;
+}
+
+function MemberFilterButton({ member, image, active, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className={`inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-xs font-black transition sm:py-2 sm:pl-2 sm:pr-4 sm:text-sm ${active ? 'border-cyan-100/35 bg-cyan-100/16 text-cyan-50 shadow-[0_0_24px_rgba(103,232,249,0.10)]' : 'border-white/10 bg-black/16 text-white/58 hover:border-white/18 hover:bg-white/[0.06] hover:text-white/82'}`}>
+      {image ? <img src={image} alt="" className="h-6 w-6 rounded-full border border-white/12 object-cover sm:h-7 sm:w-7" loading="lazy" /> : <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/12 bg-white/[0.07] text-[11px] sm:h-7 sm:w-7">{member === ALL_MEMBERS ? 'ALL' : member.slice(0, 1)}</span>}
+      <span>{member}</span>
+    </button>
+  );
 }
 
 function NoticeCard({ item }) {
@@ -97,13 +109,10 @@ export default function PrisonNoticeSection() {
   }, []);
 
   const members = useMemo(() => {
-    const seen = new Set();
-    return notices.reduce((acc, item) => {
-      if (!item.member || seen.has(item.member)) return acc;
-      seen.add(item.member);
-      acc.push(item.member);
-      return acc;
-    }, []);
+    const available = new Set(notices.map((item) => item.member).filter(Boolean));
+    const ordered = MEMBER_ORDER.map((member) => member.nickname).filter((nickname) => available.has(nickname));
+    const extras = Array.from(available).filter((nickname) => !ordered.includes(nickname));
+    return [...ordered, ...extras];
   }, [notices]);
 
   const filteredNotices = useMemo(() => {
@@ -140,14 +149,10 @@ export default function PrisonNoticeSection() {
 
       {members.length ? (
         <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-          {[ALL_MEMBERS, ...members].map((member) => {
-            const active = selectedMember === member;
-            return (
-              <button key={member} type="button" onClick={() => handleFilterClick(member)} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black transition sm:text-sm ${active ? 'border-cyan-100/35 bg-cyan-100/16 text-cyan-50 shadow-[0_0_24px_rgba(103,232,249,0.10)]' : 'border-white/10 bg-black/16 text-white/52 hover:border-white/18 hover:bg-white/[0.06] hover:text-white/82'}`}>
-                {member}
-              </button>
-            );
-          })}
+          <MemberFilterButton member={ALL_MEMBERS} active={selectedMember === ALL_MEMBERS} onClick={() => handleFilterClick(ALL_MEMBERS)} />
+          {members.map((member) => (
+            <MemberFilterButton key={member} member={member} image={MEMBER_IMAGE_MAP[member] || notices.find((item) => item.member === member)?.profileImage || ''} active={selectedMember === member} onClick={() => handleFilterClick(member)} />
+          ))}
         </div>
       ) : null}
 
