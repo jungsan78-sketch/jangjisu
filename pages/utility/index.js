@@ -142,12 +142,12 @@ export default function UtilityHomePage() {
             />
 
             <UtilityCard
-              title="SOOP 펀딩 복사"
-              description="현재 미완성"
-              label="현재 미완성"
-              status="미완성"
+              href="/utility/soop-funding-memo"
+              title="SOOP 펀딩 자동 메모장"
+              description="유효개수 기준으로 후원 로그를 장지수*10,냥냥두둥*20 형태의 핀볼 복붙용 메모로 변환합니다. 현재는 샘플/수동입력 테스트 버전입니다."
+              label="베타 열기"
+              status="미완성 베타"
               accent="soop"
-              disabled
               preview={<SoopPreview />}
             />
           </section>
