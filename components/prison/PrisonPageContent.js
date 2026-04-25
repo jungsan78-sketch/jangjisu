@@ -1,6 +1,7 @@
 import MemberBoardPreview from './MemberBoardPreview';
 import CalendarPreview from './CalendarPreview';
 import RecentYoutubeSection from './RecentYoutubeSection';
+import PrisonNoticeSection from './PrisonNoticeSection';
 
 function NavChip({ href, label, tone = 'neutral', icon = '', external = false }) {
   const toneClass = tone === 'green'
@@ -18,18 +19,6 @@ function NavChip({ href, label, tone = 'neutral', icon = '', external = false })
       {icon ? <span>{icon}</span> : null}
       <span>{label}</span>
     </a>
-  );
-}
-
-function NoticeSection() {
-  return (
-    <section id="notice" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
-      <div className="mb-4 flex items-center gap-3 sm:mb-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-amber-200/18 bg-amber-200/10 text-base text-amber-100 sm:h-10 sm:w-10 sm:text-lg">📢</span>
-        <h3 className="text-[24px] font-black tracking-tight text-white sm:text-[34px]">공지</h3>
-      </div>
-      <div className="rounded-[20px] border border-white/10 bg-[#0b0f17] p-5 text-sm text-white/65 sm:rounded-[24px] sm:p-6">점검중</div>
-    </section>
   );
 }
 
@@ -81,7 +70,7 @@ export default function PrisonPageContent() {
 
         <MemberBoardPreview />
         <CalendarPreview />
-        <NoticeSection />
+        <PrisonNoticeSection />
         <RecentYoutubeSection />
       </main>
     </>
