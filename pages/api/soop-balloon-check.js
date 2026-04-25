@@ -1,16 +1,107 @@
-const encoder = new TextEncoder();
-
 function writeSse(res, payload) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+function writeComment(res, comment) {
+  res.write(`: ${comment}\n\n`);
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function normalizeRelayPayload(payload, streamerId) {
+  if (!payload || payload.type !== 'donation') return null;
+  const fromUsername = String(payload.fromUsername || payload.nickname || payload.name || '').trim();
+  const amount = Number(payload.amount || payload.count || 0);
+  if (!fromUsername || !Number.isFinite(amount) || amount <= 0) return null;
+
+  return {
+    type: 'donation',
+    kind: payload.kind || 'normalBalloon',
+    id: String(payload.id || `hoxy-${streamerId}-${fromUsername}-${amount}-${Date.now()}`),
+    fromUsername,
+    message: String(payload.message || fromUsername).trim(),
+    amount,
+    createdAt: payload.createdAt || new Date().toISOString(),
+    streamerId,
+    relay: 'hoxy',
+  };
+}
+
+async function relayHoxyStream({ streamerId, res, signal }) {
+  const hoxyUrl = `https://calm-hoxy.vercel.app/api/soop-balloon-check?streamerId=${encodeURIComponent(streamerId)}`;
+  const response = await fetch(hoxyUrl, {
+    headers: {
+      Accept: 'text/event-stream',
+      'User-Agent': 'jangjisou-soop-funding-relay/1.0',
+    },
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Hoxy relay failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let lastPingAt = Date.now();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let sep = buffer.indexOf('\n\n');
+    while (sep !== -1) {
+      const block = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const lines = block.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith(':')) {
+          const now = Date.now();
+          if (now - lastPingAt > 10000) {
+            writeComment(res, 'relay ping');
+            lastPingAt = now;
+          }
+          continue;
+        }
+        if (!line.startsWith('data: ')) continue;
+
+        let payload = null;
+        try {
+          payload = JSON.parse(line.slice(6));
+        } catch {
+          continue;
+        }
+
+        if (payload.type === 'status') {
+          writeSse(res, {
+            type: 'status',
+            status: payload.status || 'ready',
+            streamerId,
+            relay: 'hoxy',
+          });
+          continue;
+        }
+
+        const donation = normalizeRelayPayload(payload, streamerId);
+        if (donation) {
+          writeSse(res, donation);
+        }
+      }
+
+      sep = buffer.indexOf('\n\n');
+    }
+  }
+}
+
 export default async function handler(req, res) {
   const streamerId = String(req.query.streamerId || '').trim();
   const demo = String(req.query.demo || '') === '1';
+  const relay = String(req.query.relay || 'hoxy') === 'hoxy';
 
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -34,13 +125,14 @@ export default async function handler(req, res) {
     type: 'status',
     status: 'ready',
     streamerId,
-    source: 'jangjisou-sse-v1',
+    source: relay ? 'jangjisou-hoxy-relay-v1' : 'jangjisou-sse-v1',
   });
 
   if (demo) {
     await sleep(850);
     writeSse(res, {
       type: 'donation',
+      kind: 'normalBalloon',
       id: `demo-${Date.now()}-1000`,
       fromUsername: '테스트후원',
       message: '테스트후원',
@@ -53,6 +145,7 @@ export default async function handler(req, res) {
     await sleep(1200);
     writeSse(res, {
       type: 'donation',
+      kind: 'normalBalloon',
       id: `demo-${Date.now()}-10000`,
       fromUsername: '장지수',
       message: '장지수',
@@ -72,8 +165,29 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 1차 버전: Hoxy와 같은 SSE 껍데기/클라이언트 연결 검증용입니다.
-  // 실제 SOOP 후원 원본 API가 확인되면 이 루프 내부에서 원본을 폴링하고 donation 이벤트를 내려주면 됩니다.
+  if (relay) {
+    const ac = new AbortController();
+    const closeRelay = () => ac.abort();
+    req.on('close', closeRelay);
+
+    try {
+      await relayHoxyStream({ streamerId, res, signal: ac.signal });
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        writeSse(res, {
+          type: 'error',
+          message: 'Hoxy relay 연결에 실패했습니다.',
+          detail: error?.message || 'unknown',
+          streamerId,
+        });
+      }
+    } finally {
+      req.off?.('close', closeRelay);
+      res.end();
+    }
+    return;
+  }
+
   const startedAt = Date.now();
   const maxMs = 55 * 1000;
 
