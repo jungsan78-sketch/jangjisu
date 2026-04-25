@@ -1,8 +1,8 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
-const SoopFundingMemoClean = dynamic(
-  () => import('../../components/utility/SoopFundingMemoClean'),
+const SoopOfficialChatSdkMemo = dynamic(
+  () => import('../../components/utility/SoopOfficialChatSdkMemo'),
   { ssr: false }
 );
 
@@ -11,9 +11,9 @@ export default function SoopFundingMemoPage() {
     <>
       <Head>
         <title>장지수용소 펀딩 자동메모장 | 유틸리티</title>
-        <meta name="description" content="SOOP 펀딩 데이터를 핀볼용 복붙 메모로 변환하는 유틸리티" />
+        <meta name="description" content="SOOP 공식 Chat SDK로 별풍선과 채팅을 매칭하는 핀볼용 자동메모장" />
       </Head>
-      <SoopFundingMemoClean />
+      <SoopOfficialChatSdkMemo />
     </>
   );
 }
