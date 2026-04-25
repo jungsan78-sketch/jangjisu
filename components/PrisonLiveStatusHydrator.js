@@ -35,6 +35,86 @@ function clearOldLogoBadge(anchor) {
   anchor.querySelectorAll(':scope > .sou-live-badge').forEach((badge) => badge.remove());
 }
 
+function removeLiveSnapshot(card) {
+  card?.querySelectorAll('.sou-live-snapshot').forEach((snapshot) => snapshot.remove());
+}
+
+function formatViewerCount(value) {
+  const count = Number(value || 0);
+  if (!Number.isFinite(count) || count <= 0) return '';
+  if (count >= 10000) return `${Math.floor(count / 1000) / 10}만`;
+  if (count >= 1000) return `${Math.floor(count / 100) / 10}천`;
+  return `${count}명`;
+}
+
+function makeLiveSnapshot(status) {
+  const href = status?.liveUrl || status?.stationUrl || '#';
+  const thumbnailUrl = status?.thumbnailUrl || '';
+  const title = String(status?.title || '방송 제목을 불러오는 중입니다').trim();
+  const viewers = formatViewerCount(status?.viewerCount);
+
+  const wrapper = document.createElement('a');
+  wrapper.className = 'sou-live-snapshot';
+  wrapper.href = href;
+  wrapper.target = '_blank';
+  wrapper.rel = 'noreferrer';
+  wrapper.setAttribute('aria-label', title);
+
+  const media = document.createElement('div');
+  media.className = 'sou-live-snapshot-media';
+
+  if (thumbnailUrl) {
+    const img = document.createElement('img');
+    img.src = thumbnailUrl;
+    img.alt = title;
+    img.loading = 'lazy';
+    media.appendChild(img);
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'sou-live-snapshot-empty';
+    empty.textContent = 'LIVE';
+    media.appendChild(empty);
+  }
+
+  const top = document.createElement('div');
+  top.className = 'sou-live-snapshot-top';
+
+  const live = document.createElement('span');
+  live.className = 'sou-live-snapshot-live';
+  live.textContent = '● LIVE';
+  top.appendChild(live);
+
+  if (viewers) {
+    const viewer = document.createElement('span');
+    viewer.className = 'sou-live-snapshot-viewers';
+    viewer.textContent = viewers;
+    top.appendChild(viewer);
+  }
+
+  const bottom = document.createElement('div');
+  bottom.className = 'sou-live-snapshot-bottom';
+  bottom.textContent = title;
+
+  media.appendChild(top);
+  media.appendChild(bottom);
+  wrapper.appendChild(media);
+  return wrapper;
+}
+
+function updateLiveSnapshot(card, status, isLive) {
+  if (!card) return;
+  removeLiveSnapshot(card);
+  if (!isLive) return;
+
+  const snapshot = makeLiveSnapshot(status);
+  const platformRow = card.querySelector('a[href*="sooplive.com/station/"]')?.parentElement;
+  if (platformRow?.parentElement) {
+    platformRow.parentElement.insertBefore(snapshot, platformRow);
+    return;
+  }
+  card.appendChild(snapshot);
+}
+
 function applyCardState(anchor, status) {
   const isLive = Boolean(status?.isLive);
   const stationId = extractStationId(anchor.getAttribute('href'));
@@ -53,6 +133,7 @@ function applyCardState(anchor, status) {
     card.setAttribute('data-sou-live-card', isLive ? 'on' : 'off');
     card.classList.toggle('sou-live-card-on', isLive);
     card.classList.toggle('sou-live-card-off', !isLive);
+    updateLiveSnapshot(card, status, isLive);
   }
 
   if (avatar) {
