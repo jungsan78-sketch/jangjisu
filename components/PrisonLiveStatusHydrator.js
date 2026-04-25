@@ -58,8 +58,14 @@ function injectLiveGridStyle() {
   const style = document.createElement('style');
   style.id = 'sou-member-live-grid-style';
   style.textContent = `
+    header > div, main { max-width: 1120px !important; }
+    main { width: 100% !important; }
     #notice { display: none !important; }
     a[href="#notice"] { display: none !important; }
+    #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
+    #schedule button:hover { transform: none !important; }
+    #schedule button > * { pointer-events: none; }
+    #schedule .sou-schedule-range-hidden { display: none !important; }
     #members.sou-member-live-section { margin-top: 30px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
     .sou-member-live-head { display: none !important; }
     .sou-member-live-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -83,7 +89,7 @@ function injectLiveGridStyle() {
     .sou-member-live-action.cafe { color: #bbf7d0; }
     .sou-member-live-recent { margin-top: 12px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; color: rgba(255,255,255,.64); font-size: 12px; font-weight: 900; line-height: 1.45; min-height: 35px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     @media (max-width: 1180px) { .sou-member-live-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 760px) { .sou-member-live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { header > div, main { max-width: 100% !important; } .sou-member-live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 460px) { .sou-member-live-grid { grid-template-columns: 1fr; } }
   `;
   document.head.appendChild(style);
@@ -139,6 +145,49 @@ function hideNoticeSection() {
   document.querySelectorAll('a[href="#notice"]').forEach((anchor) => { anchor.style.display = 'none'; });
 }
 
+function isWholeViewSelected(schedule) {
+  return [...schedule.querySelectorAll('button')].some((button) => {
+    const text = String(button.textContent || '').replace(/\s+/g, '').trim();
+    const selected = /border-amber|bg-amber|text-white|active|selected/.test(String(button.className || '')) || button.getAttribute('aria-pressed') === 'true';
+    return text === '전체보기' && selected;
+  });
+}
+
+function reduceScheduleWholeViewRange() {
+  const schedule = document.getElementById('schedule');
+  if (!schedule || !isWholeViewSelected(schedule)) return;
+  schedule.querySelectorAll('.sou-schedule-range-hidden').forEach((element) => element.classList.remove('sou-schedule-range-hidden'));
+
+  const groups = [...schedule.querySelectorAll('div')].filter((group) => {
+    const children = [...group.children].filter((child) => child instanceof HTMLElement);
+    if (children.length !== 5) return false;
+    if (children.some((child) => child.tagName === 'BUTTON')) return false;
+    const text = children.map((child) => child.textContent || '').join(' ');
+    const hasDateText = /(오늘|TODAY|\d{1,2}\s*일|월|화|수|목|금|토|일요일)/.test(text);
+    const hasCardShape = children.every((child) => /rounded|border|bg-|shadow|p-/.test(String(child.className || '')));
+    return hasDateText && hasCardShape;
+  });
+
+  groups.forEach((group) => {
+    const children = [...group.children].filter((child) => child instanceof HTMLElement);
+    if (children.length === 5) {
+      children[0].classList.add('sou-schedule-range-hidden');
+      children[4].classList.add('sou-schedule-range-hidden');
+    }
+  });
+}
+
+function stabilizeScheduleButtons() {
+  const schedule = document.getElementById('schedule');
+  if (!schedule) return;
+  schedule.querySelectorAll('button').forEach((button) => {
+    button.style.transform = 'none';
+    button.style.minHeight = '40px';
+    button.style.minWidth = button.textContent?.includes('전체보기') ? '104px' : '86px';
+  });
+  reduceScheduleWholeViewRange();
+}
+
 export default function PrisonLiveStatusHydrator() {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -146,26 +195,44 @@ export default function PrisonLiveStatusHydrator() {
 
     let disposed = false;
     let timer = null;
+    let scheduleTimer = null;
 
     const load = async () => {
       try {
+        injectLiveGridStyle();
         hideNoticeSection();
+        stabilizeScheduleButtons();
         renderMemberLiveGrid(new Map());
         const response = await fetch(`/api/soop-live-status?t=${Date.now()}`, { cache: 'no-store' });
         const payload = await response.json();
         if (disposed) return;
         renderMemberLiveGrid(makeStatusMap(payload));
+        stabilizeScheduleButtons();
       } catch {
-        if (!disposed) renderMemberLiveGrid(new Map());
+        if (!disposed) {
+          renderMemberLiveGrid(new Map());
+          stabilizeScheduleButtons();
+        }
       }
     };
 
+    const handleScheduleClick = (event) => {
+      if (event.target?.closest?.('#schedule')) {
+        window.setTimeout(stabilizeScheduleButtons, 0);
+        window.setTimeout(stabilizeScheduleButtons, 120);
+      }
+    };
+
+    document.addEventListener('click', handleScheduleClick, true);
     load();
     timer = window.setInterval(load, 60000);
+    scheduleTimer = window.setInterval(stabilizeScheduleButtons, 1200);
 
     return () => {
       disposed = true;
+      document.removeEventListener('click', handleScheduleClick, true);
       if (timer) window.clearInterval(timer);
+      if (scheduleTimer) window.clearInterval(scheduleTimer);
     };
   }, []);
 
