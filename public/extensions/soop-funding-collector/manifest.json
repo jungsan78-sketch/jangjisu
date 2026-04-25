@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "장지수용소 SOOP 펀딩 수집기",
+  "version": "0.1.0",
+  "description": "선택한 SOOP 방송 탭의 채팅을 장지수용소 펀딩 자동메모장으로 전송합니다.",
+  "permissions": ["tabs", "storage", "scripting"],
+  "host_permissions": [
+    "https://www.sooplive.com/*",
+    "https://play.sooplive.co.kr/*",
+    "https://*.sooplive.com/*",
+    "https://www.jangjisou.xyz/*",
+    "https://*.vercel.app/*",
+    "http://localhost:*/*"
+  ],
+  "action": {
+    "default_title": "장지수용소 수집기",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.sooplive.com/*",
+        "https://play.sooplive.co.kr/*",
+        "https://*.sooplive.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
