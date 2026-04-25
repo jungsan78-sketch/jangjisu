@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseSoopSocketPacket } from '../../lib/soop/parse-socket-packet';
 
-const STORAGE_KEY = 'sou-soop-funding-sse-settings-v2';
+const STORAGE_KEY = 'sou-soop-funding-sse-settings-v3';
 const DEFAULT_SETTINGS = {
   soopId: '',
   validCount: 1000,
   alertMinCount: 1000,
+  messageMatchSeconds: 10,
   inputMode: 'nickname',
-  separator: ',',
   autoEnabled: false,
   soundEnabled: true,
   overlayEnabled: true,
@@ -24,7 +25,7 @@ function formatNumber(value) {
 function readSettings() {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'), separator: ',' };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -33,7 +34,7 @@ function readSettings() {
 function saveSettings(settings) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...settings, separator: ',' }));
   } catch {}
 }
 
@@ -50,7 +51,7 @@ function makeMemo(events, settings) {
 
   return Array.from(grouped.entries())
     .map(([name, units]) => `${name}*${units}`)
-    .join(settings.separator === 'newline' ? '\n' : ',');
+    .join(',');
 }
 
 function buildRanking(events) {
@@ -130,9 +131,11 @@ function normalizePayload(payload) {
     id: String(payload.id || `${Date.now()}-${name}-${amount}-${Math.random().toString(16).slice(2)}`),
     name,
     message: String(payload.message || name).trim(),
+    pendingMessage: true,
     amount,
     source: payload.relay ? 'soop-sse' : payload.demo ? 'test' : 'soop-sse',
     createdAt: payload.createdAt || new Date().toISOString(),
+    donatedAtMs: Date.now(),
   };
 }
 
@@ -213,6 +216,8 @@ export default function SoopFundingMemoSse() {
   const [statusText, setStatusText] = useState('자동입력을 켜면 후원 감지를 시작합니다.');
   const [notice, setNotice] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [packetBase64, setPacketBase64] = useState('');
+  const [packetResult, setPacketResult] = useState(null);
   const abortRef = useRef(null);
   const seenRef = useRef(new Set());
   const settingsRef = useRef(DEFAULT_SETTINGS);
@@ -244,6 +249,60 @@ export default function SoopFundingMemoSse() {
       setTimeout(() => setNotice(null), event.amount >= 10000 ? 3200 : 2300);
     }
   }, []);
+
+  const applyChatToPendingDonation = useCallback((chat) => {
+    if (!chat?.nickname || !chat?.message) return false;
+    const now = Date.now();
+    const limitMs = Math.max(1, toNumber(settingsRef.current.messageMatchSeconds, 10)) * 1000;
+    let matched = false;
+
+    setEvents((prev) => {
+      const next = [...prev];
+      const targetIndex = next.findIndex((event) => {
+        if (event.messageMatched) return false;
+        if (event.name !== chat.nickname) return false;
+        const donatedAtMs = toNumber(event.donatedAtMs || new Date(event.createdAt).getTime(), 0);
+        if (!donatedAtMs) return false;
+        const diff = now - donatedAtMs;
+        return diff >= 0 && diff <= limitMs;
+      });
+
+      if (targetIndex === -1) return prev;
+      matched = true;
+      next[targetIndex] = {
+        ...next[targetIndex],
+        message: chat.message,
+        messageMatched: true,
+        pendingMessage: false,
+        matchedAt: new Date().toISOString(),
+      };
+      return next;
+    });
+
+    return matched;
+  }, []);
+
+  const handleParsedPacket = useCallback((parsed) => {
+    if (!parsed) return;
+
+    if (parsed.type === 'donation') {
+      addEvent({
+        id: `socket-${Date.now()}-${parsed.nickname}-${parsed.amount}-${Math.random().toString(16).slice(2)}`,
+        name: parsed.nickname,
+        message: parsed.nickname,
+        pendingMessage: true,
+        amount: parsed.amount,
+        source: 'socket-packet',
+        createdAt: new Date().toISOString(),
+        donatedAtMs: Date.now(),
+      });
+      return;
+    }
+
+    if (parsed.type === 'chat') {
+      applyChatToPendingDonation(parsed);
+    }
+  }, [addEvent, applyChatToPendingDonation]);
 
   useEffect(() => {
     if (abortRef.current) {
@@ -310,7 +369,7 @@ export default function SoopFundingMemoSse() {
   const validCount = Math.max(1, toNumber(settings.validCount, 1000));
   const validEvents = events.filter((event) => toNumber(event.amount) >= validCount);
 
-  const updateSetting = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
+  const updateSetting = (key, value) => setSettings((prev) => ({ ...prev, [key]: value, separator: ',' }));
 
   const addManual = () => {
     const amount = toNumber(manualAmount);
@@ -323,7 +382,15 @@ export default function SoopFundingMemoSse() {
       amount,
       source: 'manual',
       createdAt: new Date().toISOString(),
+      donatedAtMs: Date.now(),
+      messageMatched: Boolean(manualMessage.trim()),
     });
+  };
+
+  const parsePacketInput = () => {
+    const parsed = parseSoopSocketPacket(packetBase64);
+    setPacketResult(parsed);
+    handleParsedPacket(parsed);
   };
 
   const copyMemo = async () => {
@@ -336,6 +403,7 @@ export default function SoopFundingMemoSse() {
   const resetEvents = () => {
     setEvents([]);
     seenRef.current = new Set();
+    setPacketResult(null);
   };
 
   return (
@@ -369,9 +437,9 @@ export default function SoopFundingMemoSse() {
         <div className="mx-auto flex max-w-[1780px] items-center justify-between gap-4 px-5 py-3 lg:px-8">
           <div className="flex items-center gap-3">
             <a href="/utility" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-black text-white/80 transition hover:bg-white/10">← 유틸리티</a>
-            <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">SOOP 펀딩 자동메모장</h1>
+            <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">장지수용소 펀딩 자동메모장</h1>
           </div>
-          <div className="rounded-full border border-cyan-200/18 bg-cyan-200/10 px-4 py-2 text-xs font-black tracking-[0.18em] text-cyan-100">AUTO RELAY</div>
+          <a href="/" className="rounded-full border border-cyan-200/18 bg-cyan-200/10 px-4 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/16">장지수용소로 돌아가기</a>
         </div>
       </header>
 
@@ -406,7 +474,7 @@ export default function SoopFundingMemoSse() {
               </div>
             </Card>
 
-            <Card title="설정" className="xl:min-h-[360px]">
+            <Card title="설정" className="xl:min-h-[320px]">
               <div className="grid gap-3">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="유효개수" help="복붙 기준" compact>
@@ -416,16 +484,13 @@ export default function SoopFundingMemoSse() {
                     <TextInput type="number" min="1" value={settings.alertMinCount} onChange={(e) => updateSetting('alertMinCount', Math.max(1, toNumber(e.target.value, 1000)))} />
                   </Field>
                 </div>
+                <Field label="메시지 매칭" help="후원 후 다음 채팅을 찾는 시간" compact>
+                  <TextInput type="number" min="1" value={settings.messageMatchSeconds} onChange={(e) => updateSetting('messageMatchSeconds', Math.max(1, toNumber(e.target.value, 10)))} />
+                </Field>
                 <Field label="기입 기준" compact>
                   <div className="grid grid-cols-2 gap-2">
                     <PillButton active={settings.inputMode === 'nickname'} onClick={() => updateSetting('inputMode', 'nickname')}>후원닉네임</PillButton>
-                    <PillButton active={settings.inputMode === 'message'} onClick={() => updateSetting('inputMode', 'message')}>후원메시지</PillButton>
-                  </div>
-                </Field>
-                <Field label="출력 구분" compact>
-                  <div className="grid grid-cols-2 gap-2">
-                    <PillButton active={settings.separator === ','} onClick={() => updateSetting('separator', ',')}>쉼표</PillButton>
-                    <PillButton active={settings.separator === 'newline'} onClick={() => updateSetting('separator', 'newline')}>줄바꿈</PillButton>
+                    <PillButton active={settings.inputMode === 'message'} onClick={() => updateSetting('inputMode', 'message')}>후원 후 채팅</PillButton>
                   </div>
                 </Field>
                 <div className="grid grid-cols-2 gap-2">
@@ -450,7 +515,7 @@ export default function SoopFundingMemoSse() {
           <div className="space-y-4">
             <Card
               title="핀볼 복붙 결과"
-              caption="유효개수 기준을 넘긴 후원자만 정리됩니다. 결과 박스 안에서 스크롤됩니다."
+              caption="유효개수 기준을 넘긴 후원자만 쉼표로 정리됩니다."
               className="xl:min-h-[360px]"
               right={
                 <div className="flex gap-2">
@@ -472,40 +537,29 @@ export default function SoopFundingMemoSse() {
               </div>
             </Card>
 
-            <Card title="최근 후원 로그" caption="내부 스크롤로 최근 기록을 확인합니다." className="xl:h-[494px]">
-              <div className="grid max-h-[390px] gap-3 overflow-auto pr-1 md:grid-cols-2 xl:max-h-[398px]">
-                {events.length ? (
-                  events.map((event) => {
-                    const units = Math.floor(toNumber(event.amount) / validCount);
-                    const alertActive = event.amount >= Math.max(1, toNumber(settings.alertMinCount, 1000));
-                    return (
-                      <div key={event.id} className="rounded-[22px] border border-white/10 bg-[#07101a] px-4 py-3 shadow-lg shadow-black/15">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div className="truncate text-sm font-black text-white">{event.name}</div>
-                              {event.source === 'soop-sse' ? <span className="rounded-full border border-cyan-200/20 bg-cyan-200/10 px-2 py-0.5 text-[10px] font-black text-cyan-100">AUTO</span> : null}
-                              {event.source === 'manual' ? <span className="rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-black text-white/55">MANUAL</span> : null}
-                            </div>
-                            <div className="mt-1 truncate text-xs font-semibold text-white/45">{event.message}</div>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <div key={event.amount} className="animate-[numberPop_420ms_ease-out] text-sm font-black text-white">{formatNumber(event.amount)}개</div>
-                            <div className={`mt-1 text-xs font-black ${units >= 1 ? 'text-cyan-100' : 'text-white/35'}`}>{units >= 1 ? `*${units}` : '제외'}</div>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-2 text-[11px] font-bold text-white/35">
-                          <span>{new Date(event.createdAt || Date.now()).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          <span className={alertActive ? 'text-emerald-200/75' : 'text-white/30'}>{alertActive ? '알림 대상' : '로그만 저장'}</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-[24px] border border-dashed border-white/12 bg-black/18 p-8 text-center md:col-span-2">
-                    <div className="text-lg font-black text-white/70">아직 후원 로그가 없습니다.</div>
-                    <div className="mt-2 text-sm font-semibold text-white/40">자동입력을 켜고 실제 후원이 들어오면 여기에 쌓입니다.</div>
+            <Card title="SOOP 소켓 패킷 테스트" caption="Socket Binary Message를 Base64로 붙여넣어 후원/채팅 파싱과 다음 채팅 매칭을 검증합니다." className="xl:h-[494px]">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
+                <textarea
+                  value={packetBase64}
+                  onChange={(e) => setPacketBase64(e.target.value)}
+                  placeholder="Copy as Base64 값을 붙여넣기"
+                  className="h-[130px] resize-none rounded-[22px] border border-white/10 bg-[#07101a] px-4 py-3 text-xs font-bold leading-5 text-white outline-none placeholder:text-white/24"
+                />
+                <div className="space-y-2">
+                  <button type="button" onClick={parsePacketInput} className="w-full rounded-2xl border border-cyan-200/25 bg-cyan-300/16 px-4 py-3 text-sm font-black text-cyan-50 transition hover:bg-cyan-300/22">패킷 반영</button>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-bold leading-5 text-white/45">후원 패킷은 로그에 추가되고, 채팅 패킷은 같은 닉네임의 대기 후원에 메시지로 붙습니다.</div>
+                </div>
+              </div>
+              <div className="mt-3 rounded-[22px] border border-white/10 bg-black/22 p-4 text-xs font-bold leading-6 text-white/55">
+                {packetResult ? (
+                  <div>
+                    <div className="text-white">분석 결과: {packetResult.type}</div>
+                    {packetResult.type === 'chat' ? <div>채팅: {packetResult.nickname} / {packetResult.message}</div> : null}
+                    {packetResult.type === 'donation' ? <div>후원: {packetResult.nickname} / {formatNumber(packetResult.amount)}개</div> : null}
+                    {packetResult.type === 'unknown' ? <div>알 수 없는 패킷: {packetResult.packetType || 'unknown'}</div> : null}
                   </div>
+                ) : (
+                  <div>아직 분석한 패킷이 없습니다.</div>
                 )}
               </div>
             </Card>
@@ -543,11 +597,27 @@ export default function SoopFundingMemoSse() {
               </div>
             </Card>
 
-            <Card title="요약" className="xl:h-[244px]">
-              <div className="grid gap-2 text-xs font-bold text-white/50">
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">닉네임/개수 자동연동: {settings.autoEnabled ? '사용 중' : '꺼짐'}</div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">복붙 기준: {formatNumber(validCount)}개당 1개</div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">알림 기준: {formatNumber(settings.alertMinCount)}개 이상</div>
+            <Card title="최근 후원 로그" caption="후원 후 채팅이 매칭되면 메시지가 자동으로 교체됩니다." className="xl:h-[244px]">
+              <div className="max-h-[156px] space-y-2 overflow-auto pr-1">
+                {events.length ? (
+                  events.map((event) => {
+                    const units = Math.floor(toNumber(event.amount) / validCount);
+                    return (
+                      <div key={event.id} className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-white/55">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-white">{event.name}</span>
+                          <span className="shrink-0 text-cyan-100">{formatNumber(event.amount)}개 {units >= 1 ? `*${units}` : ''}</span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <span className="truncate">{event.message}</span>
+                          <span className={event.messageMatched ? 'text-emerald-200/75' : event.pendingMessage ? 'text-yellow-200/70' : 'text-white/30'}>{event.messageMatched ? '채팅 매칭' : event.pendingMessage ? '채팅 대기' : event.source}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-[24px] border border-dashed border-white/12 bg-black/18 p-6 text-center text-sm font-semibold text-white/40">아직 후원 로그가 없습니다.</div>
+                )}
               </div>
             </Card>
           </div>
