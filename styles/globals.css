@@ -51,6 +51,31 @@ button {
   }
 }
 
+@keyframes souTabContentIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes souTabButtonPop {
+  0% {
+    transform: translateY(1px) scale(0.98);
+  }
+  58% {
+    transform: translateY(-1px) scale(1.045);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
 section[aria-label="장지수용소 대문"] {
   position: relative;
   border-color: rgba(245, 158, 11, 0.18) !important;
@@ -123,6 +148,43 @@ section[aria-label="장지수용소 대문"] > div::after {
 #members .mb-5.flex.items-center.justify-between.gap-4 > div:last-child {
   position: absolute;
   right: 0;
+}
+
+#schedule button {
+  will-change: transform, background-color, border-color, box-shadow;
+}
+
+#schedule button:active {
+  animation: souTabButtonPop 240ms ease-out;
+}
+
+#schedule .grid.grid-cols-7.gap-3 {
+  animation: souTabContentIn 260ms ease-out;
+}
+
+#schedule .grid.grid-cols-7.gap-3 > div {
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease,
+    border-color 260ms ease,
+    background-color 260ms ease,
+    box-shadow 260ms ease,
+    filter 260ms ease;
+}
+
+#schedule .grid.grid-cols-7.gap-3 > div:hover {
+  filter: brightness(1.08) saturate(1.05);
+}
+
+#notice > div,
+#notice .rounded-\[24px\] {
+  animation: souTabContentIn 260ms ease-out;
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease,
+    border-color 260ms ease,
+    background-color 260ms ease,
+    box-shadow 260ms ease;
 }
 
 @media (max-width: 640px) {
