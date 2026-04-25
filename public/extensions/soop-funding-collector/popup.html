@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>장지수용소 수집기</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="header">
+      <div class="eyebrow">JANGJISOU</div>
+      <h1>SOOP 펀딩 수집기</h1>
+      <p>열려 있는 SOOP 방송 탭 중 하나를 골라 채팅을 자동메모장으로 보냅니다.</p>
+    </header>
+
+    <section class="card">
+      <label class="label" for="appUrl">자동메모장 주소</label>
+      <input id="appUrl" class="input" type="url" placeholder="https://www.jangjisou.xyz/utility/soop-funding-memo" />
+      <button id="saveUrl" class="btn secondary" type="button">주소 저장</button>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div>
+          <h2>방송 탭 선택</h2>
+          <p class="muted">여러 방송이 켜져 있으면 1개만 선택하세요.</p>
+        </div>
+        <button id="refresh" class="mini" type="button">새로고침</button>
+      </div>
+      <div id="tabs" class="tabs"></div>
+    </section>
+
+    <section class="card status-card">
+      <div id="status" class="status">대기 중</div>
+      <button id="stop" class="btn danger" type="button">수집 중지</button>
+    </section>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
