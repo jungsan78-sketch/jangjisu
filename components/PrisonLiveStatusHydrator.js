@@ -39,11 +39,34 @@ function removeLiveSnapshot(card) {
   card?.querySelectorAll('.sou-live-snapshot').forEach((snapshot) => snapshot.remove());
 }
 
+function removeLegacyHoverSnapshot(card) {
+  if (!card) return;
+  const keywords = ['LIVE SNAPSHOT', '실시간 방송 정보', '방송 제목'];
+  [...card.querySelectorAll('div, section, article, aside, a')].forEach((element) => {
+    if (element.classList?.contains('sou-live-snapshot')) return;
+    if (element.closest('.sou-live-snapshot')) return;
+    const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    const matched = keywords.some((keyword) => text.includes(keyword));
+    if (matched) element.remove();
+  });
+}
+
 function normalizeTitle(value = '') {
   return String(value).replace(/\s+/g, ' ').trim();
 }
 
-function hideDuplicateLiveTitle(card, status) {
+function shouldHideTitleText(text, title) {
+  const normalizedText = normalizeTitle(text);
+  const normalizedTitle = normalizeTitle(title);
+  if (!normalizedText || !normalizedTitle) return false;
+  if (normalizedText === normalizedTitle) return true;
+  if (normalizedTitle.length >= 8 && normalizedText.includes(normalizedTitle)) return true;
+  if (normalizedText.length >= 8 && normalizedTitle.includes(normalizedText)) return true;
+  return false;
+}
+
+function hideLegacyLiveTitle(card, status, livePill) {
   if (!card) return;
   card.querySelectorAll('[data-sou-hidden-live-title="true"]').forEach((element) => {
     element.style.display = '';
@@ -51,17 +74,24 @@ function hideDuplicateLiveTitle(card, status) {
   });
 
   const title = normalizeTitle(status?.title);
-  if (!title) return;
-
-  const protectedSelectors = 'a, button, img, .sou-live-snapshot, .sou-live-snapshot *';
+  const platformRow = card.querySelector('a[href*="sooplive.com/station/"]')?.parentElement;
   const candidates = [...card.querySelectorAll('div, p, span')];
   candidates.forEach((element) => {
-    if (element.matches(protectedSelectors) || element.closest('.sou-live-snapshot')) return;
-    if (element.children.length > 0) return;
+    if (element.closest('.sou-live-snapshot')) return;
+    if (element === livePill || element.contains(livePill)) return;
+    if (element.querySelector('a, button, img, .sou-live-snapshot')) return;
+
     const text = normalizeTitle(element.textContent || '');
-    if (!text || text !== title) return;
-    element.style.display = 'none';
-    element.setAttribute('data-sou-hidden-live-title', 'true');
+    if (!text || /LIVE\s*(ON|OFF)|OFF\s*AIR/i.test(text)) return;
+
+    const afterLivePill = livePill ? Boolean(livePill.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
+    const beforePlatform = platformRow ? Boolean(element.compareDocumentPosition(platformRow) & Node.DOCUMENT_POSITION_FOLLOWING) : true;
+    const titleMatched = shouldHideTitleText(text, title);
+
+    if (titleMatched || (afterLivePill && beforePlatform && text.length >= 6)) {
+      element.style.display = 'none';
+      element.setAttribute('data-sou-hidden-live-title', 'true');
+    }
   });
 }
 
@@ -127,10 +157,11 @@ function makeLiveSnapshot(status) {
   return wrapper;
 }
 
-function updateLiveSnapshot(card, status, isLive) {
+function updateLiveSnapshot(card, status, isLive, livePill) {
   if (!card) return;
+  removeLegacyHoverSnapshot(card);
   removeLiveSnapshot(card);
-  hideDuplicateLiveTitle(card, isLive ? status : null);
+  hideLegacyLiveTitle(card, isLive ? status : null, livePill);
   if (!isLive) return;
 
   const snapshot = makeLiveSnapshot(status);
@@ -160,7 +191,7 @@ function applyCardState(anchor, status) {
     card.setAttribute('data-sou-live-card', isLive ? 'on' : 'off');
     card.classList.toggle('sou-live-card-on', isLive);
     card.classList.toggle('sou-live-card-off', !isLive);
-    updateLiveSnapshot(card, status, isLive);
+    updateLiveSnapshot(card, status, isLive, livePill);
   }
 
   if (avatar) {
