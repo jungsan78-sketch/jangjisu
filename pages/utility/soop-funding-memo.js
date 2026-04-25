@@ -6,6 +6,11 @@ const SoopOfficialChatSdkMemo = dynamic(
   { ssr: false }
 );
 
+const SoopSdkEventProbe = dynamic(
+  () => import('../../components/utility/SoopSdkEventProbe'),
+  { ssr: false }
+);
+
 export default function SoopFundingMemoPage() {
   return (
     <>
@@ -14,6 +19,11 @@ export default function SoopFundingMemoPage() {
         <meta name="description" content="SOOP 공식 Chat SDK로 별풍선과 채팅을 매칭하는 핀볼용 자동메모장" />
       </Head>
       <SoopOfficialChatSdkMemo />
+      <div className="bg-[#05070c] px-5 pb-8 lg:px-8">
+        <div className="mx-auto max-w-[1780px]">
+          <SoopSdkEventProbe />
+        </div>
+      </div>
     </>
   );
 }
