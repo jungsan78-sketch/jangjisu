@@ -1,14 +1,14 @@
 import Head from 'next/head';
-import SoopFundingMemoSse from '../../components/utility/SoopFundingMemoSse';
+import SoopFundingMemoCollector from '../../components/utility/SoopFundingMemoCollector';
 
 export default function SoopFundingMemoPage() {
   return (
     <>
       <Head>
-        <title>SOOP 펀딩 자동 메모장 | 유틸리티</title>
+        <title>장지수용소 펀딩 자동메모장 | 유틸리티</title>
         <meta name="description" content="SOOP 펀딩 데이터를 핀볼용 복붙 메모로 변환하는 유틸리티" />
       </Head>
-      <SoopFundingMemoSse />
+      <SoopFundingMemoCollector />
     </>
   );
 }
