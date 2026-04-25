@@ -14,10 +14,16 @@ export default function Home() {
       }
     };
 
-    const removeOldNoticePlaceholder = () => {
+    const placeMainNoticeAfterSchedule = () => {
       const noticeSections = Array.from(document.querySelectorAll('section#notice'));
       const placeholder = noticeSections.find((section) => section.textContent?.includes('SOOP 탭은 점검 중'));
       if (placeholder) placeholder.remove();
+
+      const scheduleSection = document.getElementById('schedule');
+      const mainNotice = Array.from(document.querySelectorAll('section#notice')).find((section) => section.textContent?.includes('장지수 공지'));
+      if (scheduleSection && mainNotice && scheduleSection.nextElementSibling !== mainNotice) {
+        scheduleSection.insertAdjacentElement('afterend', mainNotice);
+      }
     };
 
     let didActivateShorts = false;
@@ -45,11 +51,11 @@ export default function Home() {
     };
 
     moveUtilityMenu();
-    removeOldNoticePlaceholder();
+    placeMainNoticeAfterSchedule();
     prioritizeYoutubeTabs();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 600);
-    const noticeTimer = setTimeout(removeOldNoticePlaceholder, 600);
+    const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 600);
     const youtubeInterval = setInterval(() => {
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
