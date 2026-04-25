@@ -9,5 +9,5 @@ export default function handler(req, res) {
   }
 
   const authUrl = `https://openapi.sooplive.com/auth/code?client_id=${encodeURIComponent(clientId)}`;
-  return res.redirect(authUrl);
+  return res.status(200).json({ ok: true, url: authUrl });
 }
