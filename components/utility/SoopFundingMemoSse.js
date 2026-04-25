@@ -53,6 +53,18 @@ function makeMemo(events, settings) {
     .join(settings.separator === 'newline' ? '\n' : ',');
 }
 
+function buildRanking(events) {
+  const map = new Map();
+  events.forEach((event) => {
+    const name = String(event.name || '').trim() || '익명';
+    const prev = map.get(name) || { name, amount: 0, count: 0 };
+    prev.amount += toNumber(event.amount);
+    prev.count += 1;
+    map.set(name, prev);
+  });
+  return Array.from(map.values()).sort((a, b) => b.amount - a.amount).slice(0, 10);
+}
+
 function playBeep(amount) {
   if (typeof window === 'undefined') return;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -124,13 +136,13 @@ function normalizePayload(payload) {
   };
 }
 
-function Card({ title, caption, right, children }) {
+function Card({ title, caption, right, className = '', children }) {
   return (
-    <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.065),rgba(255,255,255,0.03))] p-5 shadow-2xl shadow-black/25">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <section className={`overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.065),rgba(255,255,255,0.03))] p-4 shadow-2xl shadow-black/25 ${className}`}>
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-white">{title}</h2>
-          {caption ? <p className="mt-1 text-xs font-semibold leading-5 text-white/45">{caption}</p> : null}
+          <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+          {caption ? <p className="mt-1 text-xs font-semibold leading-5 text-white/42">{caption}</p> : null}
         </div>
         {right}
       </div>
@@ -139,12 +151,12 @@ function Card({ title, caption, right, children }) {
   );
 }
 
-function Field({ label, help, children }) {
+function Field({ label, help, children, compact = false }) {
   return (
-    <label className="block rounded-[22px] border border-white/10 bg-black/22 p-4 transition focus-within:border-cyan-200/30">
-      <div className="text-sm font-black text-white">{label}</div>
-      {help ? <p className="mt-1 text-xs font-semibold leading-5 text-white/45">{help}</p> : null}
-      <div className="mt-3">{children}</div>
+    <label className={`block rounded-[18px] border border-white/10 bg-black/22 transition focus-within:border-cyan-200/30 ${compact ? 'p-3' : 'p-4'}`}>
+      <div className="text-xs font-black text-white/86">{label}</div>
+      {help ? <p className="mt-1 text-[11px] font-semibold leading-4 text-white/38">{help}</p> : null}
+      <div className="mt-2">{children}</div>
     </label>
   );
 }
@@ -154,7 +166,7 @@ function PillButton({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${
+      className={`rounded-2xl border px-3 py-2.5 text-xs font-black transition ${
         active
           ? 'border-cyan-200/40 bg-cyan-300/16 text-cyan-50 shadow-[0_0_24px_rgba(34,211,238,0.12)]'
           : 'border-white/10 bg-white/[0.045] text-white/55 hover:border-white/18 hover:bg-white/[0.07] hover:text-white/80'
@@ -169,9 +181,26 @@ function TextInput(props) {
   return (
     <input
       {...props}
-      className="w-full rounded-2xl border border-white/10 bg-[#090d15] px-4 py-3 text-sm font-bold text-white outline-none transition placeholder:text-white/25 focus:border-cyan-200/35"
+      className="w-full rounded-2xl border border-white/10 bg-[#090d15] px-3.5 py-2.5 text-sm font-bold text-white outline-none transition placeholder:text-white/25 focus:border-cyan-200/35"
     />
   );
+}
+
+function StatBox({ label, value, tone = 'cyan' }) {
+  const toneClass = tone === 'emerald' ? 'border-emerald-200/16 bg-emerald-300/10 text-emerald-100' : 'border-cyan-200/16 bg-cyan-300/10 text-cyan-100';
+  return (
+    <div className={`rounded-[18px] border px-4 py-3 text-center ${toneClass}`}>
+      <div className="text-[11px] font-black text-white/45">{label}</div>
+      <div key={value} className="mt-1 animate-[numberPop_420ms_ease-out] text-2xl font-black tracking-tight text-white">{value}</div>
+    </div>
+  );
+}
+
+function RankIcon({ rank }) {
+  if (rank === 1) return <span className="text-lg">👑</span>;
+  if (rank === 2) return <span className="text-lg">🥈</span>;
+  if (rank === 3) return <span className="text-lg">🥉</span>;
+  return <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-[11px] font-black text-white/55">{rank}</span>;
 }
 
 export default function SoopFundingMemoSse() {
@@ -276,10 +305,10 @@ export default function SoopFundingMemoSse() {
   }, [settings.autoEnabled, settings.soopId, addEvent]);
 
   const memo = useMemo(() => makeMemo(events, settings), [events, settings]);
+  const ranking = useMemo(() => buildRanking(events), [events]);
   const total = useMemo(() => events.reduce((sum, event) => sum + toNumber(event.amount), 0), [events]);
   const validCount = Math.max(1, toNumber(settings.validCount, 1000));
   const validEvents = events.filter((event) => toNumber(event.amount) >= validCount);
-  const latestEvent = events[0] || null;
 
   const updateSetting = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
 
@@ -322,6 +351,14 @@ export default function SoopFundingMemoSse() {
         </div>
       ) : null}
 
+      <style jsx global>{`
+        @keyframes numberPop {
+          0% { transform: translateY(3px) scale(0.96); opacity: 0.72; }
+          55% { transform: translateY(-1px) scale(1.04); opacity: 1; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+      `}</style>
+
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-cyan-500/12 blur-3xl" />
         <div className="absolute top-16 right-[-90px] h-96 w-96 rounded-full bg-blue-500/12 blur-3xl" />
@@ -329,114 +366,92 @@ export default function SoopFundingMemoSse() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-          <a href="/utility" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-black text-white/80 transition hover:bg-white/10">← 유틸리티</a>
+        <div className="mx-auto flex max-w-[1780px] items-center justify-between gap-4 px-5 py-3 lg:px-8">
+          <div className="flex items-center gap-3">
+            <a href="/utility" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-black text-white/80 transition hover:bg-white/10">← 유틸리티</a>
+            <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">SOOP 펀딩 자동메모장</h1>
+          </div>
           <div className="rounded-full border border-cyan-200/18 bg-cyan-200/10 px-4 py-2 text-xs font-black tracking-[0.18em] text-cyan-100">AUTO RELAY</div>
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-7xl px-5 py-8 lg:px-8">
-        <section className="rounded-[38px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(255,255,255,0.04)_42%,rgba(99,102,241,0.08))] p-6 shadow-2xl shadow-black/30 lg:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="text-xs font-black tracking-[0.42em] text-cyan-100/55">SOOP FUNDING MEMO</div>
-              <h1 className="mt-4 text-[34px] font-black tracking-tight text-white sm:text-[52px]">SOOP 펀딩 자동 메모장</h1>
-              <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-white/58">후원자 이름과 개수를 자동으로 받아 핀볼 복붙용 문장으로 정리합니다. 기본 샘플은 제거했고, 실제 후원 로그만 쌓입니다.</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-[22px] border border-emerald-200/14 bg-emerald-300/10 px-4 py-4 text-center">
-                <div className="text-xs font-black text-emerald-100/60">총 펀딩</div>
-                <div className="mt-1 text-2xl font-black text-white">{formatNumber(total)}</div>
-              </div>
-              <div className="rounded-[22px] border border-cyan-200/14 bg-cyan-300/10 px-4 py-4 text-center">
-                <div className="text-xs font-black text-cyan-100/60">유효 건수</div>
-                <div className="mt-1 text-2xl font-black text-white">{validEvents.length}</div>
-              </div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.055] px-4 py-4 text-center">
-                <div className="text-xs font-black text-white/45">최근 후원</div>
-                <div className="mt-1 max-w-[90px] truncate text-lg font-black text-white">{latestEvent ? latestEvent.name : '-'}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-[400px_1fr]">
+      <main className="relative mx-auto max-w-[1780px] px-5 py-5 lg:px-8">
+        <section className="grid gap-4 xl:grid-cols-[390px_minmax(0,1fr)_390px] 2xl:grid-cols-[420px_minmax(0,1fr)_420px]">
           <div className="space-y-4">
-            <Card title="SOOP 자동입력 연결" caption="방송자 SOOP 아이디를 넣고 자동입력을 켜면 후원 감지를 시작합니다.">
-              <div className="rounded-[24px] border border-white/10 bg-[#07101a] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-black text-white">자동입력</div>
-                    <div className="mt-1 text-xs font-semibold text-white/45">Hoxy relay 기반 실험 연결</div>
+            <Card title="자동입력" caption="아이디 입력과 ON/OFF를 한 곳에서 관리합니다." className="xl:min-h-[238px]">
+              <div className="space-y-3">
+                <Field label="SOOP 아이디" help="예: lshooooo" compact>
+                  <div className="flex gap-2">
+                    <TextInput value={settings.soopId} onChange={(e) => updateSetting('soopId', e.target.value.trim())} placeholder="방송자 SOOP 아이디" />
+                    <button
+                      type="button"
+                      onClick={() => updateSetting('autoEnabled', !settings.autoEnabled)}
+                      className={`shrink-0 rounded-2xl border px-5 py-2.5 text-sm font-black transition ${
+                        settings.autoEnabled
+                          ? 'border-emerald-200/35 bg-emerald-300/16 text-emerald-50 shadow-[0_0_28px_rgba(16,185,129,0.16)]'
+                          : 'border-white/10 bg-white/[0.05] text-white/55 hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      {settings.autoEnabled ? 'ON' : 'OFF'}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => updateSetting('autoEnabled', !settings.autoEnabled)}
-                    className={`rounded-full border px-5 py-2.5 text-sm font-black transition ${
-                      settings.autoEnabled
-                        ? 'border-emerald-200/35 bg-emerald-300/16 text-emerald-50 shadow-[0_0_28px_rgba(16,185,129,0.16)]'
-                        : 'border-white/10 bg-white/[0.05] text-white/55 hover:bg-white/[0.08]'
-                    }`}
-                  >
-                    {settings.autoEnabled ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+                </Field>
+                <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs font-black uppercase tracking-[0.18em] text-white/35">{status}</div>
                     <div className={`h-2.5 w-2.5 rounded-full ${status === 'error' ? 'bg-rose-300' : settings.autoEnabled ? 'bg-emerald-300' : 'bg-white/25'}`} />
                   </div>
-                  <div className="mt-2 text-xs font-semibold leading-5 text-white/58">{statusText}</div>
+                  <div className="mt-2 min-h-[20px] text-xs font-semibold leading-5 text-white/58">{statusText}</div>
                 </div>
               </div>
             </Card>
 
-            <Card title="자동입력 설정">
-              <div className="space-y-3">
-                <Field label="SOOP 아이디" help="예: lshooooo">
-                  <TextInput value={settings.soopId} onChange={(e) => updateSetting('soopId', e.target.value.trim())} placeholder="방송자 SOOP 아이디" />
-                </Field>
+            <Card title="설정" className="xl:min-h-[360px]">
+              <div className="grid gap-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="유효개수" help="복붙 결과에 반영되는 기준">
+                  <Field label="유효개수" help="복붙 기준" compact>
                     <TextInput type="number" min="1" value={settings.validCount} onChange={(e) => updateSetting('validCount', Math.max(1, toNumber(e.target.value, 1000)))} />
                   </Field>
-                  <Field label="알림 최소" help="팝업/효과음 기준">
+                  <Field label="알림 최소" help="팝업/효과음" compact>
                     <TextInput type="number" min="1" value={settings.alertMinCount} onChange={(e) => updateSetting('alertMinCount', Math.max(1, toNumber(e.target.value, 1000)))} />
                   </Field>
                 </div>
-                <Field label="기입 기준">
+                <Field label="기입 기준" compact>
                   <div className="grid grid-cols-2 gap-2">
                     <PillButton active={settings.inputMode === 'nickname'} onClick={() => updateSetting('inputMode', 'nickname')}>후원닉네임</PillButton>
                     <PillButton active={settings.inputMode === 'message'} onClick={() => updateSetting('inputMode', 'message')}>후원메시지</PillButton>
                   </div>
                 </Field>
-                <Field label="출력 구분">
+                <Field label="출력 구분" compact>
                   <div className="grid grid-cols-2 gap-2">
                     <PillButton active={settings.separator === ','} onClick={() => updateSetting('separator', ',')}>쉼표</PillButton>
                     <PillButton active={settings.separator === 'newline'} onClick={() => updateSetting('separator', 'newline')}>줄바꿈</PillButton>
                   </div>
                 </Field>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)} className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${settings.soundEnabled ? 'border-emerald-200/30 bg-emerald-300/12 text-emerald-50' : 'border-white/10 bg-white/[0.04] text-white/50'}`}>효과음 {settings.soundEnabled ? 'ON' : 'OFF'}</button>
-                  <button type="button" onClick={() => updateSetting('overlayEnabled', !settings.overlayEnabled)} className={`rounded-2xl border px-3 py-3 text-sm font-black transition ${settings.overlayEnabled ? 'border-emerald-200/30 bg-emerald-300/12 text-emerald-50' : 'border-white/10 bg-white/[0.04] text-white/50'}`}>팝업 {settings.overlayEnabled ? 'ON' : 'OFF'}</button>
+                  <button type="button" onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)} className={`rounded-2xl border px-3 py-2.5 text-xs font-black transition ${settings.soundEnabled ? 'border-emerald-200/30 bg-emerald-300/12 text-emerald-50' : 'border-white/10 bg-white/[0.04] text-white/50'}`}>효과음 {settings.soundEnabled ? 'ON' : 'OFF'}</button>
+                  <button type="button" onClick={() => updateSetting('overlayEnabled', !settings.overlayEnabled)} className={`rounded-2xl border px-3 py-2.5 text-xs font-black transition ${settings.overlayEnabled ? 'border-emerald-200/30 bg-emerald-300/12 text-emerald-50' : 'border-white/10 bg-white/[0.04] text-white/50'}`}>팝업 {settings.overlayEnabled ? 'ON' : 'OFF'}</button>
                 </div>
               </div>
             </Card>
 
-            <Card title="수동 후원 추가" caption="자동 감지 누락이나 테스트용으로 직접 넣을 수 있습니다.">
-              <div className="space-y-3">
+            <Card title="수동 추가" caption="누락된 후원을 빠르게 입력합니다." className="xl:min-h-[256px]">
+              <div className="space-y-2.5">
                 <TextInput value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="후원 닉네임" />
                 <TextInput value={manualMessage} onChange={(e) => setManualMessage(e.target.value)} placeholder="후원 메시지 또는 별칭" />
-                <TextInput type="number" value={manualAmount} onChange={(e) => setManualAmount(e.target.value)} placeholder="후원 개수" />
-                <button type="button" onClick={addManual} className="w-full rounded-2xl border border-cyan-200/25 bg-cyan-300/16 px-4 py-3 text-sm font-black text-cyan-50 transition hover:bg-cyan-300/22">수동 추가</button>
+                <div className="flex gap-2">
+                  <TextInput type="number" value={manualAmount} onChange={(e) => setManualAmount(e.target.value)} placeholder="후원 개수" />
+                  <button type="button" onClick={addManual} className="shrink-0 rounded-2xl border border-cyan-200/25 bg-cyan-300/16 px-5 py-2.5 text-sm font-black text-cyan-50 transition hover:bg-cyan-300/22">추가</button>
+                </div>
               </div>
             </Card>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card
               title="핀볼 복붙 결과"
-              caption="유효개수 기준을 넘긴 후원자만 자동으로 정리됩니다."
+              caption="유효개수 기준을 넘긴 후원자만 정리됩니다. 결과 박스 안에서 스크롤됩니다."
+              className="xl:min-h-[360px]"
               right={
                 <div className="flex gap-2">
                   <button type="button" onClick={copyMemo} disabled={!memo} className="rounded-full border border-cyan-200/25 bg-cyan-300/16 px-5 py-2 text-sm font-black text-cyan-50 transition hover:bg-cyan-300/22 disabled:cursor-not-allowed disabled:opacity-40">{copied ? '복사됨' : '복사'}</button>
@@ -448,7 +463,7 @@ export default function SoopFundingMemoSse() {
                 value={memo}
                 readOnly
                 placeholder="아직 복붙할 후원 데이터가 없습니다."
-                className="min-h-[190px] w-full resize-y rounded-[28px] border border-cyan-200/14 bg-[#07101a] px-5 py-4 text-[17px] font-black leading-8 text-cyan-50 outline-none placeholder:text-white/24 selection:bg-cyan-300/30 selection:text-white shadow-inner shadow-black/30"
+                className="h-[250px] w-full resize-none overflow-auto rounded-[28px] border border-cyan-200/14 bg-[#07101a] px-5 py-4 text-[17px] font-black leading-8 text-cyan-50 outline-none placeholder:text-white/24 selection:bg-cyan-300/30 selection:text-white shadow-inner shadow-black/30 xl:h-[270px]"
               />
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-white/40">
                 <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5">유효개수 {formatNumber(validCount)}개</span>
@@ -457,8 +472,8 @@ export default function SoopFundingMemoSse() {
               </div>
             </Card>
 
-            <Card title="최근 후원 로그" caption="1000개 미만도 로그에는 남지만, 알림 기준 미만이면 팝업/효과음은 뜨지 않습니다.">
-              <div className="grid gap-3 md:grid-cols-2">
+            <Card title="최근 후원 로그" caption="내부 스크롤로 최근 기록을 확인합니다." className="xl:h-[494px]">
+              <div className="grid max-h-[390px] gap-3 overflow-auto pr-1 md:grid-cols-2 xl:max-h-[398px]">
                 {events.length ? (
                   events.map((event) => {
                     const units = Math.floor(toNumber(event.amount) / validCount);
@@ -475,7 +490,7 @@ export default function SoopFundingMemoSse() {
                             <div className="mt-1 truncate text-xs font-semibold text-white/45">{event.message}</div>
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="text-sm font-black text-white">{formatNumber(event.amount)}개</div>
+                            <div key={event.amount} className="animate-[numberPop_420ms_ease-out] text-sm font-black text-white">{formatNumber(event.amount)}개</div>
                             <div className={`mt-1 text-xs font-black ${units >= 1 ? 'text-cyan-100' : 'text-white/35'}`}>{units >= 1 ? `*${units}` : '제외'}</div>
                           </div>
                         </div>
@@ -492,6 +507,47 @@ export default function SoopFundingMemoSse() {
                     <div className="mt-2 text-sm font-semibold text-white/40">자동입력을 켜고 실제 후원이 들어오면 여기에 쌓입니다.</div>
                   </div>
                 )}
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <Card title="후원자 순위 TOP 10" caption="후원 개수 합산 기준입니다." className="xl:h-[610px]">
+              <div className="mb-3 grid grid-cols-2 gap-3">
+                <StatBox label="총 펀딩" value={formatNumber(total)} tone="emerald" />
+                <StatBox label="유효 건수" value={validEvents.length} />
+              </div>
+              <div className="max-h-[456px] space-y-2 overflow-auto pr-1 xl:max-h-[464px]">
+                {ranking.length ? (
+                  ranking.map((item, index) => {
+                    const rank = index + 1;
+                    return (
+                      <div key={item.name} className={`rounded-[20px] border px-3.5 py-3 transition ${rank === 1 ? 'border-yellow-200/28 bg-yellow-300/10 shadow-[0_0_34px_rgba(250,204,21,0.10)]' : 'border-white/10 bg-[#07101a]'}`}>
+                        <div className="flex items-center gap-3">
+                          <RankIcon rank={rank} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-black text-white">{item.name}</div>
+                            <div className="mt-1 text-[11px] font-bold text-white/36">후원 {item.count}회</div>
+                          </div>
+                          <div key={item.amount} className="animate-[numberPop_420ms_ease-out] text-right text-base font-black text-cyan-50">{formatNumber(item.amount)}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-[24px] border border-dashed border-white/12 bg-black/18 p-8 text-center">
+                    <div className="text-lg font-black text-white/70">순위 대기 중</div>
+                    <div className="mt-2 text-sm font-semibold text-white/40">후원이 들어오면 TOP 10이 표시됩니다.</div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card title="요약" className="xl:h-[244px]">
+              <div className="grid gap-2 text-xs font-bold text-white/50">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">닉네임/개수 자동연동: {settings.autoEnabled ? '사용 중' : '꺼짐'}</div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">복붙 기준: {formatNumber(validCount)}개당 1개</div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">알림 기준: {formatNumber(settings.alertMinCount)}개 이상</div>
               </div>
             </Card>
           </div>
