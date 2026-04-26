@@ -24,6 +24,44 @@ function injectStyle() {
     #schedule .grid.grid-cols-7.gap-3 > div > .pointer-events-none { display: none !important; }
     #schedule .sou-schedule-range-hidden { display: none !important; }
     #schedule [data-sou-schedule-compact-row="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    #schedule .mb-5.flex.flex-wrap.gap-2.rounded-\[24px\] {
+      border-color: rgba(255,255,255,.055) !important;
+      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 14px 28px rgba(0,0,0,.16) !important;
+    }
+    #schedule button.rounded-full {
+      border-color: rgba(255,255,255,.055) !important;
+      background: rgba(255,255,255,.045) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 10px 22px rgba(0,0,0,.12) !important;
+    }
+    #schedule button.rounded-full:hover {
+      border-color: rgba(255,255,255,.085) !important;
+      background: rgba(255,255,255,.07) !important;
+    }
+    #schedule button.rounded-full[class*="amber"],
+    #schedule button.rounded-full[class*="text-white"] {
+      border-color: rgba(251,191,36,.16) !important;
+      background: linear-gradient(180deg, rgba(251,191,36,.105), rgba(255,255,255,.035)) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 12px 26px rgba(0,0,0,.16), 0 0 18px rgba(245,158,11,.07) !important;
+    }
+    .sou-member-live-section [class*="border-white"],
+    .sou-member-live-section [class*="border-rose"],
+    .sou-member-live-section [class*="border-amber"] {
+      border-color: rgba(255,255,255,.065) !important;
+    }
+    .sou-member-live-section article {
+      border-color: rgba(255,255,255,.07) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 18px 38px rgba(0,0,0,.20) !important;
+    }
+    .sou-member-live-section article[class*="rose"] {
+      border-color: rgba(251,113,133,.22) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 18px 40px rgba(127,29,29,.18) !important;
+    }
+    .sou-member-live-section .rounded-full,
+    .sou-member-live-section .rounded-2xl {
+      border-color: rgba(255,255,255,.06) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 8px 18px rgba(0,0,0,.12) !important;
+    }
     #members.sou-member-live-section {
       margin-top: 30px !important;
       border: 0 !important;
