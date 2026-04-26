@@ -121,10 +121,39 @@ function MemberCard({ member, status, post }) {
   );
 }
 
+function LiveGridSkeleton({ failed = false }) {
+  const skeletonItems = Array.from({ length: 8 }, (_, index) => index);
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={!failed}>
+      {skeletonItems.map((item) => (
+        <div key={item} className="min-h-[360px] overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.16)]">
+          <div className="h-36 bg-white/[0.035]" />
+          <div className="p-4 pt-10">
+            <div className="h-5 w-28 rounded-full bg-white/[0.055]" />
+            <div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" />
+            <div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" />
+            <div className="mt-5 flex gap-2">
+              <div className="h-10 w-11 rounded-2xl bg-white/[0.045]" />
+              <div className="h-10 w-11 rounded-2xl bg-white/[0.045]" />
+              <div className="h-10 w-11 rounded-2xl bg-white/[0.045]" />
+            </div>
+            <div className="mt-5 h-px bg-white/8" />
+            <div className="mt-4 h-4 w-24 rounded-full bg-white/[0.04]" />
+            <div className="mt-3 h-4 w-full rounded-full bg-white/[0.035]" />
+            <div className="mt-2 h-4 w-3/4 rounded-full bg-white/[0.03]" />
+          </div>
+        </div>
+      ))}
+      {failed ? <div className="col-span-full rounded-[22px] border border-amber-200/20 bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다. 이전 OFF 카드로 먼저 표시하지 않습니다.</div> : null}
+    </div>
+  );
+}
+
 function PrisonMemberLiveGridContent() {
   const [livePayload, setLivePayload] = useState(null);
   const [postsPayload, setPostsPayload] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -141,9 +170,11 @@ function PrisonMemberLiveGridContent() {
         if (!mounted) return;
         setLivePayload(liveJson || null);
         setPostsPayload(postsJson || null);
+        setLoadFailed(!liveJson && !postsJson);
         setLoaded(true);
       } catch {
         if (!mounted) return;
+        setLoadFailed(true);
         setLoaded(true);
       }
     }
@@ -153,6 +184,7 @@ function PrisonMemberLiveGridContent() {
 
   const statuses = livePayload?.statuses || {};
   const posts = postsPayload?.posts || {};
+  const hasResolvedData = Boolean(livePayload?.statuses || postsPayload?.posts);
   const sortedMembers = useMemo(() => sortMembers(ALL_PRISON_MEMBERS, statuses), [statuses]);
   const liveCount = sortedMembers.filter((member) => statuses[member.nickname]?.isLive).length;
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
@@ -166,15 +198,17 @@ function PrisonMemberLiveGridContent() {
           </h3>
         </div>
         <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62">
-          {loaded ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}
+          {hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {sortedMembers.map((member) => {
-          const stationId = stationIdFromUrl(member.station);
-          return <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} post={posts[stationId]} />;
-        })}
-      </div>
+      {hasResolvedData ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sortedMembers.map((member) => {
+            const stationId = stationIdFromUrl(member.station);
+            return <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} post={posts[stationId]} />;
+          })}
+        </div>
+      ) : <LiveGridSkeleton failed={loaded && loadFailed} />}
     </section>
   );
 }
