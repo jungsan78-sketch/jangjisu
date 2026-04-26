@@ -87,38 +87,71 @@ function hideNotice() {
   document.querySelectorAll('a[href="#notice"]').forEach((anchor) => anchor.style.setProperty('display', 'none', 'important'));
 }
 
+function getSelectedScheduleText(schedule) {
+  const selected = [...schedule.querySelectorAll('button')].find((button) => {
+    const className = String(button.className || '');
+    return /border-amber|bg-amber|text-white|active|selected/.test(className) || button.getAttribute('aria-pressed') === 'true';
+  });
+  return String(selected?.textContent || '').replace(/\s+/g, '').trim();
+}
+
 function isWholeViewSelected(schedule) {
-  return [...schedule.querySelectorAll('button')].some((button) => String(button.textContent || '').replace(/\s+/g, '').trim() === '전체보기' && /border-amber|bg-amber|text-white|active|selected/.test(String(button.className || '')));
+  return getSelectedScheduleText(schedule) === '전체보기';
+}
+
+function hideSchedulePagingButtons(schedule) {
+  schedule.querySelectorAll('button').forEach((button) => {
+    const text = String(button.textContent || '').replace(/\s+/g, '').trim();
+    if (/^(이전|다음)(날짜|일정)?$/.test(text) || text.includes('이전날짜') || text.includes('다음날짜')) {
+      button.style.setProperty('display', 'none', 'important');
+    }
+  });
+}
+
+function getDayNumber(element) {
+  const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+  const first = text.match(/^(\d{1,2})(?:\s*일)?(?:\s|$)/);
+  if (first) return Number(first[1]);
+  const labeled = text.match(/(\d{1,2})\s*일/);
+  return labeled ? Number(labeled[1]) : null;
 }
 
 function compactScheduleRange() {
   const schedule = document.getElementById('schedule');
   if (!schedule) return;
+  hideSchedulePagingButtons(schedule);
   schedule.querySelectorAll('.sou-schedule-range-hidden').forEach((element) => element.classList.remove('sou-schedule-range-hidden'));
   schedule.querySelectorAll('[data-sou-schedule-compact-row="true"]').forEach((element) => {
     element.style.gridTemplateColumns = '';
     element.removeAttribute('data-sou-schedule-compact-row');
   });
   if (!isWholeViewSelected(schedule)) return;
+
+  const today = new Date();
+  const startDay = today.getDate();
+  const endDay = startDay + 2;
   const cards = [...schedule.querySelectorAll('div')].filter((element) => {
-    const text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
     const rect = element.getBoundingClientRect();
-    return /\d{1,2}\s*일/.test(text) && rect.width >= 100 && rect.height >= 130 && !element.querySelector('button');
-  }).filter((element, index, array) => !array.some((other) => other !== element && other.contains(element)));
-  const rows = new Map();
-  cards.forEach((card) => {
-    const rowKey = Math.round(card.getBoundingClientRect().top / 20) * 20;
-    rows.set(rowKey, [...(rows.get(rowKey) || []), card]);
+    if (rect.width < 70 || rect.height < 90 || element.querySelector('button')) return false;
+    const day = getDayNumber(element);
+    return Number.isInteger(day) && ![...schedule.querySelectorAll('div')].some((other) => other !== element && other.contains(element) && Number.isInteger(getDayNumber(other)));
   });
-  const row = [...rows.values()].filter((items) => items.length >= 5).sort((a, b) => b.length - a.length)[0];
-  if (!row) return;
-  row.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
-  row[0].classList.add('sou-schedule-range-hidden');
-  row[row.length - 1].classList.add('sou-schedule-range-hidden');
-  const parent = row[0].parentElement;
-  if (parent && parent === row[row.length - 1].parentElement) {
-    parent.setAttribute('data-sou-schedule-compact-row', 'true');
-    parent.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+
+  const targetCards = cards.filter((card) => {
+    const day = getDayNumber(card);
+    return day >= startDay && day <= endDay;
+  });
+
+  if (targetCards.length >= 1) {
+    cards.forEach((card) => {
+      const day = getDayNumber(card);
+      if (day < startDay || day > endDay) card.classList.add('sou-schedule-range-hidden');
+    });
+    const parent = targetCards[0].parentElement;
+    if (parent && targetCards.every((card) => card.parentElement === parent)) {
+      parent.setAttribute('data-sou-schedule-compact-row', 'true');
+      parent.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+    }
   }
 }
 
