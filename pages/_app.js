@@ -11,11 +11,27 @@ export default function App({ Component, pageProps }) {
         <title>JANGJISOU FAN ARCHIVE</title>
         <link rel="icon" type="image/png" href="/site-icon.png" />
         <link rel="apple-touch-icon" href="/site-icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                try {
+                  if (location.pathname.indexOf('/jangjisu-prison') === 0) {
+                    document.documentElement.classList.add('sou-prison-prepaint');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <style>{`
+          html.sou-prison-prepaint header > div,
+          html.sou-prison-prepaint main,
           body:has(section[aria-label="장지수용소 대문"]) header > div,
           body:has(section[aria-label="장지수용소 대문"]) main {
             max-width: 1120px !important;
           }
+          html.sou-prison-prepaint main,
           body:has(section[aria-label="장지수용소 대문"]) main {
             width: 100% !important;
           }
