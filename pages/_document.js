@@ -19,6 +19,13 @@ class MyDocument extends Document {
             <style
               dangerouslySetInnerHTML={{
                 __html: `
+                  html.sou-prison-prepaint header > div,
+                  html.sou-prison-prepaint main {
+                    max-width: 1200px !important;
+                  }
+                  html.sou-prison-prepaint main {
+                    width: 100% !important;
+                  }
                   html.sou-prison-prepaint #members {
                     position: relative !important;
                     min-height: 230px !important;
