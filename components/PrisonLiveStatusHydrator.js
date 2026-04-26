@@ -14,26 +14,10 @@ function injectStyle() {
     header > div, main { max-width: 1120px !important; }
     main { width: 100% !important; }
     #notice, a[href="#notice"] { display: none !important; }
-    #schedule { overflow: hidden !important; contain: paint; }
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
-    #schedule button:hover, #schedule button:active { transform: none !important; animation: none !important; }
-    #schedule .grid.grid-cols-7.gap-3 { animation: none !important; overflow: hidden !important; contain: paint; }
-    #schedule .grid.grid-cols-7.gap-3 > div {
-      transform: none !important;
-      animation: none !important;
-      transition: border-color .12s ease, background-color .12s ease, box-shadow .12s ease !important;
-      overflow: hidden !important;
-      contain: paint;
-    }
-    #schedule .grid.grid-cols-7.gap-3 > div:hover { transform: none !important; filter: none !important; }
-    #schedule .grid.grid-cols-7.gap-3 > div * { animation: none !important; }
-    #schedule.sou-schedule-switching,
-    #schedule.sou-schedule-switching * {
-      animation: none !important;
-      transition: none !important;
-      transform: none !important;
-      scroll-behavior: auto !important;
-    }
+    #schedule button:hover { transform: none !important; }
+    #schedule .grid.grid-cols-7.gap-3 { animation: none !important; }
+    #schedule .grid.grid-cols-7.gap-3 > div { transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease !important; }
     #schedule .sou-schedule-range-hidden { display: none !important; }
     #schedule [data-sou-schedule-compact-row="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     #members.sou-member-live-section {
@@ -135,30 +119,15 @@ function compactScheduleRange() {
   }
 }
 
-function resetScheduleScroll(schedule) {
-  schedule.querySelectorAll('*').forEach((element) => {
-    if (element.scrollTop) element.scrollTop = 0;
-  });
-}
-
 function stabilizeSchedule() {
   const schedule = document.getElementById('schedule');
   if (!schedule) return;
-  resetScheduleScroll(schedule);
   schedule.querySelectorAll('button').forEach((button) => {
     button.style.transform = 'none';
     button.style.minHeight = '40px';
     button.style.minWidth = button.textContent?.includes('전체보기') ? '104px' : '86px';
   });
   compactScheduleRange();
-}
-
-function markScheduleSwitching() {
-  const schedule = document.getElementById('schedule');
-  if (!schedule) return;
-  schedule.classList.add('sou-schedule-switching');
-  resetScheduleScroll(schedule);
-  window.setTimeout(() => schedule.classList.remove('sou-schedule-switching'), 240);
 }
 
 function renderPausedMembers() {
@@ -216,7 +185,7 @@ export default function PrisonLiveStatusHydrator() {
       const schedule = document.getElementById('schedule');
       if (!schedule) return;
       observer = new MutationObserver(runSchedule);
-      observer.observe(schedule, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+      observer.observe(schedule, { childList: true, subtree: true });
     };
 
     const run = () => {
@@ -230,9 +199,8 @@ export default function PrisonLiveStatusHydrator() {
 
     const onClick = (event) => {
       if (event.target?.closest?.('#schedule')) {
-        markScheduleSwitching();
         runSchedule();
-        [40, 90, 160, 260].forEach((delay) => window.setTimeout(runSchedule, delay));
+        [60, 160, 360].forEach((delay) => window.setTimeout(runSchedule, delay));
       }
     };
     document.addEventListener('click', onClick, true);
