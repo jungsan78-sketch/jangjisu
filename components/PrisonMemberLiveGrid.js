@@ -50,15 +50,15 @@ function PlatformLink({ href, type, label }) {
 }
 
 function MemberCard({ member, status, post }) {
-  const stationId = stationIdFromUrl(member.station);
   const isLive = Boolean(status?.isLive);
   const isUnknown = String(status?.liveState || '').includes('unknown');
   const mediaHref = isLive && status?.liveUrl ? status.liveUrl : member.station;
   const mediaImage = status?.thumbnailUrl || member.image;
   const title = status?.title || (isLive ? '방송 중' : isUnknown ? '방송 상태 확인중' : '방송 꺼짐');
-  const stateLabel = isLive ? 'ON AIR' : isUnknown ? '확인중' : 'OFF AIR';
+  const stateLabel = isLive ? formatCount(status?.viewerCount) : isUnknown ? '확인중' : 'OFF';
   const stateClass = isLive ? 'border-rose-300/35 shadow-[0_0_0_1px_rgba(251,113,133,0.10),0_20px_42px_rgba(127,29,29,0.20)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
   const dotClass = isLive ? 'bg-rose-400 shadow-[0_0_16px_rgba(251,113,133,0.75)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
+  const tags = Array.isArray(member.tags) ? member.tags : [];
 
   return (
     <article className={`group relative overflow-hidden rounded-[26px] border ${stateClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.18)]`}>
@@ -78,9 +78,8 @@ function MemberCard({ member, status, post }) {
         </div>
         <p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/70">{title}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">시청 {formatCount(status?.viewerCount)}</span>
           {status?.categoryName ? <span className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{status.categoryName}</span> : null}
-          {stationId ? <span className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">#{stationId}</span> : null}
+          {tags.map((tag) => <span key={tag} className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{tag}</span>)}
         </div>
         <div className="mt-3 flex gap-2">
           <PlatformLink href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} />
