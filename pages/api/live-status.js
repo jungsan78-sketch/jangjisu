@@ -2,7 +2,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { buildFallbackStatuses, fetchLiveStatusPayload } from '../../lib/soop/liveStatus';
 
 export const SOOP_LIVE_RESPONSE_CACHE_KEY = 'soop:live-status:response:v4';
-export const SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS = 120;
+export const SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS = 300;
 
 export async function getLiveStatusResponsePayload() {
   const cached = await getCachedJson(SOOP_LIVE_RESPONSE_CACHE_KEY);
@@ -49,7 +49,7 @@ export async function getLiveStatusResponsePayload() {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   const payload = await getLiveStatusResponsePayload();
   return res.status(200).json(payload);
 }
