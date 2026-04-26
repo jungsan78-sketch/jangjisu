@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 
 const STYLE_ID = 'sou-member-live-grid-style';
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function injectStyle() {
   let style = document.getElementById(STYLE_ID);
@@ -15,7 +16,10 @@ function injectStyle() {
     #notice, a[href="#notice"] { display: none !important; }
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
     #schedule button:hover { transform: none !important; }
+    #schedule .grid.grid-cols-7.gap-3 { animation: none !important; }
+    #schedule .grid.grid-cols-7.gap-3 > div { transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease !important; }
     #schedule .sou-schedule-range-hidden { display: none !important; }
+    #schedule [data-sou-schedule-compact-row="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     #members.sou-member-live-section {
       margin-top: 30px !important;
       border: 0 !important;
@@ -129,7 +133,9 @@ function stabilizeSchedule() {
 function renderPausedMembers() {
   const section = document.getElementById('members');
   if (!section) return;
+  if (section.getAttribute('data-sou-members-paused') === 'true') return;
   section.className = 'sou-member-live-section';
+  section.setAttribute('data-sou-members-paused', 'true');
   section.innerHTML = `
     <section class="sou-member-live-paused" aria-label="수용소 멤버표 개편 준비중">
       <div class="sou-member-live-paused-eyebrow">SOOP MEMBER GRID</div>
@@ -156,20 +162,51 @@ function paint() {
 }
 
 export default function PrisonLiveStatusHydrator() {
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (typeof window === 'undefined' || !window.location.pathname.startsWith('/jangjisu-prison')) return undefined;
     let disposed = false;
-    const run = () => {
-      if (!disposed) paint();
+    let observer = null;
+    let applying = false;
+
+    const runSchedule = () => {
+      if (disposed || applying) return;
+      applying = true;
+      try {
+        stabilizeSchedule();
+      } finally {
+        window.requestAnimationFrame(() => {
+          applying = false;
+        });
+      }
     };
+
+    const attachScheduleObserver = () => {
+      if (observer || disposed) return;
+      const schedule = document.getElementById('schedule');
+      if (!schedule) return;
+      observer = new MutationObserver(runSchedule);
+      observer.observe(schedule, { childList: true, subtree: true });
+    };
+
+    const run = () => {
+      if (disposed) return;
+      paint();
+      attachScheduleObserver();
+    };
+
     run();
-    [120, 360, 800].forEach((delay) => window.setTimeout(run, delay));
+    [60, 160, 360].forEach((delay) => window.setTimeout(run, delay));
+
     const onClick = (event) => {
-      if (event.target?.closest?.('#schedule')) [0, 120, 360, 700].forEach((delay) => window.setTimeout(stabilizeSchedule, delay));
+      if (event.target?.closest?.('#schedule')) {
+        runSchedule();
+        [60, 160, 360].forEach((delay) => window.setTimeout(runSchedule, delay));
+      }
     };
     document.addEventListener('click', onClick, true);
     return () => {
       disposed = true;
+      observer?.disconnect?.();
       document.removeEventListener('click', onClick, true);
     };
   }, []);
