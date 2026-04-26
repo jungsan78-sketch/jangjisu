@@ -39,8 +39,61 @@ export default function App({ Component, pageProps }) {
         />
         <style>{`
           video[src="/hero.mp4"],
-          img[src="/jangjisu-prison-hero.png"] {
+          img[src="/jangjisu-prison-hero.png"],
+          section[aria-label="장지수용소 대문"],
+          body:not(:has(section[aria-label="장지수용소 대문"])) main > section:first-child:has(video[src="/hero.mp4"]),
+          body:not(:has(section[aria-label="장지수용소 대문"])) main > section:first-child:has(.text-transparent) {
             display: none !important;
+          }
+          main > section:first-child:has(video[src="/hero.mp4"]) + #schedule,
+          main > section:first-child:has(.text-transparent) + #schedule,
+          section[aria-label="장지수용소 대문"] + #members,
+          section[aria-label="장지수용소 대문"] + #schedule {
+            margin-top: 0 !important;
+          }
+          #notice,
+          #schedule,
+          #youtube,
+          #recent-youtube,
+          #members.sou-member-live-section,
+          section.sou-member-live-section {
+            position: relative !important;
+          }
+          #notice::after,
+          #schedule::after,
+          #youtube::after,
+          #recent-youtube::after,
+          #members.sou-member-live-section::after,
+          section.sou-member-live-section::after {
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            z-index: 5;
+            border: 1px solid rgba(255,255,255,.10);
+            border-radius: 999px;
+            background: rgba(0,0,0,.22);
+            padding: 6px 11px;
+            color: rgba(255,255,255,.62);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: -.01em;
+            line-height: 1;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+          }
+          #notice::after {
+            content: "30분마다 갱신";
+          }
+          #schedule::after {
+            content: "30분마다 갱신";
+          }
+          #youtube::after,
+          #recent-youtube::after {
+            content: "15분마다 갱신";
+          }
+          #members.sou-member-live-section::after,
+          section.sou-member-live-section::after {
+            content: "5분마다 갱신";
           }
           html.sou-prison-prepaint main,
           body:has(section[aria-label="장지수용소 대문"]) main {
