@@ -3,6 +3,7 @@ import Head from 'next/head';
 import NewYoutubeDomToast from '../components/NewYoutubeDomToast';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
+import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -76,6 +77,7 @@ export default function App({ Component, pageProps }) {
       <NewYoutubeDomToast />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
+      <PrisonMemberLiveGrid />
     </>
   );
 }
