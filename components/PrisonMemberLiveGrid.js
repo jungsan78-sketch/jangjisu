@@ -161,8 +161,9 @@ function PrisonMemberLiveGridContent() {
     <section data-sou-react-live-grid="true" className="sou-member-live-section mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-200/70">SOOP MEMBER GRID</div>
-          <h3 className="mt-2 text-[28px] font-black tracking-tight text-white sm:text-[34px]">멤버 라이브 카드</h3>
+          <h3 className="group w-fit bg-[linear-gradient(90deg,#ffffff_0%,#fde68a_30%,#67e8f9_68%,#ffffff_100%)] bg-[length:220%_100%] bg-clip-text text-[30px] font-black tracking-[-0.05em] text-transparent drop-shadow-[0_0_26px_rgba(103,232,249,0.16)] transition-all duration-300 hover:scale-[1.015] hover:drop-shadow-[0_0_34px_rgba(251,191,36,0.20)] sm:text-[38px]">
+            수용소 멤버 라이브
+          </h3>
         </div>
         <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62">
           {loaded ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}
