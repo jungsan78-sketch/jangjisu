@@ -185,12 +185,18 @@ export default function PrisonLiveStatusHydrator() {
       }
     };
 
+    const runScheduleBurst = () => {
+      runSchedule();
+      window.requestAnimationFrame(runSchedule);
+      [0, 16, 32, 60, 120, 220].forEach((delay) => window.setTimeout(runSchedule, delay));
+    };
+
     const attachScheduleObserver = () => {
       if (observer || disposed) return;
       const schedule = document.getElementById('schedule');
       if (!schedule) return;
-      observer = new MutationObserver(runSchedule);
-      observer.observe(schedule, { childList: true, subtree: true });
+      observer = new MutationObserver(runScheduleBurst);
+      observer.observe(schedule, { childList: true, subtree: true, characterData: true });
     };
 
     const run = () => {
@@ -204,8 +210,7 @@ export default function PrisonLiveStatusHydrator() {
 
     const onClick = (event) => {
       if (event.target?.closest?.('#schedule')) {
-        runSchedule();
-        [60, 160, 360].forEach((delay) => window.setTimeout(runSchedule, delay));
+        runScheduleBurst();
       }
     };
     document.addEventListener('click', onClick, true);
