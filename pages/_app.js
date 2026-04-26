@@ -6,6 +6,17 @@ import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
 import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
 
+const SCHEDULE_POLLING_INTERVAL_MS = 30 * 60 * 1000;
+
+if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
+  window.__SOU_SCHEDULE_POLLING_PATCHED__ = true;
+  const originalSetInterval = window.setInterval.bind(window);
+  window.setInterval = (handler, timeout, ...args) => {
+    const nextTimeout = Number(timeout) === 60 * 1000 ? SCHEDULE_POLLING_INTERVAL_MS : timeout;
+    return originalSetInterval(handler, nextTimeout, ...args);
+  };
+}
+
 export default function App({ Component, pageProps }) {
   return (
     <>
@@ -27,6 +38,10 @@ export default function App({ Component, pageProps }) {
           }}
         />
         <style>{`
+          video[src="/hero.mp4"],
+          img[src="/jangjisu-prison-hero.png"] {
+            display: none !important;
+          }
           html.sou-prison-prepaint main,
           body:has(section[aria-label="장지수용소 대문"]) main {
             width: 100% !important;
