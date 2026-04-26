@@ -74,11 +74,10 @@ function MemberCard({ member, status, post }) {
       <div className="p-4 pt-10">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-[19px] font-black tracking-[-0.03em] text-white">{member.nickname}</h4>
-          {member.nickname === '장지수' ? <span className="rounded-full border border-amber-200/24 bg-amber-300/10 px-2 py-1 text-[10px] font-black tracking-[0.12em] text-amber-100">WARDEN</span> : null}
+          {member.nickname === '장지수' ? <span className="rounded-full border border-amber-200/24 bg-amber-300/10 px-2 py-1 text-[10px] font-black tracking-[0.12em] text-amber-100">수장</span> : null}
         </div>
         <p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/70">{title}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {status?.categoryName ? <span className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{status.categoryName}</span> : null}
           {tags.map((tag) => <span key={tag} className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{tag}</span>)}
         </div>
         <div className="mt-3 flex gap-2">
