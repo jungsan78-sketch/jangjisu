@@ -106,7 +106,7 @@ function MemberCard({ member, status, post }) {
   const isLive = Boolean(status?.isLive);
   const isUnknown = String(status?.liveState || '').includes('unknown');
   const mediaHref = isLive && status?.liveUrl ? status.liveUrl : member.station;
-  const mediaImage = status?.thumbnailUrl || member.image;
+  const mediaImage = status?.thumbnailUrl || '';
   const title = status?.title || (isLive ? '방송 중' : isUnknown ? '방송 상태 확인중' : '방송 꺼짐');
   const stateLabel = isLive ? formatViewerBadge(status?.viewerCount) : isUnknown ? '확인중' : 'OFF';
   const stateClass = isLive ? 'border-rose-400/48 shadow-[0_0_0_1px_rgba(251,113,133,0.18),0_22px_46px_rgba(127,29,29,0.24)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
@@ -117,9 +117,15 @@ function MemberCard({ member, status, post }) {
 
   return (
     <article className={`group relative overflow-hidden rounded-[26px] border ${stateClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.18)]`}>
-      <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block h-36 overflow-hidden bg-slate-950/80">
-        <img src={mediaImage} alt={`${member.nickname} 방송 이미지`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/45" />
+      <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block h-36 overflow-hidden bg-black">
+        {isLive && mediaImage ? (
+          <>
+            <img src={mediaImage} alt={`${member.nickname} 방송 이미지`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/45" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.42),transparent_56%),linear-gradient(180deg,#02040a,#000)]" />
+        )}
       </a>
       <img src={member.image} alt={`${member.nickname} 프로필`} className="absolute left-4 top-[96px] z-10 h-[70px] w-[70px] rounded-full border-[3px] border-[#05070c] bg-slate-900 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.32)]" loading="lazy" />
       <div className={`absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-black backdrop-blur-md ${isLive ? 'border-rose-200/40 bg-rose-950/80 text-rose-50 shadow-[0_10px_26px_rgba(127,29,29,0.35)]' : 'border-white/14 bg-black/72 text-white/82'}`}>
