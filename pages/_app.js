@@ -25,12 +25,6 @@ export default function App({ Component, pageProps }) {
           }}
         />
         <style>{`
-          html.sou-prison-prepaint header > div,
-          html.sou-prison-prepaint main,
-          body:has(section[aria-label="장지수용소 대문"]) header > div,
-          body:has(section[aria-label="장지수용소 대문"]) main {
-            max-width: 1120px !important;
-          }
           html.sou-prison-prepaint main,
           body:has(section[aria-label="장지수용소 대문"]) main {
             width: 100% !important;
