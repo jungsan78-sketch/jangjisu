@@ -131,8 +131,8 @@ function PrisonMemberLiveGridContent() {
     async function load() {
       try {
         const [liveRes, postsRes] = await Promise.all([
-          fetch('/api/soop-live-status', { cache: 'no-store' }),
-          fetch('/api/soop-station-posts', { cache: 'no-store' }),
+          fetch('/api/live-status'),
+          fetch('/api/soop-station-posts'),
         ]);
         const [liveJson, postsJson] = await Promise.all([
           liveRes.ok ? liveRes.json() : Promise.resolve(null),
