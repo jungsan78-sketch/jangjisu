@@ -241,15 +241,17 @@ function findYoutubeGrid(section) {
   return candidates.sort((a, b) => b.children.length - a.children.length)[0] || null;
 }
 
-function isShortsSection(section) {
-  const selectedButton = [...section.querySelectorAll('button')].find((button) => {
+function getActiveYoutubeTab(section) {
+  const buttons = [...section.querySelectorAll('button')];
+  const activeButton = buttons.find((button) => {
     const className = String(button.className || '');
-    return /red-500|red-400|shadow|active|selected/i.test(className);
+    return /bg-red-500\/20|border-red-400\/40|shadow-\[0_0_15px_rgba\(255,0,0,0\.4\)\]/.test(className);
   });
-  const selectedText = normalizeText(selectedButton?.textContent || '');
-  const headingText = normalizeText(section.querySelector('h3, h4, [class*="text-"]')?.textContent || '');
-  const sectionText = normalizeText(section.textContent || '').slice(0, 160);
-  return selectedText.includes('쇼츠') || headingText.includes('쇼츠') || sectionText.includes('쇼츠');
+  return normalizeText(activeButton?.textContent || '');
+}
+
+function isShortsSection(section) {
+  return getActiveYoutubeTab(section).includes('쇼츠');
 }
 
 function limitYoutubeCards(grid) {
