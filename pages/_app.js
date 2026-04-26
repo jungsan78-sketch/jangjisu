@@ -82,6 +82,15 @@ export default function App({ Component, pageProps }) {
           section.sou-member-live-section::after {
             content: "5분마다 갱신";
           }
+          body:has(section[aria-label="장지수용소 대문"]) #schedule button {
+            border-color: rgba(251,191,36,.12) !important;
+            background: linear-gradient(180deg, rgba(251,191,36,.075), rgba(15,23,42,.48)) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 18px rgba(251,191,36,.055), 0 10px 24px rgba(0,0,0,.18) !important;
+          }
+          body:has(section[aria-label="장지수용소 대문"]) #schedule button:hover {
+            border-color: rgba(251,191,36,.20) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 24px rgba(251,191,36,.11), 0 12px 28px rgba(0,0,0,.22) !important;
+          }
         `}</style>
       </Head>
       <Component {...pageProps} />
