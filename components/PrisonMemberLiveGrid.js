@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 
 function stationIdFromUrl(url = '') {
@@ -103,7 +104,7 @@ function MemberCard({ member, status, post }) {
   );
 }
 
-export default function PrisonMemberLiveGrid() {
+function PrisonMemberLiveGridContent() {
   const [livePayload, setLivePayload] = useState(null);
   const [postsPayload, setPostsPayload] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -140,7 +141,7 @@ export default function PrisonMemberLiveGrid() {
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
 
   return (
-    <section id="members" data-sou-react-live-grid="true" className="sou-member-live-section mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
+    <section data-sou-react-live-grid="true" className="sou-member-live-section mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8">
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="text-xs font-black uppercase tracking-[0.24em] text-cyan-200/70">SOOP MEMBER GRID</div>
@@ -158,4 +159,28 @@ export default function PrisonMemberLiveGrid() {
       </div>
     </section>
   );
+}
+
+export default function PrisonMemberLiveGrid() {
+  const [mountNode, setMountNode] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.location.pathname.startsWith('/jangjisu-prison')) return undefined;
+    const original = document.getElementById('members');
+    if (!original || document.getElementById('sou-react-member-live-grid-root')) return undefined;
+
+    const root = document.createElement('div');
+    root.id = 'sou-react-member-live-grid-root';
+    original.parentNode.insertBefore(root, original);
+    original.style.setProperty('display', 'none', 'important');
+    setMountNode(root);
+
+    return () => {
+      original.style.removeProperty('display');
+      root.remove();
+    };
+  }, []);
+
+  if (!mountNode) return null;
+  return createPortal(<PrisonMemberLiveGridContent />, mountNode);
 }
