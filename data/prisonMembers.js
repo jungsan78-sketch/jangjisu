@@ -20,4 +20,5 @@ export const PRISON_MEMBERS = [
   { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714', youtube: 'https://www.youtube.com/@ddikku_0714', cafe: 'https://cafe.naver.com/ddikku' },
 ];
 
-export const SCHEDULE_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
+export const ALL_PRISON_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
+export const SCHEDULE_MEMBERS = ALL_PRISON_MEMBERS;
