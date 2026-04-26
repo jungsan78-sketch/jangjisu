@@ -20,6 +20,24 @@ function formatFetchedAt(value) {
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatRelativePostTime(value) {
+  if (!value) return '';
+  const raw = String(value).replace(/\./g, '-').replace(/\s+/g, ' ').trim();
+  const date = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T'));
+  if (Number.isNaN(date.getTime())) return value;
+  const diffMs = Date.now() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))}분 전`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}시간 전`;
+  if (diffMs < week) return `${Math.floor(diffMs / day)}일 전`;
+  if (diffMs < month) return `${Math.floor(diffMs / week)}주 전`;
+  return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}
+
 function statusRank(status) {
   if (status?.isLive) return 0;
   if (String(status?.liveState || '').includes('unknown')) return 1;
@@ -59,6 +77,7 @@ function MemberCard({ member, status, post }) {
   const stateClass = isLive ? 'border-rose-300/35 shadow-[0_0_0_1px_rgba(251,113,133,0.10),0_20px_42px_rgba(127,29,29,0.20)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
   const dotClass = isLive ? 'bg-rose-400 shadow-[0_0_16px_rgba(251,113,133,0.75)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
   const tags = Array.isArray(member.tags) ? member.tags : [];
+  const postTime = formatRelativePostTime(post?.createdAt);
 
   return (
     <article className={`group relative overflow-hidden rounded-[26px] border ${stateClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.18)]`}>
@@ -86,15 +105,15 @@ function MemberCard({ member, status, post }) {
           <PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} />
         </div>
         <div className="mt-4 border-t border-white/8 pt-3">
-          <div className="text-[10px] font-black tracking-[0.18em] text-cyan-200/70">RECENT POST</div>
+          <div className="text-[10px] font-black tracking-[0.18em] text-cyan-200/70">최근 공지사항</div>
           {post ? (
             <>
               <a href={post.url} target="_blank" rel="noreferrer" className="mt-1.5 block line-clamp-2 text-[13px] font-black leading-5 text-white/88 hover:text-white hover:underline">{post.title}</a>
               {post.summary ? <p className="mt-1.5 line-clamp-2 text-xs font-bold leading-5 text-white/46">{post.summary}</p> : null}
-              <div className="mt-2 text-[11px] font-extrabold text-white/42">조회 {formatCount(post.viewCount)} · 업 {formatCount(post.okCount)} · 댓글 {formatCount(post.commentCount)}</div>
+              {postTime ? <div className="mt-2 text-[11px] font-extrabold text-white/42">{postTime}</div> : null}
             </>
           ) : (
-            <div className="mt-1.5 text-[13px] font-black leading-5 text-white/58">최근 본인 게시글 확인중</div>
+            <div className="mt-1.5 text-[13px] font-black leading-5 text-white/58">최근 공지사항 확인중</div>
           )}
         </div>
       </div>
