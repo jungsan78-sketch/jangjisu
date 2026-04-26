@@ -17,7 +17,12 @@ function injectStyle() {
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
     #schedule button:hover { transform: none !important; }
     #schedule .grid.grid-cols-7.gap-3 { animation: none !important; }
-    #schedule .grid.grid-cols-7.gap-3 > div { transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease !important; }
+    #schedule .grid.grid-cols-7.gap-3 > div {
+      transform: none !important;
+      transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease !important;
+    }
+    #schedule .grid.grid-cols-7.gap-3 > div:hover { transform: none !important; }
+    #schedule .grid.grid-cols-7.gap-3 > div > .pointer-events-none { display: none !important; }
     #schedule .sou-schedule-range-hidden { display: none !important; }
     #schedule [data-sou-schedule-compact-row="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     #members.sou-member-live-section {
