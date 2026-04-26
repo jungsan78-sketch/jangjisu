@@ -12,6 +12,13 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" type="image/png" href="/site-icon.png" />
         <link rel="apple-touch-icon" href="/site-icon.png" />
         <style>{`
+          body:has(section[aria-label="장지수용소 대문"]) header > div,
+          body:has(section[aria-label="장지수용소 대문"]) main {
+            max-width: 1120px !important;
+          }
+          body:has(section[aria-label="장지수용소 대문"]) main {
+            width: 100% !important;
+          }
           body:has(section[aria-label="장지수용소 대문"]) #members:not(.sou-member-live-section) {
             position: relative !important;
             min-height: 230px !important;
