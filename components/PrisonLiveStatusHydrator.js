@@ -11,7 +11,6 @@ function injectStyle() {
     document.head.appendChild(style);
   }
   style.textContent = `
-    header > div, main { max-width: 1120px !important; }
     main { width: 100% !important; }
     #notice, a[href="#notice"] { display: none !important; }
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
@@ -78,7 +77,6 @@ function injectStyle() {
       font-weight: 900;
     }
     @media (max-width: 760px) {
-      header > div, main { max-width: 100% !important; }
       .sou-member-live-paused-list { grid-template-columns: 1fr; }
     }
   `;
