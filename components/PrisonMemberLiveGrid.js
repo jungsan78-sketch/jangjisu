@@ -44,12 +44,25 @@ function statusRank(status) {
   return 2;
 }
 
+function viewerCount(status) {
+  const value = Number(status?.viewerCount || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 function sortMembers(members, statuses) {
   return [...members].sort((a, b) => {
-    const rankDiff = statusRank(statuses[a.nickname]) - statusRank(statuses[b.nickname]);
+    const aStatus = statuses[a.nickname];
+    const bStatus = statuses[b.nickname];
+    const rankDiff = statusRank(aStatus) - statusRank(bStatus);
     if (rankDiff) return rankDiff;
+    if (aStatus?.isLive && bStatus?.isLive) {
+      const viewerDiff = viewerCount(bStatus) - viewerCount(aStatus);
+      if (viewerDiff) return viewerDiff;
+    }
     if (a.nickname === '장지수') return -1;
     if (b.nickname === '장지수') return 1;
+    if (a.nickname === '린링') return -1;
+    if (b.nickname === '린링') return 1;
     return 0;
   });
 }
@@ -67,17 +80,26 @@ function PlatformLink({ href, type, label }) {
   return <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>{icon}</a>;
 }
 
+function RoleBadge({ type }) {
+  const label = type === 'warden' ? '수장' : '반장';
+  const className = type === 'warden'
+    ? 'border-amber-200/55 bg-[linear-gradient(135deg,rgba(251,191,36,0.30),rgba(120,53,15,0.42))] text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.20),inset_0_1px_0_rgba(255,255,255,0.18)]'
+    : 'border-cyan-200/52 bg-[linear-gradient(135deg,rgba(34,211,238,0.26),rgba(30,64,175,0.42))] text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.18)]';
+  return <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black tracking-[0.16em] ${className}`}>{label}</span>;
+}
+
 function MemberCard({ member, status, post }) {
   const isLive = Boolean(status?.isLive);
   const isUnknown = String(status?.liveState || '').includes('unknown');
   const mediaHref = isLive && status?.liveUrl ? status.liveUrl : member.station;
   const mediaImage = status?.thumbnailUrl || member.image;
   const title = status?.title || (isLive ? '방송 중' : isUnknown ? '방송 상태 확인중' : '방송 꺼짐');
-  const stateLabel = isLive ? formatCount(status?.viewerCount) : isUnknown ? '확인중' : 'OFF';
-  const stateClass = isLive ? 'border-rose-300/35 shadow-[0_0_0_1px_rgba(251,113,133,0.10),0_20px_42px_rgba(127,29,29,0.20)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
-  const dotClass = isLive ? 'bg-rose-400 shadow-[0_0_16px_rgba(251,113,133,0.75)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
+  const stateLabel = isLive ? `${formatCount(status?.viewerCount)}명 시청중` : isUnknown ? '확인중' : 'OFF';
+  const stateClass = isLive ? 'border-rose-400/48 shadow-[0_0_0_1px_rgba(251,113,133,0.18),0_22px_46px_rgba(127,29,29,0.24)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
+  const dotClass = isLive ? 'bg-[#ff163d] shadow-[0_0_0_4px_rgba(255,22,61,0.16),0_0_22px_rgba(255,22,61,0.92)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
   const tags = Array.isArray(member.tags) ? member.tags : [];
   const postTime = formatRelativePostTime(post?.createdAt);
+  const roleType = member.nickname === '장지수' ? 'warden' : member.nickname === '린링' ? 'captain' : '';
 
   return (
     <article className={`group relative overflow-hidden rounded-[26px] border ${stateClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.18)]`}>
@@ -86,14 +108,14 @@ function MemberCard({ member, status, post }) {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/45" />
       </a>
       <img src={member.image} alt={`${member.nickname} 프로필`} className="absolute left-4 top-[96px] z-10 h-[70px] w-[70px] rounded-full border-[3px] border-[#05070c] bg-slate-900 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.32)]" loading="lazy" />
-      <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-black/72 px-2.5 py-1.5 text-[11px] font-black text-white/82 backdrop-blur-md">
-        <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      <div className={`absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-black backdrop-blur-md ${isLive ? 'border-rose-200/40 bg-rose-950/80 text-rose-50 shadow-[0_10px_26px_rgba(127,29,29,0.35)]' : 'border-white/14 bg-black/72 text-white/82'}`}>
+        <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
         {stateLabel}
       </div>
       <div className="p-4 pt-10">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-[19px] font-black tracking-[-0.03em] text-white">{member.nickname}</h4>
-          {member.nickname === '장지수' ? <span className="rounded-full border border-amber-200/24 bg-amber-300/10 px-2 py-1 text-[10px] font-black tracking-[0.12em] text-amber-100">수장</span> : null}
+          {roleType ? <RoleBadge type={roleType} /> : null}
         </div>
         <p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/70">{title}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -105,10 +127,10 @@ function MemberCard({ member, status, post }) {
           <PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} />
         </div>
         <div className="mt-4 border-t border-white/8 pt-3">
-          <div className="text-[10px] font-black tracking-[0.18em] text-cyan-200/70">최근 공지사항</div>
+          <div className="text-[11px] font-black tracking-[0.18em] text-cyan-100 drop-shadow-[0_0_12px_rgba(103,232,249,0.18)]">최근 공지사항</div>
           {post ? (
             <>
-              <a href={post.url} target="_blank" rel="noreferrer" className="mt-1.5 block line-clamp-2 text-[13px] font-black leading-5 text-white/88 hover:text-white hover:underline">{post.title}</a>
+              <a href={post.url} target="_blank" rel="noreferrer" className="mt-2 block line-clamp-2 text-[15px] font-black leading-6 text-white/94 hover:text-white hover:underline">{post.title}</a>
               {post.summary ? <p className="mt-1.5 line-clamp-2 text-xs font-bold leading-5 text-white/46">{post.summary}</p> : null}
               {postTime ? <div className="mt-2 text-[11px] font-extrabold text-white/42">{postTime}</div> : null}
             </>
