@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
-const STYLE_ID = 'sou-calendar-youtube-ui-style';
-const DAY_RANGE_HIDDEN_CLASS = 'sou-calendar-compact-hidden';
+const STYLE_ID = 'sou-youtube-ui-style';
 const YOUTUBE_LIMIT_HIDDEN_CLASS = 'sou-youtube-limit-hidden';
 const YOUTUBE_DONE_ATTR = 'data-sou-youtube-carousel-ready';
 const YOUTUBE_LIMIT = 10;
@@ -11,10 +10,6 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-    #schedule .${DAY_RANGE_HIDDEN_CLASS} { display: none !important; }
-    #schedule [data-sou-compact-day-row="true"] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-    #schedule [data-sou-compact-day-row="true"] > * { min-width: 0 !important; }
-
     #youtube.sou-youtube-compact,
     #recent-youtube.sou-youtube-compact {
       padding-top: 22px !important;
@@ -147,7 +142,6 @@ function injectStyle() {
     }
 
     @media (max-width: 640px) {
-      #schedule [data-sou-compact-day-row="true"] { grid-template-columns: 1fr !important; }
       #youtube.sou-youtube-compact .sou-youtube-carousel,
       #recent-youtube.sou-youtube-compact .sou-youtube-carousel {
         grid-auto-columns: minmax(210px, 82%) !important;
@@ -177,56 +171,6 @@ function isElement(value) {
 
 function normalizeText(value = '') {
   return String(value).replace(/\s+/g, ' ').trim();
-}
-
-function isWholeScheduleView(schedule) {
-  return [...schedule.querySelectorAll('button')].some((button) => {
-    const text = normalizeText(button.textContent).replace(/\s/g, '');
-    const className = String(button.className || '');
-    const selected = /border-amber|bg-amber|text-white|active|selected/i.test(className) || button.getAttribute('aria-pressed') === 'true';
-    return text.includes('전체보기') && selected;
-  });
-}
-
-function isDayCard(element) {
-  const text = normalizeText(element.textContent || '');
-  const rect = element.getBoundingClientRect();
-  if (rect.width < 70 || rect.height < 90) return false;
-  if (element.querySelector('button')) return false;
-  if (!/(^|\s)(TODAY|\d{1,2}일|\d{1,2}\s*일|[월화수목금토일])/.test(text)) return false;
-  return /rounded|border|bg-|shadow|min-h|overflow/i.test(String(element.className || ''));
-}
-
-function resetScheduleCompact(schedule) {
-  schedule.querySelectorAll(`.${DAY_RANGE_HIDDEN_CLASS}`).forEach((element) => element.classList.remove(DAY_RANGE_HIDDEN_CLASS));
-  schedule.querySelectorAll('[data-sou-compact-day-row="true"]').forEach((element) => {
-    element.removeAttribute('data-sou-compact-day-row');
-    element.style.gridTemplateColumns = '';
-  });
-}
-
-function compactScheduleRange() {
-  const schedule = document.getElementById('schedule');
-  if (!schedule) return;
-  resetScheduleCompact(schedule);
-  if (!isWholeScheduleView(schedule)) return;
-
-  const groups = [...schedule.querySelectorAll('div')].filter((group) => {
-    const children = [...group.children].filter(isElement);
-    if (children.length !== 5) return false;
-    if (!children.every(isDayCard)) return false;
-    const groupRect = group.getBoundingClientRect();
-    if (groupRect.width < 420) return false;
-    return /grid|flex/i.test(String(group.className || '')) || window.getComputedStyle(group).display === 'grid';
-  });
-
-  groups.forEach((group) => {
-    const children = [...group.children].filter(isElement);
-    children[0].classList.add(DAY_RANGE_HIDDEN_CLASS);
-    children[4].classList.add(DAY_RANGE_HIDDEN_CLASS);
-    group.setAttribute('data-sou-compact-day-row', 'true');
-    group.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-  });
 }
 
 function findYoutubeGrid(section) {
@@ -279,7 +223,7 @@ function compactYoutubeSection(section) {
   grid.classList.add('sou-youtube-carousel');
   limitYoutubeCards(grid);
 
-  let shell = grid.parentElement;
+  const shell = grid.parentElement;
   if (!shell || !isElement(shell)) return;
   shell.classList.add('sou-youtube-panel-shell');
 
@@ -331,7 +275,6 @@ function compactYoutubeSections() {
 
 function hydrateUi() {
   injectStyle();
-  compactScheduleRange();
   compactYoutubeSections();
 }
 
@@ -349,7 +292,7 @@ export default function CalendarYoutubeUiHydrator() {
 
     const interval = window.setInterval(run, 1200);
     const clickHandler = (event) => {
-      if (event.target?.closest?.('#schedule, #youtube, #recent-youtube')) {
+      if (event.target?.closest?.('#youtube, #recent-youtube')) {
         [0, 120, 360].forEach((delay) => window.setTimeout(run, delay));
       }
     };
