@@ -5,7 +5,7 @@ const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
 const CACHE_KEY = 'schedule:ddikku:current:v7';
-const CACHE_TTL_SECONDS = 60 * 30;
+const CACHE_TTL_SECONDS = 60 * 60;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
   '띠어트 (영공)',
@@ -88,7 +88,7 @@ function extractOffReason(line) {
   const normalized = normalizeText(line);
   if (!normalized) return '';
   const stripped = normalized
-    .replace(/휴방/gu, ' ')
+    .replace(/\b휴방\b/gu, ' ')
     .replace(/[＊*]/g, ' ')
     .replace(/[:：/|]+/g, ' ')
     .replace(/\s+/g, ' ')
