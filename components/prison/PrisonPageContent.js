@@ -7,6 +7,7 @@ import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LOGO_SRC = '/prison-logo.webp';
 const LOGO_FALLBACK_SRC = '/prison-logo.svg';
+const FAN_CAFE_URL = 'https://cafe.naver.com/quaddurupfancafe';
 
 function viewerCount(status) {
   const value = Number(status?.viewerCount || 0);
@@ -39,12 +40,12 @@ function SidebarLogo({ compact = false }) {
       src={LOGO_SRC}
       onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }}
       alt="장지수용소"
-      className={`${compact ? 'h-11' : 'h-[84px]'} w-full object-contain drop-shadow-[0_0_26px_rgba(103,232,249,0.20)]`}
+      className={`${compact ? 'h-12' : 'h-[104px]'} w-full object-contain drop-shadow-[0_0_30px_rgba(103,232,249,0.24)]`}
     />
   );
 }
 
-function SidebarNavItem({ href, label, icon, tone = 'blue' }) {
+function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
   const toneClass = tone === 'green'
     ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
     : tone === 'red'
@@ -54,7 +55,7 @@ function SidebarNavItem({ href, label, icon, tone = 'blue' }) {
         : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
-    <a href={href} className={`group flex items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] px-4 py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] px-4 py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/30 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]">{icon}</span>
       <span>{label}</span>
     </a>
@@ -67,7 +68,7 @@ function LivePreviewCard({ preview }) {
   const safeTop = Math.min(Math.max(Number(top || 260), 190), typeof window !== 'undefined' ? window.innerHeight - 190 : 720);
 
   return (
-    <div className="pointer-events-none fixed left-[288px] z-[90] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/96 text-white shadow-[0_28px_80px_rgba(0,0,0,0.50),0_0_32px_rgba(56,189,248,0.10),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
+    <div className="pointer-events-none fixed left-[288px] z-[9999] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.62),0_0_42px_rgba(56,189,248,0.14),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
       <div className="relative h-[166px] bg-black">
         {status.thumbnailUrl ? (
           <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
@@ -187,7 +188,7 @@ function LiveMemberList() {
 function PrisonSidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen w-[274px] shrink-0 border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-      <a href="#top" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
+      <a href="#top" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
         <SidebarLogo />
       </a>
 
@@ -197,7 +198,7 @@ function PrisonSidebar() {
         <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
-        <SidebarNavItem href="/" label="SOU 메인" icon="↩" tone="gold" />
+        <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
       </nav>
 
       <LiveMemberList />
@@ -209,10 +210,10 @@ function MobilePrisonNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/88 px-4 py-3 backdrop-blur-xl xl:hidden">
       <div className="flex items-center justify-between gap-3">
-        <a href="#top" className="flex h-14 w-[154px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
+        <a href="#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
           <SidebarLogo compact />
         </a>
-        <a href="/" className="rounded-full bg-amber-300/8 px-3 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">SOU 메인</a>
+        <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <a href="#members" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">멤버 라이브</a>
