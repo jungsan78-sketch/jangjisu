@@ -88,15 +88,40 @@ function LiveMemberList() {
       {liveMembers.length > 0 ? (
         <div className="space-y-3">
           {liveMembers.map(({ member, status }) => (
-            <a key={member.nickname} href={status.liveUrl || member.station} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-1.5 transition hover:border-white/10 hover:bg-white/[0.045]">
-              <img src={member.image} alt={`${member.nickname} 프로필`} className="h-9 w-9 shrink-0 rounded-full border border-sky-200/30 bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.12)]" loading="lazy" />
+            <a key={member.nickname} href={status.liveUrl || member.station} target="_blank" rel="noreferrer" className="group/live relative flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-2 transition hover:border-white/10 hover:bg-white/[0.045]">
+              <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full border border-sky-200/30 bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.12)]" loading="lazy" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-black text-white">{member.nickname}</div>
-                <div className="truncate text-[11px] font-bold text-white/42">{status.category || status.title || 'LIVE'}</div>
+                <div className="truncate text-[15px] font-black leading-5 tracking-[-0.03em] text-white">{member.nickname}</div>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5 text-[12px] font-black text-white/80">
+              <div className="flex shrink-0 items-center gap-1.5 text-[12px] font-black text-white/85">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
                 <span>{formatViewerCount(status.viewerCount)}</span>
+              </div>
+              <div className="pointer-events-none absolute left-[calc(100%+14px)] top-1/2 z-50 hidden w-[300px] -translate-y-1/2 overflow-hidden rounded-[24px] border border-white/12 bg-[#080d16]/96 shadow-[0_28px_80px_rgba(0,0,0,0.48),0_0_32px_rgba(56,189,248,0.08)] backdrop-blur-xl group-hover/live:block">
+                <div className="relative h-[166px] bg-black">
+                  {status.thumbnailUrl ? (
+                    <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_58%),linear-gradient(180deg,#101827,#030712)]">
+                      <img src={member.image} alt={`${member.nickname} 프로필`} className="h-20 w-20 rounded-full border border-white/15 object-cover opacity-90" loading="lazy" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <img src={member.image} alt="" className="h-8 w-8 rounded-full border border-white/15 object-cover" loading="lazy" />
+                      <span className="truncate text-sm font-black text-white">{member.nickname}</span>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200/25 bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
+                      {formatViewerCount(status.viewerCount)}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="mb-1 text-[10px] font-black tracking-[0.18em] text-sky-100/70">LIVE TITLE</div>
+                  <div className="line-clamp-2 text-[15px] font-black leading-6 text-white">{status.title || '방송 중'}</div>
+                </div>
               </div>
             </a>
           ))}
