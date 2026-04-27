@@ -16,6 +16,12 @@ const FALLBACK_CREW_GROUPS = [
   accentIndex: index,
 }));
 
+const CREW_MEMBER_RENAMES = {
+  어인섬: {
+    거밍챠: '차밍챠',
+  },
+};
+
 const MANUAL_CREW_UPDATES = {
   버컴퍼니: {
     category: 'soop',
@@ -81,6 +87,11 @@ function normalizeName(value = '') {
   return String(value).replace(/\s+/g, '').trim();
 }
 
+function renameMemberForCrew(crewName = '', nickname = '') {
+  const clean = displayNickname(nickname);
+  return CREW_MEMBER_RENAMES[crewName]?.[clean] || clean;
+}
+
 function extractStationId(url = '') {
   const matched = String(url || '').match(/sooplive\.(?:com|co\.kr)\/station\/([^/?#]+)/i);
   return matched?.[1]?.toLowerCase() || '';
@@ -98,12 +109,12 @@ function buildProfileImages(stationUrl = '') {
   ];
 }
 
-function normalizeMember(member = {}, index = 0) {
+function normalizeMember(member = {}, index = 0, crewName = '') {
   const stationUrl = member.stationUrl || '';
   const profileImages = member.profileImages?.length ? member.profileImages : buildProfileImages(stationUrl);
   return {
     ...member,
-    nickname: displayNickname(member.nickname || ''),
+    nickname: renameMemberForCrew(crewName, member.nickname || ''),
     role: member.role || (index === 0 ? 'leader' : 'member'),
     stationUrl,
     profileImage: member.profileImage || profileImages[0] || '',
@@ -111,11 +122,11 @@ function normalizeMember(member = {}, index = 0) {
   };
 }
 
-function dedupeMembers(members = []) {
+function dedupeMembers(members = [], crewName = '') {
   const seen = new Set();
   const result = [];
   members.forEach((member, index) => {
-    const normalized = normalizeMember(member, index);
+    const normalized = normalizeMember(member, index, crewName);
     const key = extractStationId(normalized.stationUrl) || normalizeName(normalized.nickname);
     if (!key || seen.has(key)) return;
     seen.add(key);
@@ -141,7 +152,7 @@ function applyManualCrewUpdates(crews = []) {
     }
 
     const additions = (update.members || []).map((member) => ({ ...member, role: 'member' }));
-    crew.members = dedupeMembers([...(crew.members || []), ...additions]);
+    crew.members = dedupeMembers([...(crew.members || []), ...additions], crewName);
     crew.leader = crew.members[0] || null;
     crew.count = Math.max(crew.count || 0, crew.members.length);
     crew.category = crew.category || update.category || 'soop';
@@ -150,7 +161,7 @@ function applyManualCrewUpdates(crews = []) {
   });
 
   return Array.from(crewMap.values()).map((crew, index) => {
-    const members = dedupeMembers(crew.members || []);
+    const members = dedupeMembers(crew.members || [], crew.name);
     return {
       ...crew,
       members,
