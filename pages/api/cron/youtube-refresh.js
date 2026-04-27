@@ -1,23 +1,11 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { fetchMainYoutubePayload, fetchPrisonYoutubePayload, getRuntimeEnvValue, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../../lib/youtube-data';
 
 const MAIN_KEY = 'youtube:main:v1';
 const PRISON_KEY = 'youtube:prison:v1';
 const MAIN_TTL_SECONDS = 60 * 60;
 const PRISON_TTL_SECONDS = 60 * 60 * 2;
-const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260427-1';
-
-async function getRuntimeEnvValue(name) {
-  try {
-    const context = await getCloudflareContext({ async: true });
-    const value = context?.env?.[name];
-    if (value) return value;
-  } catch {}
-  try {
-    const value = getCloudflareContext()?.env?.[name];
-    if (value) return value;
-  } catch {}
-  return process.env[name] || '';
-}
+const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260427-2';
 
 async function getCacheBinding() {
   try {
@@ -45,35 +33,12 @@ async function setJsonCache(cache, key, value, ttlSeconds) {
   }
 }
 
-function getBaseUrl(req) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  return `${proto}://${host}`;
-}
-
 async function isAuthorized(req) {
   const secret = await getRuntimeEnvValue('CRON_SECRET');
   if (!secret) return true;
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   return token === secret || req.query?.secret === secret;
-}
-
-function countItems(payload, keys) {
-  return keys.reduce((sum, key) => sum + (Array.isArray(payload?.[key]) ? payload[key].length : 0), 0);
-}
-
-function isMainUsable(payload) {
-  return payload && payload.ok !== false && countItems(payload, ['videos', 'shorts', 'full']) > 0;
-}
-
-function isPrisonUsable(payload) {
-  return payload && !payload.missingKey && countItems(payload, ['videos', 'shorts']) > 0;
-}
-
-async function readJson(url) {
-  const res = await fetch(url, { cache: 'no-store', headers: { 'x-youtube-cache-bypass': '1' } });
-  return res.json();
 }
 
 export default async function handler(req, res) {
@@ -83,7 +48,6 @@ export default async function handler(req, res) {
 
   const cache = await getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
-  const baseUrl = getBaseUrl(req);
   const result = {
     ok: true,
     runtimeMarker: RUNTIME_MARKER,
@@ -100,12 +64,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const main = await readJson(`${baseUrl}/api/youtube?live=1`);
+    const main = await fetchMainYoutubePayload({ debug: false });
     result.main.videos = main.videos?.length || 0;
     result.main.shorts = main.shorts?.length || 0;
     result.main.full = main.full?.length || 0;
     result.main.error = main.error || '';
-    if (isMainUsable(main)) {
+    if (isMainYoutubeUsable(main)) {
       result.main.ok = await setJsonCache(cache, MAIN_KEY, { ...main, cachedAt: result.refreshedAt }, MAIN_TTL_SECONDS);
     } else {
       result.main.skipped = 'empty-or-unavailable';
@@ -115,11 +79,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prison = await readJson(`${baseUrl}/api/prison-youtube?live=1`);
+    const prison = await fetchPrisonYoutubePayload({ debug: false });
     result.prison.videos = prison.videos?.length || 0;
     result.prison.shorts = prison.shorts?.length || 0;
     result.prison.error = prison.error || '';
-    if (isPrisonUsable(prison)) {
+    if (isPrisonYoutubeUsable(prison)) {
       result.prison.ok = await setJsonCache(cache, PRISON_KEY, { ...prison, cachedAt: result.refreshedAt }, PRISON_TTL_SECONDS);
     } else {
       result.prison.skipped = 'empty-or-unavailable';
