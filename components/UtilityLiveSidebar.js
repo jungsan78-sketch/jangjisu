@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LIVE_CACHE_KEY = 'sou:utility-live-status:v1';
 
-function isUtilityPath() {
-  if (typeof window === 'undefined') return false;
-  return window.location.pathname === '/utility' || window.location.pathname.startsWith('/utility/');
+function isUtilityPath(pathname = '') {
+  return pathname === '/utility' || pathname.startsWith('/utility/');
 }
 
 function viewerCount(status) {
@@ -64,12 +64,48 @@ function SidebarNavItem({ href, label, icon, tone = 'blue' }) {
   );
 }
 
-function UtilityLiveMemberList() {
+function LivePreviewCard({ preview }) {
+  if (!preview?.member || !preview?.status) return null;
+  const { member, status, top } = preview;
+  const safeTop = Math.min(Math.max(Number(top || 260), 190), typeof window !== 'undefined' ? window.innerHeight - 190 : 720);
+
+  return (
+    <div className="pointer-events-none fixed left-[288px] z-[90] w-[300px] overflow-hidden rounded-[24px] border border-white/12 bg-[#080d16]/96 text-white shadow-[0_28px_80px_rgba(0,0,0,0.48),0_0_32px_rgba(56,189,248,0.08)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
+      <div className="relative h-[166px] bg-black">
+        {status.thumbnailUrl ? (
+          <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_58%),linear-gradient(180deg,#101827,#030712)]">
+            <img src={member.image} alt={`${member.nickname} 프로필`} className="h-20 w-20 rounded-full border border-white/15 object-cover opacity-90" loading="lazy" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <img src={member.image} alt="" className="h-8 w-8 rounded-full border border-white/15 object-cover" loading="lazy" />
+            <span className="truncate text-sm font-black text-white">{member.nickname}</span>
+          </div>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200/25 bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
+            {formatViewerCount(status.viewerCount)}
+          </span>
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="mb-1 text-[10px] font-black tracking-[0.18em] text-sky-100/70">LIVE TITLE</div>
+        <div className="line-clamp-2 text-[15px] font-black leading-6 text-white">{status.title || '방송 중'}</div>
+      </div>
+    </div>
+  );
+}
+
+function UtilityLiveMemberList({ utilityPath }) {
   const [payload, setPayload] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    if (!isUtilityPath()) return undefined;
+    if (!isUtilityPath(utilityPath)) return undefined;
     let mounted = true;
 
     async function loadLive(force = false) {
@@ -99,7 +135,7 @@ function UtilityLiveMemberList() {
       mounted = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [utilityPath]);
 
   const liveMembers = useMemo(() => {
     const statuses = payload?.statuses || {};
@@ -117,9 +153,24 @@ function UtilityLiveMemberList() {
       </div>
 
       {liveMembers.length > 0 ? (
-        <div className="max-h-[38vh] space-y-3 overflow-y-auto overflow-x-visible pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.32)_transparent]">
+        <div className="max-h-[38vh] space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.32)_transparent]">
           {liveMembers.map(({ member, status }) => (
-            <a key={member.nickname} href={status.liveUrl || member.station} target="_blank" rel="noreferrer" className="group/live relative flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-2 transition hover:border-white/10 hover:bg-white/[0.045]">
+            <a
+              key={member.nickname}
+              href={status.liveUrl || member.station}
+              target="_blank"
+              rel="noreferrer"
+              onMouseEnter={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setPreview({ member, status, top: rect.top + rect.height / 2 });
+              }}
+              onMouseMove={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setPreview({ member, status, top: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setPreview(null)}
+              className="flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-2 transition hover:border-white/10 hover:bg-white/[0.045]"
+            >
               <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full border border-sky-200/30 bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.12)]" loading="lazy" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[15px] font-black leading-5 tracking-[-0.03em] text-white">{member.nickname}</div>
@@ -128,19 +179,9 @@ function UtilityLiveMemberList() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
                 <span>{formatViewerCount(status.viewerCount)}</span>
               </div>
-              <div className="pointer-events-none absolute left-[calc(100%+14px)] top-1/2 z-50 hidden w-[300px] -translate-y-1/2 overflow-hidden rounded-[24px] border border-white/12 bg-[#080d16]/96 shadow-[0_28px_80px_rgba(0,0,0,0.48),0_0_32px_rgba(56,189,248,0.08)] backdrop-blur-xl group-hover/live:block">
-                <div className="relative h-[166px] bg-black">
-                  {status.thumbnailUrl ? <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_58%),linear-gradient(180deg,#101827,#030712)]"><img src={member.image} alt={`${member.nickname} 프로필`} className="h-20 w-20 rounded-full border border-white/15 object-cover opacity-90" loading="lazy" /></div>}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2"><img src={member.image} alt="" className="h-8 w-8 rounded-full border border-white/15 object-cover" loading="lazy" /><span className="truncate text-sm font-black text-white">{member.nickname}</span></div>
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200/25 bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50"><span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />{formatViewerCount(status.viewerCount)}</span>
-                  </div>
-                </div>
-                <div className="p-4"><div className="mb-1 text-[10px] font-black tracking-[0.18em] text-sky-100/70">LIVE TITLE</div><div className="line-clamp-2 text-[15px] font-black leading-6 text-white">{status.title || '방송 중'}</div></div>
-              </div>
             </a>
           ))}
+          <LivePreviewCard preview={preview} />
         </div>
       ) : (
         <div className="rounded-2xl border border-white/8 bg-white/[0.035] px-4 py-4 text-sm font-bold leading-6 text-white/50">
@@ -152,11 +193,9 @@ function UtilityLiveMemberList() {
 }
 
 export default function UtilityLiveSidebar() {
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    setEnabled(isUtilityPath());
-  }, []);
+  const router = useRouter();
+  const utilityPath = router.asPath?.split('?')[0] || router.pathname || '';
+  const enabled = isUtilityPath(utilityPath);
 
   if (!enabled) return null;
 
@@ -190,7 +229,7 @@ export default function UtilityLiveSidebar() {
           <SidebarNavItem href="/" label="SOU 메인" icon="↩" tone="blue" />
         </nav>
 
-        <UtilityLiveMemberList />
+        <UtilityLiveMemberList utilityPath={utilityPath} />
       </aside>
     </>
   );
