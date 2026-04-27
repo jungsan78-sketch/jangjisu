@@ -10,6 +10,28 @@ function injectStyle() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+    body:has(section[aria-label="장지수용소 대문"]) #schedule {
+      border-color: rgba(255,255,255,.055) !important;
+      box-shadow: 0 24px 70px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.035) !important;
+    }
+
+    body:has(section[aria-label="장지수용소 대문"]) #schedule > div {
+      border-color: rgba(148,163,184,.13) !important;
+      box-shadow: 0 22px 58px rgba(0,0,0,.32), 0 0 34px rgba(30,64,175,.06), inset 0 1px 0 rgba(255,255,255,.045) !important;
+    }
+
+    body:has(section[aria-label="장지수용소 대문"]) #schedule > div > div:nth-child(2),
+    body:has(section[aria-label="장지수용소 대문"]) #schedule > div > div:nth-child(3) {
+      border-color: rgba(255,255,255,.045) !important;
+      background: linear-gradient(180deg, rgba(5,16,29,.82), rgba(3,10,20,.74)) !important;
+      box-shadow: 0 18px 42px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.035), inset 0 0 0 1px rgba(148,163,184,.025) !important;
+    }
+
+    body:has(section[aria-label="장지수용소 대문"]) #schedule .sou-hidden-schedule-nav,
+    body:has(section[aria-label="장지수용소 대문"]) .sou-legacy-member-posts-hidden {
+      display: none !important;
+    }
+
     #youtube.sou-youtube-compact,
     #recent-youtube.sou-youtube-compact {
       padding-top: 22px !important;
@@ -273,9 +295,43 @@ function compactYoutubeSections() {
   });
 }
 
+function hideScheduleDateNavButtons() {
+  const schedule = document.getElementById('schedule');
+  if (!schedule) return;
+
+  [...schedule.querySelectorAll('button, a')].forEach((element) => {
+    const label = normalizeText(`${element.getAttribute('aria-label') || ''} ${element.textContent || ''}`);
+    if (/이전\s*날짜|다음\s*날짜/.test(label)) {
+      element.classList.add('sou-hidden-schedule-nav');
+      element.setAttribute('aria-hidden', 'true');
+      if ('tabIndex' in element) element.tabIndex = -1;
+    }
+  });
+}
+
+function hideLegacyMemberPostsSections() {
+  const legacyTextPattern = /최근\s*1\s*주일\s*멤버\s*글|최근\s*일주일\s*멤버\s*글|최근\s*1\s*주일|멤버\s*글/i;
+  const legacyAttrPattern = /recent.*member.*post|member.*recent.*post|weekly.*member.*post|member.*weekly.*post|member-board|member-post/i;
+  const roots = [...document.querySelectorAll('main section, main article, main > div, [data-section], [id], [class]')].filter(isElement);
+
+  roots.forEach((element) => {
+    if (element.id === 'schedule' || element.id === 'recent-youtube' || element.id === 'youtube' || element.id === 'members') return;
+    if (element.closest('#schedule, #recent-youtube, #youtube, #members')) return;
+
+    const marker = `${element.id || ''} ${element.getAttribute('data-section') || ''} ${element.className || ''}`;
+    const text = normalizeText(element.textContent || '').slice(0, 180);
+    if (legacyAttrPattern.test(marker) || legacyTextPattern.test(text)) {
+      element.classList.add('sou-legacy-member-posts-hidden');
+      element.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
+
 function hydrateUi() {
   injectStyle();
   compactYoutubeSections();
+  hideScheduleDateNavButtons();
+  hideLegacyMemberPostsSections();
 }
 
 export default function CalendarYoutubeUiHydrator() {
@@ -292,7 +348,7 @@ export default function CalendarYoutubeUiHydrator() {
 
     const interval = window.setInterval(run, 1200);
     const clickHandler = (event) => {
-      if (event.target?.closest?.('#youtube, #recent-youtube')) {
+      if (event.target?.closest?.('#schedule, #youtube, #recent-youtube')) {
         [0, 120, 360].forEach((delay) => window.setTimeout(run, delay));
       }
     };
