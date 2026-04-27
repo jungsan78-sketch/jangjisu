@@ -77,10 +77,17 @@ function sortMembers(members, statuses) {
   });
 }
 
+function getPostTimeValue(post) {
+  const value = post?.createdAt || post?.publishedAt || post?.date || '';
+  const raw = String(value).replace(/\./g, '-').replace(/\s+/g, ' ').trim();
+  const date = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T'));
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
 function PlatformLink({ href, type, label }) {
   const disabled = !href;
   const srcMap = { soop: '/soop-logo.svg', youtube: '/youtube-logo.svg', cafe: '/naver-cafe-logo.svg' };
-  const className = `inline-flex h-10 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] transition ${disabled ? 'pointer-events-none grayscale opacity-30' : 'hover:-translate-y-0.5 hover:border-white/22 hover:bg-white/10'}`;
+  const className = `inline-flex h-10 w-11 items-center justify-center rounded-2xl bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_12px_22px_rgba(0,0,0,0.18)] transition ${disabled ? 'pointer-events-none grayscale opacity-30' : 'hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_15px_28px_rgba(0,0,0,0.24)]'}`;
   const icon = <img src={srcMap[type]} alt={label} className="max-h-7 max-w-8 object-contain" />;
   if (disabled) return <span className={className} title={`${label} 준비중`}>{icon}</span>;
   return <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>{icon}</a>;
@@ -89,35 +96,87 @@ function PlatformLink({ href, type, label }) {
 function RoleBadge({ type }) {
   const label = type === 'warden' ? '수장' : '반장';
   const className = type === 'warden'
-    ? 'border-amber-200/60 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.48))] text-amber-50 shadow-[0_0_22px_rgba(251,191,36,0.26),inset_0_1px_0_rgba(255,255,255,0.22)]'
-    : 'border-cyan-200/58 bg-[linear-gradient(135deg,rgba(34,211,238,0.32),rgba(30,64,175,0.48))] text-cyan-50 shadow-[0_0_22px_rgba(34,211,238,0.24),inset_0_1px_0_rgba(255,255,255,0.22)]';
-  return <span className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-black tracking-[0.18em] ${className}`}>{label}</span>;
+    ? 'bg-amber-300/14 text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]'
+    : 'bg-cyan-300/14 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]';
+  return <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${className}`}>{label}</span>;
 }
 
-function MemberCard({ member, status, post }) {
+function RecentPostsRail({ members, posts }) {
+  const items = useMemo(() => members
+    .map((member) => {
+      const stationId = stationIdFromUrl(member.station);
+      const post = posts?.[stationId];
+      return post ? { member, post } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => getPostTimeValue(b.post) - getPostTimeValue(a.post))
+    .slice(0, 5), [members, posts]);
+
+  if (!items.length) return null;
+
+  return (
+    <section className="mb-10">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-[22px] font-black tracking-[-0.04em] text-white sm:text-[26px]">최근 멤버글</h3>
+        <span className="rounded-full bg-white/[0.045] px-3 py-1.5 text-[11px] font-black text-white/48 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">30분마다 갱신</span>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 2xl:grid-cols-5">
+        {items.map(({ member, post }) => (
+          <a key={`${member.nickname}-${post.url || post.title}`} href={post.url || member.station} target="_blank" rel="noreferrer" className="group min-h-[118px] overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_18px_36px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:bg-white/[0.07] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_46px_rgba(0,0,0,0.30)]">
+            <div className="flex items-center gap-3">
+              <img src={member.image} alt={`${member.nickname} 프로필`} className="h-9 w-9 rounded-full bg-slate-900 object-cover shadow-[0_0_18px_rgba(103,232,249,0.10)]" loading="lazy" />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-white">{member.nickname}</div>
+                <div className="text-[11px] font-bold text-white/42">{formatRelativePostTime(post.createdAt || post.publishedAt || post.date)}</div>
+              </div>
+            </div>
+            <div className="mt-3 line-clamp-2 text-[15px] font-black leading-6 text-white group-hover:text-cyan-50">{post.title}</div>
+            {post.summary ? <div className="mt-1.5 line-clamp-1 text-xs font-semibold text-white/44">{post.summary}</div> : null}
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MemberCard({ member, status }) {
   const isLive = Boolean(status?.isLive);
   const isUnknown = String(status?.liveState || '').includes('unknown');
   const mediaHref = isLive && status?.liveUrl ? status.liveUrl : member.station;
   const mediaImage = status?.thumbnailUrl || '';
   const title = status?.title || (isLive ? '방송 중' : isUnknown ? '방송 상태 확인중' : '방송 꺼짐');
   const stateLabel = isLive ? formatViewerBadge(status?.viewerCount) : isUnknown ? '확인중' : 'OFF';
-  const stateClass = isLive ? 'border-rose-400/48 shadow-[0_0_0_1px_rgba(251,113,133,0.18),0_22px_46px_rgba(127,29,29,0.24)]' : isUnknown ? 'border-amber-200/24' : 'border-white/10';
   const dotClass = isLive ? 'bg-[#ff163d] shadow-[0_0_0_4px_rgba(255,22,61,0.16),0_0_22px_rgba(255,22,61,0.92)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
   const tags = Array.isArray(member.tags) ? member.tags : [];
-  const postTime = formatRelativePostTime(post?.createdAt);
   const roleType = member.nickname === '장지수' ? 'warden' : member.nickname === '린링' ? 'captain' : '';
 
   return (
-    <article className={`group relative overflow-hidden rounded-[26px] border ${stateClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_36px_rgba(0,0,0,0.18)]`}>
-      <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block h-36 overflow-hidden bg-black">
-        {isLive && mediaImage ? <><img src={mediaImage} alt={`${member.nickname} 방송 이미지`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" /><div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/45" /></> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.42),transparent_56%),linear-gradient(180deg,#02040a,#000)]" />}
+    <article className="group relative min-w-0">
+      <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block aspect-video overflow-hidden rounded-[24px] bg-black shadow-[0_18px_38px_rgba(0,0,0,0.28)]">
+        {isLive && mediaImage ? (
+          <>
+            <img src={mediaImage} alt={`${member.nickname} 방송 이미지`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/8 via-transparent to-black/42" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.42),transparent_56%),linear-gradient(180deg,#111827,#05070c)]" />
+        )}
+        <div className={`absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-black backdrop-blur-md ${isLive ? 'bg-black/62 text-white shadow-[0_10px_24px_rgba(0,0,0,0.35)]' : 'bg-black/60 text-white/82'}`}>
+          <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />{stateLabel}
+        </div>
       </a>
-      <div className={`absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-black backdrop-blur-md ${isLive ? 'border-rose-200/40 bg-rose-950/80 text-rose-50 shadow-[0_10px_26px_rgba(127,29,29,0.35)]' : 'border-white/14 bg-black/72 text-white/82'}`}><span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />{stateLabel}</div>
-      <div className="p-4 pt-5">
-        <div className="flex items-center gap-4"><img src={member.image} alt={`${member.nickname} 프로필`} className="h-[72px] w-[72px] shrink-0 rounded-full border-[3px] border-[#05070c] bg-slate-900 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.32)]" loading="lazy" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><h4 className="truncate text-[21px] font-black tracking-[-0.04em] text-white">{member.nickname}</h4>{roleType ? <RoleBadge type={roleType} /> : null}</div><p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/72">{title}</p></div></div>
-        <div className="mt-4 flex flex-wrap gap-1.5">{tags.map((tag) => <span key={tag} className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{tag}</span>)}</div>
-        <div className="mt-3 flex gap-2"><PlatformLink href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} /><PlatformLink href={member.youtube} type="youtube" label={`${member.nickname} YouTube`} /><PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} /></div>
-        <div className="mt-4 border-t border-white/8 pt-3"><div className="text-[11px] font-black tracking-[0.18em] text-cyan-100 drop-shadow-[0_0_12px_rgba(103,232,249,0.18)]">최근 공지사항</div>{post ? <><a href={post.url} target="_blank" rel="noreferrer" className="mt-2 block line-clamp-2 text-[15px] font-black leading-6 text-white hover:text-cyan-50 hover:underline">{post.title}</a>{post.summary ? <p className="mt-1.5 line-clamp-2 text-xs font-semibold leading-5 text-slate-300/72">{post.summary}</p> : null}{postTime ? <div className="mt-2 text-[11px] font-extrabold text-white/42">{postTime}</div> : null}</> : <div className="mt-1.5 text-[13px] font-black leading-5 text-white/58">최근 공지사항 확인중</div>}</div>
+
+      <div className="mt-3 flex gap-3">
+        <img src={member.image} alt={`${member.nickname} 프로필`} className="h-11 w-11 shrink-0 rounded-full bg-slate-900 object-cover shadow-[0_10px_24px_rgba(0,0,0,0.28),0_0_16px_rgba(103,232,249,0.10)]" loading="lazy" />
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h4 className="truncate text-[16px] font-black tracking-[-0.04em] text-white">{member.nickname}</h4>
+            {roleType ? <RoleBadge type={roleType} /> : null}
+          </div>
+          <p className="mt-1 line-clamp-2 text-[15px] font-extrabold leading-6 text-white/86">{title}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">{tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-black text-white/54 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{tag}</span>)}</div>
+          <div className="mt-3 flex gap-2"><PlatformLink href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} /><PlatformLink href={member.youtube} type="youtube" label={`${member.nickname} YouTube`} /><PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} /></div>
+        </div>
       </div>
     </article>
   );
@@ -125,7 +184,7 @@ function MemberCard({ member, status, post }) {
 
 function LiveGridSkeleton({ failed = false }) {
   const skeletonItems = Array.from({ length: 8 }, (_, index) => index);
-  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={!failed}>{skeletonItems.map((item) => <div key={item} className="min-h-[360px] overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.16)]"><div className="h-36 bg-white/[0.035]" /><div className="p-4 pt-5"><div className="flex items-center gap-4"><div className="h-[72px] w-[72px] rounded-full bg-white/[0.055]" /><div className="flex-1"><div className="h-5 w-28 rounded-full bg-white/[0.055]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" /><div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" /></div></div><div className="mt-5 flex gap-2"><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /></div><div className="mt-5 h-px bg-white/8" /><div className="mt-4 h-4 w-24 rounded-full bg-white/[0.04]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.035]" /><div className="mt-2 h-4 w-3/4 rounded-full bg-white/[0.03]" /></div></div>)}{failed ? <div className="col-span-full rounded-[22px] border border-amber-200/20 bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다.</div> : null}</div>;
+  return <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-busy={!failed}>{skeletonItems.map((item) => <div key={item} className="min-h-[260px]"><div className="aspect-video rounded-[24px] bg-white/[0.035]" /><div className="mt-3 flex gap-3"><div className="h-11 w-11 rounded-full bg-white/[0.055]" /><div className="flex-1"><div className="h-5 w-28 rounded-full bg-white/[0.055]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" /><div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" /></div></div></div>)}{failed ? <div className="col-span-full rounded-[22px] bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다.</div> : null}</div>;
 }
 
 export function PrisonMemberLiveGridContent() {
@@ -183,7 +242,7 @@ export function PrisonMemberLiveGridContent() {
   const liveCount = sortedMembers.filter((member) => statuses[member.nickname]?.isLive).length;
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
 
-  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-8 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.28)] lg:p-8"><div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><h3 className="group w-fit bg-[linear-gradient(90deg,#ffffff_0%,#fde68a_30%,#67e8f9_68%,#ffffff_100%)] bg-[length:220%_100%] bg-clip-text text-[30px] font-black tracking-[-0.05em] text-transparent drop-shadow-[0_0_26px_rgba(103,232,249,0.16)] transition-all duration-300 hover:scale-[1.015] hover:drop-shadow-[0_0_34px_rgba(251,191,36,0.20)] sm:text-[38px]">수용소 멤버 라이브</h3></div><div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{sortedMembers.map((member) => { const stationId = stationIdFromUrl(member.station); return <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} post={posts[stationId]} />; })}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
+  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6"><RecentPostsRail members={ALL_PRISON_MEMBERS} posts={posts} /><div className="mb-6 flex flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">선호 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
 }
 
 export default function PrisonMemberLiveGrid() {
