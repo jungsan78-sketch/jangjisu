@@ -14,21 +14,26 @@ const SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=399310385#gid=399310385',
     mode: 'fixedGid',
   },
+  {
+    key: '구월이',
+    sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
+    gid: '1645820954',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1645820954#gid=1645820954',
+    mode: 'fixedGid',
+  },
 ];
 
 const buildSheetCandidates = (baseDate = new Date()) => {
-  const points = [
-    new Date(baseDate.getFullYear(), baseDate.getMonth(), 1),
-    new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1),
-    new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1),
-  ];
+  const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
 
-  return points.map((date) => ({
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    sheetName: `${String(date.getFullYear()).slice(2)}년 ${date.getMonth() + 1}월`,
-    monthLabel: `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
-  }));
+  return [
+    {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      sheetName: `${String(date.getFullYear()).slice(2)}년 ${date.getMonth() + 1}월`,
+      monthLabel: `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
+    },
+  ];
 };
 
 const csvToRows = (text) => {
@@ -226,11 +231,9 @@ const fetchSourceSchedule = async (source) => {
   for (const candidate of candidates) {
     try {
       const result = await fetchCandidateSchedule(source, candidate);
-      if (result.items.some((item) => !item.empty)) {
-        return { ok: true, member: source.key, ...result };
-      }
+      return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
     } catch {
-      // 다음 후보 시트 시도
+      // 현재 월 후보 시트만 시도합니다. 다음 달 시트가 미리 생겨도 현재 월을 유지합니다.
     }
   }
 
