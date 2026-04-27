@@ -5,7 +5,7 @@ const SHEET_ID = '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo';
 const SHEET_GID = '399310385';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
 const CACHE_KEY = 'schedule:youoneul:current';
-const CACHE_TTL_SECONDS = 60 * 30;
+const CACHE_TTL_SECONDS = 60 * 60;
 
 async function buildFreshScheduleResponse() {
   const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
