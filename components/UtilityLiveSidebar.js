@@ -4,6 +4,8 @@ import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LIVE_CACHE_KEY = 'sou:utility-live-status:v1';
+const LOGO_SRC = '/prison-logo.webp';
+const LOGO_FALLBACK_SRC = '/prison-logo.svg';
 
 function isUtilityPath(pathname = '') {
   return pathname === '/utility' || pathname.startsWith('/utility/');
@@ -201,26 +203,14 @@ function SidebarLiveMemberList({ currentPath }) {
   );
 }
 
-function UtilityNavItems() {
+function UnifiedPrisonNavItems() {
   return (
     <>
-      <SidebarNavItem href="/utility" label="유틸리티 홈" icon="🛠" />
-      <SidebarNavItem href="/utility/overwatch-random" label="오버워치 랜덤" icon="🎲" tone="gold" />
-      <SidebarNavItem href="/utility/soop-funding-memo" label="SOOP 펀딩메모" icon="📝" tone="green" />
-      <SidebarNavItem href="/jangjisu-prison" label="장지수용소" icon="▣" tone="red" />
-      <SidebarNavItem href="/" label="SOU 메인" icon="↩" tone="blue" />
-    </>
-  );
-}
-
-function CrewsNavItems() {
-  return (
-    <>
-      <SidebarNavItem href="/jangjisu-prison" label="수용소 홈" icon="▣" tone="red" />
-      <SidebarNavItem href="/jangjisu-prison#members" label="멤버 라이브" icon="🪪" />
+      <SidebarNavItem href="/jangjisu-prison#members" label="멤버 라이브" icon="▣" />
       <SidebarNavItem href="/jangjisu-prison#schedule" label="일정" icon="⛓" />
       <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
       <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" tone="blue" />
+      <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
       <SidebarNavItem href="/" label="SOU 메인" icon="↩" tone="gold" />
     </>
   );
@@ -230,7 +220,6 @@ export default function UtilityLiveSidebar() {
   const router = useRouter();
   const currentPath = router.asPath?.split('?')[0] || router.pathname || '';
   const enabled = isSidebarPath(currentPath);
-  const crewsMode = isCrewsPath(currentPath);
 
   if (!enabled) return null;
 
@@ -252,12 +241,12 @@ export default function UtilityLiveSidebar() {
         }
       `}</style>
       <aside id="sou-utility-sidebar" className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/94 px-5 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-        <a href={crewsMode ? '/jangjisu-prison' : '/utility'} className="group mb-7 flex items-center gap-3 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.11),transparent_62%),rgba(255,255,255,0.035)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:border-sky-200/22">
-          <img src={crewsMode ? '/prison-logo.svg' : '/site-icon.png'} alt={crewsMode ? '장지수용소' : 'SOU'} className="h-[68px] w-full object-contain drop-shadow-[0_0_22px_rgba(103,232,249,0.16)]" />
+        <a href="/jangjisu-prison" className="group mb-7 flex items-center gap-3 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.11),transparent_62%),rgba(255,255,255,0.035)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:border-sky-200/22">
+          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[68px] w-full object-contain drop-shadow-[0_0_22px_rgba(103,232,249,0.16)]" />
         </a>
 
         <nav className="space-y-2.5">
-          {crewsMode ? <CrewsNavItems /> : <UtilityNavItems />}
+          <UnifiedPrisonNavItems />
         </nav>
 
         <SidebarLiveMemberList currentPath={currentPath} />
