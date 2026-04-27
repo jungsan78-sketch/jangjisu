@@ -68,17 +68,13 @@ export default function App({ Component, pageProps }) {
           #notice,
           #schedule,
           #youtube,
-          #recent-youtube,
-          #members.sou-member-live-section,
-          section.sou-member-live-section {
+          #recent-youtube {
             position: relative !important;
           }
           #notice::after,
           #schedule::after,
           #youtube::after,
-          #recent-youtube::after,
-          #members.sou-member-live-section::after,
-          section.sou-member-live-section::after {
+          #recent-youtube::after {
             position: absolute;
             right: 24px;
             top: 24px;
@@ -104,10 +100,6 @@ export default function App({ Component, pageProps }) {
           #youtube::after,
           #recent-youtube::after {
             content: "15분마다 갱신";
-          }
-          #members.sou-member-live-section::after,
-          section.sou-member-live-section::after {
-            content: "5분마다 갱신";
           }
           body:has(section[aria-label="장지수용소 대문"]) #schedule button {
             border-color: rgba(251,191,36,.12) !important;
