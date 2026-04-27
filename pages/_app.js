@@ -49,24 +49,66 @@ export default function App({ Component, pageProps }) {
           ` : ''}
           ${isPrisonRoute ? `
           @media (min-width: 1280px) {
+            html,
             body {
               overflow-x: hidden !important;
             }
-            body main {
-              width: calc(100vw - 274px) !important;
+            body .sou-prison-page,
+            body .sou-prison-shell {
+              width: 100vw !important;
               max-width: none !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-              padding-left: 28px !important;
-              padding-right: 28px !important;
             }
-            body main > #members,
-            body main #members,
-            body main #schedule,
-            body main #recent-youtube,
-            body main .sou-member-live-section {
+            body .sou-prison-content {
+              margin-left: 274px !important;
+              width: calc(100vw - 274px) !important;
+              max-width: calc(100vw - 274px) !important;
+            }
+            body .sou-prison-main,
+            body main.sou-prison-main,
+            body .sou-prison-content > main {
               width: 100% !important;
               max-width: none !important;
+              margin-left: auto !important;
+              margin-right: auto !important;
+              padding-left: clamp(28px, 2.1vw, 48px) !important;
+              padding-right: clamp(28px, 2.1vw, 48px) !important;
+            }
+            body .sou-prison-main > *,
+            body .sou-prison-main #members,
+            body .sou-prison-main #schedule,
+            body .sou-prison-main #recent-youtube,
+            body .sou-prison-main .sou-member-live-section,
+            body .sou-prison-main .sou-member-live-section > section,
+            body .sou-prison-main .sou-member-live-section > section > div,
+            body .sou-prison-main .sou-member-live-section > div {
+              width: 100% !important;
+              max-width: none !important;
+            }
+            body .sou-prison-main .sou-member-live-section > section > div.grid {
+              display: grid !important;
+              grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+              gap: 18px !important;
+            }
+            body .sou-prison-main .sou-member-live-section > div.grid {
+              display: grid !important;
+              grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+              column-gap: 28px !important;
+              row-gap: 44px !important;
+            }
+          }
+          @media (min-width: 1920px) {
+            body .sou-prison-main,
+            body main.sou-prison-main,
+            body .sou-prison-content > main {
+              padding-left: 36px !important;
+              padding-right: 36px !important;
+            }
+          }
+          @media (min-width: 2300px) {
+            body .sou-prison-main,
+            body main.sou-prison-main,
+            body .sou-prison-content > main {
+              max-width: 2040px !important;
             }
           }
           ` : ''}
