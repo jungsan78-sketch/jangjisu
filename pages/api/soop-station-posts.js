@@ -5,6 +5,7 @@ import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
 
 const CACHE_KEY = 'soop:station-posts:payload';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+const RUNTIME_MARKER = 'test2-kv-fallback-20260427-1';
 
 function getKnownStationIds() {
   return ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean);
@@ -82,6 +83,7 @@ function mergeWithCachedPosts(payload, cachedPayload) {
     source: filledFromCache.length ? 'soop_board_api_with_kv_fallback' : payload.source,
     debug: {
       ...(payload.debug || {}),
+      runtimeMarker: RUNTIME_MARKER,
       matchedCount: Object.keys(mergedPosts).length,
       liveMatchedCount: Object.keys(currentPosts).length,
       missingCount: missing.length,
@@ -97,6 +99,16 @@ function mergeWithCachedPosts(payload, cachedPayload) {
   };
 }
 
+function attachRuntimeMarker(payload) {
+  return {
+    ...payload,
+    debug: {
+      ...(payload.debug || {}),
+      runtimeMarker: RUNTIME_MARKER,
+    },
+  };
+}
+
 export default async function handler(req, res) {
   const debug = String(req.query?.debug || '') === '1';
   const cache = getCacheBinding();
@@ -105,7 +117,7 @@ export default async function handler(req, res) {
 
   try {
     const livePayload = await fetchStationPostsPayload({ debug });
-    const payload = cacheAvailable ? mergeWithCachedPosts(livePayload, cachedPayload) : livePayload;
+    const payload = attachRuntimeMarker(cacheAvailable ? mergeWithCachedPosts(livePayload, cachedPayload) : livePayload);
     const writeOk = await writeCachedPayload(cache, payload);
 
     if (payload.debug) {
@@ -131,6 +143,7 @@ export default async function handler(req, res) {
         warning: error?.message || 'SOOP station posts unavailable; served cached payload',
         debug: {
           ...(cachedPayload.debug || {}),
+          runtimeMarker: RUNTIME_MARKER,
           cache: {
             bindingFound: cacheAvailable,
             hit: true,
@@ -149,7 +162,7 @@ export default async function handler(req, res) {
       source: 'fallback',
       fetchedAt: new Date().toISOString(),
       warning: error?.message || 'SOOP station posts unavailable',
-      ...(debug ? { debug: { cache: { bindingFound: cacheAvailable, hit: false }, error: error?.stack || error?.message || String(error) } } : {}),
+      ...(debug ? { debug: { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: false }, error: error?.stack || error?.message || String(error) } } : {}),
     });
   }
 }
