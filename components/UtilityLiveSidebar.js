@@ -6,6 +6,7 @@ const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LIVE_CACHE_KEY = 'sou:utility-live-status:v1';
 const LOGO_SRC = '/prison-logo.webp';
 const LOGO_FALLBACK_SRC = '/prison-logo.svg';
+const FAN_CAFE_URL = 'https://cafe.naver.com/quaddurupfancafe';
 
 function isUtilityPath(pathname = '') {
   return pathname === '/utility' || pathname.startsWith('/utility/');
@@ -57,18 +58,24 @@ function writeCachedLivePayload(payload) {
   } catch {}
 }
 
-function SidebarNavItem({ href, label, icon, tone = 'blue' }) {
+function RoleMiniBadge({ nickname }) {
+  if (nickname === '장지수') return <span className="rounded-full bg-amber-300/12 px-2 py-0.5 text-[10px] font-black text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">수장</span>;
+  if (nickname === '린링') return <span className="rounded-full bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">반장</span>;
+  return null;
+}
+
+function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
   const toneClass = tone === 'green'
-    ? 'border-emerald-300/18 bg-emerald-400/8 text-emerald-100 hover:border-emerald-200/38 hover:bg-emerald-400/14 hover:shadow-[0_0_24px_rgba(16,185,129,0.12)]'
+    ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
     : tone === 'red'
-      ? 'border-red-300/18 bg-red-500/8 text-red-50 hover:border-red-200/38 hover:bg-red-500/14 hover:shadow-[0_0_24px_rgba(239,68,68,0.12)]'
+      ? 'text-red-50 hover:bg-red-500/10 hover:shadow-[0_0_26px_rgba(239,68,68,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
       : tone === 'gold'
-        ? 'border-amber-200/20 bg-amber-300/8 text-amber-50 hover:border-amber-100/40 hover:bg-amber-300/14 hover:shadow-[0_0_24px_rgba(245,158,11,0.12)]'
-        : 'border-sky-300/18 bg-sky-400/8 text-sky-50 hover:border-sky-200/38 hover:bg-sky-400/14 hover:shadow-[0_0_24px_rgba(56,189,248,0.12)]';
+        ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+        : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
-    <a href={href} className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-black/24 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{icon}</span>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] px-4 py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
+      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/30 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]">{icon}</span>
       <span>{label}</span>
     </a>
   );
@@ -80,22 +87,23 @@ function LivePreviewCard({ preview }) {
   const safeTop = Math.min(Math.max(Number(top || 260), 190), typeof window !== 'undefined' ? window.innerHeight - 190 : 720);
 
   return (
-    <div className="pointer-events-none fixed left-[288px] z-[90] w-[300px] overflow-hidden rounded-[24px] border border-white/12 bg-[#080d16]/96 text-white shadow-[0_28px_80px_rgba(0,0,0,0.48),0_0_32px_rgba(56,189,248,0.08)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
+    <div className="pointer-events-none fixed left-[288px] z-[9999] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.62),0_0_42px_rgba(56,189,248,0.14),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
       <div className="relative h-[166px] bg-black">
         {status.thumbnailUrl ? (
           <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_58%),linear-gradient(180deg,#101827,#030712)]">
-            <img src={member.image} alt={`${member.nickname} 프로필`} className="h-20 w-20 rounded-full border border-white/15 object-cover opacity-90" loading="lazy" />
+            <img src={member.image} alt={`${member.nickname} 프로필`} className="h-20 w-20 rounded-full object-cover opacity-90 shadow-[0_0_24px_rgba(103,232,249,0.14)]" loading="lazy" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
-            <img src={member.image} alt="" className="h-8 w-8 rounded-full border border-white/15 object-cover" loading="lazy" />
+            <img src={member.image} alt="" className="h-8 w-8 rounded-full object-cover shadow-[0_0_14px_rgba(255,255,255,0.12)]" loading="lazy" />
             <span className="truncate text-sm font-black text-white">{member.nickname}</span>
+            <RoleMiniBadge nickname={member.nickname} />
           </div>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200/25 bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50">
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
             {formatViewerCount(status.viewerCount)}
           </span>
@@ -160,7 +168,7 @@ function SidebarLiveMemberList({ currentPath }) {
     <section className="mt-7 border-t border-white/8 pt-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-[15px] font-black tracking-[-0.02em] text-white">방송중 멤버</h2>
-        <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[10px] font-black text-white/50">TOP 5</span>
+        <span className="rounded-full bg-white/[0.045] px-2.5 py-1 text-[10px] font-black text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">TOP 5</span>
       </div>
 
       {liveMembers.length > 0 ? (
@@ -180,11 +188,14 @@ function SidebarLiveMemberList({ currentPath }) {
                 setPreview({ member, status, top: rect.top + rect.height / 2 });
               }}
               onMouseLeave={() => setPreview(null)}
-              className="flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-2 transition hover:border-white/10 hover:bg-white/[0.045]"
+              className="flex items-center gap-3 rounded-2xl px-1.5 py-2 transition hover:bg-white/[0.045] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
             >
-              <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full border border-sky-200/30 bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.12)]" loading="lazy" />
+              <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.14)]" loading="lazy" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-black leading-5 tracking-[-0.03em] text-white">{member.nickname}</div>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-[15px] font-black leading-5 tracking-[-0.03em] text-white">{member.nickname}</span>
+                  <RoleMiniBadge nickname={member.nickname} />
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5 text-[12px] font-black text-white/85">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#ff3347] shadow-[0_0_10px_rgba(255,51,71,0.85)]" />
@@ -195,7 +206,7 @@ function SidebarLiveMemberList({ currentPath }) {
           <LivePreviewCard preview={preview} />
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/8 bg-white/[0.035] px-4 py-4 text-sm font-bold leading-6 text-white/50">
+        <div className="rounded-2xl bg-white/[0.035] px-4 py-4 text-sm font-bold leading-6 text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           {failed ? '방송 상태 확인중입니다.' : '현재 방송중인 멤버가 없습니다.'}
         </div>
       )}
@@ -211,7 +222,7 @@ function UnifiedPrisonNavItems() {
       <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
       <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" tone="blue" />
       <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
-      <SidebarNavItem href="/" label="SOU 메인" icon="↩" tone="gold" />
+      <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
     </>
   );
 }
@@ -241,8 +252,8 @@ export default function UtilityLiveSidebar() {
         }
       `}</style>
       <aside id="sou-utility-sidebar" className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/94 px-5 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-        <a href="/jangjisu-prison" className="group mb-7 flex items-center gap-3 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.11),transparent_62%),rgba(255,255,255,0.035)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:border-sky-200/22">
-          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[68px] w-full object-contain drop-shadow-[0_0_22px_rgba(103,232,249,0.16)]" />
+        <a href="/jangjisu-prison" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
+          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[104px] w-full object-contain drop-shadow-[0_0_30px_rgba(103,232,249,0.24)]" />
         </a>
 
         <nav className="space-y-2.5">
