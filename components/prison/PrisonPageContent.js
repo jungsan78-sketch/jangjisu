@@ -248,7 +248,7 @@ export default function PrisonPageContent() {
           <PrisonSidebar />
           <div className="min-w-0 flex-1">
             <MobilePrisonNav />
-            <main className="relative mx-auto max-w-[1880px] px-4 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8 xl:px-9 2xl:px-10">
+            <main className="relative max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 2xl:px-8">
               <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
                 <div className="relative overflow-hidden">
                   <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
