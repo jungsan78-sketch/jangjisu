@@ -72,9 +72,9 @@ button {
   #sou-utility-sidebar > a:first-of-type,
   .sou-prison-page aside > a:first-of-type {
     display: flex !important;
-    height: 118px !important;
-    min-height: 118px !important;
-    max-height: 118px !important;
+    height: 124px !important;
+    min-height: 124px !important;
+    max-height: 124px !important;
     width: 100% !important;
     padding: 8px !important;
     margin-bottom: 28px !important;
@@ -91,9 +91,9 @@ button {
   .sou-prison-page aside > a:first-of-type img {
     display: block !important;
     width: 100% !important;
-    height: 88px !important;
-    min-height: 88px !important;
-    max-height: 88px !important;
+    height: 104px !important;
+    min-height: 104px !important;
+    max-height: 104px !important;
     object-fit: contain !important;
     transform: none !important;
   }
