@@ -6,3 +6,7 @@ compatibility_flags = ['nodejs_compat']
 [assets]
 directory = './.open-next/assets'
 binding = 'ASSETS'
+
+[[kv_namespaces]]
+binding = 'JANGJISU_CACHE'
+id = '6fa38b24812b460ab3edcca06732d3b4'
