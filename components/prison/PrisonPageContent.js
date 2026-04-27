@@ -74,8 +74,7 @@ function LiveMemberList() {
     return ALL_PRISON_MEMBERS
       .map((member) => ({ member, status: statuses[member.nickname] }))
       .filter((item) => item.status?.isLive)
-      .sort((a, b) => viewerCount(b.status) - viewerCount(a.status))
-      .slice(0, 8);
+      .sort((a, b) => viewerCount(b.status) - viewerCount(a.status));
   }, [payload]);
 
   return (
@@ -86,7 +85,7 @@ function LiveMemberList() {
       </div>
 
       {liveMembers.length > 0 ? (
-        <div className="space-y-3">
+        <div className="max-h-[38vh] space-y-3 overflow-y-auto overflow-x-visible pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.32)_transparent]">
           {liveMembers.map(({ member, status }) => (
             <a key={member.nickname} href={status.liveUrl || member.station} target="_blank" rel="noreferrer" className="group/live relative flex items-center gap-3 rounded-2xl border border-transparent px-1.5 py-2 transition hover:border-white/10 hover:bg-white/[0.045]">
               <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full border border-sky-200/30 bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.12)]" loading="lazy" />
