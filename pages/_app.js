@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
@@ -25,25 +26,62 @@ export default function App({ Component, pageProps }) {
   const isHomeRoute = routePath === '/';
   const isPrisonRoute = routePath === '/jangjisu-prison' || routePath === '/jangjisu-prison-v2';
 
+  useEffect(() => {
+    if (!isPrisonRoute || typeof window === 'undefined') return;
+    try {
+      window.history.scrollRestoration = 'manual';
+      if (!window.location.hash || window.location.hash === '#top') {
+        window.scrollTo(0, 0);
+      }
+    } catch {}
+  }, [isPrisonRoute, routePath]);
+
   return (
     <>
       <Head>
         <title>JANGJISOU FAN ARCHIVE</title>
         <link rel="icon" type="image/png" href="/site-icon.png" />
         <link rel="apple-touch-icon" href="/site-icon.png" />
+        {isPrisonRoute ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `try{history.scrollRestoration='manual';if((location.pathname==='/jangjisu-prison'||location.pathname==='/jangjisu-prison-v2')&&(!location.hash||location.hash==='#top')){scrollTo(0,0)}}catch(e){}`,
+            }}
+          />
+        ) : null}
         <style>{`
+          @media (min-width: 1280px) {
+            #sou-utility-sidebar > a:first-of-type,
+            .sou-prison-page aside > a:first-of-type {
+              height: 118px !important;
+              min-height: 118px !important;
+              max-height: 118px !important;
+              padding: 8px !important;
+              margin-bottom: 28px !important;
+              transform: none !important;
+              transition: box-shadow 220ms ease, background-color 220ms ease !important;
+            }
+            #sou-utility-sidebar > a:first-of-type img,
+            .sou-prison-page aside > a:first-of-type img {
+              width: 100% !important;
+              height: 88px !important;
+              max-height: 88px !important;
+              object-fit: contain !important;
+              transform: none !important;
+            }
+          }
           ${isUtilityRoute ? `
           @media (min-width: 1280px) {
             body header {
               display: none !important;
             }
             body main {
-              width: calc(100% - 274px) !important;
-              max-width: 1880px !important;
+              width: calc(100vw - 274px) !important;
+              max-width: none !important;
               margin-left: 274px !important;
               margin-right: 0 !important;
-              padding-left: 36px !important;
-              padding-right: 36px !important;
+              padding-left: 28px !important;
+              padding-right: 28px !important;
             }
           }
           ` : ''}
@@ -70,8 +108,8 @@ export default function App({ Component, pageProps }) {
               max-width: none !important;
               margin-left: auto !important;
               margin-right: auto !important;
-              padding-left: clamp(28px, 2.1vw, 48px) !important;
-              padding-right: clamp(28px, 2.1vw, 48px) !important;
+              padding-left: clamp(18px, 1.35vw, 28px) !important;
+              padding-right: clamp(18px, 1.35vw, 28px) !important;
             }
             body .sou-prison-main > *,
             body .sou-prison-main #members,
@@ -87,28 +125,20 @@ export default function App({ Component, pageProps }) {
             body .sou-prison-main .sou-member-live-section > section > div.grid {
               display: grid !important;
               grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-              gap: 18px !important;
+              gap: 16px !important;
             }
             body .sou-prison-main .sou-member-live-section > div.grid {
               display: grid !important;
               grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-              column-gap: 28px !important;
+              column-gap: 24px !important;
               row-gap: 44px !important;
-            }
-          }
-          @media (min-width: 1920px) {
-            body .sou-prison-main,
-            body main.sou-prison-main,
-            body .sou-prison-content > main {
-              padding-left: 36px !important;
-              padding-right: 36px !important;
             }
           }
           @media (min-width: 2300px) {
             body .sou-prison-main,
             body main.sou-prison-main,
             body .sou-prison-content > main {
-              max-width: 2040px !important;
+              max-width: 2180px !important;
             }
           }
           ` : ''}
