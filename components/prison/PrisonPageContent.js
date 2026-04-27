@@ -187,7 +187,7 @@ function LiveMemberList() {
 
 function PrisonSidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-[274px] shrink-0 border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
+    <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
       <a href="#top" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
         <SidebarLogo />
       </a>
@@ -244,9 +244,9 @@ export default function PrisonPageContent() {
           <div className="absolute bottom-0 left-1/2 h-56 w-[18rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl sm:h-72 sm:w-[30rem]" />
         </div>
 
-        <div className="relative flex min-h-screen w-screen max-w-none overflow-x-hidden">
+        <div className="relative min-h-screen w-screen max-w-none overflow-x-hidden">
           <PrisonSidebar />
-          <div className="min-w-0 flex-1 max-w-none xl:w-[calc(100vw-274px)] xl:flex-none">
+          <div className="min-w-0 max-w-none xl:ml-[274px] xl:w-[calc(100vw-274px)]">
             <MobilePrisonNav />
             <main className="relative w-full max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-6 2xl:px-7">
               <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
