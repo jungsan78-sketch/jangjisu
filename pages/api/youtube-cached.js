@@ -1,8 +1,9 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { fetchMainYoutubePayload, isMainYoutubeUsable } from '../../lib/youtube-data';
 
 const CACHE_KEY = 'youtube:main:v1';
 const TTL_SECONDS = 60 * 60;
-const RUNTIME_MARKER = 'test2-youtube-kv-cache-20260427-1';
+const RUNTIME_MARKER = 'test2-youtube-kv-cache-20260427-2';
 
 async function getCacheBinding() {
   try {
@@ -35,27 +36,13 @@ async function readCachedPayload(cache) {
 }
 
 async function writeCachedPayload(cache, payload) {
-  if (!isKvNamespace(cache) || !isUsablePayload(payload)) return false;
+  if (!isKvNamespace(cache) || !isMainYoutubeUsable(payload)) return false;
   try {
     await cache.put(CACHE_KEY, JSON.stringify({ ...payload, cachedAt: new Date().toISOString() }), { expirationTtl: TTL_SECONDS });
     return true;
   } catch {
     return false;
   }
-}
-
-function getBaseUrl(req) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  return `${proto}://${host}`;
-}
-
-function isUsablePayload(payload) {
-  return payload && payload.ok !== false && (
-    (Array.isArray(payload.videos) && payload.videos.length > 0) ||
-    (Array.isArray(payload.shorts) && payload.shorts.length > 0) ||
-    (Array.isArray(payload.full) && payload.full.length > 0)
-  );
 }
 
 export default async function handler(req, res) {
@@ -71,19 +58,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const baseUrl = getBaseUrl(req);
-    const liveRes = await fetch(`${baseUrl}/api/youtube?live=1`, {
-      cache: 'no-store',
-      headers: { 'x-youtube-cache-bypass': '1' },
-    });
-    const live = await liveRes.json();
+    const live = await fetchMainYoutubePayload({ debug });
     const writeOk = await writeCachedPayload(cache, live);
 
-    if (isUsablePayload(live)) {
+    if (isMainYoutubeUsable(live)) {
       return res.status(200).json({
         ...live,
         cached: false,
-        cacheSource: 'live-fallback',
+        cacheSource: 'direct-lib-fallback',
         debug: debug ? {
           ...(live.debug || {}),
           runtimeMarker: RUNTIME_MARKER,
