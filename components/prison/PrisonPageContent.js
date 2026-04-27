@@ -198,7 +198,7 @@ function PrisonSidebar() {
       </a>
 
       <nav className="space-y-2.5">
-        <SidebarNavItem href="#members" label="멤버 라이브" icon="▣" />
+        <SidebarNavItem href="#top" label="멤버 라이브" icon="▣" />
         <SidebarNavItem href="#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
@@ -221,7 +221,7 @@ function MobilePrisonNav() {
         <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="#members" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">멤버 라이브</a>
+        <a href="#top" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">멤버 라이브</a>
         <a href="#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
@@ -237,24 +237,45 @@ export default function PrisonPageContent() {
       <style jsx global>{`
         html { scroll-behavior: smooth; }
         html, body { overflow-x: hidden; }
+        @media (min-width: 1280px) {
+          .sou-prison-content {
+            margin-left: 274px !important;
+            width: calc(100vw - 274px) !important;
+            max-width: calc(100vw - 274px) !important;
+          }
+          .sou-prison-main {
+            width: 100% !important;
+            max-width: none !important;
+            padding-left: 28px !important;
+            padding-right: 28px !important;
+          }
+          .sou-prison-main > *,
+          .sou-prison-main #members,
+          .sou-prison-main #schedule,
+          .sou-prison-main #recent-youtube,
+          .sou-prison-main .sou-member-live-section {
+            width: 100% !important;
+            max-width: none !important;
+          }
+        }
         @keyframes youtubeTabIn {
           0% { opacity: 0; transform: translateY(10px) scale(0.985); filter: blur(3px); }
           100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
       `}</style>
 
-      <div id="top" className="min-h-screen w-full overflow-x-hidden bg-[#05070c] text-white">
+      <div id="top" className="sou-prison-page min-h-screen w-full overflow-x-hidden bg-[#05070c] text-white">
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           <div className="absolute -top-20 left-[-50px] h-56 w-56 rounded-full bg-slate-500/10 blur-3xl sm:h-72 sm:w-72" />
           <div className="absolute top-20 right-[-70px] h-64 w-64 rounded-full bg-amber-500/8 blur-3xl sm:h-80 sm:w-80" />
           <div className="absolute bottom-0 left-1/2 h-56 w-[18rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl sm:h-72 sm:w-[30rem]" />
         </div>
 
-        <div className="relative min-h-screen w-full max-w-none overflow-x-hidden">
+        <div className="sou-prison-shell relative min-h-screen w-full max-w-none overflow-x-hidden">
           <PrisonSidebar />
-          <div className="min-w-0 max-w-none xl:ml-[274px] xl:w-[calc(100vw-274px)] xl:max-w-[calc(100vw-274px)]">
+          <div className="sou-prison-content min-w-0 max-w-none">
             <MobilePrisonNav />
-            <main className="relative w-full max-w-none overflow-x-hidden px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-6 2xl:px-7">
+            <main className="sou-prison-main relative w-full max-w-none overflow-x-hidden px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7">
               <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
                 <div className="relative overflow-hidden">
                   <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
