@@ -43,6 +43,10 @@ function buildCenteredWeekDates(centerDate) {
   return Array.from({ length: 5 }, (_, index) => shiftDay(centerDate, index - 2));
 }
 
+function hasScheduleItems(entry) {
+  return (entry?.items || []).some((item) => !item.empty && String(item.title || '').trim());
+}
+
 function FilterButton({ label, image, active, onClick }) {
   return (
     <button onClick={onClick} className={`inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[12px] font-black transition sm:py-2 sm:pl-2 sm:pr-4 sm:text-[15px] ${active ? 'bg-amber-300/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_18px_rgba(245,158,11,0.16)]' : 'bg-white/[0.055] text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_18px_rgba(0,0,0,0.12)] hover:bg-white/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_0_16px_rgba(56,189,248,0.08)]'}`}>
@@ -97,6 +101,25 @@ export default function CalendarPreview() {
 
   const selectedSource = scheduleEntries.find((entry) => entry.member === selectedMember);
   const visibleSchedules = selectedMember === '전체보기' ? schedules : schedules.filter((item) => item.member === selectedMember);
+  const linkedMemberOrder = useMemo(() => new Map(PRISON_SCHEDULE_SOURCES.map((source, index) => [source.member, index])), []);
+  const scheduleMemberButtons = useMemo(() => {
+    return [...SCHEDULE_MEMBERS].sort((a, b) => {
+      if (a.nickname === '장지수') return -1;
+      if (b.nickname === '장지수') return 1;
+
+      const aEntry = scheduleEntries.find((entry) => entry.member === a.nickname);
+      const bEntry = scheduleEntries.find((entry) => entry.member === b.nickname);
+      const aLinked = linkedMemberOrder.has(a.nickname);
+      const bLinked = linkedMemberOrder.has(b.nickname);
+      const aHasItems = hasScheduleItems(aEntry);
+      const bHasItems = hasScheduleItems(bEntry);
+
+      if (aHasItems !== bHasItems) return aHasItems ? -1 : 1;
+      if (aLinked !== bLinked) return aLinked ? -1 : 1;
+      if (aLinked && bLinked) return linkedMemberOrder.get(a.nickname) - linkedMemberOrder.get(b.nickname);
+      return SCHEDULE_MEMBERS.indexOf(a) - SCHEDULE_MEMBERS.indexOf(b);
+    });
+  }, [linkedMemberOrder, scheduleEntries]);
   const weeklyDates = useMemo(() => buildCenteredWeekDates(centerDate), [centerDate]);
   const weeklyGroupedSchedules = useMemo(() => {
     const map = new Map();
@@ -116,14 +139,18 @@ export default function CalendarPreview() {
   return (
     <section id="schedule" className="mt-6 w-full max-w-none rounded-[28px] bg-white/[0.035] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.24)] sm:mt-8 sm:rounded-[32px] sm:p-5 lg:p-7">
       <div className="w-full max-w-none rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.28),0_0_36px_rgba(56,189,248,0.055)] sm:rounded-[30px] sm:p-5 lg:p-7">
-        <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="text-[22px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[34px]">{parsedMonth.month}월 일정표</div>
-          <div className="text-[10px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{parsedMonth.year}</div>
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[11px] font-black text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">1시간마다 갱신</span>
+            {selectedMember !== '전체보기' && selectedSource?.sourceUrl ? <a href={selectedSource.sourceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-sky-300/10 px-3 py-1.5 text-[11px] font-black text-sky-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:bg-sky-300/16">시트보기</a> : null}
+            <div className="text-[10px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{parsedMonth.year}</div>
+          </div>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] bg-[#05101d] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_0_24px_rgba(56,189,248,0.05)] sm:mb-5 sm:rounded-[24px] sm:p-3">
           <FilterButton label="전체보기" active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')} />
-          {SCHEDULE_MEMBERS.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
+          {scheduleMemberButtons.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
         </div>
 
         {selectedMember === '전체보기' ? (
