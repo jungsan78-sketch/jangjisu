@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { Analytics } from '@vercel/analytics/next';
 import NewYoutubeDomToast from '../components/NewYoutubeDomToast';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
@@ -19,6 +20,10 @@ if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
 }
 
 export default function App({ Component, pageProps }) {
+  const router = useRouter();
+  const routePath = router.asPath?.split('?')[0] || router.pathname || '';
+  const isUtilityRoute = routePath === '/utility' || routePath.startsWith('/utility/');
+
   return (
     <>
       <Head>
@@ -26,6 +31,21 @@ export default function App({ Component, pageProps }) {
         <link rel="icon" type="image/png" href="/site-icon.png" />
         <link rel="apple-touch-icon" href="/site-icon.png" />
         <style>{`
+          ${isUtilityRoute ? `
+          @media (min-width: 1280px) {
+            body header {
+              display: none !important;
+            }
+            body main {
+              width: calc(100% - 274px) !important;
+              max-width: 1880px !important;
+              margin-left: 274px !important;
+              margin-right: 0 !important;
+              padding-left: 36px !important;
+              padding-right: 36px !important;
+            }
+          }
+          ` : ''}
           video[src="/hero.mp4"],
           img[src="/jangjisu-prison-hero.png"],
           section[aria-label="장지수용소 대문"],
