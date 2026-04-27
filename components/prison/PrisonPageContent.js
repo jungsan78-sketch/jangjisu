@@ -236,24 +236,25 @@ export default function PrisonPageContent() {
     <>
       <style jsx global>{`
         html { scroll-behavior: smooth; }
+        html, body { overflow-x: hidden; }
         @keyframes youtubeTabIn {
           0% { opacity: 0; transform: translateY(10px) scale(0.985); filter: blur(3px); }
           100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
       `}</style>
 
-      <div id="top" className="min-h-screen bg-[#05070c] text-white">
+      <div id="top" className="min-h-screen w-full overflow-x-hidden bg-[#05070c] text-white">
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           <div className="absolute -top-20 left-[-50px] h-56 w-56 rounded-full bg-slate-500/10 blur-3xl sm:h-72 sm:w-72" />
           <div className="absolute top-20 right-[-70px] h-64 w-64 rounded-full bg-amber-500/8 blur-3xl sm:h-80 sm:w-80" />
           <div className="absolute bottom-0 left-1/2 h-56 w-[18rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl sm:h-72 sm:w-[30rem]" />
         </div>
 
-        <div className="relative min-h-screen w-screen max-w-none overflow-x-hidden">
+        <div className="relative min-h-screen w-full max-w-none overflow-x-hidden">
           <PrisonSidebar />
-          <div className="min-w-0 max-w-none xl:ml-[274px] xl:w-[calc(100vw-274px)]">
+          <div className="min-w-0 max-w-none xl:ml-[274px] xl:w-[calc(100vw-274px)] xl:max-w-[calc(100vw-274px)]">
             <MobilePrisonNav />
-            <main className="relative w-full max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-6 2xl:px-7">
+            <main className="relative w-full max-w-none overflow-x-hidden px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-6 2xl:px-7">
               <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
                 <div className="relative overflow-hidden">
                   <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
@@ -262,7 +263,7 @@ export default function PrisonPageContent() {
                 </div>
               </section>
 
-              <div id="members" className="scroll-mt-6 w-full max-w-none">
+              <div id="members" className="scroll-mt-6 w-full max-w-none overflow-x-hidden">
                 <PrisonMemberLiveGridContent />
               </div>
               <CalendarPreview />
