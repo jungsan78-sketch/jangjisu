@@ -128,7 +128,7 @@ function LiveGridSkeleton({ failed = false }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={!failed}>{skeletonItems.map((item) => <div key={item} className="min-h-[360px] overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.16)]"><div className="h-36 bg-white/[0.035]" /><div className="p-4 pt-5"><div className="flex items-center gap-4"><div className="h-[72px] w-[72px] rounded-full bg-white/[0.055]" /><div className="flex-1"><div className="h-5 w-28 rounded-full bg-white/[0.055]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" /><div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" /></div></div><div className="mt-5 flex gap-2"><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /><div className="h-10 w-11 rounded-2xl bg-white/[0.045]" /></div><div className="mt-5 h-px bg-white/8" /><div className="mt-4 h-4 w-24 rounded-full bg-white/[0.04]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.035]" /><div className="mt-2 h-4 w-3/4 rounded-full bg-white/[0.03]" /></div></div>)}{failed ? <div className="col-span-full rounded-[22px] border border-amber-200/20 bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다.</div> : null}</div>;
 }
 
-function PrisonMemberLiveGridContent() {
+export function PrisonMemberLiveGridContent() {
   const [livePayload, setLivePayload] = useState(null);
   const [postsPayload, setPostsPayload] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -190,6 +190,7 @@ export default function PrisonMemberLiveGrid() {
   const [mountNode, setMountNode] = useState(null);
   useEffect(() => {
     if (typeof window === 'undefined' || !window.location.pathname.startsWith('/jangjisu-prison')) return undefined;
+    if (document.querySelector('[data-sou-react-live-grid="true"]')) return undefined;
     const original = document.getElementById('members');
     if (!original || document.getElementById('sou-react-member-live-grid-root')) return undefined;
     const root = document.createElement('div');
