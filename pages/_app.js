@@ -24,6 +24,7 @@ export default function App({ Component, pageProps }) {
   const routePath = router.asPath?.split('?')[0] || router.pathname || '';
   const isUtilityRoute = routePath === '/utility' || routePath.startsWith('/utility/');
   const isHomeRoute = routePath === '/';
+  const isPrisonRoute = routePath === '/jangjisu-prison' || routePath === '/jangjisu-prison-v2';
 
   return (
     <>
@@ -44,6 +45,27 @@ export default function App({ Component, pageProps }) {
               margin-right: 0 !important;
               padding-left: 36px !important;
               padding-right: 36px !important;
+            }
+          }
+          ` : ''}
+          ${isPrisonRoute ? `
+          @media (min-width: 1280px) {
+            body {
+              overflow-x: hidden !important;
+            }
+            body main {
+              width: calc(100vw - 274px) !important;
+              max-width: none !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
+            body main > #members,
+            body main #members,
+            body main #schedule,
+            body main #recent-youtube,
+            body main .sou-member-live-section {
+              width: 100% !important;
+              max-width: none !important;
             }
           }
           ` : ''}
