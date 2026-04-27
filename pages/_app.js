@@ -21,7 +21,7 @@ if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const routePath = router.asPath?.split('?')[0] || router.pathname || '';
+  const routePath = (router.asPath || router.pathname || '').split(/[?#]/)[0] || router.pathname || '';
   const isUtilityRoute = routePath === '/utility' || routePath.startsWith('/utility/');
   const isHomeRoute = routePath === '/';
   const isPrisonRoute = routePath === '/jangjisu-prison' || routePath === '/jangjisu-prison-v2';
@@ -58,6 +58,8 @@ export default function App({ Component, pageProps }) {
               max-width: none !important;
               margin-left: 0 !important;
               margin-right: 0 !important;
+              padding-left: 28px !important;
+              padding-right: 28px !important;
             }
             body main > #members,
             body main #members,
