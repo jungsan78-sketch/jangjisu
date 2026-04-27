@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import { createPortal } from 'react-dom';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -59,9 +60,13 @@ function writeCachedLivePayload(payload) {
 }
 
 function RoleMiniBadge({ nickname }) {
-  if (nickname === '장지수') return <span className="rounded-full bg-amber-300/12 px-2 py-0.5 text-[10px] font-black text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">수장</span>;
-  if (nickname === '린링') return <span className="rounded-full bg-cyan-300/12 px-2 py-0.5 text-[10px] font-black text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">반장</span>;
-  return null;
+  const type = nickname === '장지수' ? 'warden' : nickname === '린링' ? 'captain' : '';
+  if (!type) return null;
+  const label = type === 'warden' ? '수장' : '반장';
+  const className = type === 'warden'
+    ? 'border-amber-200/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.34))] text-amber-50 shadow-[0_0_16px_rgba(251,191,36,0.30),inset_0_1px_0_rgba(255,255,255,0.24)]'
+    : 'border-cyan-200/35 bg-[linear-gradient(135deg,rgba(34,211,238,0.34),rgba(30,64,175,0.32))] text-cyan-50 shadow-[0_0_16px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.22)]';
+  return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black ${className}`}>{label}</span>;
 }
 
 function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
@@ -86,8 +91,8 @@ function LivePreviewCard({ preview }) {
   const { member, status, top } = preview;
   const safeTop = Math.min(Math.max(Number(top || 260), 190), typeof window !== 'undefined' ? window.innerHeight - 190 : 720);
 
-  return (
-    <div className="pointer-events-none fixed left-[288px] z-[2147483647] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.70),0_0_48px_rgba(56,189,248,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
+  return createPortal(
+    <div className="pointer-events-none fixed left-[288px] z-[2147483647] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.76),0_0_52px_rgba(56,189,248,0.20),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
       <div className="relative h-[166px] bg-black">
         {status.thumbnailUrl ? (
           <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
@@ -110,10 +115,10 @@ function LivePreviewCard({ preview }) {
         </div>
       </div>
       <div className="p-4">
-        <div className="mb-1 text-[10px] font-black tracking-[0.18em] text-sky-100/70">LIVE TITLE</div>
         <div className="line-clamp-2 text-[15px] font-black leading-6 text-white">{status.title || '방송 중'}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
