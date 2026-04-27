@@ -244,11 +244,11 @@ export default function PrisonPageContent() {
           <div className="absolute bottom-0 left-1/2 h-56 w-[18rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl sm:h-72 sm:w-[30rem]" />
         </div>
 
-        <div className="relative flex min-h-screen">
+        <div className="relative flex min-h-screen w-screen max-w-none overflow-x-hidden">
           <PrisonSidebar />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 max-w-none xl:w-[calc(100vw-274px)] xl:flex-none">
             <MobilePrisonNav />
-            <main className="relative max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 2xl:px-8">
+            <main className="relative w-full max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-6 2xl:px-7">
               <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
                 <div className="relative overflow-hidden">
                   <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
@@ -257,7 +257,7 @@ export default function PrisonPageContent() {
                 </div>
               </section>
 
-              <div id="members" className="scroll-mt-6">
+              <div id="members" className="scroll-mt-6 w-full max-w-none">
                 <PrisonMemberLiveGridContent />
               </div>
               <CalendarPreview />
