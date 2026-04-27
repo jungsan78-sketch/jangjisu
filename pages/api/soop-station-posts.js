@@ -5,7 +5,8 @@ import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
 
 const CACHE_KEY = 'soop:station-posts:payload';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
-const RUNTIME_MARKER = 'test2-kv-fallback-20260427-1';
+const RUNTIME_MARKER = 'test2-soop-posts-page-20260427-2';
+const TARGET_STATION_IDS = new Set(['bxroong', 'isq1158', 'mini1212', 'ddikku0714']);
 
 function getKnownStationIds() {
   return ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean);
@@ -84,6 +85,15 @@ function mergeWithCachedPosts(payload, cachedPayload) {
     debug: {
       ...(payload.debug || {}),
       runtimeMarker: RUNTIME_MARKER,
+      pageRuntimeMarker: RUNTIME_MARKER,
+      targetPostStatus: Object.fromEntries([...TARGET_STATION_IDS].map((stationId) => [stationId, {
+        hasLivePost: Boolean(currentPosts[stationId]),
+        hasCachedPost: Boolean(cachedPosts[stationId]),
+        hasMergedPost: Boolean(mergedPosts[stationId]),
+        liveSource: currentPosts[stationId]?.source || '',
+        cachedSource: cachedPosts[stationId]?.source || '',
+        mergedSource: mergedPosts[stationId]?.source || '',
+      }])),
       matchedCount: Object.keys(mergedPosts).length,
       liveMatchedCount: Object.keys(currentPosts).length,
       missingCount: missing.length,
@@ -105,6 +115,7 @@ function attachRuntimeMarker(payload) {
     debug: {
       ...(payload.debug || {}),
       runtimeMarker: RUNTIME_MARKER,
+      pageRuntimeMarker: RUNTIME_MARKER,
     },
   };
 }
@@ -144,6 +155,7 @@ export default async function handler(req, res) {
         debug: {
           ...(cachedPayload.debug || {}),
           runtimeMarker: RUNTIME_MARKER,
+          pageRuntimeMarker: RUNTIME_MARKER,
           cache: {
             bindingFound: cacheAvailable,
             hit: true,
@@ -162,7 +174,7 @@ export default async function handler(req, res) {
       source: 'fallback',
       fetchedAt: new Date().toISOString(),
       warning: error?.message || 'SOOP station posts unavailable',
-      ...(debug ? { debug: { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: false }, error: error?.stack || error?.message || String(error) } } : {}),
+      ...(debug ? { debug: { runtimeMarker: RUNTIME_MARKER, pageRuntimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: false }, error: error?.stack || error?.message || String(error) } } : {}),
     });
   }
 }
