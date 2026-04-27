@@ -26,31 +26,6 @@ button {
   cursor: pointer;
 }
 
-@keyframes newYoutubeToastIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes youtubeSpark {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 10px, 0) scale(0.45);
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(0, -22px, 0) scale(1.15);
-  }
-}
-
 @keyframes souTabContentIn {
   0% {
     opacity: 0;
@@ -82,6 +57,124 @@ button {
   }
   50% {
     box-shadow: 0 0 0 6px rgba(248, 113, 113, 0), 0 0 30px rgba(248, 113, 113, 0.46);
+  }
+}
+
+@media (min-width: 1280px) {
+  #sou-utility-sidebar,
+  .sou-prison-page aside {
+    width: 274px !important;
+    min-width: 274px !important;
+    max-width: 274px !important;
+    contain: layout paint;
+  }
+
+  #sou-utility-sidebar > a:first-of-type,
+  .sou-prison-page aside > a:first-of-type {
+    display: flex !important;
+    height: 118px !important;
+    min-height: 118px !important;
+    max-height: 118px !important;
+    width: 100% !important;
+    padding: 8px !important;
+    margin-bottom: 28px !important;
+    transform: none !important;
+    transition: box-shadow 220ms ease, background-color 220ms ease !important;
+  }
+
+  #sou-utility-sidebar > a:first-of-type:hover,
+  .sou-prison-page aside > a:first-of-type:hover {
+    transform: none !important;
+  }
+
+  #sou-utility-sidebar > a:first-of-type img,
+  .sou-prison-page aside > a:first-of-type img {
+    display: block !important;
+    width: 100% !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
+    object-fit: contain !important;
+    transform: none !important;
+  }
+
+  body:has(#sou-utility-sidebar) header {
+    display: none !important;
+  }
+
+  body:has(#sou-utility-sidebar) main {
+    width: calc(100vw - 274px) !important;
+    max-width: none !important;
+    margin-left: 274px !important;
+    margin-right: 0 !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  .sou-prison-page,
+  .sou-prison-shell {
+    width: 100vw !important;
+    max-width: none !important;
+    overflow-x: hidden !important;
+  }
+
+  .sou-prison-content {
+    margin-left: 274px !important;
+    width: calc(100vw - 274px) !important;
+    max-width: calc(100vw - 274px) !important;
+  }
+
+  .sou-prison-main {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    overflow-x: visible !important;
+  }
+
+  .sou-prison-main > *,
+  .sou-prison-main #members,
+  .sou-prison-main #schedule,
+  .sou-prison-main #recent-youtube,
+  .sou-prison-main .sou-member-live-section {
+    max-width: none !important;
+  }
+
+  .sou-prison-main #members,
+  .sou-prison-main #schedule,
+  .sou-prison-main #recent-youtube {
+    --sou-target-width: min(calc(100vw - 330px), 1780px);
+    position: relative !important;
+    width: var(--sou-target-width) !important;
+    max-width: var(--sou-target-width) !important;
+    margin-left: calc((100% - var(--sou-target-width)) / 2) !important;
+    margin-right: 0 !important;
+  }
+
+  .sou-prison-main .sou-member-live-section,
+  .sou-prison-main .sou-member-live-section > section,
+  .sou-prison-main .sou-member-live-section > div {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .sou-prison-main .sou-member-live-section > section > div.grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+
+  .sou-prison-main .sou-member-live-section > div.grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    column-gap: 24px !important;
+    row-gap: 44px !important;
+  }
+}
+
+@media (min-width: 2300px) {
+  .sou-prison-main #members,
+  .sou-prison-main #schedule,
+  .sou-prison-main #recent-youtube {
+    --sou-target-width: min(calc(100vw - 390px), 2180px);
   }
 }
 
