@@ -6,13 +6,6 @@ function stationIdFromUrl(url = '') {
   return String(url).match(/station\/([^/?#]+)/i)?.[1] || '';
 }
 
-function formatCount(value) {
-  const number = Number(value || 0);
-  if (!Number.isFinite(number) || number <= 0) return '0';
-  if (number >= 10000) return `${(number / 10000).toFixed(number >= 100000 ? 0 : 1)}만`;
-  return number.toLocaleString('ko-KR');
-}
-
 function formatFetchedAt(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -99,7 +92,7 @@ function RoleBadge({ type }) {
   const className = type === 'warden'
     ? 'border-amber-200/60 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.48))] text-amber-50 shadow-[0_0_22px_rgba(251,191,36,0.26),inset_0_1px_0_rgba(255,255,255,0.22)]'
     : 'border-cyan-200/58 bg-[linear-gradient(135deg,rgba(34,211,238,0.32),rgba(30,64,175,0.48))] text-cyan-50 shadow-[0_0_22px_rgba(34,211,238,0.24),inset_0_1px_0_rgba(255,255,255,0.22)]';
-  return <span className={`rounded-full border px-3.5 py-1.5 text-[12px] font-black tracking-[0.18em] ${className}`}>{label}</span>;
+  return <span className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-black tracking-[0.18em] ${className}`}>{label}</span>;
 }
 
 function MemberCard({ member, status, post }) {
@@ -127,18 +120,22 @@ function MemberCard({ member, status, post }) {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.42),transparent_56%),linear-gradient(180deg,#02040a,#000)]" />
         )}
       </a>
-      <img src={member.image} alt={`${member.nickname} 프로필`} className="absolute left-4 top-[96px] z-10 h-[70px] w-[70px] rounded-full border-[3px] border-[#05070c] bg-slate-900 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.32)]" loading="lazy" />
       <div className={`absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-black backdrop-blur-md ${isLive ? 'border-rose-200/40 bg-rose-950/80 text-rose-50 shadow-[0_10px_26px_rgba(127,29,29,0.35)]' : 'border-white/14 bg-black/72 text-white/82'}`}>
         <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
         {stateLabel}
       </div>
-      <div className="p-4 pt-10">
-        <div className="flex items-center justify-between gap-2">
-          <h4 className="text-[19px] font-black tracking-[-0.03em] text-white">{member.nickname}</h4>
-          {roleType ? <RoleBadge type={roleType} /> : null}
+      <div className="p-4 pt-5">
+        <div className="flex items-center gap-4">
+          <img src={member.image} alt={`${member.nickname} 프로필`} className="h-[72px] w-[72px] shrink-0 rounded-full border-[3px] border-[#05070c] bg-slate-900 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.32)]" loading="lazy" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="truncate text-[21px] font-black tracking-[-0.04em] text-white">{member.nickname}</h4>
+              {roleType ? <RoleBadge type={roleType} /> : null}
+            </div>
+            <p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/72">{title}</p>
+          </div>
         </div>
-        <p className="mt-2 line-clamp-2 min-h-[40px] text-[13px] font-extrabold leading-5 text-white/70">{title}</p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-4 flex flex-wrap gap-1.5">
           {tags.map((tag) => <span key={tag} className="rounded-full border border-white/8 bg-white/[0.045] px-2 py-1 text-[11px] font-black text-white/62">{tag}</span>)}
         </div>
         <div className="mt-3 flex gap-2">
@@ -150,8 +147,8 @@ function MemberCard({ member, status, post }) {
           <div className="text-[11px] font-black tracking-[0.18em] text-cyan-100 drop-shadow-[0_0_12px_rgba(103,232,249,0.18)]">최근 공지사항</div>
           {post ? (
             <>
-              <a href={post.url} target="_blank" rel="noreferrer" className="mt-2 block line-clamp-2 text-[15px] font-black leading-6 text-white/94 hover:text-white hover:underline">{post.title}</a>
-              {post.summary ? <p className="mt-1.5 line-clamp-2 text-xs font-bold leading-5 text-white/46">{post.summary}</p> : null}
+              <a href={post.url} target="_blank" rel="noreferrer" className="mt-2 block line-clamp-2 text-[15px] font-black leading-6 text-white hover:text-cyan-50 hover:underline">{post.title}</a>
+              {post.summary ? <p className="mt-1.5 line-clamp-2 text-xs font-semibold leading-5 text-slate-300/72">{post.summary}</p> : null}
               {postTime ? <div className="mt-2 text-[11px] font-extrabold text-white/42">{postTime}</div> : null}
             </>
           ) : (
@@ -170,10 +167,15 @@ function LiveGridSkeleton({ failed = false }) {
       {skeletonItems.map((item) => (
         <div key={item} className="min-h-[360px] overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.16)]">
           <div className="h-36 bg-white/[0.035]" />
-          <div className="p-4 pt-10">
-            <div className="h-5 w-28 rounded-full bg-white/[0.055]" />
-            <div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" />
-            <div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" />
+          <div className="p-4 pt-5">
+            <div className="flex items-center gap-4">
+              <div className="h-[72px] w-[72px] rounded-full bg-white/[0.055]" />
+              <div className="flex-1">
+                <div className="h-5 w-28 rounded-full bg-white/[0.055]" />
+                <div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" />
+                <div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" />
+              </div>
+            </div>
             <div className="mt-5 flex gap-2">
               <div className="h-10 w-11 rounded-2xl bg-white/[0.045]" />
               <div className="h-10 w-11 rounded-2xl bg-white/[0.045]" />
