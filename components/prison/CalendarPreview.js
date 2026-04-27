@@ -3,6 +3,7 @@ import { PRISON_SCHEDULE_SOURCES } from '../../data/prisonScheduleSources';
 import { SCHEDULE_MEMBERS } from '../../data/prisonMembers';
 import WeeklyAllScheduleView from './WeeklyAllScheduleView';
 
+const SCHEDULE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function parseMonthFromLabel(label) {
@@ -75,7 +76,7 @@ export default function CalendarPreview() {
     }
 
     load();
-    const timer = setInterval(load, 60000);
+    const timer = setInterval(load, SCHEDULE_REFRESH_INTERVAL_MS);
     return () => {
       mounted = false;
       clearInterval(timer);
