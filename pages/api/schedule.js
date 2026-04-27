@@ -4,7 +4,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_KEY = 'schedule:jangjisu:current';
-const CACHE_TTL_SECONDS = 60 * 30;
+const CACHE_TTL_SECONDS = 60 * 60;
 
 function buildCurrentMonthCandidates(baseDate = new Date()) {
   return buildMonthCandidates(baseDate).filter(
