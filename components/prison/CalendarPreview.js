@@ -3,27 +3,10 @@ import { PRISON_SCHEDULE_SOURCES } from '../../data/prisonScheduleSources';
 import { SCHEDULE_MEMBERS } from '../../data/prisonMembers';
 import WeeklyAllScheduleView from './WeeklyAllScheduleView';
 
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-
 function parseMonthFromLabel(label) {
-  const m = String(label || '').match(/(\d{4})년\s*(\d{1,2})월/);
-  if (!m) return null;
-  return { year: Number(m[1]), month: Number(m[2]) };
-}
-
-function buildCalendarCells(schedule) {
-  const parsed = parseMonthFromLabel(schedule.monthLabel);
-  if (!parsed) return [];
-  const { year, month } = parsed;
-  const days = new Date(year, month, 0).getDate();
-  const lead = new Date(year, month - 1, 1).getDay();
-  const total = Math.ceil((lead + days) / 7) * 7;
-  const map = new Map((schedule.items || []).map((item) => [Number(item.dayNumber), item]));
-  return Array.from({ length: total }, (_, index) => {
-    const day = index - lead + 1;
-    if (day < 1 || day > days) return null;
-    return map.get(day) || { dayNumber: day, title: '', empty: true };
-  });
+  const matched = String(label || '').match(/(\d{4})년\s*(\d{1,2})월/);
+  if (!matched) return null;
+  return { year: Number(matched[1]), month: Number(matched[2]) };
 }
 
 function startOfDay(value) {
@@ -51,77 +34,18 @@ function FilterButton({ label, image, active, onClick }) {
   );
 }
 
-function CalendarLoadingShell() {
-  return (
-    <section id="schedule" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8" aria-busy="true">
-      <div className="rounded-[24px] border border-[#12305c] bg-[linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:rounded-[30px] sm:p-5 lg:p-7">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="h-8 w-48 rounded-full bg-white/[0.055]" />
-          <div className="h-4 w-20 rounded-full bg-white/[0.04]" />
-        </div>
-        <div className="mb-5 flex flex-wrap gap-2 rounded-[20px] border border-white/8 bg-[#05101d] p-3 sm:rounded-[24px]">
-          {Array.from({ length: 8 }, (_, index) => <div key={index} className="h-9 w-24 rounded-full bg-white/[0.045]" />)}
-        </div>
-        <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
-          <div className="grid grid-cols-5 gap-2 sm:gap-3">
-            {Array.from({ length: 5 }, (_, index) => <div key={index} className="min-h-[150px] rounded-[18px] border border-white/6 bg-white/[0.025] sm:min-h-[210px]" />)}
-          </div>
-          <div className="mt-4 text-sm font-bold text-white/55">멤버 일정표 데이터를 불러오는 중입니다.</div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DayDetailModal({ isOpen, month, day, items, onClose }) {
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/72 p-3 backdrop-blur-sm sm:items-center sm:p-6" onClick={onClose}>
-      <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(10,18,30,0.98),rgba(5,10,19,0.98))] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-6" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-black tracking-[0.22em] text-cyan-200/70">DAY DETAIL</div>
-            <div className="mt-2 text-[24px] font-black text-white sm:text-[30px]">{month}월 {day}일 일정</div>
-          </div>
-          <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-bold text-white/72 transition hover:bg-white/10 hover:text-white">닫기</button>
-        </div>
-        <div className="space-y-2.5">
-          {items.map((item, index) => {
-            const off = String(item.title || '').includes('휴방');
-            return (
-              <div key={`${item.member}-${item.title}-${index}`} className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3">
-                <div className={`text-sm font-black ${off ? 'text-rose-100' : 'text-cyan-100'}`}>{item.member}</div>
-                <div className={`mt-1.5 text-sm leading-6 break-keep ${off ? 'text-rose-50' : 'text-white/90'}`}>{item.title}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체보기');
-  const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], loaded: false }])));
-  const [detailModal, setDetailModal] = useState({ isOpen: false, day: null, items: [] });
   const [centerDate, setCenterDate] = useState(() => startOfDay(new Date()));
+  const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], loaded: false }])));
 
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
+
+    async function load() {
       const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(source.endpoint).then((res) => res.json())));
       if (!mounted) return;
+
       const nextState = {};
       PRISON_SCHEDULE_SOURCES.forEach((source, index) => {
         const result = results[index];
@@ -132,7 +56,8 @@ export default function CalendarPreview() {
         };
       });
       setScheduleState(nextState);
-    };
+    }
+
     load();
     const timer = setInterval(load, 60000);
     return () => {
@@ -141,98 +66,60 @@ export default function CalendarPreview() {
     };
   }, []);
 
-  const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => ({ ...source, ...(scheduleState[source.key] || { monthLabel: '', items: [], loaded: false }) })), [scheduleState]);
+  const scheduleEntries = useMemo(
+    () => PRISON_SCHEDULE_SOURCES.map((source) => ({ ...source, ...(scheduleState[source.key] || { monthLabel: '', items: [], loaded: false }) })),
+    [scheduleState],
+  );
   const isLoaded = scheduleEntries.every((entry) => entry.loaded);
+  const monthLabel = scheduleEntries.find((entry) => entry.monthLabel)?.monthLabel || '';
+  const parsedMonth = useMemo(() => parseMonthFromLabel(monthLabel), [monthLabel]);
 
-  const calendarSchedule = useMemo(() => {
-    const monthLabel = scheduleEntries.find((entry) => entry.monthLabel)?.monthLabel || '';
-    const itemMap = new Map();
-    scheduleEntries.forEach((entry) => {
-      (entry.items || []).forEach((item) => {
-        if (!item?.dayNumber) return;
-        if (!itemMap.has(item.dayNumber)) itemMap.set(item.dayNumber, item);
-      });
-    });
-    return { monthLabel, items: Array.from(itemMap.values()) };
-  }, [scheduleEntries]);
+  const schedules = useMemo(() => {
+    if (!parsedMonth) return [];
+    return scheduleEntries.flatMap((entry) => (entry.items || [])
+      .filter((item) => !item.empty && String(item.title || '').trim())
+      .map((item) => ({
+        day: item.dayNumber,
+        member: entry.member,
+        title: item.title,
+        year: parsedMonth.year,
+        month: parsedMonth.month,
+      })));
+  }, [scheduleEntries, parsedMonth]);
 
-  const parsedMonth = useMemo(() => parseMonthFromLabel(calendarSchedule.monthLabel), [calendarSchedule.monthLabel]);
-  const month = parsedMonth?.month || '';
-  const year = parsedMonth?.year || '';
-  const cells = useMemo(() => buildCalendarCells(calendarSchedule), [calendarSchedule]);
-  const today = new Date();
-  const schedules = useMemo(() => scheduleEntries.flatMap((entry) => (entry.items || []).filter((item) => !item.empty && String(item.title || '').trim()).map((item) => ({ day: item.dayNumber, member: entry.member, title: item.title, year, month }))), [scheduleEntries, year, month]);
-  const visible = selectedMember === '전체보기' ? schedules : schedules.filter((item) => item.member === selectedMember);
-  const byDay = useMemo(() => {
-    const map = new Map();
-    visible.forEach((item) => {
-      const list = map.get(item.day) || [];
-      list.push(item);
-      map.set(item.day, list);
-    });
-    return map;
-  }, [visible]);
+  const visibleSchedules = selectedMember === '전체보기' ? schedules : schedules.filter((item) => item.member === selectedMember);
   const weeklyDates = useMemo(() => buildCenteredWeekDates(centerDate), [centerDate]);
   const weeklyGroupedSchedules = useMemo(() => {
     const map = new Map();
-    schedules.forEach((item) => {
+    visibleSchedules.forEach((item) => {
       const key = `${item.year}-${item.month}-${item.day}`;
       const list = map.get(key) || [];
       list.push(item);
       map.set(key, list);
     });
     return map;
-  }, [schedules]);
+  }, [visibleSchedules]);
 
-  if (!isLoaded || !parsedMonth) return <CalendarLoadingShell />;
+  if (!isLoaded || !parsedMonth) {
+    return <div id="schedule" aria-hidden="true" style={{ display: 'none' }} />;
+  }
 
   return (
-    <>
-      <section id="schedule" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
-        <div className="rounded-[24px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:rounded-[30px] sm:p-5 lg:p-7">
-          <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:gap-4">
-            <div className="text-[22px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[34px]">{month}월 달력</div>
-            <div className="text-[10px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{year}</div>
-          </div>
-
-          <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] border border-white/8 bg-[#05101d] p-2.5 sm:mb-5 sm:rounded-[24px] sm:p-3">
-            <FilterButton label="전체보기" active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')} />
-            {SCHEDULE_MEMBERS.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
-          </div>
-
-          {selectedMember === '전체보기' ? <WeeklyAllScheduleView dates={weeklyDates} onMoveDay={(days) => setCenterDate((prev) => shiftDay(prev, days))} groupedSchedules={weeklyGroupedSchedules} /> : <div className="rounded-[22px] border border-white/10 bg-[#05101d] p-3 sm:rounded-[28px] sm:p-5">
-            <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-black text-white/58 sm:mb-4 sm:gap-3 sm:text-[15px]">
-              {WEEKDAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
-              {cells.map((cell, index) => {
-                if (!cell) return <div key={`e-${index}`} className="min-h-[82px] rounded-[16px] border border-white/5 bg-white/[0.02] sm:min-h-[132px] sm:rounded-[22px]" />;
-                const day = Number(cell.dayNumber);
-                const list = byDay.get(day) || [];
-                const isToday = today.getMonth() + 1 === month && today.getDate() === day;
-                const hasItem = list.length > 0;
-                const offDay = list.some((item) => String(item.title || '').includes('휴방'));
-                const visibleItems = list.slice(0, 3);
-                const hiddenCount = Math.max(0, list.length - 3);
-                return (
-                  <div key={day} className={`group relative min-h-[82px] overflow-hidden rounded-[16px] border p-2 transition-all duration-300 hover:-translate-y-1 sm:min-h-[132px] sm:rounded-[22px] sm:p-3.5 ${isToday ? 'border-cyan-300/50 bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))]' : offDay ? 'border-orange-300/20 bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))]' : hasItem ? 'border-white/10 bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))]' : 'border-white/8 bg-[#07111f]'}`}>
-                    <div className="relative flex items-start justify-between gap-1 sm:gap-2"><div className="text-[12px] font-black text-white/95 sm:text-[17px]">{day}</div>{isToday ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 sm:px-2 sm:text-[10px]">TODAY</span> : null}</div>
-                    <div className="relative mt-2 space-y-1 sm:mt-4 sm:space-y-2">
-                      {visibleItems.map((item) => {
-                        const off = String(item.title || '').includes('휴방');
-                        return <div key={`${item.day}-${item.member}-${item.title}`} className={`line-clamp-2 text-[9px] font-black leading-4 break-keep sm:text-[13px] sm:leading-6 ${off ? 'text-rose-100' : 'text-white/92'}`}><span className="text-cyan-100">{item.member}</span><span className="px-1 text-white/42 sm:px-1.5">-</span><span>{item.title}</span></div>;
-                      })}
-                      {hiddenCount > 0 ? <button type="button" onClick={() => setDetailModal({ isOpen: true, day, items: list })} className="text-[9px] font-black leading-4 text-cyan-200/85 underline decoration-dotted underline-offset-2 transition hover:text-cyan-100 sm:text-[12px] sm:leading-5">+{hiddenCount} 더보기</button> : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {visible.length === 0 ? <div className="mt-4 text-sm font-bold text-white/55">선택한 메뉴의 일정 데이터가 아직 비어 있습니다.</div> : null}
-          </div>}
+    <section id="schedule" className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8">
+      <div className="rounded-[24px] border border-[#12305c] bg-[radial-gradient(circle_at_top,rgba(22,78,145,0.18),transparent_26%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.28)] sm:rounded-[30px] sm:p-5 lg:p-7">
+        <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+          <div className="text-[22px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[34px]">{parsedMonth.month}월 일정표</div>
+          <div className="text-[10px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{parsedMonth.year}</div>
         </div>
-      </section>
-      <DayDetailModal isOpen={detailModal.isOpen} month={month} day={detailModal.day} items={detailModal.items} onClose={() => setDetailModal({ isOpen: false, day: null, items: [] })} />
-    </>
+
+        <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] border border-white/8 bg-[#05101d] p-2.5 sm:mb-5 sm:rounded-[24px] sm:p-3">
+          <FilterButton label="전체보기" active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')} />
+          {SCHEDULE_MEMBERS.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
+        </div>
+
+        <WeeklyAllScheduleView dates={weeklyDates} onMoveDay={(days) => setCenterDate((prev) => shiftDay(prev, days))} groupedSchedules={weeklyGroupedSchedules} />
+        {visibleSchedules.length === 0 ? <div className="mt-4 text-sm font-bold text-white/55">선택한 메뉴의 일정 데이터가 아직 비어 있습니다.</div> : null}
+      </div>
+    </section>
   );
 }
