@@ -1,0 +1,41 @@
+@media (min-width: 1280px) {
+  #sou-utility-sidebar > a:first-of-type,
+  .sou-prison-page aside > a:first-of-type {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 132px !important;
+    min-height: 132px !important;
+    max-height: 132px !important;
+    margin: 0 0 28px 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #sou-utility-sidebar > a:first-of-type:hover,
+  .sou-prison-page aside > a:first-of-type:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  #sou-utility-sidebar > a:first-of-type img,
+  .sou-prison-page aside > a:first-of-type img {
+    display: block !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    height: 132px !important;
+    min-height: 132px !important;
+    max-height: 132px !important;
+    object-fit: contain !important;
+    transform: none !important;
+  }
+}
