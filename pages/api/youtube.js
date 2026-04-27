@@ -1,3 +1,13 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+
+function getRuntimeEnvValue(name) {
+  try {
+    const value = getCloudflareContext()?.env?.[name];
+    if (value) return value;
+  } catch {}
+  return process.env[name];
+}
+
 function formatDuration(isoDuration = '') {
   const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return '';
@@ -205,11 +215,11 @@ async function fallbackUploads(channelHandle, apiKey, maxResults = 24, maxPages 
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=1800');
-  const apiKey = process.env.YOUTUBE_API_KEY;
+  const apiKey = getRuntimeEnvValue('YOUTUBE_API_KEY');
   const debugMode = req.query?.debug === '1';
 
   if (!apiKey) {
-    return res.status(200).json({ ok: false, error: 'YOUTUBE_API_KEY is not set' });
+    return res.status(200).json({ ok: false, error: 'YOUTUBE_API_KEY is not set', debug: debugMode ? { runtimeEnvChecked: true } : undefined });
   }
 
   try {
@@ -319,6 +329,7 @@ export default async function handler(req, res) {
       ...(debugMode
         ? {
             debug: {
+              runtimeEnvChecked: true,
               sourceMode,
               shortsIds: shortsIds.slice(0, 24),
               fullIds: fullIds.slice(0, 24),
@@ -336,6 +347,6 @@ export default async function handler(req, res) {
         : {}),
     });
   } catch (error) {
-    return res.status(200).json({ ok: false, error: error.message });
+    return res.status(200).json({ ok: false, error: error.message, debug: debugMode ? { runtimeEnvChecked: true } : undefined });
   }
 }
