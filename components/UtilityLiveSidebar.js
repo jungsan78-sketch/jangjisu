@@ -150,18 +150,19 @@ function SidebarLiveMemberList({ currentPath }) {
     return ALL_PRISON_MEMBERS
       .map((member) => ({ member, status: statuses[member.nickname] }))
       .filter((item) => item.status?.isLive)
-      .sort((a, b) => viewerCount(b.status) - viewerCount(a.status));
+      .sort((a, b) => viewerCount(b.status) - viewerCount(a.status))
+      .slice(0, 5);
   }, [payload]);
 
   return (
     <section className="mt-7 border-t border-white/8 pt-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-[15px] font-black tracking-[-0.02em] text-white">방송중 멤버</h2>
-        <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[10px] font-black text-white/50">5분 저장</span>
+        <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[10px] font-black text-white/50">TOP 5</span>
       </div>
 
       {liveMembers.length > 0 ? (
-        <div className="max-h-[38vh] space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.32)_transparent]">
+        <div className="space-y-3">
           {liveMembers.map(({ member, status }) => (
             <a
               key={member.nickname}
