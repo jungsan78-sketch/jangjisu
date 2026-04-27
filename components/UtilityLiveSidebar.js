@@ -87,7 +87,7 @@ function LivePreviewCard({ preview }) {
   const safeTop = Math.min(Math.max(Number(top || 260), 190), typeof window !== 'undefined' ? window.innerHeight - 190 : 720);
 
   return (
-    <div className="pointer-events-none fixed left-[288px] z-[9999] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.62),0_0_42px_rgba(56,189,248,0.14),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
+    <div className="pointer-events-none fixed left-[288px] z-[2147483647] w-[300px] overflow-hidden rounded-[24px] bg-[#080d16]/98 text-white shadow-[0_28px_80px_rgba(0,0,0,0.70),0_0_48px_rgba(56,189,248,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl" style={{ top: safeTop, transform: 'translateY(-50%)' }}>
       <div className="relative h-[166px] bg-black">
         {status.thumbnailUrl ? (
           <img src={status.thumbnailUrl} alt={`${member.nickname} 방송 썸네일`} className="h-full w-full object-cover" loading="lazy" />
@@ -243,11 +243,11 @@ export default function UtilityLiveSidebar() {
           }
           body:has(#sou-utility-sidebar) main {
             width: calc(100% - 274px) !important;
-            max-width: 1880px !important;
+            max-width: none !important;
             margin-left: 274px !important;
             margin-right: 0 !important;
-            padding-left: 36px !important;
-            padding-right: 36px !important;
+            padding-left: 28px !important;
+            padding-right: 28px !important;
           }
         }
       `}</style>
