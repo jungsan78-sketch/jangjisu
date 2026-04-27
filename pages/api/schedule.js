@@ -6,37 +6,44 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_KEY = 'schedule:jangjisu:current';
 const CACHE_TTL_SECONDS = 60 * 30;
 
+function buildCurrentMonthCandidates(baseDate = new Date()) {
+  return buildMonthCandidates(baseDate).filter(
+    (candidate) => candidate.year === baseDate.getFullYear() && candidate.month === baseDate.getMonth() + 1,
+  );
+}
+
 async function buildFreshScheduleResponse() {
-  const candidates = buildMonthCandidates();
+  const candidates = buildCurrentMonthCandidates();
 
   for (const candidate of candidates) {
     try {
       const { rows, fetchedUrl } = await fetchRowsBySheetName(SHEET_ID, candidate.sheetName);
       const items = parseScheduleRows(rows, candidate.year, candidate.month);
 
-      if (items.some((item) => !item.empty)) {
-        return {
-          ok: true,
-          source: 'google_sheet_csv',
-          sourceUrl: `${SHEET_URL}?sheet=${encodeURIComponent(candidate.sheetName)}`,
-          monthLabel: candidate.monthLabel,
-          sheetName: candidate.sheetName,
-          fetchedUrl,
-          items,
-          fetchedAt: new Date().toISOString(),
-        };
-      }
+      return {
+        ok: items.some((item) => !item.empty),
+        source: 'google_sheet_csv',
+        sourceUrl: `${SHEET_URL}?sheet=${encodeURIComponent(candidate.sheetName)}`,
+        monthLabel: candidate.monthLabel,
+        sheetName: candidate.sheetName,
+        fetchedUrl,
+        items,
+        fetchedAt: new Date().toISOString(),
+      };
     } catch {
-      // 다음 후보 시트로 계속 시도
+      // 현재 월 후보 시트만 사용합니다. 다음 달 시트가 미리 생겨도 현재 월을 유지합니다.
     }
   }
+
+  const now = new Date();
+  const monthLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
 
   return {
     ok: false,
     sourceUrl: SHEET_URL,
-    monthLabel: '',
+    monthLabel,
     items: [],
-    message: '일정 데이터를 불러오지 못했습니다.',
+    message: '현재 월 일정 데이터를 불러오지 못했습니다.',
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -73,12 +80,14 @@ export default async function handler(req, res) {
       });
     }
 
+    const currentDate = new Date();
+
     return res.status(200).json({
       ok: false,
       sourceUrl: SHEET_URL,
-      monthLabel: '',
+      monthLabel: `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`,
       items: [],
-      message: '일정 데이터를 불러오지 못했습니다.',
+      message: '현재 월 일정 데이터를 불러오지 못했습니다.',
       fetchedAt: new Date().toISOString(),
       cache: 'unavailable',
     });
