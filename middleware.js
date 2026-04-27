@@ -7,7 +7,7 @@ export function middleware(request) {
   if (pathname === '/jangjisu-prison') {
     const url = request.nextUrl.clone();
     url.pathname = '/jangjisu-prison-v2';
-    return NextResponse.rewrite(url);
+    return NextResponse.redirect(url, 307);
   }
 
   if (!bypass && pathname === '/api/youtube') {
