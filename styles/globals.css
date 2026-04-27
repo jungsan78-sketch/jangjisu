@@ -122,13 +122,16 @@ button {
     margin-left: 274px !important;
     width: calc(100vw - 274px) !important;
     max-width: calc(100vw - 274px) !important;
+    min-width: 0 !important;
   }
 
   .sou-prison-main {
-    width: 100% !important;
-    max-width: none !important;
-    padding-left: 24px !important;
-    padding-right: 24px !important;
+    width: min(calc(100vw - 322px), 2040px) !important;
+    max-width: min(calc(100vw - 322px), 2040px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     overflow-x: visible !important;
   }
 
@@ -136,26 +139,13 @@ button {
   .sou-prison-main #members,
   .sou-prison-main #schedule,
   .sou-prison-main #recent-youtube,
-  .sou-prison-main .sou-member-live-section {
-    max-width: none !important;
-  }
-
-  .sou-prison-main #members,
-  .sou-prison-main #schedule,
-  .sou-prison-main #recent-youtube {
-    --sou-target-width: min(calc(100vw - 330px), 1780px);
-    position: relative !important;
-    width: var(--sou-target-width) !important;
-    max-width: var(--sou-target-width) !important;
-    margin-left: calc((100% - var(--sou-target-width)) / 2) !important;
-    margin-right: 0 !important;
-  }
-
   .sou-prison-main .sou-member-live-section,
   .sou-prison-main .sou-member-live-section > section,
   .sou-prison-main .sou-member-live-section > div {
     width: 100% !important;
     max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .sou-prison-main .sou-member-live-section > section > div.grid {
@@ -171,10 +161,9 @@ button {
 }
 
 @media (min-width: 2300px) {
-  .sou-prison-main #members,
-  .sou-prison-main #schedule,
-  .sou-prison-main #recent-youtube {
-    --sou-target-width: min(calc(100vw - 390px), 2180px);
+  .sou-prison-main {
+    width: 2040px !important;
+    max-width: 2040px !important;
   }
 }
 
@@ -237,21 +226,6 @@ section[aria-label="장지수용소 대문"] > div::after {
     radial-gradient(ellipse at center bottom, rgba(245, 158, 11, 0.10), transparent 58%);
 }
 
-#members .mb-5.flex.items-center.justify-between.gap-4 {
-  position: relative;
-  justify-content: center;
-}
-
-#members .mb-5.flex.items-center.justify-between.gap-4 > div:first-child {
-  flex: 1 1 auto;
-  text-align: center;
-}
-
-#members .mb-5.flex.items-center.justify-between.gap-4 > div:last-child {
-  position: absolute;
-  right: 0;
-}
-
 #schedule button {
   will-change: transform, background-color, border-color, box-shadow;
 }
@@ -276,17 +250,6 @@ section[aria-label="장지수용소 대문"] > div::after {
 
 #schedule .grid.grid-cols-7.gap-3 > div:hover {
   filter: brightness(1.08) saturate(1.05);
-}
-
-#notice > div,
-#notice .rounded-\[24px\] {
-  animation: souTabContentIn 260ms ease-out;
-  transition:
-    opacity 260ms ease,
-    transform 260ms ease,
-    border-color 260ms ease,
-    background-color 260ms ease,
-    box-shadow 260ms ease;
 }
 
 .sou-live-badge {
@@ -433,15 +396,6 @@ section[aria-label="장지수용소 대문"] > div::after {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* Legacy hover preview cards from the previous snapshot design */
-#members [class*="group-hover"]:has(:is(img, div, span)) {
-  pointer-events: auto;
-}
-
-#members div:has(> div > div):has(:where(*)) {
-  --sou-keep: 1;
 }
 
 @media (max-width: 640px) {
