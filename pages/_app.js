@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import '../styles/sidebar-logo.css';
+import '../styles/theme-soft-background.css';
 import Head from 'next/head';
 import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
