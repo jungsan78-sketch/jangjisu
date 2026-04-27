@@ -45,7 +45,7 @@ function SidebarLogo({ compact = false }) {
       src={LOGO_SRC}
       onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }}
       alt="장지수용소"
-      className={`${compact ? 'h-12' : 'h-[104px]'} w-full object-contain drop-shadow-[0_0_30px_rgba(103,232,249,0.24)]`}
+      className={`${compact ? 'h-12' : 'h-[132px]'} w-[260px] max-w-none object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]`}
     />
   );
 }
@@ -193,7 +193,7 @@ function LiveMemberList() {
 function PrisonSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-      <a href="#top" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
+      <a href="#top" className="mb-7 flex h-[132px] items-center justify-center overflow-visible p-0">
         <SidebarLogo />
       </a>
 
