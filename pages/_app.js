@@ -23,6 +23,7 @@ export default function App({ Component, pageProps }) {
   const router = useRouter();
   const routePath = router.asPath?.split('?')[0] || router.pathname || '';
   const isUtilityRoute = routePath === '/utility' || routePath.startsWith('/utility/');
+  const isHomeRoute = routePath === '/';
 
   return (
     <>
@@ -44,6 +45,11 @@ export default function App({ Component, pageProps }) {
               padding-left: 36px !important;
               padding-right: 36px !important;
             }
+          }
+          ` : ''}
+          ${isHomeRoute ? `
+          header a[href="/utility"] {
+            display: none !important;
           }
           ` : ''}
           video[src="/hero.mp4"],
