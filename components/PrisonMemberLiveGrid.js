@@ -93,12 +93,12 @@ function PlatformLink({ href, type, label }) {
   return <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>{icon}</a>;
 }
 
-function RoleBadge({ type }) {
+function RoleBadge({ type, mini = false }) {
   const label = type === 'warden' ? '수장' : '반장';
   const className = type === 'warden'
-    ? 'bg-amber-300/14 text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]'
-    : 'bg-cyan-300/14 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]';
-  return <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${className}`}>{label}</span>;
+    ? 'border-amber-200/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.34))] text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.32),inset_0_1px_0_rgba(255,255,255,0.26)]'
+    : 'border-cyan-200/35 bg-[linear-gradient(135deg,rgba(34,211,238,0.34),rgba(30,64,175,0.32))] text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.30),inset_0_1px_0_rgba(255,255,255,0.24)]';
+  return <span className={`shrink-0 rounded-full border ${mini ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'} font-black ${className}`}>{label}</span>;
 }
 
 function RecentPostsRail({ members, posts }) {
@@ -120,7 +120,7 @@ function RecentPostsRail({ members, posts }) {
         <h3 className="text-[22px] font-black tracking-[-0.04em] text-white sm:text-[26px]">최근 멤버글</h3>
         <span className="rounded-full bg-white/[0.045] px-3 py-1.5 text-[11px] font-black text-white/48 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">30분마다 갱신</span>
       </div>
-      <div className="grid w-full grid-cols-6 gap-4 overflow-hidden pb-1">
+      <div className="grid w-full grid-cols-2 gap-3 overflow-hidden pb-1 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
         {items.map(({ member, post }) => (
           <a key={`${member.nickname}-${post.url || post.title}`} href={post.url || member.station} target="_blank" rel="noreferrer" className="group min-h-[118px] min-w-0 overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_18px_36px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:bg-white/[0.07] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_46px_rgba(0,0,0,0.30)]">
             <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ function MemberCard({ member, status }) {
 
 function LiveGridSkeleton({ failed = false }) {
   const skeletonItems = Array.from({ length: 8 }, (_, index) => index);
-  return <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:[grid-template-columns:repeat(auto-fit,minmax(238px,1fr))] 2xl:[grid-template-columns:repeat(auto-fit,minmax(246px,1fr))]" aria-busy={!failed}>{skeletonItems.map((item) => <div key={item} className="min-h-[260px]"><div className="aspect-video rounded-[24px] bg-white/[0.035]" /><div className="mt-3 flex gap-3"><div className="h-11 w-11 rounded-full bg-white/[0.055]" /><div className="flex-1"><div className="h-5 w-28 rounded-full bg-white/[0.055]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" /><div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" /></div></div></div>)}{failed ? <div className="col-span-full rounded-[22px] bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다.</div> : null}</div>;
+  return <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 min-[2300px]:grid-cols-5" aria-busy={!failed}>{skeletonItems.map((item) => <div key={item} className="min-h-[260px]"><div className="aspect-video rounded-[24px] bg-white/[0.035]" /><div className="mt-3 flex gap-3"><div className="h-11 w-11 rounded-full bg-white/[0.055]" /><div className="flex-1"><div className="h-5 w-28 rounded-full bg-white/[0.055]" /><div className="mt-3 h-4 w-full rounded-full bg-white/[0.04]" /><div className="mt-2 h-4 w-2/3 rounded-full bg-white/[0.035]" /></div></div></div>)}{failed ? <div className="col-span-full rounded-[22px] bg-amber-300/8 px-5 py-4 text-sm font-black text-amber-100/80">라이브/게시글 상태를 확인하는 중입니다.</div> : null}</div>;
 }
 
 export function PrisonMemberLiveGridContent() {
@@ -242,7 +242,7 @@ export function PrisonMemberLiveGridContent() {
   const liveCount = sortedMembers.filter((member) => statuses[member.nickname]?.isLive).length;
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
 
-  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none xl:w-[calc(100vw-326px)]"><RecentPostsRail members={ALL_PRISON_MEMBERS} posts={posts} /><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">선호 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:[grid-template-columns:repeat(auto-fit,minmax(238px,1fr))] 2xl:[grid-template-columns:repeat(auto-fit,minmax(246px,1fr))]">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
+  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none"><RecentPostsRail members={ALL_PRISON_MEMBERS} posts={posts} /><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">선호 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 min-[2300px]:grid-cols-5">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
 }
 
 export default function PrisonMemberLiveGrid() {
