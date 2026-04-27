@@ -2,7 +2,6 @@ import '../styles/globals.css';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Analytics } from '@vercel/analytics/next';
-import NewYoutubeDomToast from '../components/NewYoutubeDomToast';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
 import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
@@ -137,7 +136,6 @@ export default function App({ Component, pageProps }) {
         `}</style>
       </Head>
       <Component {...pageProps} />
-      <NewYoutubeDomToast />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
       <PrisonMemberLiveGrid />
