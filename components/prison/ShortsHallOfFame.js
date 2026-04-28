@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatRelativeTime } from './prisonShared';
+import { MemberBadges } from './MemberBadges';
 
 const SHORTS_HALL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -8,14 +9,6 @@ function stripHashtags(title = '') {
     .replace(/#[^\s#]+/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
-}
-
-function ChiefBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full border border-cyan-100/32 bg-[linear-gradient(135deg,rgba(103,232,249,0.24),rgba(139,92,246,0.22),rgba(226,232,240,0.16))] px-3.5 py-1.5 text-[12px] font-black text-cyan-50 shadow-[0_0_18px_rgba(103,232,249,0.25),inset_0_1px_0_rgba(255,255,255,0.20)] sm:text-[13px]">
-      수장
-    </span>
-  );
 }
 
 function getToneClasses(tone, highlight) {
@@ -49,6 +42,7 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
   const toneClasses = getToneClasses(tone, highlight);
   const timeText = formatRelativeTime(video?.publishedAt) || video?.publishedAtText || '';
   const displayTitle = stripHashtags(video?.title) || video?.title || '쇼츠 데이터 준비중';
+  const memberName = video?.member || '-';
 
   return (
     <a
@@ -64,12 +58,13 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
           {highlight ? (
             <>
               <span>장지수</span>
-              <ChiefBadge />
+              <MemberBadges nickname="장지수" />
             </>
           ) : (
             <>
               <span className="text-[22px] leading-none sm:text-[24px]">{medal}</span>
-              <span>{video?.member || '-'}</span>
+              <span>{memberName}</span>
+              <MemberBadges nickname={memberName} />
             </>
           )}
         </div>
