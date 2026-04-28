@@ -53,9 +53,16 @@ function PrisonWideLayoutOverride() {
         }
 
         .sou-prison-main .sou-member-live-section > div.grid {
-          grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-          column-gap: 22px !important;
-          row-gap: 44px !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          column-gap: 28px !important;
+          row-gap: 50px !important;
+        }
+      }
+
+      @media (min-width: 1880px) {
+        .sou-prison-main .sou-member-live-section > div.grid {
+          grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+          column-gap: 26px !important;
         }
       }
     `}</style>
