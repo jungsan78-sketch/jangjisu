@@ -1,11 +1,13 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { fetchMainYoutubePayload, fetchPrisonYoutubePayload, getRuntimeEnvValue, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../../lib/youtube-data';
+import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePayload, getRuntimeEnvValue, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../../lib/youtube-data';
 
 const MAIN_KEY = 'youtube:main:v1';
 const PRISON_KEY = 'youtube:prison:v1';
-const MAIN_TTL_SECONDS = 60 * 60;
-const PRISON_TTL_SECONDS = 60 * 60 * 2;
-const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260427-2';
+const SHORTS_HALL_KEY = 'youtube:shorts-hall:v1';
+const MAIN_TTL_SECONDS = 60 * 60 * 6;
+const PRISON_TTL_SECONDS = 60 * 60 * 6;
+const SHORTS_HALL_TTL_SECONDS = 60 * 60 * 6;
+const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260428-1';
 
 async function getCacheBinding() {
   try {
@@ -52,9 +54,11 @@ export default async function handler(req, res) {
     ok: true,
     runtimeMarker: RUNTIME_MARKER,
     refreshedAt: new Date().toISOString(),
+    refreshLabel: '6시간마다 갱신',
     cache: { bindingFound: cacheAvailable },
     main: { ok: false },
     prison: { ok: false },
+    shortsHall: { ok: false },
   };
 
   if (!cacheAvailable) {
@@ -63,8 +67,12 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   }
 
+  let mainPayload = null;
+  let prisonPayload = null;
+
   try {
     const main = await fetchMainYoutubePayload({ debug: false });
+    mainPayload = main;
     result.main.videos = main.videos?.length || 0;
     result.main.shorts = main.shorts?.length || 0;
     result.main.full = main.full?.length || 0;
@@ -80,6 +88,7 @@ export default async function handler(req, res) {
 
   try {
     const prison = await fetchPrisonYoutubePayload({ debug: false });
+    prisonPayload = prison;
     result.prison.videos = prison.videos?.length || 0;
     result.prison.shorts = prison.shorts?.length || 0;
     result.prison.error = prison.error || '';
@@ -92,6 +101,18 @@ export default async function handler(req, res) {
     result.prison.error = error?.message || true;
   }
 
-  result.ok = Boolean(result.main.ok || result.prison.ok);
+  try {
+    const hall = buildShortsHallOfFame(mainPayload || {}, prisonPayload || {});
+    result.shortsHall.slots = Object.values(hall.slots || {}).filter(Boolean).length;
+    if (hall.ok) {
+      result.shortsHall.ok = await setJsonCache(cache, SHORTS_HALL_KEY, { ...hall, cachedAt: result.refreshedAt }, SHORTS_HALL_TTL_SECONDS);
+    } else {
+      result.shortsHall.skipped = 'empty-or-unavailable';
+    }
+  } catch (error) {
+    result.shortsHall.error = error?.message || true;
+  }
+
+  result.ok = Boolean(result.main.ok || result.prison.ok || result.shortsHall.ok);
   return res.status(200).json(result);
 }
