@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { MemberBadges } from './MemberBadges';
 
 function stationIdFromUrl(url = '') {
   return String(url).match(/station\/([^/?#]+)/i)?.[1] || '';
@@ -29,20 +30,6 @@ function getPostTimeValue(post) {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
-function RoleBadge({ type }) {
-  const label = type === 'warden' ? '수장' : '반장';
-  const className = type === 'warden'
-    ? 'border-amber-200/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.34))] text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.32),inset_0_1px_0_rgba(255,255,255,0.26)]'
-    : 'border-cyan-200/35 bg-[linear-gradient(135deg,rgba(34,211,238,0.34),rgba(30,64,175,0.32))] text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.30),inset_0_1px_0_rgba(255,255,255,0.24)]';
-  return <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black ${className}`}>{label}</span>;
-}
-
-function roleTypeForMember(nickname) {
-  if (nickname === '장지수') return 'warden';
-  if (nickname === '린링') return 'captain';
-  return '';
-}
-
 function sortItems(items) {
   return [...items].sort((a, b) => {
     if (a.member.nickname === '장지수') return -1;
@@ -70,7 +57,6 @@ export default function RecentMemberPostsGrid({ members, posts }) {
       <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 xl:gap-4">
         {items.map(({ member, post }) => {
           const hasPost = Boolean(post?.title);
-          const roleType = roleTypeForMember(member.nickname);
           return (
             <a key={`${member.nickname}-${post?.url || post?.title || 'empty'}`} href={post?.url || member.station} target="_blank" rel="noreferrer" className={`group min-h-[118px] overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_18px_36px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:bg-white/[0.07] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_46px_rgba(0,0,0,0.30)] ${hasPost ? '' : 'opacity-70'}`}>
               <div className="flex items-center gap-3">
@@ -78,7 +64,7 @@ export default function RecentMemberPostsGrid({ members, posts }) {
                 <div className="min-w-0">
                   <div className="flex min-w-0 items-center gap-1.5">
                     <span className="truncate text-sm font-black text-white">{member.nickname}</span>
-                    {roleType ? <RoleBadge type={roleType} /> : null}
+                    <MemberBadges nickname={member.nickname} mini />
                   </div>
                   <div className="text-[11px] font-bold text-white/42">{hasPost ? formatRelativePostTime(post.createdAt || post.publishedAt || post.date) : '확인중'}</div>
                 </div>
