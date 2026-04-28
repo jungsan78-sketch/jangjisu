@@ -30,7 +30,7 @@ function PrisonWideLayoutOverride() {
         }
 
         .sou-prison-main {
-          width: calc(100vw - 298px) !important;
+          width: calc(100vw - 282px) !important;
           max-width: none !important;
           margin-left: auto !important;
           margin-right: auto !important;
@@ -54,15 +54,15 @@ function PrisonWideLayoutOverride() {
 
         .sou-prison-main .sou-member-live-section > div.grid {
           grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-          column-gap: 28px !important;
-          row-gap: 50px !important;
+          column-gap: 30px !important;
+          row-gap: 52px !important;
         }
       }
 
-      @media (min-width: 1880px) {
+      @media (min-width: 2300px) {
         .sou-prison-main .sou-member-live-section > div.grid {
           grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-          column-gap: 26px !important;
+          column-gap: 28px !important;
         }
       }
     `}</style>
