@@ -2,8 +2,8 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { fetchPrisonYoutubePayload, isPrisonYoutubeUsable } from '../../lib/youtube-data';
 
 const CACHE_KEY = 'youtube:prison:v1';
-const TTL_SECONDS = 60 * 60 * 2;
-const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260427-1';
+const TTL_SECONDS = 60 * 60 * 6;
+const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260428-1';
 
 async function getCacheBinding() {
   try {
@@ -47,7 +47,7 @@ async function writeCachedPayload(cache, payload) {
 
 export default async function handler(req, res) {
   const debug = String(req.query?.debug || '') === '1';
-  res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=3600, stale-while-revalidate=7200');
+  res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=21600, stale-while-revalidate=21600');
 
   const cache = await getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
@@ -66,6 +66,7 @@ export default async function handler(req, res) {
         ...live,
         cached: false,
         cacheSource: 'direct-lib-fallback',
+        refreshLabel: '6시간마다 갱신',
         debug: debug ? {
           runtimeMarker: RUNTIME_MARKER,
           cache: { bindingFound: cacheAvailable, hit: Boolean(cached), writeAttempted: cacheAvailable, writeOk },
