@@ -3,9 +3,16 @@ import { formatRelativeTime } from './prisonShared';
 
 const SHORTS_HALL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+function stripHashtags(title = '') {
+  return String(title)
+    .replace(/#[^\s#]+/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function ChiefBadge() {
   return (
-    <span className="inline-flex items-center rounded-full border border-cyan-100/32 bg-[linear-gradient(135deg,rgba(103,232,249,0.24),rgba(139,92,246,0.22),rgba(226,232,240,0.16))] px-3 py-1 text-[11px] font-black text-cyan-50 shadow-[0_0_18px_rgba(103,232,249,0.25),inset_0_1px_0_rgba(255,255,255,0.20)]">
+    <span className="inline-flex items-center rounded-full border border-cyan-100/32 bg-[linear-gradient(135deg,rgba(103,232,249,0.24),rgba(139,92,246,0.22),rgba(226,232,240,0.16))] px-3.5 py-1.5 text-[12px] font-black text-cyan-50 shadow-[0_0_18px_rgba(103,232,249,0.25),inset_0_1px_0_rgba(255,255,255,0.20)] sm:text-[13px]">
       수장
     </span>
   );
@@ -41,6 +48,7 @@ function getToneClasses(tone, highlight) {
 function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
   const toneClasses = getToneClasses(tone, highlight);
   const timeText = formatRelativeTime(video?.publishedAt) || video?.publishedAtText || '';
+  const displayTitle = stripHashtags(video?.title) || video?.title || '쇼츠 데이터 준비중';
 
   return (
     <a
@@ -52,7 +60,7 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
       <div className={`pointer-events-none absolute -top-14 h-52 w-52 rounded-full blur-3xl ${toneClasses.glow}`} />
 
       <div className="relative z-10 mb-5 flex min-h-[104px] flex-col items-center justify-end">
-        <div className={`flex items-center justify-center gap-2 text-[14px] font-black tracking-[0.10em] ${toneClasses.label}`}>
+        <div className={`flex items-center justify-center gap-2.5 text-[16px] font-black tracking-[0.08em] sm:text-[18px] ${toneClasses.label}`}>
           {highlight ? (
             <>
               <span>장지수</span>
@@ -60,7 +68,7 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
             </>
           ) : (
             <>
-              <span className="text-[18px] leading-none">{medal}</span>
+              <span className="text-[22px] leading-none sm:text-[24px]">{medal}</span>
               <span>{video?.member || '-'}</span>
             </>
           )}
@@ -74,13 +82,13 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
       <div className={`relative z-10 overflow-hidden rounded-[24px] bg-black/20 ring-1 transition duration-500 group-hover:scale-[1.015] ${toneClasses.ring} ${highlight ? 'w-[216px] sm:w-[260px] lg:w-[304px]' : 'w-[184px] sm:w-[224px] lg:w-[258px]'}`}>
         <div className="aspect-[9/14] overflow-hidden rounded-[24px]">
           {video?.thumbnail ? (
-            <img src={video.thumbnail} alt={video.title || ''} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.045]" loading="lazy" />
+            <img src={video.thumbnail} alt={displayTitle} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.045]" loading="lazy" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.20),transparent_56%),linear-gradient(180deg,#101827,#030712)] text-4xl">🏆</div>
           )}
         </div>
         <div className="absolute inset-x-3 bottom-3 rounded-[16px] border border-white/10 bg-black/58 px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">
-          <div className="line-clamp-2 text-[12px] font-black leading-5 text-white sm:text-[14px] sm:leading-6">{video?.title || '쇼츠 데이터 준비중'}</div>
+          <div className="line-clamp-2 text-[12px] font-black leading-5 text-white sm:text-[14px] sm:leading-6">{displayTitle}</div>
         </div>
       </div>
 
