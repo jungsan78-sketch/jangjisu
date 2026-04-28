@@ -18,7 +18,6 @@ function getToneClasses(tone, highlight) {
       glow: 'bg-[radial-gradient(circle,rgba(103,232,249,0.18),transparent_62%)]',
       ring: 'ring-cyan-100/18 shadow-[0_32px_92px_rgba(0,0,0,0.46),0_0_58px_rgba(103,232,249,0.18),0_0_38px_rgba(139,92,246,0.13)]',
       pedestal: 'w-[282px] bg-[radial-gradient(ellipse,rgba(103,232,249,0.20),rgba(139,92,246,0.10),transparent_68%)] shadow-[0_0_42px_rgba(103,232,249,0.18)]',
-      memberBadge: 'bg-cyan-100/82 text-[#03131d]',
     };
   }
 
@@ -28,7 +27,6 @@ function getToneClasses(tone, highlight) {
       glow: 'bg-[radial-gradient(circle,rgba(251,191,36,0.18),transparent_62%)]',
       ring: 'ring-amber-100/18 shadow-[0_26px_76px_rgba(0,0,0,0.40),0_0_46px_rgba(251,191,36,0.16)]',
       pedestal: 'w-[216px] bg-[radial-gradient(ellipse,rgba(251,191,36,0.20),rgba(245,158,11,0.10),transparent_68%)] shadow-[0_0_34px_rgba(251,191,36,0.18)]',
-      memberBadge: 'bg-amber-200/86 text-[#241303]',
     };
   }
 
@@ -37,11 +35,10 @@ function getToneClasses(tone, highlight) {
     glow: 'bg-[radial-gradient(circle,rgba(226,232,240,0.16),transparent_62%)]',
     ring: 'ring-slate-100/18 shadow-[0_26px_76px_rgba(0,0,0,0.40),0_0_46px_rgba(226,232,240,0.12)]',
     pedestal: 'w-[216px] bg-[radial-gradient(ellipse,rgba(226,232,240,0.16),rgba(148,163,184,0.10),transparent_68%)] shadow-[0_0_34px_rgba(226,232,240,0.13)]',
-    memberBadge: 'bg-slate-100/84 text-[#07111f]',
   };
 }
 
-function HallSpot({ label, medal, video, highlight = false, tone = 'gold' }) {
+function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
   const toneClasses = getToneClasses(tone, highlight);
   const timeText = formatRelativeTime(video?.publishedAt) || video?.publishedAtText || '';
 
@@ -64,11 +61,10 @@ function HallSpot({ label, medal, video, highlight = false, tone = 'gold' }) {
           ) : (
             <>
               <span className="text-[18px] leading-none">{medal}</span>
-              <span>{label}</span>
+              <span>{video?.member || '-'}</span>
             </>
           )}
         </div>
-        <div className="mt-2 text-[15px] font-black text-white/82">{video?.member || '-'}</div>
         <div className="mt-2 text-[27px] font-black tracking-[-0.07em] text-white drop-shadow-[0_0_24px_rgba(255,255,255,0.16)] sm:text-[34px]">
           {video?.viewsText ? `조회 ${video.viewsText}` : '조회수 집계중'}
         </div>
@@ -83,7 +79,6 @@ function HallSpot({ label, medal, video, highlight = false, tone = 'gold' }) {
             <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.20),transparent_56%),linear-gradient(180deg,#101827,#030712)] text-4xl">🏆</div>
           )}
         </div>
-        <div className="absolute left-3 top-3 rounded-full px-3 py-1.5 text-[11px] font-black shadow-[0_10px_26px_rgba(0,0,0,0.30)] backdrop-blur ${toneClasses.memberBadge}">{video?.member || '-'}</div>
         <div className="absolute inset-x-3 bottom-3 rounded-[16px] border border-white/10 bg-black/58 px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">
           <div className="line-clamp-2 text-[12px] font-black leading-5 text-white sm:text-[14px] sm:leading-6">{video?.title || '쇼츠 데이터 준비중'}</div>
         </div>
@@ -136,18 +131,18 @@ export default function ShortsHallOfFame() {
 
       <div className="relative z-10 mb-14 text-center">
         <div className="text-[30px] font-black tracking-[-0.06em] text-white drop-shadow-[0_0_26px_rgba(103,232,249,0.15)] sm:text-[42px]">🏆 최근 30일 명예의 쇼츠</div>
-        <div className="mt-2 text-sm font-black text-white/48">최근 30일 기준 조회수 상위 쇼츠 · 6시간마다 갱신</div>
+        <div className="mt-2 text-sm font-black text-white/48">최근 30일 기준 수장 제외 조회수 1위 2위 쇼츠 * 6시간마다 갱신</div>
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1260px] flex-col items-center gap-12 md:flex-row md:items-end md:justify-between md:gap-0">
         <div className="flex min-w-[258px] flex-1 justify-center md:justify-start">
-          <HallSpot label="멤버 TOP 1" medal="🥇" video={slots.memberTop1} tone="gold" />
+          <HallSpot medal="🥇" video={slots.memberTop1} tone="gold" />
         </div>
         <div className="flex min-w-[304px] flex-[1.12] justify-center">
-          <HallSpot label="장지수" video={slots.jangjisu} highlight tone="chief" />
+          <HallSpot video={slots.jangjisu} highlight tone="chief" />
         </div>
         <div className="flex min-w-[258px] flex-1 justify-center md:justify-end">
-          <HallSpot label="멤버 TOP 2" medal="🥈" video={slots.memberTop2} tone="silver" />
+          <HallSpot medal="🥈" video={slots.memberTop2} tone="silver" />
         </div>
       </div>
     </section>
