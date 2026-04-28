@@ -107,8 +107,8 @@ button {
     max-width: none !important;
     margin-left: 274px !important;
     margin-right: 0 !important;
-    padding-left: 28px !important;
-    padding-right: 28px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
   }
 
   .sou-prison-page,
@@ -126,8 +126,8 @@ button {
   }
 
   .sou-prison-main {
-    width: min(calc(100vw - 322px), 2040px) !important;
-    max-width: min(calc(100vw - 322px), 2040px) !important;
+    width: min(calc(100vw - 314px), 2200px) !important;
+    max-width: min(calc(100vw - 314px), 2200px) !important;
     margin-left: auto !important;
     margin-right: auto !important;
     padding-left: 0 !important;
@@ -162,8 +162,8 @@ button {
 
 @media (min-width: 2300px) {
   .sou-prison-main {
-    width: 2040px !important;
-    max-width: 2040px !important;
+    width: 2200px !important;
+    max-width: 2200px !important;
   }
 }
 
