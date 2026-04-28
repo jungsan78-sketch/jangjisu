@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CalendarPreview from './CalendarPreview';
 import RecentYoutubeSection from './RecentYoutubeSection';
-import ShortsHallOfFame from './ShortsHallOfFame';
 import { PrisonMemberLiveGridContent } from '../PrisonMemberLiveGrid';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 
@@ -288,7 +287,6 @@ export default function PrisonPageContent() {
               </section>
 
               <div id="members" className="scroll-mt-6 w-full max-w-none overflow-x-hidden">
-                <ShortsHallOfFame />
                 <PrisonMemberLiveGridContent />
               </div>
               <CalendarPreview />
