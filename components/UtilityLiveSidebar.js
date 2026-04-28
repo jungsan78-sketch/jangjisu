@@ -258,7 +258,7 @@ export default function UtilityLiveSidebar() {
       `}</style>
       <aside id="sou-utility-sidebar" className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/94 px-5 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
         <a href="/jangjisu-prison-v2#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
-          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[210px] w-[330px] max-w-none scale-[1.18] object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]" />
+          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[210px] w-[330px] max-w-none scale-[1.34] object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]" />
         </a>
 
         <nav className="space-y-2.5">
