@@ -51,7 +51,7 @@ function shiftDay(value, days) {
 }
 
 function buildCenteredWeekDates(centerDate) {
-  return Array.from({ length: 5 }, (_, index) => shiftDay(centerDate, index - 2));
+  return Array.from({ length: 3 }, (_, index) => shiftDay(centerDate, index - 1));
 }
 
 function hasScheduleItems(entry) {
