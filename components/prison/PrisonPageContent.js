@@ -45,7 +45,7 @@ function SidebarLogo({ compact = false }) {
       src={LOGO_SRC}
       onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }}
       alt="장지수용소"
-      className={`${compact ? 'h-12' : 'h-[132px]'} w-[260px] max-w-none object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]`}
+      className={`${compact ? 'h-12 w-[168px]' : 'h-[210px] w-[330px] scale-[1.18]'} max-w-none object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]`}
     />
   );
 }
@@ -193,12 +193,12 @@ function LiveMemberList() {
 function PrisonSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-      <a href="#top" className="mb-7 flex h-[132px] items-center justify-center overflow-visible p-0">
+      <a href="#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
         <SidebarLogo />
       </a>
 
       <nav className="space-y-2.5">
-        <SidebarNavItem href="#top" label="멤버 라이브" icon="▣" />
+        <SidebarNavItem href="#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" />
         <SidebarNavItem href="#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
@@ -221,7 +221,7 @@ function MobilePrisonNav() {
         <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="#top" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">멤버 라이브</a>
+        <a href="#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
         <a href="#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
