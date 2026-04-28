@@ -1,10 +1,10 @@
 import { detectMonthFromRows, fetchRowsByGid } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
+import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
 const SHEET_GID = '1059909393';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:ddikku:current:v7';
 const CACHE_TTL_SECONDS = 60 * 60;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
@@ -191,21 +191,33 @@ function parseDdikkuRows(rows, targetYear, targetMonth) {
   return items;
 }
 
-async function buildFreshScheduleResponse() {
+function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
+  return {
+    ok: false,
+    source: 'google_sheet_gid',
+    sourceUrl: SHEET_URL,
+    monthLabel: currentMonth.monthLabel,
+    items: buildEmptyMonthItems(currentMonth.year, currentMonth.month),
+    fetchedUrl,
+    fetchedAt: new Date().toISOString(),
+    message: '띠꾸 일정 시트에서 현재 월 데이터를 찾지 못했습니다.',
+  };
+}
+
+async function buildFreshScheduleResponse(currentMonth) {
   const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
   const detected = detectMonthFromRows(rows, new Date());
-  const items = parseDdikkuRows(rows, detected.year, detected.month);
+
+  if (!sameScheduleMonth(detected, currentMonth)) {
+    return emptyCurrentMonthPayload(currentMonth, fetchedUrl);
+  }
+
+  const items = parseDdikkuRows(rows, currentMonth.year, currentMonth.month);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return {
-      ok: false,
-      source: 'google_sheet_gid',
-      sourceUrl: SHEET_URL,
-      monthLabel: detected.monthLabel,
+      ...emptyCurrentMonthPayload(currentMonth, fetchedUrl),
       items,
-      fetchedUrl,
-      fetchedAt: new Date().toISOString(),
-      message: '띠꾸 일정 시트에서 이번 달 데이터를 찾지 못했습니다.',
     };
   }
 
@@ -213,7 +225,7 @@ async function buildFreshScheduleResponse() {
     ok: true,
     source: 'google_sheet_gid',
     sourceUrl: SHEET_URL,
-    monthLabel: detected.monthLabel,
+    monthLabel: currentMonth.monthLabel,
     items,
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -223,7 +235,9 @@ async function buildFreshScheduleResponse() {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
-  const cached = await getCachedJson(CACHE_KEY);
+  const currentMonth = getKstMonthInfo();
+  const cacheKey = makeMonthlyScheduleCacheKey('schedule:ddikku', new Date());
+  const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
   if (cached?.payload && cached.cachedAt && now - cached.cachedAt < CACHE_TTL_SECONDS * 1000) {
@@ -235,8 +249,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = await buildFreshScheduleResponse();
-    await setCachedJson(CACHE_KEY, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
+    const payload = await buildFreshScheduleResponse(currentMonth);
+    await setCachedJson(cacheKey, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
 
     return res.status(200).json({
       ...payload,
@@ -255,7 +269,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: false,
       sourceUrl: SHEET_URL,
-      monthLabel: '',
+      monthLabel: currentMonth.monthLabel,
       items: [],
       message: '띠꾸 일정 데이터를 불러오지 못했습니다.',
       fetchedAt: new Date().toISOString(),
