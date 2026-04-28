@@ -66,7 +66,7 @@ function HallSpot({ medal, video, highlight = false, tone = 'gold' }) {
           )}
         </div>
         <div className="mt-2 text-[27px] font-black tracking-[-0.07em] text-white drop-shadow-[0_0_24px_rgba(255,255,255,0.16)] sm:text-[34px]">
-          {video?.viewsText ? `조회 ${video.viewsText}` : '조회수 집계중'}
+          {video?.viewsText ? `조회수 ${video.viewsText}` : '조회수 집계중'}
         </div>
         <div className="mt-1 text-[12px] font-black text-white/46">{timeText}</div>
       </div>
