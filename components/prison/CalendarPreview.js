@@ -12,6 +12,17 @@ function parseMonthFromLabel(label) {
   return { year: Number(matched[1]), month: Number(matched[2]) };
 }
 
+function getCurrentKstMonth() {
+  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const year = kst.getFullYear();
+  const month = kst.getMonth() + 1;
+  return { year, month, monthLabel: `${year}년 ${month}월` };
+}
+
+function isSameMonth(entryMonth, currentMonth) {
+  return Boolean(entryMonth && currentMonth && Number(entryMonth.year) === Number(currentMonth.year) && Number(entryMonth.month) === Number(currentMonth.month));
+}
+
 function buildCalendarCells(monthLabel, items) {
   const parsed = parseMonthFromLabel(monthLabel);
   if (!parsed) return [];
@@ -94,10 +105,23 @@ export default function CalendarPreview() {
     };
   }, []);
 
-  const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => ({ ...source, ...(scheduleState[source.key] || { monthLabel: '', items: [], loaded: false }) })), [scheduleState]);
+  const currentMonth = useMemo(() => getCurrentKstMonth(), []);
+  const monthLabel = currentMonth.monthLabel;
+  const parsedMonth = currentMonth;
+  const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => {
+    const state = scheduleState[source.key] || { monthLabel: '', items: [], loaded: false };
+    const entryMonth = parseMonthFromLabel(state.monthLabel);
+    const keepCurrentMonth = isSameMonth(entryMonth, currentMonth);
+    return {
+      ...source,
+      ...state,
+      monthLabel: currentMonth.monthLabel,
+      items: keepCurrentMonth ? state.items : [],
+      sourceMonthLabel: state.monthLabel || '',
+      blockedDifferentMonth: Boolean(state.monthLabel && !keepCurrentMonth),
+    };
+  }), [currentMonth, scheduleState]);
   const isLoaded = scheduleEntries.every((entry) => entry.loaded);
-  const monthLabel = scheduleEntries.find((entry) => entry.monthLabel)?.monthLabel || '';
-  const parsedMonth = useMemo(() => parseMonthFromLabel(monthLabel), [monthLabel]);
 
   const schedules = useMemo(() => {
     if (!parsedMonth) return [];
