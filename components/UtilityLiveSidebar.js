@@ -222,9 +222,9 @@ function SidebarLiveMemberList({ currentPath }) {
 function UnifiedPrisonNavItems() {
   return (
     <>
-      <SidebarNavItem href="/jangjisu-prison#members" label="멤버 라이브" icon="▣" />
-      <SidebarNavItem href="/jangjisu-prison#schedule" label="일정" icon="⛓" />
-      <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
+      <SidebarNavItem href="/jangjisu-prison-v2#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" />
+      <SidebarNavItem href="/jangjisu-prison-v2#schedule" label="일정" icon="⛓" />
+      <SidebarNavItem href="/jangjisu-prison-v2#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
       <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" tone="blue" />
       <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
       <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
@@ -257,8 +257,8 @@ export default function UtilityLiveSidebar() {
         }
       `}</style>
       <aside id="sou-utility-sidebar" className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/94 px-5 py-5 text-white shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-        <a href="/jangjisu-prison" className="group mb-7 flex items-center gap-3 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.12),transparent_62%),rgba(255,255,255,0.035)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.22),0_0_28px_rgba(56,189,248,0.06)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.28),0_0_34px_rgba(56,189,248,0.11)]">
-          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[104px] w-full object-contain drop-shadow-[0_0_30px_rgba(103,232,249,0.24)]" />
+        <a href="/jangjisu-prison-v2#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
+          <img src={LOGO_SRC} onError={(event) => { event.currentTarget.src = LOGO_FALLBACK_SRC; }} alt="장지수용소" className="h-[210px] w-[330px] max-w-none scale-[1.18] object-contain drop-shadow-[0_0_32px_rgba(103,232,249,0.28)]" />
         </a>
 
         <nav className="space-y-2.5">
