@@ -47,9 +47,16 @@ function hasScheduleItems(entry) {
   return (entry?.items || []).some((item) => !item.empty && String(item.title || '').trim());
 }
 
-function FilterButton({ label, image, active, onClick }) {
+function FilterButton({ label, image, active, linked, onClick }) {
+  const stateClass = active
+    ? 'border-amber-200/28 bg-amber-300/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_22px_rgba(245,158,11,0.20)]'
+    : linked
+      ? 'border-cyan-200/22 bg-cyan-300/[0.075] text-white/86 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_0_18px_rgba(103,232,249,0.12),0_10px_22px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 hover:border-cyan-100/36 hover:bg-cyan-300/[0.12] hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_28px_rgba(103,232,249,0.22),0_14px_28px_rgba(0,0,0,0.16)]'
+      : 'border-white/8 bg-white/[0.055] text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_18px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 hover:bg-white/10 hover:text-white hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_0_16px_rgba(56,189,248,0.08)]';
+
   return (
-    <button onClick={onClick} className={`inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[12px] font-black transition sm:py-2 sm:pl-2 sm:pr-4 sm:text-[15px] ${active ? 'bg-amber-300/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_18px_rgba(245,158,11,0.16)]' : 'bg-white/[0.055] text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_18px_rgba(0,0,0,0.12)] hover:bg-white/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_0_16px_rgba(56,189,248,0.08)]'}`}>
+    <button onClick={onClick} className={`relative inline-flex items-center gap-2 overflow-hidden rounded-full border py-1.5 pl-1.5 pr-3 text-[12px] font-black transition duration-300 sm:py-2 sm:pl-2 sm:pr-4 sm:text-[15px] ${stateClass}`}>
+      {linked ? <span className="pointer-events-none absolute right-2 top-1.5 h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(103,232,249,0.9)]" /> : null}
       {image ? <img src={image} alt="" className="h-6 w-6 rounded-full object-cover shadow-[0_0_10px_rgba(255,255,255,0.08)] sm:h-7 sm:w-7" loading="lazy" /> : <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.07] text-[10px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-7 sm:w-7">ALL</span>}
       <span>{label}</span>
     </button>
@@ -150,7 +157,7 @@ export default function CalendarPreview() {
 
         <div className="mb-4 flex flex-wrap gap-2 rounded-[20px] bg-[#05101d] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_0_24px_rgba(56,189,248,0.05)] sm:mb-5 sm:rounded-[24px] sm:p-3">
           <FilterButton label="전체보기" active={selectedMember === '전체보기'} onClick={() => setSelectedMember('전체보기')} />
-          {scheduleMemberButtons.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
+          {scheduleMemberButtons.map((member) => <FilterButton key={member.nickname} label={member.nickname} image={member.image} linked={linkedMemberOrder.has(member.nickname)} active={selectedMember === member.nickname} onClick={() => setSelectedMember(member.nickname)} />)}
         </div>
 
         {selectedMember === '전체보기' ? (
