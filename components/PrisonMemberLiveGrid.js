@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 import ShortsHallOfFame from './prison/ShortsHallOfFame';
 import RecentMemberPostsGrid from './prison/RecentMemberPostsGrid';
+import { MemberBadges } from './prison/MemberBadges';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const POSTS_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
@@ -66,14 +67,6 @@ function PlatformLink({ href, type, label }) {
   return <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>{icon}</a>;
 }
 
-function RoleBadge({ type, mini = false }) {
-  const label = type === 'warden' ? '수장' : '반장';
-  const className = type === 'warden'
-    ? 'border-amber-200/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.36),rgba(120,53,15,0.34))] text-amber-50 shadow-[0_0_18px_rgba(251,191,36,0.32),inset_0_1px_0_rgba(255,255,255,0.26)]'
-    : 'border-cyan-200/35 bg-[linear-gradient(135deg,rgba(34,211,238,0.34),rgba(30,64,175,0.32))] text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.30),inset_0_1px_0_rgba(255,255,255,0.24)]';
-  return <span className={`shrink-0 rounded-full border ${mini ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'} font-black ${className}`}>{label}</span>;
-}
-
 function MemberCard({ member, status }) {
   const isLive = Boolean(status?.isLive);
   const isUnknown = String(status?.liveState || '').includes('unknown');
@@ -83,7 +76,6 @@ function MemberCard({ member, status }) {
   const stateLabel = isLive ? formatViewerBadge(status?.viewerCount) : isUnknown ? '확인중' : 'OFF';
   const dotClass = isLive ? 'bg-[#ff163d] shadow-[0_0_0_4px_rgba(255,22,61,0.16),0_0_22px_rgba(255,22,61,0.92)]' : isUnknown ? 'bg-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.55)]' : 'bg-slate-400';
   const tags = Array.isArray(member.tags) ? member.tags : [];
-  const roleType = member.nickname === '장지수' ? 'warden' : member.nickname === '린링' ? 'captain' : '';
 
   return (
     <article className="group relative min-w-0">
@@ -106,7 +98,7 @@ function MemberCard({ member, status }) {
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <h4 className="truncate text-[16px] font-black tracking-[-0.04em] text-white">{member.nickname}</h4>
-            {roleType ? <RoleBadge type={roleType} /> : null}
+            <MemberBadges nickname={member.nickname} />
           </div>
           <p className="mt-1 line-clamp-2 text-[15px] font-extrabold leading-6 text-white/86">{title}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">{tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-black text-white/54 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{tag}</span>)}</div>
