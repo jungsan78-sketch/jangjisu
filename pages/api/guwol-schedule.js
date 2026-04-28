@@ -1,10 +1,10 @@
-import { detectMonthFromRows, fetchRowsByGid, parseLooseCalendarRows, parseScheduleListRows, parseScheduleRows, pickBestSchedule } from '../../lib/scheduleSheet';
+import { detectMonthFromRows, fetchRowsByGid, parseLooseCalendarRows, parseScheduleListRows, pickBestSchedule } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 
 const SHEET_ID = '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs';
 const SHEET_GID = '1645820954';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:guwol:current';
+const CACHE_KEY = 'schedule:guwol:current:v2';
 const CACHE_TTL_SECONDS = 60 * 60;
 
 async function buildFreshScheduleResponse() {
@@ -12,9 +12,8 @@ async function buildFreshScheduleResponse() {
   const detected = detectMonthFromRows(rows, new Date());
 
   const looseItems = parseLooseCalendarRows(rows, detected.year, detected.month);
-  const gridItems = parseScheduleRows(rows, detected.year, detected.month);
   const listItems = parseScheduleListRows(rows, detected.year, detected.month);
-  const items = pickBestSchedule([looseItems, gridItems, listItems]);
+  const items = pickBestSchedule([looseItems, listItems]);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return {
