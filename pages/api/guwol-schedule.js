@@ -1,30 +1,41 @@
 import { detectMonthFromRows, fetchRowsByGid, parseLooseCalendarRows, parseScheduleListRows, pickBestSchedule } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
+import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs';
 const SHEET_GID = '1645820954';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_KEY = 'schedule:guwol:current:v2';
 const CACHE_TTL_SECONDS = 60 * 60;
 
-async function buildFreshScheduleResponse() {
+function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
+  return {
+    ok: false,
+    source: 'google_sheet_gid',
+    sourceUrl: SHEET_URL,
+    monthLabel: currentMonth.monthLabel,
+    items: [],
+    fetchedUrl,
+    fetchedAt: new Date().toISOString(),
+    message: '구월이 일정 시트에서 현재 월 데이터를 찾지 못했습니다.',
+  };
+}
+
+async function buildFreshScheduleResponse(currentMonth) {
   const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
   const detected = detectMonthFromRows(rows, new Date());
 
-  const looseItems = parseLooseCalendarRows(rows, detected.year, detected.month);
-  const listItems = parseScheduleListRows(rows, detected.year, detected.month);
+  if (!sameScheduleMonth(detected, currentMonth)) {
+    return emptyCurrentMonthPayload(currentMonth, fetchedUrl);
+  }
+
+  const looseItems = parseLooseCalendarRows(rows, currentMonth.year, currentMonth.month);
+  const listItems = parseScheduleListRows(rows, currentMonth.year, currentMonth.month);
   const items = pickBestSchedule([looseItems, listItems]);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return {
-      ok: false,
-      source: 'google_sheet_gid',
-      sourceUrl: SHEET_URL,
-      monthLabel: detected.monthLabel,
+      ...emptyCurrentMonthPayload(currentMonth, fetchedUrl),
       items,
-      fetchedUrl,
-      fetchedAt: new Date().toISOString(),
-      message: '구월이 일정 시트에서 이번 달 데이터를 찾지 못했습니다.',
     };
   }
 
@@ -32,7 +43,7 @@ async function buildFreshScheduleResponse() {
     ok: true,
     source: 'google_sheet_gid',
     sourceUrl: SHEET_URL,
-    monthLabel: detected.monthLabel,
+    monthLabel: currentMonth.monthLabel,
     items,
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -42,7 +53,9 @@ async function buildFreshScheduleResponse() {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
-  const cached = await getCachedJson(CACHE_KEY);
+  const currentMonth = getKstMonthInfo();
+  const cacheKey = makeMonthlyScheduleCacheKey('schedule:guwol', new Date());
+  const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
   if (cached?.payload && cached.cachedAt && now - cached.cachedAt < CACHE_TTL_SECONDS * 1000) {
@@ -54,8 +67,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = await buildFreshScheduleResponse();
-    await setCachedJson(CACHE_KEY, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
+    const payload = await buildFreshScheduleResponse(currentMonth);
+    await setCachedJson(cacheKey, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
 
     return res.status(200).json({
       ...payload,
@@ -74,7 +87,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: false,
       sourceUrl: SHEET_URL,
-      monthLabel: '',
+      monthLabel: currentMonth.monthLabel,
       items: [],
       message: '구월이 일정 데이터를 불러오지 못했습니다.',
       fetchedAt: new Date().toISOString(),
