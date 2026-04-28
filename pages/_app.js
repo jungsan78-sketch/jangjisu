@@ -19,6 +19,49 @@ if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
   };
 }
 
+function PrisonWideLayoutOverride() {
+  return (
+    <style jsx global>{`
+      @media (min-width: 1280px) {
+        .sou-prison-content {
+          margin-left: 274px !important;
+          width: calc(100vw - 274px) !important;
+          max-width: calc(100vw - 274px) !important;
+        }
+
+        .sou-prison-main {
+          width: calc(100vw - 298px) !important;
+          max-width: none !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          overflow-x: visible !important;
+        }
+
+        .sou-prison-main > *,
+        .sou-prison-main #members,
+        .sou-prison-main #schedule,
+        .sou-prison-main #recent-youtube,
+        .sou-prison-main .sou-member-live-section,
+        .sou-prison-main .sou-member-live-section > section,
+        .sou-prison-main .sou-member-live-section > div {
+          width: 100% !important;
+          max-width: none !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+        }
+
+        .sou-prison-main .sou-member-live-section > div.grid {
+          grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+          column-gap: 22px !important;
+          row-gap: 44px !important;
+        }
+      }
+    `}</style>
+  );
+}
+
 export default function App({ Component, pageProps }) {
   return (
     <>
@@ -28,6 +71,7 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/site-icon.png" />
       </Head>
       <Component {...pageProps} />
+      <PrisonWideLayoutOverride />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
       <PrisonMemberLiveGrid />
