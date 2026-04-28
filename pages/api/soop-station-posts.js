@@ -1,12 +1,14 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
+import { fetchRecentPrisonNotices } from '../../lib/board/prisonNotices';
 import { extractStationId } from '../../lib/soop/liveStatus';
 import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
 
 const CACHE_KEY = 'soop:station-posts:payload:v3';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
-const RUNTIME_MARKER = 'test2-soop-posts-page-20260428-2';
-const TARGET_STATION_IDS = new Set(['ayanesena', 'bxroong', 'isq1158', 'mini1212', 'ddikku0714']);
+const RUNTIME_MARKER = 'test2-soop-posts-page-20260428-3';
+const WARDEN_STATION_ID = 'iamquaddurup';
+const TARGET_STATION_IDS = new Set(['iamquaddurup', 'ayanesena', 'bxroong', 'isq1158', 'mini1212', 'ddikku0714']);
 
 function getKnownStationIds() {
   return ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean);
@@ -58,6 +60,72 @@ async function writeCachedPayload(cache, payload) {
     return true;
   } catch {
     return false;
+  }
+}
+
+function parsePostNoFromUrl(url = '') {
+  const match = String(url || '').match(/\/post\/(\d+)/i);
+  return match ? match[1] : '';
+}
+
+function noticeToStationPost(notice) {
+  const postNo = parsePostNoFromUrl(notice?.url);
+  if (!notice || !postNo) return null;
+  const createdAtMs = new Date(notice.createdAt || notice.rawCreatedAt || '').getTime();
+  return {
+    stationId: WARDEN_STATION_ID,
+    stationNo: '20404342',
+    postNo,
+    title: notice.title || '',
+    summary: notice.summary || '',
+    writerId: WARDEN_STATION_ID,
+    writerStationId: '',
+    writerStationNo: '',
+    writerNick: '장지수',
+    createdAt: notice.rawCreatedAt || notice.createdAt || '',
+    createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
+    source: 'main_jangjisu_notices_sync',
+    url: notice.url,
+  };
+}
+
+async function syncWardenPostFromMainNotices(payload) {
+  const syncDebug = { attempted: true, replaced: false, postNo: '', title: '', reason: '' };
+  try {
+    const notices = await fetchRecentPrisonNotices();
+    const notice = notices.find((item) => item?.stationId === WARDEN_STATION_ID);
+    const syncedPost = noticeToStationPost(notice);
+    if (!syncedPost) {
+      syncDebug.reason = 'main_notice_missing';
+      return { payload, syncDebug };
+    }
+
+    const currentPost = payload?.posts?.[WARDEN_STATION_ID];
+    const shouldReplace = !currentPost || Number(syncedPost.createdAtMs || 0) >= Number(currentPost.createdAtMs || 0);
+    syncDebug.postNo = syncedPost.postNo;
+    syncDebug.title = syncedPost.title;
+    syncDebug.reason = shouldReplace ? 'main_notice_newer_or_equal' : 'current_station_post_newer';
+
+    if (!shouldReplace) return { payload, syncDebug };
+
+    return {
+      payload: {
+        ...payload,
+        posts: {
+          ...(payload?.posts || {}),
+          [WARDEN_STATION_ID]: syncedPost,
+        },
+        source: payload?.source || 'soop_station_posts',
+        debug: {
+          ...(payload?.debug || {}),
+          wardenMainNoticeSync: { ...syncDebug, replaced: true },
+        },
+      },
+      syncDebug: { ...syncDebug, replaced: true },
+    };
+  } catch (error) {
+    syncDebug.reason = error?.message || 'main_notice_sync_failed';
+    return { payload, syncDebug };
   }
 }
 
@@ -128,10 +196,12 @@ export default async function handler(req, res) {
 
   try {
     const livePayload = await fetchStationPostsPayload({ debug });
-    const payload = attachRuntimeMarker(cacheAvailable ? mergeWithCachedPosts(livePayload, cachedPayload) : livePayload);
+    const { payload: syncedLivePayload, syncDebug } = await syncWardenPostFromMainNotices(livePayload);
+    const payload = attachRuntimeMarker(cacheAvailable ? mergeWithCachedPosts(syncedLivePayload, cachedPayload) : syncedLivePayload);
     const writeOk = await writeCachedPayload(cache, payload);
 
     if (payload.debug) {
+      payload.debug.wardenMainNoticeSync = payload.debug.wardenMainNoticeSync || syncDebug;
       payload.debug.cache = {
         ...(payload.debug.cache || {}),
         bindingFound: cacheAvailable,
