@@ -244,10 +244,12 @@ export default function PrisonPageContent() {
             max-width: calc(100vw - 274px) !important;
           }
           .sou-prison-main {
-            width: 100% !important;
-            max-width: none !important;
-            padding-left: 28px !important;
-            padding-right: 28px !important;
+            width: min(calc(100vw - 314px), 2200px) !important;
+            max-width: min(calc(100vw - 314px), 2200px) !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
           }
           .sou-prison-main > *,
           .sou-prison-main #members,
