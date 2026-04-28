@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getPrisonMemberBadges } from '../../data/prisonBadges';
 import { MemberBadges } from './MemberBadges';
 
 function stationIdFromUrl(url = '') {
@@ -30,12 +31,18 @@ function getPostTimeValue(post) {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+function getFixedRank(nickname) {
+  if (nickname === '장지수') return 1;
+  if (nickname === '린링') return 2;
+  if (getPrisonMemberBadges(nickname).includes('shortsKing')) return 3;
+  return 99;
+}
+
 function sortItems(items) {
   return [...items].sort((a, b) => {
-    if (a.member.nickname === '장지수') return -1;
-    if (b.member.nickname === '장지수') return 1;
-    if (a.member.nickname === '린링') return -1;
-    if (b.member.nickname === '린링') return 1;
+    const aRank = getFixedRank(a.member.nickname);
+    const bRank = getFixedRank(b.member.nickname);
+    if (aRank !== bRank) return aRank - bRank;
     return getPostTimeValue(b.post) - getPostTimeValue(a.post);
   });
 }
