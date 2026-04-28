@@ -114,9 +114,9 @@ export default function UtilityHomePage() {
         </div>
 
         <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a href="/" className="block h-14 w-14 overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:scale-[1.07] hover:border-white/25 hover:shadow-[0_0_36px_rgba(96,165,250,0.28)]">
-              <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 lg:px-8">
+            <a href="/" className="flex h-20 w-44 items-center justify-center overflow-visible rounded-[24px] border border-white/10 bg-white/[0.025] shadow-[0_0_30px_rgba(59,130,246,0.12)] transition-all duration-300 hover:scale-[1.04] hover:border-white/25 hover:shadow-[0_0_36px_rgba(96,165,250,0.28)]">
+              <img src="/prison-logo.webp" alt="장지수용소" className="h-24 w-48 max-w-none object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.28)]" />
             </a>
             <nav className="flex flex-wrap items-center justify-end gap-3">
               <a href="/" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10">홈으로</a>
