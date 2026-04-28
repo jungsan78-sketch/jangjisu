@@ -1,14 +1,17 @@
 import Head from 'next/head';
 import PrisonPageContent from '../components/prison/PrisonPageContent';
 
+const PRISON_FAVICON = '/prison-logo.webp?v=sou-prison-logo-20260428-2';
+
 export default function JangjisuPrisonV2Page() {
   return (
     <>
       <Head>
         <title>장지수용소 | SOU</title>
         <meta name="description" content="장지수용소 팬메이드 서브사이트" />
-        <link rel="icon" href="/prison-logo.webp" />
-        <link rel="apple-touch-icon" href="/prison-logo.webp" />
+        <link rel="icon" type="image/webp" href={PRISON_FAVICON} />
+        <link rel="shortcut icon" type="image/webp" href={PRISON_FAVICON} />
+        <link rel="apple-touch-icon" href={PRISON_FAVICON} />
       </Head>
       <style jsx global>{`
         body:has(img[src="/jangjisu-prison-hero.png"]) section#members:not(.sou-member-live-section) {
@@ -16,12 +19,16 @@ export default function JangjisuPrisonV2Page() {
         }
         @media (min-width: 1280px) {
           .sou-prison-page aside > a[href="#top"] {
-            height: 264px !important;
-            margin-bottom: 20px !important;
+            height: 210px !important;
+            margin-bottom: 18px !important;
+            overflow: visible !important;
           }
           .sou-prison-page aside > a[href="#top"] img[alt="장지수용소"] {
-            height: 264px !important;
-            width: 260px !important;
+            height: 210px !important;
+            width: 330px !important;
+            max-width: none !important;
+            transform: scale(1.18) !important;
+            transform-origin: center center !important;
           }
           .sou-prison-page aside nav a[href="#top"] span:first-child {
             font-size: 0 !important;
