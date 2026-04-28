@@ -10,13 +10,8 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
 
   return (
     <div className="w-full max-w-none rounded-[22px] bg-[linear-gradient(180deg,rgba(4,11,22,0.98),rgba(3,8,18,0.98))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_18px_48px_rgba(0,0,0,0.20)] sm:rounded-[28px] sm:p-5">
-      <div className="mb-4 rounded-[20px] bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.008))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] sm:mb-5 sm:rounded-[24px] sm:p-4">
-        <div className="text-[11px] font-black tracking-[0.2em] text-cyan-200/55 sm:text-xs">ALL MEMBERS · WEEKLY CALENDAR</div>
-        <div className="mt-1 text-[18px] font-black text-white sm:text-[24px]">전체 일정 주간 보기</div>
-      </div>
-
       <div className="overflow-x-auto">
-        <div className="grid min-w-[760px] grid-cols-5 gap-3 xl:min-w-0 xl:w-full xl:gap-4 2xl:gap-5">
+        <div className="grid min-w-[620px] grid-cols-3 gap-3 xl:min-w-0 xl:w-full xl:gap-4 2xl:gap-5">
           {dates.map((date) => {
             const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
             const dayItems = groupedSchedules.get(key) || [];
