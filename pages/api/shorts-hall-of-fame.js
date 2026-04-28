@@ -3,7 +3,7 @@ import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePaylo
 
 const SHORTS_HALL_KEY = 'youtube:shorts-hall:v1';
 const TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-shorts-hall-api-20260428-1';
+const RUNTIME_MARKER = 'test2-shorts-hall-api-20260428-2';
 
 async function getCacheBinding() {
   try {
@@ -45,16 +45,51 @@ async function writeCachedPayload(cache, payload) {
   }
 }
 
+function emptyPayload(debugPayload) {
+  return {
+    ok: false,
+    windowDays: 30,
+    refreshLabel: '6시간마다 갱신',
+    slots: { memberTop1: null, jangjisu: null, memberTop2: null },
+    ...(debugPayload ? { debug: debugPayload } : {}),
+  };
+}
+
 export default async function handler(req, res) {
   const debug = String(req.query?.debug || '') === '1';
-  res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=21600, stale-while-revalidate=21600');
+  const refresh = String(req.query?.refresh || '') === '1';
+  res.setHeader('Cache-Control', debug || refresh ? 'no-store' : 'public, s-maxage=21600, stale-while-revalidate=21600');
 
   const cache = await getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
   const cached = await readCachedPayload(cache);
 
-  if (cached && !debug) {
-    return res.status(200).json({ ...cached, cached: true, cacheSource: 'cloudflare-kv' });
+  if (cached && !refresh) {
+    return res.status(200).json({
+      ...cached,
+      cached: true,
+      cacheSource: 'cloudflare-kv',
+      debug: debug ? {
+        ...(cached.debug || {}),
+        runtimeMarker: RUNTIME_MARKER,
+        mode: 'cache_only_debug_no_youtube_api_call',
+        cache: {
+          bindingFound: cacheAvailable,
+          hit: true,
+          cachedFetchedAt: cached.fetchedAt || '',
+          cachedAt: cached.cachedAt || '',
+        },
+      } : cached.debug,
+    });
+  }
+
+  if (debug && !refresh) {
+    return res.status(200).json(emptyPayload({
+      runtimeMarker: RUNTIME_MARKER,
+      mode: 'cache_only_debug_no_youtube_api_call',
+      cache: { bindingFound: cacheAvailable, hit: false },
+      note: 'Use refresh=1 only when you intentionally want to call YouTube API.',
+    }));
   }
 
   try {
@@ -71,8 +106,9 @@ export default async function handler(req, res) {
         ...payload,
         cached: false,
         cacheSource: 'live-youtube-api',
-        debug: debug ? {
+        debug: debug || refresh ? {
           runtimeMarker: RUNTIME_MARKER,
+          mode: 'refresh_live_youtube_api_call',
           cache: { bindingFound: cacheAvailable, hit: Boolean(cached), writeAttempted: cacheAvailable, writeOk },
           sourceCounts: {
             mainShorts: main?.shorts?.length || 0,
@@ -90,17 +126,11 @@ export default async function handler(req, res) {
         cached: true,
         cacheSource: 'cloudflare-kv-after-live-empty',
         warning: 'live shorts hall payload empty',
-        debug: debug ? { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: true, writeAttempted: cacheAvailable, writeOk } } : cached.debug,
+        debug: debug || refresh ? { runtimeMarker: RUNTIME_MARKER, mode: 'stale_cache_after_refresh_empty', cache: { bindingFound: cacheAvailable, hit: true, writeAttempted: cacheAvailable, writeOk } } : cached.debug,
       });
     }
 
-    return res.status(200).json({
-      ok: false,
-      windowDays: 30,
-      refreshLabel: '6시간마다 갱신',
-      slots: { memberTop1: null, jangjisu: null, memberTop2: null },
-      debug: debug ? { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: false, writeAttempted: cacheAvailable, writeOk } } : undefined,
-    });
+    return res.status(200).json(emptyPayload(debug || refresh ? { runtimeMarker: RUNTIME_MARKER, mode: 'refresh_live_empty', cache: { bindingFound: cacheAvailable, hit: false, writeAttempted: cacheAvailable, writeOk } } : undefined));
   } catch (error) {
     if (cached) {
       return res.status(200).json({
@@ -108,17 +138,13 @@ export default async function handler(req, res) {
         cached: true,
         cacheSource: 'cloudflare-kv-after-live-error',
         warning: error?.message || 'shorts hall live fallback failed',
-        debug: debug ? { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: true, fallbackAfterError: true } } : cached.debug,
+        debug: debug || refresh ? { runtimeMarker: RUNTIME_MARKER, mode: 'stale_cache_after_refresh_error', cache: { bindingFound: cacheAvailable, hit: true, fallbackAfterError: true } } : cached.debug,
       });
     }
 
     return res.status(200).json({
-      ok: false,
-      windowDays: 30,
-      refreshLabel: '6시간마다 갱신',
-      slots: { memberTop1: null, jangjisu: null, memberTop2: null },
+      ...emptyPayload(debug || refresh ? { runtimeMarker: RUNTIME_MARKER, mode: 'refresh_live_error', cache: { bindingFound: cacheAvailable, hit: false } } : undefined),
       error: error?.message || 'shorts hall endpoint failed',
-      debug: debug ? { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: false } } : undefined,
     });
   }
 }
