@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
+import ShortsHallOfFame from './prison/ShortsHallOfFame';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const POSTS_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
@@ -255,7 +256,7 @@ export function PrisonMemberLiveGridContent() {
   const liveCount = sortedMembers.filter((member) => statuses[member.nickname]?.isLive).length;
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
 
-  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none"><RecentPostsRail members={ALL_PRISON_MEMBERS} posts={posts} /><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">수용소 멤버 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
+  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none"><ShortsHallOfFame /><RecentPostsRail members={ALL_PRISON_MEMBERS} posts={posts} /><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">수용소 멤버 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</section>;
 }
 
 export default function PrisonMemberLiveGrid() {
