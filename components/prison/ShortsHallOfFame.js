@@ -139,10 +139,16 @@ export default function ShortsHallOfFame() {
         <div className="mt-2 text-sm font-black text-white/48">최근 30일 기준 조회수 상위 쇼츠 · 6시간마다 갱신</div>
       </div>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-[1260px] items-end justify-items-center gap-12 md:grid-cols-[minmax(258px,1fr)_minmax(304px,1.1fr)_minmax(258px,1fr)] md:gap-20 lg:gap-28 xl:gap-32">
-        <HallSpot label="멤버 TOP 1" medal="🥇" video={slots.memberTop1} tone="gold" />
-        <HallSpot label="장지수" video={slots.jangjisu} highlight tone="chief" />
-        <HallSpot label="멤버 TOP 2" medal="🥈" video={slots.memberTop2} tone="silver" />
+      <div className="relative z-10 mx-auto flex w-full max-w-[1260px] flex-col items-center gap-12 md:flex-row md:items-end md:justify-between md:gap-0">
+        <div className="flex min-w-[258px] flex-1 justify-center md:justify-start">
+          <HallSpot label="멤버 TOP 1" medal="🥇" video={slots.memberTop1} tone="gold" />
+        </div>
+        <div className="flex min-w-[304px] flex-[1.12] justify-center">
+          <HallSpot label="장지수" video={slots.jangjisu} highlight tone="chief" />
+        </div>
+        <div className="flex min-w-[258px] flex-1 justify-center md:justify-end">
+          <HallSpot label="멤버 TOP 2" medal="🥈" video={slots.memberTop2} tone="silver" />
+        </div>
       </div>
     </section>
   );
