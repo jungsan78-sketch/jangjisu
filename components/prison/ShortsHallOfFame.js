@@ -139,7 +139,7 @@ export default function ShortsHallOfFame() {
         <div className="mt-2 text-sm font-black text-white/48">최근 30일 기준 조회수 상위 쇼츠 · 6시간마다 갱신</div>
       </div>
 
-      <div className="relative z-10 grid items-end justify-items-center gap-12 md:grid-cols-[1fr_1.1fr_1fr] md:gap-14 lg:gap-20 xl:gap-24">
+      <div className="relative z-10 mx-auto grid w-full max-w-[1260px] items-end justify-items-center gap-12 md:grid-cols-[minmax(258px,1fr)_minmax(304px,1.1fr)_minmax(258px,1fr)] md:gap-20 lg:gap-28 xl:gap-32">
         <HallSpot label="멤버 TOP 1" medal="🥇" video={slots.memberTop1} tone="gold" />
         <HallSpot label="장지수" video={slots.jangjisu} highlight tone="chief" />
         <HallSpot label="멤버 TOP 2" medal="🥈" video={slots.memberTop2} tone="silver" />
