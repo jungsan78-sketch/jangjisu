@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatRelativeTime, hasRecentUpload, SectionTitle, shareYoutubeState } from './prisonShared';
 
-const YOUTUBE_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
+const YOUTUBE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 function VideoCard({ video, vertical = false }) {
   return (
@@ -34,7 +34,7 @@ export default function RecentYoutubeSection() {
     let mounted = true;
     const load = async () => {
       try {
-        const res = await fetch('/api/prison-youtube');
+        const res = await fetch('/api/prison-youtube-cached');
         const json = await res.json();
         if (mounted) {
           const nextData = { videos: json.videos || [], shorts: json.shorts || [], loaded: true, missingKey: Boolean(json.missingKey) };
@@ -51,5 +51,5 @@ export default function RecentYoutubeSection() {
   }, []);
   const hasNewVideos = hasRecentUpload(data.videos);
   const hasNewShorts = hasRecentUpload(data.shorts);
-  return <section id="recent-youtube" className="mt-6 w-full max-w-none rounded-[28px] bg-white/[0.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.22)] sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8"><SectionTitle title="YOUTUBE" logo="▶" /><div className="mb-5 flex flex-wrap gap-2 sm:mb-6 sm:gap-3"><YoutubeTabButton label="쇼츠" isActive={activeTab === 'shorts'} onClick={() => setActiveTab('shorts')} hasNew={hasNewShorts} /><YoutubeTabButton label="영상" isActive={activeTab === 'videos'} onClick={() => setActiveTab('videos')} hasNew={hasNewVideos} /></div>{data.missingKey ? <div className="rounded-[20px] bg-amber-300/8 p-4 text-sm font-bold leading-6 text-amber-50/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-5 sm:leading-7">YouTube API 키가 아직 연결되지 않았습니다.</div> : !data.loaded ? <div className="rounded-[20px] bg-[#0b0f17] p-5 text-sm font-semibold text-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-6">유튜브 영상을 불러오는 중입니다.</div> : activeTab === 'shorts' ? <div key="shorts-panel"><YoutubePanel title="쇼츠" items={data.shorts} vertical /></div> : <div key="videos-panel"><YoutubePanel title="영상" items={data.videos} /></div>}</section>;
+  return <section id="recent-youtube" className="mt-6 w-full max-w-none rounded-[28px] bg-white/[0.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.22)] sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8"><div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><SectionTitle title="YOUTUBE" logo="▶" /><span className="w-fit rounded-full bg-white/[0.055] px-3 py-1.5 text-[11px] font-black text-white/48 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">6시간마다 갱신</span></div><div className="mb-5 flex flex-wrap gap-2 sm:mb-6 sm:gap-3"><YoutubeTabButton label="쇼츠" isActive={activeTab === 'shorts'} onClick={() => setActiveTab('shorts')} hasNew={hasNewShorts} /><YoutubeTabButton label="영상" isActive={activeTab === 'videos'} onClick={() => setActiveTab('videos')} hasNew={hasNewVideos} /></div>{data.missingKey ? <div className="rounded-[20px] bg-amber-300/8 p-4 text-sm font-bold leading-6 text-amber-50/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-5 sm:leading-7">YouTube API 키가 아직 연결되지 않았습니다.</div> : !data.loaded ? <div className="rounded-[20px] bg-[#0b0f17] p-5 text-sm font-semibold text-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-6">유튜브 영상을 불러오는 중입니다.</div> : activeTab === 'shorts' ? <div key="shorts-panel"><YoutubePanel title="쇼츠" items={data.shorts} vertical /></div> : <div key="videos-panel"><YoutubePanel title="영상" items={data.videos} /></div>}</section>;
 }
