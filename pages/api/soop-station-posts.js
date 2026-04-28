@@ -3,10 +3,10 @@ import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 import { extractStationId } from '../../lib/soop/liveStatus';
 import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
 
-const CACHE_KEY = 'soop:station-posts:payload';
+const CACHE_KEY = 'soop:station-posts:payload:v2';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
-const RUNTIME_MARKER = 'test2-soop-posts-page-20260427-2';
-const TARGET_STATION_IDS = new Set(['bxroong', 'isq1158', 'mini1212', 'ddikku0714']);
+const RUNTIME_MARKER = 'test2-soop-posts-page-20260428-1';
+const TARGET_STATION_IDS = new Set(['ayanesena', 'bxroong', 'isq1158', 'mini1212', 'ddikku0714']);
 
 function getKnownStationIds() {
   return ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean);
