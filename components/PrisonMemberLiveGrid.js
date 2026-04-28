@@ -133,7 +133,7 @@ function RecentPostsRail({ members, posts }) {
           <button type="button" aria-label="다음 멤버글" onClick={() => scrollPosts(1)} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] text-lg font-black text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_10px_22px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-cyan-100/28 hover:bg-cyan-300/[0.11] hover:text-white hover:shadow-[0_0_22px_rgba(103,232,249,0.16)]">›</button>
         </div>
       </div>
-      <div ref={railRef} className="scrollbar-hide flex w-full snap-x gap-3 overflow-x-auto overflow-y-visible scroll-smooth pb-2 xl:gap-4">
+      <div ref={railRef} className="scrollbar-hide flex w-full snap-x gap-3 overflow-x-hidden overflow-y-visible scroll-smooth pb-2 xl:gap-4">
         {items.map(({ member, post }) => (
           <a data-sou-post-card="true" key={`${member.nickname}-${post.url || post.title}`} href={post.url || member.station} target="_blank" rel="noreferrer" className="group min-h-[118px] w-[260px] shrink-0 snap-start overflow-hidden rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_18px_36px_rgba(0,0,0,0.20)] transition hover:-translate-y-0.5 hover:bg-white/[0.07] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_46px_rgba(0,0,0,0.30)] sm:w-[286px] 2xl:w-[320px]">
             <div className="flex items-center gap-3">
