@@ -222,7 +222,7 @@ function SidebarLiveMemberList({ currentPath }) {
 function UnifiedPrisonNavItems() {
   return (
     <>
-      <SidebarNavItem href="/jangjisu-prison-v2#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" />
+      <SidebarNavItem href="/jangjisu-prison-v2#top" label="명예의 쇼츠" icon="🏆" tone="gold" />
       <SidebarNavItem href="/jangjisu-prison-v2#schedule" label="일정" icon="⛓" />
       <SidebarNavItem href="/jangjisu-prison-v2#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
       <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" tone="blue" />
