@@ -19,6 +19,7 @@ export const PRISON_MEMBERS = [
   { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol', tags: ['#섹시', '#큐티', '#도시락'] },
   { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212', youtube: 'https://www.youtube.com/@LinLing_', cafe: 'https://cafe.naver.com/linling', tags: ['#집순이', '#리액션', '#하이텐션'] },
   { nickname: '띠꾸', image: 'https://stimg.sooplive.com/LOGO/dd/ddikku0714/ddikku0714.jpg', station: 'https://www.sooplive.com/station/ddikku0714', youtube: 'https://www.youtube.com/@ddikku_0714', cafe: 'https://cafe.naver.com/ddikku', tags: ['#짱친', '#다정다감', '#노력'] },
+  { nickname: '후룽카카', image: 'https://stimg.sooplive.com/LOGO/ka/kakazzang/kakazzang.jpg', station: 'https://www.sooplive.com/station/kakazzang', tags: ['#신입', '#종겜', '#장지수용소'] },
 ];
 
 export const ALL_PRISON_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
