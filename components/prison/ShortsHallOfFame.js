@@ -122,8 +122,8 @@ export default function ShortsHallOfFame() {
   if (payload.loaded && !hasAny) return null;
 
   return (
-    <section id="shorts-hall" className="relative mb-14 scroll-mt-6 w-full max-w-none px-4 py-8 sm:px-8 sm:py-10 lg:px-12">
-      <div className="pointer-events-none absolute inset-x-[-7%] top-[-8%] h-[82%] bg-[radial-gradient(circle_at_50%_8%,rgba(103,232,249,0.13),transparent_28%),radial-gradient(circle_at_18%_42%,rgba(251,191,36,0.15),transparent_31%),radial-gradient(circle_at_82%_42%,rgba(226,232,240,0.12),transparent_30%)] blur-[2px]" />
+    <section id="shorts-hall" className="relative mb-14 scroll-mt-6 w-full max-w-none overflow-hidden rounded-[34px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(103,232,249,0.13),transparent_26%),radial-gradient(circle_at_18%_42%,rgba(251,191,36,0.17),transparent_28%),radial-gradient(circle_at_82%_42%,rgba(226,232,240,0.14),transparent_27%)]" />
       <div className="pointer-events-none absolute left-[10%] top-14 h-1.5 w-1.5 rounded-full bg-amber-200/90 shadow-[0_0_18px_rgba(251,191,36,0.9)]" />
       <div className="pointer-events-none absolute left-[18%] top-28 h-1 w-1 rounded-full bg-amber-300/80 shadow-[0_0_16px_rgba(251,191,36,0.75)]" />
       <div className="pointer-events-none absolute left-[31%] top-20 h-1 w-1 rounded-full bg-amber-100/80 shadow-[0_0_16px_rgba(251,191,36,0.7)]" />
