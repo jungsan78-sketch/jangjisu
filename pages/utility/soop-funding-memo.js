@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const TEST_EVENT_LIMIT = 2000;
 
-const SoopFundingMemoStableV3 = dynamic(
-  () => import('../../components/utility/SoopFundingMemoStableV3'),
+const SoopFundingMemoSoftV4 = dynamic(
+  () => import('../../components/utility/SoopFundingMemoSoftV4'),
   { ssr: false }
 );
 
@@ -141,9 +141,9 @@ const resetButtonStyle = { ...buttonStyle, border: '1px solid rgba(251,113,133,0
 
 function LiveDebugNotice() {
   return (
-    <div style={{ background: '#05070c', color: '#fff', padding: 16 }}>
-      <div style={{ maxWidth: 1780, margin: '0 auto', border: '1px solid rgba(251,191,36,0.30)', borderRadius: 18, background: 'rgba(251,191,36,0.08)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
-        ⚠️ LIVE DEBUG: 이 화면은 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 끊김 감지 시 자동 재연결을 시도하며, 안정화 확인 전에는 SOOP 실제 후원 내역과 반드시 대조하세요.
+    <div style={{ background: '#07101f', color: '#fff', padding: 16 }}>
+      <div style={{ maxWidth: 1760, margin: '0 auto', borderRadius: 20, background: 'rgba(251,191,36,0.10)', boxShadow: 'inset 0 0 0 1px rgba(252,211,77,0.13), 0 18px 45px rgba(0,0,0,0.18)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
+        ⚠️ LIVE DEBUG: 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 안정화 확인 전에는 SOOP 실제 후원 내역과 반드시 대조하세요.
       </div>
     </div>
   );
@@ -200,7 +200,7 @@ export default function SoopFundingMemoPage() {
     return (
       <>
         <LiveDebugNotice />
-        <SoopFundingMemoStableV3 />
+        <SoopFundingMemoSoftV4 />
       </>
     );
   }
