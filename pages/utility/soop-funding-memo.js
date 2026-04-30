@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const TEST_EVENT_LIMIT = 2000;
 
-const SoopFundingMemoSoftV5 = dynamic(
-  () => import('../../components/utility/SoopFundingMemoSoftV5'),
+const SoopFundingMemoSoftV6 = dynamic(
+  () => import('../../components/utility/SoopFundingMemoSoftV6'),
   { ssr: false }
 );
 
@@ -164,7 +164,7 @@ export default function SoopFundingMemoPage() {
   return (
     <>
       <BetaNotice />
-      <SoopFundingMemoSoftV5 />
+      <SoopFundingMemoSoftV6 />
     </>
   );
 }
