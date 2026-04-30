@@ -7,7 +7,7 @@ const EVENTS_KEY = 'sou-soop-funding-v2-events';
 const MAX_EVENTS = 220;
 const DEDUPE_MS = 650;
 const MESSAGE_MATCH_MS = 10000;
-const DEFAULT_SETTINGS = { validCount: 1000, alertMinCount: 1000, outputMode: 'nickname' };
+const DEFAULT_SETTINGS = { validCount: 1000, outputMode: 'nickname' };
 
 const toNumber = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
 const formatNumber = (value) => toNumber(value).toLocaleString('ko-KR');
@@ -141,6 +141,7 @@ export default function SoopFundingMemoPolishedV2() {
   const [statusText, setStatusText] = useState('SOOP 로그인 후 방송 채팅 연결을 눌러주세요.');
   const [manual, setManual] = useState({ name: '', amount: 1000, message: '' });
   const [copied, setCopied] = useState(false);
+  const [isLiveDebug, setIsLiveDebug] = useState(false);
   const sdkRef = useRef(null);
   const seenRef = useRef(new Set());
   const recentRef = useRef(new Map());
@@ -152,6 +153,7 @@ export default function SoopFundingMemoPolishedV2() {
     setSettings({ ...DEFAULT_SETTINGS, ...readJson(SETTINGS_KEY, {}) });
     setEvents(savedEvents);
     setToken(readJson(TOKEN_KEY, null));
+    setIsLiveDebug(new URLSearchParams(window.location.search).get('debug') === 'live');
     seenRef.current = new Set(savedEvents.map((event) => event.id));
   }, []);
 
@@ -172,7 +174,7 @@ export default function SoopFundingMemoPolishedV2() {
         setStatus('error');
         setStatusText('SOOP 인증 토큰을 읽지 못했습니다.');
       }
-      window.history.replaceState({}, '', '/utility/soop-funding-memo');
+      window.history.replaceState({}, '', '/utility/soop-funding-memo?debug=live');
     }
   }, []);
 
@@ -284,6 +286,18 @@ export default function SoopFundingMemoPolishedV2() {
     setStatusText('방송 채팅 연결을 중지했습니다.');
   };
 
+  const forceClosedTest = () => {
+    try { sdkRef.current?.disconnect?.(); } catch {}
+    sdkRef.current = null;
+    setStatus('closed-test');
+    setStatusText('테스트: 연결 끊김 상태를 강제로 만들었습니다. 실제 CLOSED와 같은 복구 흐름 확인용입니다.');
+  };
+
+  const forceErrorTest = () => {
+    setStatus('error-test');
+    setStatusText('테스트: ERROR 상태를 강제로 표시했습니다. 실제 오류 표시/운영 대응 문구 확인용입니다.');
+  };
+
   const clearLogin = () => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -319,7 +333,7 @@ export default function SoopFundingMemoPolishedV2() {
   const total = useMemo(() => events.reduce((sum, event) => sum + toNumber(event.amount), 0), [events]);
   const validCount = Math.max(1, toNumber(settings.validCount, 1000));
   const validEvents = events.filter((event) => toNumber(event.amount) >= validCount);
-  const statusDot = status === 'error' ? 'bg-rose-300' : ['connected', 'received', 'authorized'].includes(status) ? 'bg-emerald-300' : 'bg-white/25';
+  const statusDot = ['error', 'error-test'].includes(status) ? 'bg-rose-300' : ['closed', 'closed-test'].includes(status) ? 'bg-yellow-300' : ['connected', 'received', 'authorized'].includes(status) ? 'bg-emerald-300' : 'bg-white/25';
   const copyMemo = async () => {
     if (!memo) return;
     await navigator.clipboard.writeText(memo);
@@ -354,14 +368,14 @@ export default function SoopFundingMemoPolishedV2() {
               </div>
               <div className="rounded-[22px] border border-cyan-100/14 bg-[#071521] px-4 py-3"><div className="flex items-center justify-between gap-3"><div className="text-xs font-black uppercase tracking-[0.2em] text-white/44">{status}</div><div className={`h-3 w-3 rounded-full ${statusDot}`} /></div><div className="mt-2 min-h-[22px] text-sm font-bold leading-6 text-white/70">{statusText}</div></div>
               <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={startLogin} className="inline-flex items-center justify-center gap-2 rounded-[22px] border border-cyan-200/38 bg-cyan-300/18 px-4 py-4 text-sm font-black text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/26 active:scale-[0.97]"><img src="/logos/SOOP.png" alt="" className="h-4 w-auto" /> SOOP 로그인</button><button type="button" onClick={token ? connectSdk : startLogin} className="rounded-[22px] border border-emerald-200/36 bg-emerald-300/18 px-4 py-4 text-sm font-black text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/26 active:scale-[0.97]">방송 채팅 연결</button><button type="button" onClick={disconnectSdk} className="col-span-2 rounded-[22px] border border-white/12 bg-white/[0.075] px-4 py-3 text-sm font-black text-white/72 transition hover:bg-white/[0.11] active:scale-[0.98]">연결 중지</button></div>
+              {isLiveDebug ? <div className="mt-3 grid grid-cols-2 gap-2 rounded-[20px] border border-yellow-200/20 bg-yellow-300/8 p-3"><button type="button" onClick={forceClosedTest} className="rounded-[18px] border border-yellow-200/28 bg-yellow-300/12 px-3 py-3 text-xs font-black text-yellow-100 transition hover:bg-yellow-300/18 active:scale-[0.98]">연결 끊김 테스트</button><button type="button" onClick={forceErrorTest} className="rounded-[18px] border border-rose-200/28 bg-rose-300/12 px-3 py-3 text-xs font-black text-rose-100 transition hover:bg-rose-300/18 active:scale-[0.98]">ERROR 테스트</button><div className="col-span-2 text-[11px] font-bold leading-5 text-yellow-100/75">debug=live 전용입니다. 실제 후원 없이 상태 전환과 운영 대응 문구만 확인합니다.</div></div> : null}
               <button type="button" onClick={clearLogin} className="mt-3 text-xs font-bold text-white/42 underline-offset-4 hover:text-white/65 hover:underline">로그인 정보 초기화</button>
               {!sdkUrl ? <div className="mt-3 rounded-2xl border border-yellow-200/20 bg-yellow-300/10 px-3 py-2 text-[11px] font-bold leading-5 text-yellow-100/85">NEXT_PUBLIC_SOOP_CHAT_SDK_URL 환경변수에 Chat SDK 스크립트 URL을 넣어야 연결 버튼이 동작합니다.</div> : null}
             </Card>
 
-            <Card title="기준 설정" desc="복붙 기준과 알림 기준을 조절합니다." glow="purple">
+            <Card title="기준 설정" desc="복붙 결과에 반영할 최소 단위를 조절합니다." glow="purple">
               <div className="grid gap-3">
                 <label className="rounded-[24px] border border-cyan-100/20 bg-cyan-300/[0.085] p-4"><div className="text-sm font-black text-cyan-50">유효개수</div><div className="mt-1 text-xs font-semibold text-white/52">복붙 결과에 반영할 최소 단위</div><div className="mt-3"><BigInput type="number" min="1" value={settings.validCount} onChange={(e) => setSettings((p) => ({ ...p, validCount: Math.max(1, toNumber(e.target.value, 1000)) }))} /></div></label>
-                <label className="rounded-[24px] border border-fuchsia-100/20 bg-fuchsia-300/[0.085] p-4"><div className="text-sm font-black text-fuchsia-50">알림 기준</div><div className="mt-1 text-xs font-semibold text-white/52">최근 로그 강조용 최소 후원 개수</div><div className="mt-3"><BigInput type="number" min="1" value={settings.alertMinCount} onChange={(e) => setSettings((p) => ({ ...p, alertMinCount: Math.max(1, toNumber(e.target.value, 1000)) }))} /></div></label>
               </div>
             </Card>
           </div>
