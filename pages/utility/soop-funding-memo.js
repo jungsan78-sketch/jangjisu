@@ -67,7 +67,7 @@ function DebugFundingMemoTest() {
             <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.34em', color: 'rgba(125,211,252,0.72)' }}>DEBUG TEST MODE</div>
             <h1 style={{ marginTop: 14, fontSize: 38, fontWeight: 900 }}>SOOP 펀딩 자동메모장 테스트</h1>
             <p style={{ marginTop: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.8, fontWeight: 700 }}>실제 후원을 받지 않고 가짜 후원 이벤트를 주입해서 누락, 렉, 복붙 결과를 확인하는 화면입니다. 실제 SOOP 연결은 실행하지 않습니다.</p>
-            <p style={{ marginTop: 10, color: 'rgba(251,191,36,0.82)', lineHeight: 1.8, fontWeight: 800 }}>실제 로그인/Chat SDK 연결 테스트는 ?debug=live 주소에서만 확인합니다.</p>
+            <p style={{ marginTop: 10, color: 'rgba(251,191,36,0.82)', lineHeight: 1.8, fontWeight: 800 }}>실제 로그인/Chat SDK 연결 테스트는 기본 페이지에서 확인합니다.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 380px) minmax(0, 1fr)', gap: 18, marginTop: 18 }}>
@@ -87,7 +87,7 @@ function DebugFundingMemoTest() {
                 <button onClick={() => setStatus('closed-test')} style={darkButtonStyle}>CLOSED 상태 테스트</button>
                 <button onClick={() => setStatus('error-test')} style={darkButtonStyle}>ERROR 상태 테스트</button>
                 <button onClick={() => { setEvents([]); setStatus('debug-ready'); }} style={resetButtonStyle}>초기화</button>
-                <a href="/utility/soop-funding-memo?debug=live" style={{ ...darkButtonStyle, textAlign: 'center', textDecoration: 'none' }}>실제 로그인 테스트로 이동</a>
+                <a href="/utility/soop-funding-memo" style={{ ...darkButtonStyle, textAlign: 'center', textDecoration: 'none' }}>베타 자동메모장으로 이동</a>
               </div>
             </section>
 
@@ -139,71 +139,32 @@ const warnButtonStyle = { ...buttonStyle, border: '1px solid rgba(251,191,36,0.3
 const darkButtonStyle = { ...buttonStyle, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff' };
 const resetButtonStyle = { ...buttonStyle, border: '1px solid rgba(251,113,133,0.28)', background: 'rgba(251,113,133,0.10)', color: '#ffe4e6' };
 
-function LiveDebugNotice() {
+function BetaNotice() {
   return (
     <div style={{ background: '#07101f', color: '#fff', padding: 16 }}>
       <div style={{ maxWidth: 1760, margin: '0 auto', borderRadius: 20, background: 'rgba(251,191,36,0.10)', boxShadow: 'inset 0 0 0 1px rgba(252,211,77,0.13), 0 18px 45px rgba(0,0,0,0.18)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
-        ⚠️ LIVE DEBUG: 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 안정화 확인 전에는 SOOP 실제 후원 내역과 반드시 대조하세요.
+        ⚠️ BETA: 자동 재연결 안정화가 적용된 베타버전입니다. 실전 사용 시 SOOP 실제 후원 내역과 최근 후원 로그를 같이 확인하세요.
       </div>
     </div>
   );
 }
 
-function MaintenancePage() {
-  const warningItems = [
-    '방송 중에는 이 페이지 탭을 닫거나 새로고침하지 마세요.',
-    'PC 절전 모드, 브라우저 절전 모드, 인터넷 끊김 상태에서는 후원 기록이 누락될 수 있습니다.',
-    'CLOSED 또는 ERROR 상태가 보이면 후원 수신이 멈춘 상태일 수 있습니다.',
-    '후원이 몰리는 상황에서는 SOOP 실제 후원 내역과 최근 후원 로그를 반드시 같이 확인해야 합니다.',
-    '안정화 전까지 실전 방송에서 자동메모장만 단독으로 믿고 사용하지 마세요.',
-  ];
-
-  return (
-    <>
-      <Head>
-        <title>점검중 | 유틸리티</title>
-        <meta name="description" content="점검중" />
-      </Head>
-      <main style={{ minHeight: '100vh', background: '#05070c', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <section style={{ width: '100%', maxWidth: 760, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 28, background: 'rgba(255,255,255,0.04)', padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.36em', color: 'rgba(255,255,255,0.45)' }}>MAINTENANCE</div>
-          <h1 style={{ marginTop: 16, fontSize: 40, fontWeight: 900 }}>현재 점검중입니다</h1>
-          <p style={{ margin: '16px auto 0', maxWidth: 560, lineHeight: 1.8, color: 'rgba(255,255,255,0.62)' }}>자동메모장 안정화 작업 중이라 잠시 이용할 수 없습니다.</p>
-
-          <div style={{ margin: '28px auto 0', maxWidth: 640, border: '1px solid rgba(251,191,36,0.28)', borderRadius: 22, background: 'rgba(251,191,36,0.08)', padding: 20, textAlign: 'left' }}>
-            <div style={{ fontSize: 14, fontWeight: 900, color: '#fde68a' }}>⚠️ 실전 사용 주의사항</div>
-            <ul style={{ margin: '14px 0 0', paddingLeft: 20, color: 'rgba(255,255,255,0.72)', lineHeight: 1.8, fontSize: 14, fontWeight: 700 }}>
-              {warningItems.map((item) => <li key={item}>{item}</li>)}
-            </ul>
-          </div>
-
-          <a href="/utility/soop-funding-memo?debug=1" style={{ display: 'inline-flex', marginTop: 28, marginRight: 10, border: '1px solid rgba(34,211,238,0.24)', borderRadius: 16, background: 'rgba(34,211,238,0.10)', padding: '12px 20px', color: '#ecfeff', fontWeight: 900, textDecoration: 'none' }}>테스트 모드</a>
-          <a href="/utility" style={{ display: 'inline-flex', marginTop: 28, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 16, background: 'rgba(255,255,255,0.1)', padding: '12px 20px', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>유틸리티로 돌아가기</a>
-        </section>
-      </main>
-    </>
-  );
-}
-
 export default function SoopFundingMemoPage() {
-  const [debugMode, setDebugMode] = useState('maintenance');
+  const [debugMode, setDebugMode] = useState('live');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const debug = new URLSearchParams(window.location.search).get('debug');
-    if (debug === 'live') setDebugMode('live');
-    else if (debug === '1') setDebugMode('test');
-    else setDebugMode('maintenance');
+    if (debug === '1') setDebugMode('test');
+    else setDebugMode('live');
   }, []);
 
-  if (debugMode === 'live') {
-    return (
-      <>
-        <LiveDebugNotice />
-        <SoopFundingMemoSoftV5 />
-      </>
-    );
-  }
+  if (debugMode === 'test') return <DebugFundingMemoTest />;
 
-  return debugMode === 'test' ? <DebugFundingMemoTest /> : <MaintenancePage />;
+  return (
+    <>
+      <BetaNotice />
+      <SoopFundingMemoSoftV5 />
+    </>
+  );
 }
