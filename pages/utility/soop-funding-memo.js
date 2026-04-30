@@ -1,5 +1,13 @@
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
+
+const TEST_EVENT_LIMIT = 2000;
+
+const SoopFundingMemoPolishedV2 = dynamic(
+  () => import('../../components/utility/SoopFundingMemoPolishedV2'),
+  { ssr: false }
+);
 
 function formatNumber(value) {
   const number = Number(value || 0);
@@ -39,7 +47,7 @@ function DebugFundingMemoTest() {
 
   function addBurst(count, same = false) {
     const next = Array.from({ length: count }, (_, index) => makeEvent(index, same));
-    setEvents((prev) => [...next, ...prev].slice(0, 500));
+    setEvents((prev) => [...next, ...prev].slice(0, TEST_EVENT_LIMIT));
     setStatus(`debug-added-${count}`);
   }
 
@@ -59,12 +67,13 @@ function DebugFundingMemoTest() {
             <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.34em', color: 'rgba(125,211,252,0.72)' }}>DEBUG TEST MODE</div>
             <h1 style={{ marginTop: 14, fontSize: 38, fontWeight: 900 }}>SOOP 펀딩 자동메모장 테스트</h1>
             <p style={{ marginTop: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.8, fontWeight: 700 }}>실제 후원을 받지 않고 가짜 후원 이벤트를 주입해서 누락, 렉, 복붙 결과를 확인하는 화면입니다. 실제 SOOP 연결은 실행하지 않습니다.</p>
+            <p style={{ marginTop: 10, color: 'rgba(251,191,36,0.82)', lineHeight: 1.8, fontWeight: 800 }}>실제 로그인/Chat SDK 연결 테스트는 ?debug=live 주소에서만 확인합니다.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 380px) minmax(0, 1fr)', gap: 18, marginTop: 18 }}>
             <section style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 26, background: 'rgba(255,255,255,0.04)', padding: 22 }}>
               <h2 style={{ fontSize: 22, fontWeight: 900 }}>테스트 조작</h2>
-              <p style={{ marginTop: 8, color: 'rgba(255,255,255,0.58)', lineHeight: 1.7, fontWeight: 700 }}>버튼을 눌러 실제 후원 대신 테스트 데이터를 넣습니다.</p>
+              <p style={{ marginTop: 8, color: 'rgba(255,255,255,0.58)', lineHeight: 1.7, fontWeight: 700 }}>버튼을 눌러 실제 후원 대신 테스트 데이터를 넣습니다. 최대 {formatNumber(TEST_EVENT_LIMIT)}건까지 보관합니다.</p>
 
               <label style={{ display: 'block', marginTop: 18, fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.72)' }}>유효개수</label>
               <input value={validCount} onChange={(event) => setValidCount(event.target.value)} type="number" min="1" style={{ marginTop: 8, width: '100%', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 16, background: 'rgba(0,0,0,0.34)', color: '#fff', padding: 14, fontSize: 20, fontWeight: 900 }} />
@@ -73,10 +82,12 @@ function DebugFundingMemoTest() {
                 <button onClick={() => addBurst(1)} style={buttonStyle}>테스트 후원 1건 추가</button>
                 <button onClick={() => addBurst(10)} style={buttonStyle}>테스트 후원 10건 연속 추가</button>
                 <button onClick={() => addBurst(100)} style={buttonStyle}>테스트 후원 100건 연속 추가</button>
+                <button onClick={() => addBurst(1000)} style={buttonStyle}>테스트 후원 1,000건 연속 추가</button>
                 <button onClick={() => addBurst(10, true)} style={warnButtonStyle}>동일 닉네임/동일 개수 10건</button>
                 <button onClick={() => setStatus('closed-test')} style={darkButtonStyle}>CLOSED 상태 테스트</button>
                 <button onClick={() => setStatus('error-test')} style={darkButtonStyle}>ERROR 상태 테스트</button>
                 <button onClick={() => { setEvents([]); setStatus('debug-ready'); }} style={resetButtonStyle}>초기화</button>
+                <a href="/utility/soop-funding-memo?debug=live" style={{ ...darkButtonStyle, textAlign: 'center', textDecoration: 'none' }}>실제 로그인 테스트로 이동</a>
               </div>
             </section>
 
@@ -128,6 +139,16 @@ const warnButtonStyle = { ...buttonStyle, border: '1px solid rgba(251,191,36,0.3
 const darkButtonStyle = { ...buttonStyle, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff' };
 const resetButtonStyle = { ...buttonStyle, border: '1px solid rgba(251,113,133,0.28)', background: 'rgba(251,113,133,0.10)', color: '#ffe4e6' };
 
+function LiveDebugNotice() {
+  return (
+    <div style={{ background: '#05070c', color: '#fff', padding: 16 }}>
+      <div style={{ maxWidth: 1780, margin: '0 auto', border: '1px solid rgba(251,191,36,0.30)', borderRadius: 18, background: 'rgba(251,191,36,0.08)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
+        ⚠️ LIVE DEBUG: 이 화면은 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 실제 후원 수신과 동일한 경로를 타지만, 아직 안정화 전이므로 SOOP 실제 후원 내역과 반드시 같이 대조하세요.
+      </div>
+    </div>
+  );
+}
+
 function MaintenancePage() {
   const warningItems = [
     '방송 중에는 이 페이지 탭을 닫거나 새로고침하지 마세요.',
@@ -156,6 +177,7 @@ function MaintenancePage() {
             </ul>
           </div>
 
+          <a href="/utility/soop-funding-memo?debug=1" style={{ display: 'inline-flex', marginTop: 28, marginRight: 10, border: '1px solid rgba(34,211,238,0.24)', borderRadius: 16, background: 'rgba(34,211,238,0.10)', padding: '12px 20px', color: '#ecfeff', fontWeight: 900, textDecoration: 'none' }}>테스트 모드</a>
           <a href="/utility" style={{ display: 'inline-flex', marginTop: 28, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 16, background: 'rgba(255,255,255,0.1)', padding: '12px 20px', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>유틸리티로 돌아가기</a>
         </section>
       </main>
@@ -164,12 +186,24 @@ function MaintenancePage() {
 }
 
 export default function SoopFundingMemoPage() {
-  const [debug, setDebug] = useState(false);
+  const [debugMode, setDebugMode] = useState('maintenance');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setDebug(new URLSearchParams(window.location.search).get('debug') === '1');
+    const debug = new URLSearchParams(window.location.search).get('debug');
+    if (debug === 'live') setDebugMode('live');
+    else if (debug === '1') setDebugMode('test');
+    else setDebugMode('maintenance');
   }, []);
 
-  return debug ? <DebugFundingMemoTest /> : <MaintenancePage />;
+  if (debugMode === 'live') {
+    return (
+      <>
+        <LiveDebugNotice />
+        <SoopFundingMemoPolishedV2 />
+      </>
+    );
+  }
+
+  return debugMode === 'test' ? <DebugFundingMemoTest /> : <MaintenancePage />;
 }
