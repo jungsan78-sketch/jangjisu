@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const TEST_EVENT_LIMIT = 2000;
 
-const SoopFundingMemoPolishedV2 = dynamic(
-  () => import('../../components/utility/SoopFundingMemoPolishedV2'),
+const SoopFundingMemoStableV3 = dynamic(
+  () => import('../../components/utility/SoopFundingMemoStableV3'),
   { ssr: false }
 );
 
@@ -143,7 +143,7 @@ function LiveDebugNotice() {
   return (
     <div style={{ background: '#05070c', color: '#fff', padding: 16 }}>
       <div style={{ maxWidth: 1780, margin: '0 auto', border: '1px solid rgba(251,191,36,0.30)', borderRadius: 18, background: 'rgba(251,191,36,0.08)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
-        ⚠️ LIVE DEBUG: 이 화면은 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 실제 후원 수신과 동일한 경로를 타지만, 아직 안정화 전이므로 SOOP 실제 후원 내역과 반드시 같이 대조하세요.
+        ⚠️ LIVE DEBUG: 이 화면은 실제 SOOP 로그인/Chat SDK 연결 테스트용입니다. 끊김 감지 시 자동 재연결을 시도하며, 안정화 확인 전에는 SOOP 실제 후원 내역과 반드시 대조하세요.
       </div>
     </div>
   );
@@ -200,7 +200,7 @@ export default function SoopFundingMemoPage() {
     return (
       <>
         <LiveDebugNotice />
-        <SoopFundingMemoPolishedV2 />
+        <SoopFundingMemoStableV3 />
       </>
     );
   }
