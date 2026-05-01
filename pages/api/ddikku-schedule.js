@@ -10,8 +10,17 @@ const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
   '띠어트 (영공)',
   '띠어트(영공)',
+  '띠여르',
+  '띠여르(영공)',
+  '띠여르 (영공)',
   '꾸어르(후열소통)',
   '꾸어르 (후열소통)',
+  '꾸여르(후열소통)',
+  '꾸여르 (후열소통)',
+  '띠여르/꾸여르(후열소통)',
+  '띠여르 / 꾸여르(후열소통)',
+  '띠여르/꾸여르 (후열소통)',
+  '띠여르 / 꾸여르 (후열소통)',
   '1부',
   '2부',
   '3부',
@@ -22,6 +31,13 @@ function normalizeText(value) {
   return String(value || '')
     .replace(/\u00a0/g, ' ')
     .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeForIgnore(value) {
+  return normalizeText(value)
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, '')
     .trim();
 }
 
@@ -77,8 +93,10 @@ function extractDayColumns(row, daysInMonth) {
 
 function isIgnoredFallbackText(text) {
   const normalized = normalizeText(text);
+  const compact = normalizeForIgnore(normalized);
   if (!normalized) return true;
-  if (IGNORED_FALLBACK_TEXTS.has(normalized)) return true;
+  if (IGNORED_FALLBACK_TEXTS.has(normalized) || IGNORED_FALLBACK_TEXTS.has(compact)) return true;
+  if (compact === '띠여르/꾸여르(후열소통)') return true;
   if (/^[1234]부$/u.test(normalized)) return true;
   if (/^(월요일|화요일|수요일|목요일|금요일|토요일|일요일)$/u.test(normalized)) return true;
   return false;
@@ -86,14 +104,14 @@ function isIgnoredFallbackText(text) {
 
 function extractOffReason(line) {
   const normalized = normalizeText(line);
-  if (!normalized) return '';
+  if (!normalized || isIgnoredFallbackText(normalized)) return '';
   const stripped = normalized
     .replace(/\b휴방\b/gu, ' ')
     .replace(/[＊*]/g, ' ')
     .replace(/[:：/|]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return stripped;
+  return isIgnoredFallbackText(stripped) ? '' : stripped;
 }
 
 function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclusive) {
@@ -119,14 +137,14 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
       const labeledPart = cell.match(/^([23])부\s*(.*)$/u);
       if (labeledPart) {
         const normalized = normalizePartText(labeledPart[2]);
-        if (normalized) collected.push(normalized);
+        if (normalized && !isIgnoredFallbackText(normalized)) collected.push(normalized);
         continue;
       }
 
       const previous = normalizeText(row[columnIndex - 1]);
       if (/^[23]부$/u.test(previous)) {
         const normalized = normalizePartText(cell);
-        if (normalized) collected.push(normalized);
+        if (normalized && !isIgnoredFallbackText(normalized)) collected.push(normalized);
         continue;
       }
 
@@ -236,7 +254,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const currentMonth = getKstMonthInfo();
-  const cacheKey = makeMonthlyScheduleCacheKey('schedule:ddikku:v2', new Date());
+  const cacheKey = makeMonthlyScheduleCacheKey('schedule:ddikku:v3', new Date());
   const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
