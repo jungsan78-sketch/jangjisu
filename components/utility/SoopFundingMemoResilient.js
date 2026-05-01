@@ -4,6 +4,7 @@ import SoopFundingMemoSoftV15 from './SoopFundingMemoSoftV15';
 const PATCH_FLAG = '__souFundingChatSdkSafePatch';
 const MANUAL_DISCONNECT_UNTIL = '__souFundingManualDisconnectUntil';
 const HARD_RECONNECT_KEY = 'sou-soop-funding-hard-reconnect-at';
+const HARD_RELOAD_DELAY_MS = 400;
 
 function markManualDisconnect() {
   if (typeof window === 'undefined') return;
@@ -26,8 +27,8 @@ function scheduleHardReload() {
   window.clearTimeout(window.__souFundingHardReloadTimer);
   window.__souFundingHardReloadTimer = window.setTimeout(() => {
     if (isManualDisconnectWindow()) return;
-    window.location.replace('/utility/soop-funding-memo?debug=live&reconnect=1');
-  }, 1200);
+    window.location.replace('/utility/soop-funding-memo?reconnect=1');
+  }, HARD_RELOAD_DELAY_MS);
 }
 
 function patchChatSdk(target) {
