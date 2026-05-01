@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 
 const TEST_EVENT_LIMIT = 2000;
+const PASSWORD_KEY = 'sou-soop-funding-memo-unlocked-v1';
+const ACCESS_PASSWORD = '032359';
 
 const SoopFundingMemoSoftV9 = dynamic(
   () => import('../../components/utility/SoopFundingMemoSoftV9'),
@@ -25,6 +27,71 @@ function buildMemo(events, validCount = 1000) {
     })
     .filter(Boolean)
     .join(',');
+}
+
+function PasswordGate({ children }) {
+  const [ready, setReady] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    try {
+      setUnlocked(localStorage.getItem(PASSWORD_KEY) === '1');
+    } catch {}
+    setReady(true);
+  }, []);
+
+  function submit(event) {
+    event.preventDefault();
+    if (password.trim() === ACCESS_PASSWORD) {
+      try {
+        localStorage.setItem(PASSWORD_KEY, '1');
+      } catch {}
+      setUnlocked(true);
+      setError('');
+      return;
+    }
+    setError('비밀번호가 맞지 않습니다.');
+  }
+
+  if (!ready) return null;
+  if (unlocked) return children;
+
+  return (
+    <>
+      <Head>
+        <title>비밀번호 필요 | SOOP 펀딩 자동메모장</title>
+        <meta name="description" content="SOOP 펀딩 자동메모장 비밀번호 확인" />
+      </Head>
+      <main style={{ minHeight: '100vh', background: 'linear-gradient(180deg,#07101f,#091827 42%,#06101f)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <section style={{ width: '100%', maxWidth: 520, borderRadius: 32, background: 'linear-gradient(145deg,rgba(20,41,64,0.94),rgba(8,18,34,0.96))', boxShadow: '0 28px 80px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.06)', padding: 34 }}>
+          <div style={{ display: 'inline-flex', borderRadius: 999, background: 'rgba(34,211,238,0.12)', color: '#cffafe', padding: '8px 13px', fontSize: 12, fontWeight: 900, boxShadow: 'inset 0 0 0 1px rgba(103,232,249,0.16)' }}>접근 제한</div>
+          <h1 style={{ marginTop: 18, fontSize: 34, fontWeight: 950, letterSpacing: '-0.04em' }}>SOOP 펀딩 자동메모장</h1>
+          <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.68)', lineHeight: 1.7, fontSize: 15, fontWeight: 800 }}>비밀번호를 아는 사람만 접속할 수 있습니다.</p>
+
+          <form onSubmit={submit} style={{ marginTop: 24, display: 'grid', gap: 12 }}>
+            <label style={{ display: 'grid', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.72)' }}>비밀번호</span>
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                type="password"
+                inputMode="numeric"
+                autoFocus
+                placeholder="비밀번호 입력"
+                style={{ width: '100%', border: 0, borderRadius: 22, background: '#062033', color: '#fff', padding: '17px 18px', fontSize: 22, fontWeight: 900, outline: 'none', boxShadow: 'inset 0 0 0 2px rgba(34,211,238,0.28), 0 12px 28px rgba(0,0,0,0.20)' }}
+              />
+            </label>
+            {error ? <div style={{ borderRadius: 16, background: 'rgba(251,113,133,0.14)', color: '#fecdd3', padding: '11px 13px', fontSize: 13, fontWeight: 900 }}>{error}</div> : null}
+            <button type="submit" style={{ marginTop: 4, minHeight: 58, border: 0, borderRadius: 24, background: 'linear-gradient(180deg,rgba(34,211,238,0.30),rgba(14,165,233,0.16))', color: '#ecfeff', fontSize: 16, fontWeight: 950, cursor: 'pointer', boxShadow: 'inset 0 0 0 2px rgba(103,232,249,0.34),0 16px 34px rgba(14,165,233,0.16)' }}>입장하기</button>
+          </form>
+
+          <a href="/utility" style={{ display: 'inline-flex', marginTop: 18, color: 'rgba(255,255,255,0.48)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>← 유틸리티로 돌아가기</a>
+        </section>
+      </main>
+    </>
+  );
 }
 
 function DebugFundingMemoTest() {
@@ -162,9 +229,9 @@ export default function SoopFundingMemoPage() {
   if (debugMode === 'test') return <DebugFundingMemoTest />;
 
   return (
-    <>
+    <PasswordGate>
       <BetaNotice />
       <SoopFundingMemoSoftV9 />
-    </>
+    </PasswordGate>
   );
 }
