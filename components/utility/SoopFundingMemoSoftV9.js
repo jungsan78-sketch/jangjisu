@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import SoopFundingMemoSoftV15 from './SoopFundingMemoSoftV15';
+import SoopFundingMemoStable from './SoopFundingMemoStable';
 
 const STATUS_LABELS = {
   IDLE: '대기중',
@@ -39,7 +39,7 @@ export default function SoopFundingMemoSoftV9() {
 
   return (
     <div className="funding-memo-soft-v9">
-      <SoopFundingMemoSoftV15 />
+      <SoopFundingMemoStable />
       <style jsx global>{`
         .funding-memo-soft-v9 textarea {
           color: #111827 !important;
