@@ -21,7 +21,7 @@ export const PRISON_SCHEDULE_SOURCES = [
     key: 'rinring',
     member: '린링',
     endpoint: '/api/rinring-schedule',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=242454512#gid=242454512',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1306533963#gid=1306533963',
   },
   {
     key: 'popo',
