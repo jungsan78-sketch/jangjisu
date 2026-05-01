@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const TEST_EVENT_LIMIT = 2000;
 
-const SoopFundingMemoSoftV8 = dynamic(
-  () => import('../../components/utility/SoopFundingMemoSoftV8'),
+const SoopFundingMemoSoftV9 = dynamic(
+  () => import('../../components/utility/SoopFundingMemoSoftV9'),
   { ssr: false }
 );
 
@@ -59,14 +59,14 @@ function DebugFundingMemoTest() {
     <>
       <Head>
         <title>자동메모장 테스트 모드 | 유틸리티</title>
-        <meta name="description" content="숲 펀딩 자동메모장 테스트 모드" />
+        <meta name="description" content="SOOP 펀딩 자동메모장 테스트 모드" />
       </Head>
       <main style={{ minHeight: '100vh', background: '#05070c', color: '#fff', padding: 24 }}>
         <section style={{ maxWidth: 1180, margin: '0 auto' }}>
           <div style={{ border: '1px solid rgba(34,211,238,0.22)', borderRadius: 28, background: 'rgba(255,255,255,0.04)', padding: 28 }}>
             <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.24em', color: 'rgba(125,211,252,0.72)' }}>테스트 모드</div>
-            <h1 style={{ marginTop: 14, fontSize: 38, fontWeight: 900 }}>숲 펀딩 자동메모장 테스트</h1>
-            <p style={{ marginTop: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.8, fontWeight: 700 }}>실제 후원을 받지 않고 가짜 후원 이벤트를 주입해서 누락, 렉, 복붙 결과를 확인하는 화면입니다. 실제 숲 연결은 실행하지 않습니다.</p>
+            <h1 style={{ marginTop: 14, fontSize: 38, fontWeight: 900 }}>SOOP 펀딩 자동메모장 테스트</h1>
+            <p style={{ marginTop: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.8, fontWeight: 700 }}>실제 후원을 받지 않고 가짜 후원 이벤트를 주입해서 누락, 렉, 복붙 결과를 확인하는 화면입니다. 실제 SOOP 연결은 실행하지 않습니다.</p>
             <p style={{ marginTop: 10, color: 'rgba(251,191,36,0.82)', lineHeight: 1.8, fontWeight: 800 }}>실제 로그인과 채팅 연결 테스트는 기본 페이지에서 확인합니다.</p>
           </div>
 
@@ -143,7 +143,7 @@ function BetaNotice() {
   return (
     <div style={{ background: '#07101f', color: '#fff', padding: 16 }}>
       <div style={{ maxWidth: 1760, margin: '0 auto', borderRadius: 20, background: 'rgba(251,191,36,0.10)', boxShadow: 'inset 0 0 0 1px rgba(252,211,77,0.13), 0 18px 45px rgba(0,0,0,0.18)', padding: 14, fontSize: 13, fontWeight: 800, lineHeight: 1.7 }}>
-        ⚠️ 베타: 자동 재연결 안정화가 적용된 베타버전입니다. 실전 사용 시 숲 실제 후원 내역과 최근 후원 로그를 같이 확인하세요.
+        ⚠️ 베타: 자동 재연결 안정화가 적용된 베타버전입니다. 실전 사용 시 SOOP 실제 후원 내역과 최근 후원 로그를 같이 확인하세요.
       </div>
     </div>
   );
@@ -164,7 +164,7 @@ export default function SoopFundingMemoPage() {
   return (
     <>
       <BetaNotice />
-      <SoopFundingMemoSoftV8 />
+      <SoopFundingMemoSoftV9 />
     </>
   );
 }
