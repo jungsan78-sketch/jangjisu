@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs';
-const SHEET_GID = '1645820954';
+const SHEET_GID = '1488413913';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
 const CACHE_TTL_SECONDS = 60 * 60;
 
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const currentMonth = getKstMonthInfo();
-  const cacheKey = makeMonthlyScheduleCacheKey('schedule:guwol', new Date());
+  const cacheKey = makeMonthlyScheduleCacheKey('schedule:guwol:v2', new Date());
   const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
