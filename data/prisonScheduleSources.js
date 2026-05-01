@@ -9,13 +9,13 @@ export const PRISON_SCHEDULE_SOURCES = [
     key: 'youoneul',
     member: '유오늘',
     endpoint: '/api/youoneul-schedule',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=399310385#gid=399310385',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=1672412190#gid=1672412190',
   },
   {
     key: 'guwol',
     member: '구월이',
     endpoint: '/api/guwol-schedule',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1645820954#gid=1645820954',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1488413913#gid=1488413913',
   },
   {
     key: 'rinring',
@@ -33,6 +33,12 @@ export const PRISON_SCHEDULE_SOURCES = [
     key: 'ddikku',
     member: '띠꾸',
     endpoint: '/api/ddikku-schedule',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc/edit?gid=1059909393#gid=1059909393',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc/edit?gid=1553307664#gid=1553307664',
+  },
+  {
+    key: 'hurungkaka',
+    member: '후룽카카',
+    endpoint: '/api/hurungkaka-schedule',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1gWZgS8ExyOdZAJGW6MMY49zCMgf4QAA2aQokkY31z4Y/edit',
   },
 ];
