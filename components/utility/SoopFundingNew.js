@@ -56,6 +56,18 @@ function buildMemo(events, validBase) {
     .join(',');
 }
 
+function buildTopRank(events) {
+  const map = new Map();
+  events.forEach((event) => {
+    const name = String(event.name || '익명').trim();
+    const current = map.get(name) || { name, amount: 0, count: 0 };
+    current.amount += toNumber(event.amount);
+    current.count += 1;
+    map.set(name, current);
+  });
+  return Array.from(map.values()).sort((a, b) => b.amount - a.amount).slice(0, 10);
+}
+
 export default function SoopFundingNew() {
   const [streamerId, setStreamerId] = useState('');
   const [validCount, setValidCount] = useState(100);
@@ -98,13 +110,14 @@ export default function SoopFundingNew() {
       const name = String(payload.fromUsername || payload.nickname || payload.name || '').trim();
       const amount = toNumber(payload.amount || payload.count, 0);
       if (!name || amount <= 0) return;
+      const receivedAtText = nowText();
       const eventId = String(payload.id || `${id}-${name}-${amount}-${payload.createdAt || Date.now()}-${Math.random().toString(36).slice(2)}`);
       if (seenRef.current.has(eventId)) return;
       seenRef.current.add(eventId);
-      setLastReceivedAt(nowText());
+      setLastReceivedAt(receivedAtText);
       setStatus('received');
       setStatusText(`${name}님 ${formatNumber(amount)}개 수신`);
-      setEvents((prev) => [{ id: eventId, name, amount, kind: payload.kind || 'normalBalloon', createdAt: payload.createdAt || new Date().toISOString() }, ...prev].slice(0, MAX_EVENTS));
+      setEvents((prev) => [{ id: eventId, name, amount, kind: payload.kind || 'normalBalloon', receivedAtText, createdAt: payload.createdAt || new Date().toISOString() }, ...prev].slice(0, MAX_EVENTS));
     };
     source.onerror = () => {
       setStatus('error');
@@ -123,6 +136,7 @@ export default function SoopFundingNew() {
   const validBase = Math.max(1, toNumber(validCount, 100));
   const validEvents = useMemo(() => events.filter((event) => toNumber(event.amount) >= validBase), [events, validBase]);
   const memoText = useMemo(() => buildMemo(events, validBase), [events, validBase]);
+  const topRank = useMemo(() => buildTopRank(events), [events]);
   const total = useMemo(() => events.reduce((sum, event) => sum + toNumber(event.amount), 0), [events]);
   const validTotal = useMemo(() => validEvents.reduce((sum, event) => sum + toNumber(event.amount), 0), [validEvents]);
 
@@ -155,15 +169,13 @@ export default function SoopFundingNew() {
           <div className="space-y-5">
             <Panel title="후원 수신 목록" desc="유효개수 이상 후원만 표시합니다.">
               <div className="mb-4 grid grid-cols-3 gap-3"><div className="rounded-[22px] bg-cyan-300/10 p-4 text-center"><div className="text-xs font-black text-white/45">전체 건수</div><div className="mt-1 text-2xl font-black">{formatNumber(events.length)}</div></div><div className="rounded-[22px] bg-emerald-300/10 p-4 text-center"><div className="text-xs font-black text-white/45">유효 건수</div><div className="mt-1 text-2xl font-black">{formatNumber(validEvents.length)}</div></div><div className="rounded-[22px] bg-emerald-300/10 p-4 text-center"><div className="text-xs font-black text-white/45">유효 합계</div><div className="mt-1 text-2xl font-black">{formatNumber(validTotal)}</div></div></div>
-              <div className="max-h-[620px] space-y-2 overflow-auto pr-1">{validEvents.length ? validEvents.map((event) => <div key={event.id} className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-[#07101a] px-4 py-4"><div className="min-w-0"><div className="truncate text-lg font-black text-white">{event.name}</div><div className="mt-1 text-[11px] font-bold text-white/36">{event.kind}</div></div><div className="text-2xl font-black text-cyan-50">{formatNumber(event.amount)}개</div></div>) : <div className="rounded-[24px] border border-dashed border-white/12 bg-black/18 p-10 text-center text-white/50">유효 후원 수신 대기 중</div>}</div>
+              <div className="max-h-[620px] space-y-2 overflow-auto pr-1">{validEvents.length ? validEvents.map((event) => <div key={event.id} className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-[#07101a] px-4 py-4"><div className="min-w-0"><div className="truncate text-lg font-black text-white">{event.name}</div><div className="mt-1 text-[11px] font-bold text-white/36">수신 {event.receivedAtText || '-'}</div></div><div className="text-2xl font-black text-cyan-50">{formatNumber(event.amount)}개</div></div>) : <div className="rounded-[24px] border border-dashed border-white/12 bg-black/18 p-10 text-center text-white/50">유효 후원 수신 대기 중</div>}</div>
             </Panel>
           </div>
 
           <div className="space-y-5">
-            <Panel title="메모장 복사" desc="유효개수 단위로 닉네임*개수 형식을 만듭니다.">
-              <div className="rounded-[22px] bg-[#07101a] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"><textarea value={memoText} readOnly placeholder="유효 후원이 들어오면 예: 닉네임*10 형태로 표시됩니다." className="min-h-[210px] w-full resize-none bg-transparent text-lg font-black leading-8 text-cyan-50 outline-none placeholder:text-white/30" /></div>
-              <div className="mt-3 grid gap-2"><Button onClick={copyMemo} wide>메모장 복사</Button>{copyStatus ? <div className="rounded-[16px] bg-white/[0.06] px-4 py-3 text-sm font-black text-white/70">{copyStatus}</div> : null}</div>
-            </Panel>
+            <Panel title="메모장 복사" desc="유효개수 단위로 닉네임*개수 형식을 만듭니다."><div className="rounded-[22px] bg-[#07101a] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"><textarea value={memoText} readOnly placeholder="유효 후원이 들어오면 예: 닉네임*10 형태로 표시됩니다." className="min-h-[170px] w-full resize-none bg-transparent text-lg font-black leading-8 text-cyan-50 outline-none placeholder:text-white/30" /></div><div className="mt-3 grid gap-2"><Button onClick={copyMemo} wide>메모장 복사</Button>{copyStatus ? <div className="rounded-[16px] bg-white/[0.06] px-4 py-3 text-sm font-black text-white/70">{copyStatus}</div> : null}</div></Panel>
+            <Panel title="후원순위 TOP10" desc="저장된 후원목록을 닉네임별로 합산합니다."><div className="grid gap-2">{topRank.length ? topRank.map((rank, index) => <div key={rank.name} className="flex items-center justify-between gap-3 rounded-[18px] bg-[#07101a] px-4 py-3 ring-1 ring-white/10"><div className="flex min-w-0 items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-300/14 text-sm font-black text-cyan-50">{index + 1}</span><div className="min-w-0"><div className="truncate text-sm font-black text-white">{rank.name}</div><div className="text-[11px] font-bold text-white/38">{formatNumber(rank.count)}회</div></div></div><div className="text-lg font-black text-cyan-50">{formatNumber(rank.amount)}개</div></div>) : <div className="rounded-[18px] border border-dashed border-white/12 p-6 text-center text-sm font-bold text-white/42">아직 순위가 없습니다.</div>}</div></Panel>
             <Panel title="전체 요약" desc="유효개수 미만 후원도 합산에는 보관됩니다."><div className="grid gap-3"><div className="rounded-[22px] bg-cyan-300/10 p-4 text-center"><div className="text-xs font-black text-white/45">총 후원</div><div className="mt-1 text-3xl font-black">{formatNumber(total)}</div></div><div className="rounded-[22px] bg-white/[0.05] p-4 text-sm font-bold leading-7 text-white/60">유효개수 {formatNumber(validBase)}개 기준으로 1,000개 후원은 닉네임*{formatNumber(Math.floor(1000 / validBase))} 형태로 변환됩니다.</div></div></Panel>
           </div>
         </section>
