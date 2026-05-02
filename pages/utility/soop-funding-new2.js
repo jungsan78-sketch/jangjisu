@@ -9,7 +9,12 @@ export default function Page() {
       <Head>
         <title>SOOP 펀딩 New2 | 유틸리티</title>
       </Head>
-      <SoopFundingNew />
+      <SoopFundingNew
+        apiPath="/api/soop-balloon-check-native"
+        title="SOOP 펀딩 New2 (Native 테스트)"
+        modeLabel="Native 수신 테스트"
+        modeDescription="SOOP → Native → SSE"
+      />
     </>
   );
 }
