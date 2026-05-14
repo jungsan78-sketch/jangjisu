@@ -26,8 +26,7 @@ function NoticeCard({ item }) {
             {item.profileImage ? <img src={item.profileImage} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-black text-white/90">{item.member || '장지수'}</div>
-            <div className="mt-0.5 text-[11px] font-bold tracking-[0.08em] text-blue-100/45">SOOP STATION</div>
+            <div className="truncate text-[16px] font-black leading-tight text-white/95">{item.member || '장지수'}</div>
           </div>
         </div>
         <span className="shrink-0 rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] font-black text-white/65">{formatRelativeTime(item.createdAt)}</span>
