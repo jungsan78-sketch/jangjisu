@@ -1,7 +1,7 @@
 import { searchSnkrdunkProducts } from '../../lib/pokemon/snkrdunk';
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=180, stale-while-revalidate=900');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const q = String(req.query.q || '').trim();
   const limit = Math.min(Number(req.query.limit || 12) || 12, 20);
