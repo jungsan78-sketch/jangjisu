@@ -25,7 +25,7 @@ export default function Home() {
       pokemonLink.removeAttribute('target');
       pokemonLink.removeAttribute('rel');
       pokemonLink.onclick = null;
-      pokemonLink.innerHTML = '<span>🎴</span><span>포켓몬카드 모드</span>';
+      pokemonLink.innerHTML = '<span>TCG</span><span>포켓몬카드 모드</span>';
       prisonLink.insertAdjacentElement('afterend', pokemonLink);
     };
 
@@ -183,6 +183,9 @@ export default function Home() {
             min-width: 26px !important;
             justify-content: center !important;
             text-align: center !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.04em !important;
           }
 
           .jangjisu-left-nav-mode header nav a > span:nth-child(2) {
