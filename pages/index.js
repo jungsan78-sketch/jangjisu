@@ -114,11 +114,6 @@ export default function Home() {
       <MainJangJisuNoticeSection />
       <style jsx global>{`
         @media (min-width: 1024px) {
-          .jangjisu-left-nav-mode {
-            box-sizing: border-box !important;
-            padding-left: 218px !important;
-          }
-
           .jangjisu-left-nav-mode header {
             position: fixed !important;
             inset: 0 auto 0 0 !important;
@@ -199,21 +194,14 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode main {
-            box-sizing: border-box !important;
-            display: flex !important;
-            width: 100% !important;
+            width: calc(100% - 218px) !important;
             max-width: none !important;
-            margin-left: 0 !important;
+            margin-left: 218px !important;
             margin-right: 0 !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            padding-left: clamp(24px, 4vw, 72px) !important;
-            padding-right: clamp(24px, 4vw, 72px) !important;
           }
 
           .jangjisu-left-nav-mode main > section,
           .jangjisu-left-nav-mode main > div {
-            width: min(1280px, 100%) !important;
             max-width: 1280px !important;
             margin-left: auto !important;
             margin-right: auto !important;
