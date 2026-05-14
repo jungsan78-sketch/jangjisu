@@ -42,6 +42,24 @@ function normalizeLiveItem(baseItem, detailPayload) {
   };
 }
 
+function normalizeSearchProduct(product, tab = 'box') {
+  const jpy = Number(product.jpy || 0);
+  return {
+    id: `snkrdunk-${product.sourceId || product.id}`,
+    snkrdunkId: String(product.sourceId || product.id),
+    type: tab === 'card' ? 'card' : 'box',
+    code: product.code || `snkrdunk-${product.sourceId || product.id}`,
+    name: product.name || `SNKRDUNK 상품 ${product.sourceId || product.id}`,
+    image: product.image || '',
+    krw: formatKrwFromJpy(jpy) || '확인중',
+    jpy: product.jpyText || '확인중',
+    usd: formatUsdFromJpy(jpy) || '확인중',
+    recent: product.latestTradeJpyText || product.jpyText || '실시간 확인',
+    change: 'LIVE',
+    originalUrl: product.originalUrl || `https://snkrdunk.com/apparels/${product.sourceId || product.id}`,
+  };
+}
+
 const BOX_PRODUCTS = [
   { id: 'snkrdunk-762693', snkrdunkId: '762693', type: 'box', code: 'pkmn-tcg-M4', name: 'Pokemon Card Game MEGA Expansion Pack "Ninja Spinner" Box', image: 'https://cdn.snkrdunk.com/upload_bg_removed/244b2a87-ebe1-41bb-a812-6daa8aaddc80.webp', krw: '₩128,155', jpy: '¥13,490', usd: '$94', recent: '실시간 확인', change: 'LIVE' },
   { id: 'pkmn-129', type: 'box', code: 'pkmn-129', name: 'Pokemon Card Game 25th Anniversary Golden Box', image: 'https://images.snkrdunk.com/en/magazine/wp-content/uploads/2021/10/25172024/pokemon-card-game-25th-anniversary-golden-box.jpg', krw: '₩3,038,070', jpy: '¥320,000', usd: '$2,230', recent: '₩3,010,000', change: '+8.4%' },
@@ -173,12 +191,49 @@ export default function PokemonCardPage() {
   const [tab, setTab] = useState('box');
   const [query, setQuery] = useState('');
   const [detailState, setDetailState] = useState(null);
+  const [searchItems, setSearchItems] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [searchedKeyword, setSearchedKeyword] = useState('');
   const products = tab === 'box' ? BOX_PRODUCTS : CARD_PRODUCTS;
-  const filtered = useMemo(() => {
+  const localFiltered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     if (!keyword) return products;
     return products.filter((item) => `${item.name} ${item.code}`.toLowerCase().includes(keyword));
   }, [products, query]);
+  const displayedProducts = searchedKeyword ? searchItems : localFiltered;
+
+  const handleSearch = async (event) => {
+    event?.preventDefault?.();
+    const keyword = query.trim();
+    if (!keyword) {
+      setSearchItems([]);
+      setSearchedKeyword('');
+      setSearchError('');
+      return;
+    }
+    setSearchLoading(true);
+    setSearchError('');
+    setSearchedKeyword(keyword);
+    try {
+      const response = await fetch(`/api/pokemon-card-search?q=${encodeURIComponent(keyword)}&limit=12`);
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'SNKRDUNK search error');
+      setSearchItems((payload.products || []).map((item) => normalizeSearchProduct(item, tab)));
+    } catch (error) {
+      setSearchItems([]);
+      setSearchError(error.message);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleTab = (nextTab) => {
+    setTab(nextTab);
+    setSearchItems([]);
+    setSearchedKeyword('');
+    setSearchError('');
+  };
 
   const handleSelect = async (item) => {
     setDetailState({ item, loading: Boolean(item.snkrdunkId), error: '', detail: null });
@@ -214,21 +269,28 @@ export default function PokemonCardPage() {
           <section className="mb-7 rounded-[32px] border border-white/10 bg-[#10131a] p-5 lg:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap gap-3">
-                <button onClick={() => setTab('box')} className={`rounded-full border px-5 py-2.5 text-sm font-black transition ${tab === 'box' ? 'border-yellow-200/35 bg-yellow-400/18 text-yellow-100' : 'border-white/10 bg-white/5 text-white/58 hover:bg-white/10'}`}>상자</button>
-                <button onClick={() => setTab('card')} className={`rounded-full border px-5 py-2.5 text-sm font-black transition ${tab === 'card' ? 'border-sky-200/35 bg-sky-400/18 text-sky-100' : 'border-white/10 bg-white/5 text-white/58 hover:bg-white/10'}`}>카드</button>
+                <button onClick={() => handleTab('box')} className={`rounded-full border px-5 py-2.5 text-sm font-black transition ${tab === 'box' ? 'border-yellow-200/35 bg-yellow-400/18 text-yellow-100' : 'border-white/10 bg-white/5 text-white/58 hover:bg-white/10'}`}>상자</button>
+                <button onClick={() => handleTab('card')} className={`rounded-full border px-5 py-2.5 text-sm font-black transition ${tab === 'card' ? 'border-sky-200/35 bg-sky-400/18 text-sky-100' : 'border-white/10 bg-white/5 text-white/58 hover:bg-white/10'}`}>카드</button>
                 <button className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-black text-white/58">최근거래</button>
                 <button className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-black text-white/58">급등</button>
               </div>
-              <div className="relative lg:w-[520px]"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="리자몽 SAR, 피카츄, 151, 골든박스" className="w-full rounded-full border border-white/10 bg-black/30 px-5 py-3 text-sm font-bold text-white outline-none transition placeholder:text-white/30 focus:border-sky-200/35" /></div>
+              <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row lg:w-[620px]">
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="pokemon card box, 151, pikachu" className="w-full rounded-full border border-white/10 bg-black/30 px-5 py-3 text-sm font-bold text-white outline-none transition placeholder:text-white/30 focus:border-sky-200/35" />
+                <button type="submit" disabled={searchLoading} className="rounded-full border border-sky-200/20 bg-sky-400/15 px-5 py-3 text-sm font-black text-sky-100 transition hover:bg-sky-400/22 disabled:opacity-50">{searchLoading ? '검색중' : '검색'}</button>
+              </form>
             </div>
+            {searchError ? <div className="mt-4 rounded-[18px] border border-red-200/15 bg-red-400/10 px-4 py-3 text-sm font-black text-red-100">검색 실패: {searchError}</div> : null}
+            {searchedKeyword ? <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-black text-white/45"><span>SNKRDUNK 검색어: {searchedKeyword}</span><button onClick={() => { setSearchItems([]); setSearchedKeyword(''); setSearchError(''); }} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/58">기본 목록으로</button></div> : null}
           </section>
           <section>
             <div className="mb-4 flex items-end justify-between gap-4">
-              <div><div className="text-[30px] font-black text-white">{tab === 'box' ? '상자 목록' : '최근 비싼 카드'}</div><div className="mt-1 text-sm font-bold text-white/40">LIVE 상품을 누르면 SNKRDUNK 상세/최근거래를 불러옵니다.</div></div>
-              <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-black text-white/45">{filtered.length}개</div>
+              <div><div className="text-[30px] font-black text-white">{searchedKeyword ? 'SNKRDUNK 검색 결과' : tab === 'box' ? '상자 목록' : '최근 비싼 카드'}</div><div className="mt-1 text-sm font-bold text-white/40">LIVE 상품을 누르면 SNKRDUNK 상세/최근거래를 불러옵니다.</div></div>
+              <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-black text-white/45">{displayedProducts.length}개</div>
             </div>
+            {searchLoading ? <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-8 text-center text-sm font-black text-white/45">SNKRDUNK 검색 결과를 불러오는 중...</div> : null}
+            {!searchLoading && !displayedProducts.length ? <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-8 text-center text-sm font-black text-white/45">표시할 상품이 없습니다.</div> : null}
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {filtered.map((item) => <ProductCard key={item.id} item={item} onSelect={handleSelect} />)}
+              {displayedProducts.map((item) => <ProductCard key={item.id} item={item} onSelect={handleSelect} />)}
             </div>
           </section>
         </div>
