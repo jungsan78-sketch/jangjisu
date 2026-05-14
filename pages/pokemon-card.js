@@ -1,6 +1,9 @@
 import Head from 'next/head';
 import { useMemo, useState } from 'react';
 
+const JPY_TO_KRW = 9.5;
+const JPY_TO_USD = 0.007;
+
 function placeholderFor(type = 'box') {
   const label = type === 'card' ? 'SINGLE CARD' : 'BOX MARKET';
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -8,7 +11,39 @@ function placeholderFor(type = 'box') {
   );
 }
 
+function formatKrwFromJpy(jpy) {
+  const value = Number(jpy);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return `₩${Math.round(value * JPY_TO_KRW).toLocaleString('ko-KR')}`;
+}
+
+function formatUsdFromJpy(jpy) {
+  const value = Number(jpy);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return `$${Math.round(value * JPY_TO_USD).toLocaleString('en-US')}`;
+}
+
+function normalizeLiveItem(baseItem, detailPayload) {
+  const product = detailPayload?.product;
+  if (!product) return baseItem;
+  return {
+    ...baseItem,
+    id: product.id || baseItem.id,
+    snkrdunkId: product.sourceId || baseItem.snkrdunkId,
+    code: product.code || baseItem.code,
+    name: product.name || baseItem.name,
+    image: product.image || baseItem.image,
+    krw: formatKrwFromJpy(product.jpy) || baseItem.krw,
+    jpy: product.jpyText || baseItem.jpy,
+    usd: formatUsdFromJpy(product.jpy) || baseItem.usd,
+    recent: product.latestTradeJpyText || product.jpyText || baseItem.recent,
+    originalUrl: product.originalUrl || baseItem.originalUrl,
+    isLive: true,
+  };
+}
+
 const BOX_PRODUCTS = [
+  { id: 'snkrdunk-762693', snkrdunkId: '762693', type: 'box', code: 'pkmn-tcg-M4', name: 'Pokemon Card Game MEGA Expansion Pack "Ninja Spinner" Box', image: 'https://cdn.snkrdunk.com/upload_bg_removed/244b2a87-ebe1-41bb-a812-6daa8aaddc80.webp', krw: '₩128,155', jpy: '¥13,490', usd: '$94', recent: '실시간 확인', change: 'LIVE' },
   { id: 'pkmn-129', type: 'box', code: 'pkmn-129', name: 'Pokemon Card Game 25th Anniversary Golden Box', image: 'https://images.snkrdunk.com/en/magazine/wp-content/uploads/2021/10/25172024/pokemon-card-game-25th-anniversary-golden-box.jpg', krw: '₩3,038,070', jpy: '¥320,000', usd: '$2,230', recent: '₩3,010,000', change: '+8.4%' },
   { id: 'pkmn-9', type: 'box', code: 'pkmn-9', name: 'Pokemon Card Game Eevee Heroes Booster Box', image: 'https://images.snkrdunk.com/en/magazine/wp-content/uploads/2022/10/25162140/pokemon-card-game-sword-shield-eevee-heroes-booster-box.jpg', krw: '₩1,726,605', jpy: '¥181,800', usd: '$1,268', recent: '₩1,690,000', change: '+5.1%' },
   { id: 'pkmn-38', type: 'box', code: 'pkmn-38', name: 'Pokemon Card Game 25th Anniversary Collection Box', image: 'https://images.snkrdunk.com/en/magazine/wp-content/uploads/2021/10/25172112/pokemon-card-game-sword-shield-25th-anniversary-collection-box.jpg', krw: '₩825,553', jpy: '¥86,900', usd: '$606', recent: '₩812,000', change: '+2.7%' },
@@ -47,6 +82,7 @@ function ProductCard({ item, onSelect }) {
     <button onClick={() => onSelect(item)} className="group overflow-hidden rounded-[28px] border border-white/10 bg-[#15171c] text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition duration-300 hover:-translate-y-1 hover:border-sky-200/35 hover:bg-[#191c22]">
       <div className="relative flex aspect-[1.05] items-center justify-center overflow-hidden bg-[#25272d] p-5">
         <MarketImage item={item} className="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-[1.045]" />
+        {item.snkrdunkId ? <span className="absolute left-4 top-4 rounded-full border border-emerald-200/25 bg-emerald-400/15 px-3 py-1 text-[11px] font-black text-emerald-100">LIVE</span> : null}
         <span className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-lg text-white ring-1 ring-white/15">♡</span>
       </div>
       <div className="p-5">
@@ -67,39 +103,66 @@ function StatBox({ label, value, tone = 'default' }) {
   return <div className={`rounded-[22px] border p-4 ${toneClass}`}><div className="text-xs font-black text-white/42">{label}</div><div className="mt-1 whitespace-nowrap text-2xl font-black tabular-nums">{value}</div></div>;
 }
 
-function DetailModal({ item, onClose }) {
-  if (!item) return null;
-  const chartBars = [32, 44, 39, 58, 51, 72, 64, 76, 69, 84, 78, 91];
+function TradeHistory({ history = [] }) {
+  if (!history.length) return <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm font-bold text-white/40">최근 거래 내역 준비중</div>;
+  return (
+    <div className="grid gap-2">
+      {history.slice(0, 6).map((trade, index) => (
+        <div key={`${trade.date}-${trade.price}-${index}`} className="flex items-center justify-between gap-3 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3 font-sans tabular-nums">
+          <div><div className="text-sm font-black text-white">{trade.priceText}</div><div className="mt-0.5 text-[11px] font-bold text-white/38">{trade.size || '옵션'} · {trade.date}</div></div>
+          <div className="text-xs font-black text-white/35">#{index + 1}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DetailModal({ state, onClose }) {
+  if (!state?.item) return null;
+  const { item, loading, error, detail } = state;
+  const liveItem = normalizeLiveItem(item, detail);
+  const chartSource = detail?.chart?.length ? detail.chart.map((point) => point.price) : [32, 44, 39, 58, 51, 72, 64, 76, 69, 84, 78, 91];
+  const maxPrice = Math.max(...chartSource, 1);
+  const chartBars = chartSource.map((value) => Math.max(14, Math.round((value / maxPrice) * 100)));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/78 px-4 py-8 backdrop-blur-md" onClick={onClose}>
       <section className="relative max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-[34px] border border-white/10 bg-[#0b111c] p-5 shadow-[0_35px_140px_rgba(0,0,0,0.65)] lg:p-7" onClick={(event) => event.stopPropagation()}>
         <button onClick={onClose} aria-label="닫기" className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/8 text-2xl font-black leading-none text-white/70 transition hover:bg-white/14 hover:text-white">×</button>
         <div className="mb-6 pr-14">
-          <div className="text-xs font-black tracking-[0.22em] text-sky-200/50">{item.code}</div>
-          <h2 className="mt-2 text-[30px] font-black leading-tight text-white lg:text-[42px]">{item.name}</h2>
+          <div className="flex flex-wrap items-center gap-2"><span className="text-xs font-black tracking-[0.22em] text-sky-200/50">{liveItem.code}</span>{liveItem.isLive ? <span className="rounded-full border border-emerald-200/25 bg-emerald-400/15 px-2.5 py-1 text-[10px] font-black text-emerald-100">SNKRDUNK LIVE</span> : null}</div>
+          <h2 className="mt-2 text-[30px] font-black leading-tight text-white lg:text-[42px]">{liveItem.name}</h2>
         </div>
         <div className="grid gap-7 lg:grid-cols-[390px_1fr]">
           <div className="flex min-h-[330px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#202329] p-7">
-            <MarketImage item={item} className="max-h-[330px] w-full object-contain" />
+            <MarketImage item={liveItem} className="max-h-[330px] w-full object-contain" />
           </div>
           <div>
+            {loading ? <div className="mb-4 rounded-[20px] border border-sky-200/15 bg-sky-400/10 p-4 text-sm font-black text-sky-100">SNKRDUNK 실시간 상세 데이터 불러오는 중...</div> : null}
+            {error ? <div className="mb-4 rounded-[20px] border border-red-200/15 bg-red-400/10 p-4 text-sm font-black text-red-100">실시간 데이터 로딩 실패: {error}</div> : null}
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[22px] border border-sky-200/15 bg-sky-400/10 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">원화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-sky-300">{item.krw}</div></div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">엔화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white">{item.jpy}</div></div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">달러</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white/76">{item.usd}</div></div>
+              <div className="rounded-[22px] border border-sky-200/15 bg-sky-400/10 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">원화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-sky-300">{liveItem.krw}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">엔화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white">{liveItem.jpy}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">달러</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white/76">{liveItem.usd}</div></div>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">최근 거래가</div><div className="mt-1 whitespace-nowrap text-xl font-black text-white">{item.recent}</div></div>
-              <div className="rounded-[22px] border border-emerald-200/15 bg-emerald-400/10 p-4"><div className="text-xs font-black text-white/42">변동률</div><div className="mt-1 text-xl font-black text-emerald-200">{item.change}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">최근 거래가</div><div className="mt-1 whitespace-nowrap text-xl font-black text-white">{liveItem.recent}</div></div>
+              <div className="rounded-[22px] border border-emerald-200/15 bg-emerald-400/10 p-4"><div className="text-xs font-black text-white/42">변동률</div><div className="mt-1 text-xl font-black text-emerald-200">{liveItem.change}</div></div>
             </div>
-            <div className="mt-5 rounded-[22px] border border-white/10 bg-black/20 p-4 text-sm font-semibold leading-6 text-white/58">SNKRDUNK 실시간 연동 전 상세 화면입니다. 다음 단계에서 원본 상품 링크, 실제 최근 거래내역, 시세 차트 데이터를 연결합니다.</div>
+            <div className="mt-5 rounded-[22px] border border-white/10 bg-black/20 p-4 text-sm font-semibold leading-6 text-white/58">
+              {liveItem.isLive ? 'SNKRDUNK 상세 API 기준 실시간 상품/최근 거래 데이터를 표시합니다. 원화/달러는 임시 환산값입니다.' : '아직 더미 상품입니다. SNKRDUNK 상품 ID가 연결되면 실시간 상세 데이터가 표시됩니다.'}
+              {liveItem.originalUrl ? <a href={liveItem.originalUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-black text-white/70 transition hover:bg-white/10">SNKRDUNK 원본 보기</a> : null}
+            </div>
           </div>
         </div>
-        <div className="mt-7 rounded-[28px] border border-white/10 bg-[#070b12] p-5">
-          <div className="mb-4 flex items-center justify-between"><div className="text-xl font-black text-white">시세 차트</div><div className="text-xs font-black text-white/38">1D · 7D · 30D · 90D</div></div>
-          <div className="flex h-[220px] items-end gap-3 rounded-[20px] bg-[linear-gradient(180deg,rgba(14,165,233,0.07),rgba(0,0,0,0.12))] p-5">
-            {chartBars.map((height, index) => <div key={index} className="flex-1 rounded-t-lg bg-sky-400/55 shadow-[0_0_18px_rgba(56,189,248,0.20)]" style={{ height: `${height}%` }} />)}
+        <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_340px]">
+          <div className="rounded-[28px] border border-white/10 bg-[#070b12] p-5">
+            <div className="mb-4 flex items-center justify-between"><div className="text-xl font-black text-white">시세 차트</div><div className="text-xs font-black text-white/38">{detail?.chart?.length ? 'SNKRDUNK' : 'DEMO'} · ALL</div></div>
+            <div className="flex h-[220px] items-end gap-3 rounded-[20px] bg-[linear-gradient(180deg,rgba(14,165,233,0.07),rgba(0,0,0,0.12))] p-5">
+              {chartBars.map((height, index) => <div key={index} className="flex-1 rounded-t-lg bg-sky-400/55 shadow-[0_0_18px_rgba(56,189,248,0.20)]" style={{ height: `${height}%` }} />)}
+            </div>
           </div>
+          <div className="rounded-[28px] border border-white/10 bg-[#070b12] p-5"><div className="mb-4 text-xl font-black text-white">최근 거래</div><TradeHistory history={detail?.history || []} /></div>
         </div>
       </section>
     </div>
@@ -109,13 +172,26 @@ function DetailModal({ item, onClose }) {
 export default function PokemonCardPage() {
   const [tab, setTab] = useState('box');
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(null);
+  const [detailState, setDetailState] = useState(null);
   const products = tab === 'box' ? BOX_PRODUCTS : CARD_PRODUCTS;
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     if (!keyword) return products;
     return products.filter((item) => `${item.name} ${item.code}`.toLowerCase().includes(keyword));
   }, [products, query]);
+
+  const handleSelect = async (item) => {
+    setDetailState({ item, loading: Boolean(item.snkrdunkId), error: '', detail: null });
+    if (!item.snkrdunkId) return;
+    try {
+      const response = await fetch(`/api/pokemon-card-detail?id=${encodeURIComponent(item.snkrdunkId)}`);
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'SNKRDUNK API error');
+      setDetailState({ item, loading: false, error: '', detail: payload });
+    } catch (error) {
+      setDetailState({ item, loading: false, error: error.message, detail: null });
+    }
+  };
 
   return (
     <>
@@ -133,7 +209,7 @@ export default function PokemonCardPage() {
               <div className="mt-2 text-[38px] font-black tracking-tight text-white lg:text-[56px]">포켓몬카드 시세판</div>
               <p className="mt-2 text-sm font-bold text-white/45 lg:text-base">상자/싱글카드 · 원화/엔화/달러 · 최근거래 · 시세차트</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3"><StatBox label="상자 목록" value={BOX_PRODUCTS.length} tone="gold" /><StatBox label="고가 카드" value={CARD_PRODUCTS.length} tone="sky" /><StatBox label="연동" value="준비중" /></div>
+            <div className="grid gap-3 sm:grid-cols-3"><StatBox label="상자 목록" value={BOX_PRODUCTS.length} tone="gold" /><StatBox label="고가 카드" value={CARD_PRODUCTS.length} tone="sky" /><StatBox label="연동" value="LIVE" /></div>
           </header>
           <section className="mb-7 rounded-[32px] border border-white/10 bg-[#10131a] p-5 lg:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -148,15 +224,15 @@ export default function PokemonCardPage() {
           </section>
           <section>
             <div className="mb-4 flex items-end justify-between gap-4">
-              <div><div className="text-[30px] font-black text-white">{tab === 'box' ? '상자 목록' : '최근 비싼 카드'}</div><div className="mt-1 text-sm font-bold text-white/40">상품을 누르면 상세/시세차트를 확인할 수 있습니다.</div></div>
+              <div><div className="text-[30px] font-black text-white">{tab === 'box' ? '상자 목록' : '최근 비싼 카드'}</div><div className="mt-1 text-sm font-bold text-white/40">LIVE 상품을 누르면 SNKRDUNK 상세/최근거래를 불러옵니다.</div></div>
               <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs font-black text-white/45">{filtered.length}개</div>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {filtered.map((item) => <ProductCard key={item.id} item={item} onSelect={setSelected} />)}
+              {filtered.map((item) => <ProductCard key={item.id} item={item} onSelect={handleSelect} />)}
             </div>
           </section>
         </div>
-        <DetailModal item={selected} onClose={() => setSelected(null)} />
+        <DetailModal state={detailState} onClose={() => setDetailState(null)} />
       </main>
     </>
   );
