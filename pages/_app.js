@@ -7,7 +7,6 @@ import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
 import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
 import UtilityLiveSidebar from '../components/UtilityLiveSidebar';
-import PokemonCardPriceHydrator from '../components/PokemonCardPriceHydrator';
 
 const SCHEDULE_POLLING_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -84,7 +83,6 @@ export default function App({ Component, pageProps }) {
       <CalendarYoutubeUiHydrator />
       <PrisonMemberLiveGrid />
       <UtilityLiveSidebar />
-      <PokemonCardPriceHydrator />
       <Analytics />
     </>
   );
