@@ -1,11 +1,12 @@
 import Head from 'next/head';
 import { useMemo, useState } from 'react';
 
-const PLACEHOLDER =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="420" viewBox="0 0 520 420"><rect width="520" height="420" rx="34" fill="#24272e"/><rect x="70" y="66" width="380" height="250" rx="24" fill="#11151d" stroke="#3b4352"/><text x="260" y="185" text-anchor="middle" fill="#f5f7fb" font-size="34" font-family="Arial" font-weight="800">POKÉ CARD</text><text x="260" y="226" text-anchor="middle" fill="#8b93a3" font-size="18" font-family="Arial" font-weight="700">IMAGE READY</text></svg>`
+function placeholderFor(type = 'box') {
+  const label = type === 'card' ? 'SINGLE CARD' : 'BOX MARKET';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="420" viewBox="0 0 520 420"><rect width="520" height="420" rx="34" fill="#24272e"/><rect x="70" y="66" width="380" height="250" rx="24" fill="#11151d" stroke="#3b4352"/><text x="260" y="177" text-anchor="middle" fill="#f5f7fb" font-size="34" font-family="Arial" font-weight="800">POKÉ CARD</text><text x="260" y="222" text-anchor="middle" fill="#9ca3af" font-size="19" font-family="Arial" font-weight="800">${label}</text></svg>`
   );
+}
 
 const BOX_PRODUCTS = [
   { id: 'pkmn-129', type: 'box', code: 'pkmn-129', name: 'Pokemon Card Game 25th Anniversary Golden Box', image: 'https://images.snkrdunk.com/en/magazine/wp-content/uploads/2021/10/25172024/pokemon-card-game-25th-anniversary-golden-box.jpg', krw: '₩3,038,070', jpy: '¥320,000', usd: '$2,230', recent: '₩3,010,000', change: '+8.4%' },
@@ -28,26 +29,15 @@ const CARD_PRODUCTS = [
 ];
 
 function MarketImage({ item, className = '' }) {
-  return (
-    <img
-      src={item.image || PLACEHOLDER}
-      alt={item.name}
-      className={className}
-      loading="lazy"
-      onError={(event) => {
-        event.currentTarget.onerror = null;
-        event.currentTarget.src = PLACEHOLDER;
-      }}
-    />
-  );
+  return <img src={item.image || placeholderFor(item.type)} alt={item.name} className={className} loading="lazy" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = placeholderFor(item.type); }} />;
 }
 
 function PriceStack({ item, compact = false }) {
   return (
-    <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
-      <div className={compact ? 'text-[22px] font-black tracking-tight text-sky-400' : 'text-[32px] font-black tracking-tight text-sky-300'}>{item.krw}</div>
-      <div className={compact ? 'text-[14px] font-black text-white/70' : 'text-[18px] font-black text-white/76'}>{item.jpy}</div>
-      <div className={compact ? 'text-[13px] font-bold text-white/45' : 'text-[16px] font-bold text-white/52'}>{item.usd}</div>
+    <div className={compact ? 'space-y-1 font-sans tabular-nums' : 'space-y-1.5 font-sans tabular-nums'}>
+      <div className={compact ? 'whitespace-nowrap text-[22px] font-black text-sky-400' : 'whitespace-nowrap text-[32px] font-black text-sky-300'}>{item.krw}</div>
+      <div className={compact ? 'whitespace-nowrap text-[14px] font-black text-white/70' : 'whitespace-nowrap text-[18px] font-black text-white/76'}>{item.jpy}</div>
+      <div className={compact ? 'whitespace-nowrap text-[13px] font-bold text-white/45' : 'whitespace-nowrap text-[16px] font-bold text-white/52'}>{item.usd}</div>
     </div>
   );
 }
@@ -63,13 +53,18 @@ function ProductCard({ item, onSelect }) {
         <div className="text-[12px] font-black tracking-[0.08em] text-white/38">{item.code}</div>
         <div className="mt-2 line-clamp-2 min-h-[52px] text-[17px] font-black leading-[26px] text-white">{item.name}</div>
         <div className="mt-4"><PriceStack item={item} compact /></div>
-        <div className="mt-4 flex items-center justify-between rounded-[16px] border border-white/10 bg-black/22 px-3 py-2">
+        <div className="mt-4 flex items-center justify-between rounded-[16px] border border-white/10 bg-black/22 px-3 py-2 font-sans tabular-nums">
           <span className="text-[11px] font-black text-white/45">최근거래</span>
-          <span className="text-[12px] font-black text-white/80">{item.recent}</span>
+          <span className="whitespace-nowrap text-[12px] font-black text-white/80">{item.recent}</span>
         </div>
       </div>
     </button>
   );
+}
+
+function StatBox({ label, value, tone = 'default' }) {
+  const toneClass = tone === 'gold' ? 'border-yellow-200/20 bg-yellow-300/10 text-yellow-100' : tone === 'sky' ? 'border-sky-200/20 bg-sky-400/10 text-sky-100' : 'border-white/10 bg-black/20 text-white';
+  return <div className={`rounded-[22px] border p-4 ${toneClass}`}><div className="text-xs font-black text-white/42">{label}</div><div className="mt-1 whitespace-nowrap text-2xl font-black tabular-nums">{value}</div></div>;
 }
 
 function DetailModal({ item, onClose }) {
@@ -77,26 +72,24 @@ function DetailModal({ item, onClose }) {
   const chartBars = [32, 44, 39, 58, 51, 72, 64, 76, 69, 84, 78, 91];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/78 px-4 py-8 backdrop-blur-md" onClick={onClose}>
-      <section className="max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-[34px] border border-white/10 bg-[#0b111c] p-5 shadow-[0_35px_140px_rgba(0,0,0,0.65)] lg:p-7" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-black tracking-[0.22em] text-sky-200/50">{item.code}</div>
-            <h2 className="mt-2 text-[30px] font-black leading-tight text-white lg:text-[44px]">{item.name}</h2>
-          </div>
-          <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-black text-white/65 transition hover:bg-white/10">닫기</button>
+      <section className="relative max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-[34px] border border-white/10 bg-[#0b111c] p-5 shadow-[0_35px_140px_rgba(0,0,0,0.65)] lg:p-7" onClick={(event) => event.stopPropagation()}>
+        <button onClick={onClose} aria-label="닫기" className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/8 text-2xl font-black leading-none text-white/70 transition hover:bg-white/14 hover:text-white">×</button>
+        <div className="mb-6 pr-14">
+          <div className="text-xs font-black tracking-[0.22em] text-sky-200/50">{item.code}</div>
+          <h2 className="mt-2 text-[30px] font-black leading-tight text-white lg:text-[42px]">{item.name}</h2>
         </div>
-        <div className="grid gap-7 lg:grid-cols-[420px_1fr]">
-          <div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#202329] p-7">
-            <MarketImage item={item} className="max-h-[360px] w-full object-contain" />
+        <div className="grid gap-7 lg:grid-cols-[390px_1fr]">
+          <div className="flex min-h-[330px] items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#202329] p-7">
+            <MarketImage item={item} className="max-h-[330px] w-full object-contain" />
           </div>
           <div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[22px] border border-sky-200/15 bg-sky-400/10 p-4"><div className="text-xs font-black text-white/42">원화</div><div className="mt-1 text-2xl font-black text-sky-300">{item.krw}</div></div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4"><div className="text-xs font-black text-white/42">엔화</div><div className="mt-1 text-2xl font-black text-white">{item.jpy}</div></div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4"><div className="text-xs font-black text-white/42">달러</div><div className="mt-1 text-2xl font-black text-white/76">{item.usd}</div></div>
+              <div className="rounded-[22px] border border-sky-200/15 bg-sky-400/10 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">원화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-sky-300">{item.krw}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">엔화</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white">{item.jpy}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">달러</div><div className="mt-1 whitespace-nowrap text-2xl font-black text-white/76">{item.usd}</div></div>
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4"><div className="text-xs font-black text-white/42">최근 거래가</div><div className="mt-1 text-xl font-black text-white">{item.recent}</div></div>
+              <div className="rounded-[22px] border border-white/10 bg-black/20 p-4 font-sans tabular-nums"><div className="text-xs font-black text-white/42">최근 거래가</div><div className="mt-1 whitespace-nowrap text-xl font-black text-white">{item.recent}</div></div>
               <div className="rounded-[22px] border border-emerald-200/15 bg-emerald-400/10 p-4"><div className="text-xs font-black text-white/42">변동률</div><div className="mt-1 text-xl font-black text-emerald-200">{item.change}</div></div>
             </div>
             <div className="mt-5 rounded-[22px] border border-white/10 bg-black/20 p-4 text-sm font-semibold leading-6 text-white/58">SNKRDUNK 실시간 연동 전 상세 화면입니다. 다음 단계에서 원본 상품 링크, 실제 최근 거래내역, 시세 차트 데이터를 연결합니다.</div>
@@ -133,11 +126,14 @@ export default function PokemonCardPage() {
       <main className="min-h-screen bg-[#05070c] px-5 py-8 text-white lg:px-10">
         <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-10 h-80 w-80 rounded-full bg-yellow-400/10 blur-3xl" /><div className="absolute right-[-80px] top-24 h-96 w-96 rounded-full bg-red-500/10 blur-3xl" /><div className="absolute bottom-[-120px] left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" /></div>
         <div className="relative mx-auto max-w-[1640px]">
-          <header className="mb-7 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:p-8">
-            <a href="/" className="mb-4 inline-flex rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-black text-white/60 transition hover:bg-white/10">← 팬 아카이브로</a>
-            <div className="text-xs font-black tracking-[0.46em] text-yellow-200/55">POKÉ CARD MARKET</div>
-            <div className="mt-2 text-[38px] font-black tracking-tight text-white lg:text-[56px]">포켓몬카드 시세판</div>
-            <p className="mt-2 text-sm font-bold text-white/45 lg:text-base">상자/싱글카드 · 원화/엔화/달러 · 최근거래 · 시세차트</p>
+          <header className="mb-7 grid gap-6 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:grid-cols-[1fr_430px] lg:items-end lg:p-8">
+            <div>
+              <a href="/" className="mb-4 inline-flex rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-black text-white/60 transition hover:bg-white/10">← 팬 아카이브로</a>
+              <div className="text-xs font-black tracking-[0.46em] text-yellow-200/55">POKÉ CARD MARKET</div>
+              <div className="mt-2 text-[38px] font-black tracking-tight text-white lg:text-[56px]">포켓몬카드 시세판</div>
+              <p className="mt-2 text-sm font-bold text-white/45 lg:text-base">상자/싱글카드 · 원화/엔화/달러 · 최근거래 · 시세차트</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3"><StatBox label="상자 목록" value={BOX_PRODUCTS.length} tone="gold" /><StatBox label="고가 카드" value={CARD_PRODUCTS.length} tone="sky" /><StatBox label="연동" value="준비중" /></div>
           </header>
           <section className="mb-7 rounded-[32px] border border-white/10 bg-[#10131a] p-5 lg:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
