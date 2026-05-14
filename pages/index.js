@@ -14,21 +14,6 @@ export default function Home() {
       }
     };
 
-    const ensurePokemonCardModeLink = () => {
-      const prisonLink = Array.from(document.querySelectorAll('a[href="/jangjisu-prison"]'))
-        .find((link) => link.textContent?.includes('장지수용소 모드'));
-      if (!prisonLink || document.querySelector('a[href="/pokemon-card"]')) return;
-
-      const pokemonLink = prisonLink.cloneNode(true);
-      pokemonLink.href = '/pokemon-card';
-      pokemonLink.classList.add('sou-pokemon-card-mode-link');
-      pokemonLink.removeAttribute('target');
-      pokemonLink.removeAttribute('rel');
-      pokemonLink.onclick = null;
-      pokemonLink.innerHTML = '<span>TCG</span><span>포켓몬카드 모드</span>';
-      prisonLink.insertAdjacentElement('afterend', pokemonLink);
-    };
-
     const placeMainNoticeAfterSchedule = () => {
       const noticeSections = Array.from(document.querySelectorAll('section#notice'));
       const placeholder = noticeSections.find((section) => section.textContent?.includes('SOOP 탭은 점검 중'));
@@ -76,15 +61,12 @@ export default function Home() {
 
     document.addEventListener('click', handlePrisonDirectNavigation, true);
     moveUtilityMenu();
-    ensurePokemonCardModeLink();
     placeMainNoticeAfterSchedule();
     prioritizeYoutubeTabs();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 600);
-    const pokemonTimer = setTimeout(ensurePokemonCardModeLink, 600);
     const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 600);
     const youtubeInterval = setInterval(() => {
-      ensurePokemonCardModeLink();
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
       }
@@ -94,7 +76,6 @@ export default function Home() {
     return () => {
       document.removeEventListener('click', handlePrisonDirectNavigation, true);
       clearTimeout(utilityTimer);
-      clearTimeout(pokemonTimer);
       clearTimeout(noticeTimer);
       clearInterval(youtubeInterval);
       clearTimeout(youtubeTimeout);
@@ -192,12 +173,6 @@ export default function Home() {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
-          }
-
-          .jangjisu-left-nav-mode .sou-pokemon-card-mode-link {
-            border-color: rgba(251,191,36,0.30) !important;
-            background: linear-gradient(135deg, rgba(251,191,36,0.16), rgba(239,68,68,0.10)) !important;
-            color: #fde68a !important;
           }
 
           .jangjisu-left-nav-mode main {
