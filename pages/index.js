@@ -14,6 +14,21 @@ export default function Home() {
       }
     };
 
+    const ensurePokemonCardModeLink = () => {
+      const prisonLink = Array.from(document.querySelectorAll('a[href="/jangjisu-prison"]'))
+        .find((link) => link.textContent?.includes('장지수용소 모드'));
+      if (!prisonLink || document.querySelector('a[href="/pokemon-card"]')) return;
+
+      const pokemonLink = prisonLink.cloneNode(true);
+      pokemonLink.href = '/pokemon-card';
+      pokemonLink.classList.add('sou-pokemon-card-mode-link');
+      pokemonLink.removeAttribute('target');
+      pokemonLink.removeAttribute('rel');
+      pokemonLink.onclick = null;
+      pokemonLink.innerHTML = '<span>🎴</span><span>포켓몬카드 모드</span>';
+      prisonLink.insertAdjacentElement('afterend', pokemonLink);
+    };
+
     const placeMainNoticeAfterSchedule = () => {
       const noticeSections = Array.from(document.querySelectorAll('section#notice'));
       const placeholder = noticeSections.find((section) => section.textContent?.includes('SOOP 탭은 점검 중'));
@@ -51,12 +66,15 @@ export default function Home() {
     };
 
     moveUtilityMenu();
+    ensurePokemonCardModeLink();
     placeMainNoticeAfterSchedule();
     prioritizeYoutubeTabs();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 600);
+    const pokemonTimer = setTimeout(ensurePokemonCardModeLink, 600);
     const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 600);
     const youtubeInterval = setInterval(() => {
+      ensurePokemonCardModeLink();
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
       }
@@ -65,6 +83,7 @@ export default function Home() {
 
     return () => {
       clearTimeout(utilityTimer);
+      clearTimeout(pokemonTimer);
       clearTimeout(noticeTimer);
       clearInterval(youtubeInterval);
       clearTimeout(youtubeTimeout);
@@ -78,8 +97,82 @@ export default function Home() {
         <meta name="description" content="장지수 방송 상태, 공지, VOD, 팬카페를 한 곳에서 보는 팬메이드 허브" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <JangJisuFanSite />
+      <div className="jangjisu-left-nav-mode">
+        <JangJisuFanSite />
+      </div>
       <MainJangJisuNoticeSection />
+      <style jsx global>{`
+        @media (min-width: 1024px) {
+          .jangjisu-left-nav-mode header {
+            position: fixed !important;
+            inset: 0 auto 0 0 !important;
+            z-index: 70 !important;
+            width: 218px !important;
+            border-right: 1px solid rgba(255,255,255,0.10) !important;
+            border-bottom: 0 !important;
+            background: linear-gradient(180deg, rgba(3,7,18,0.96), rgba(5,10,20,0.92)) !important;
+            box-shadow: 24px 0 70px rgba(0,0,0,0.34) !important;
+          }
+
+          .jangjisu-left-nav-mode header > div {
+            height: 100vh !important;
+            max-width: none !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            gap: 22px !important;
+            padding: 22px 16px !important;
+          }
+
+          .jangjisu-left-nav-mode header a[href="#"] {
+            margin: 0 auto !important;
+            height: 72px !important;
+            width: 72px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav,
+          .jangjisu-left-nav-mode header nav > div {
+            width: 100% !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+          }
+
+          .jangjisu-left-nav-mode header nav {
+            flex: 1 !important;
+            gap: 16px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav > div:first-child,
+          .jangjisu-left-nav-mode header nav > div:last-child {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 9px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav > div:last-child {
+            margin-top: auto !important;
+            border-top: 1px solid rgba(255,255,255,0.10) !important;
+            padding-top: 14px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a {
+            width: 100% !important;
+            justify-content: flex-start !important;
+            border-radius: 18px !important;
+            padding: 12px 14px !important;
+          }
+
+          .jangjisu-left-nav-mode .sou-pokemon-card-mode-link {
+            border-color: rgba(251,191,36,0.30) !important;
+            background: linear-gradient(135deg, rgba(251,191,36,0.16), rgba(239,68,68,0.10)) !important;
+            color: #fde68a !important;
+          }
+
+          .jangjisu-left-nav-mode main {
+            margin-left: 218px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
