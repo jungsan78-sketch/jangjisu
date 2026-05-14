@@ -41,6 +41,15 @@ export default function Home() {
       }
     };
 
+    const handlePrisonDirectNavigation = (event) => {
+      const prisonLink = event.target?.closest?.('a[href="/jangjisu-prison"]');
+      if (!prisonLink) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      window.location.href = '/jangjisu-prison';
+    };
+
     let didActivateShorts = false;
     const prioritizeYoutubeTabs = () => {
       const youtubeSection = document.getElementById('youtube');
@@ -65,6 +74,7 @@ export default function Home() {
       return true;
     };
 
+    document.addEventListener('click', handlePrisonDirectNavigation, true);
     moveUtilityMenu();
     ensurePokemonCardModeLink();
     placeMainNoticeAfterSchedule();
@@ -82,6 +92,7 @@ export default function Home() {
     const youtubeTimeout = setTimeout(() => clearInterval(youtubeInterval), 4000);
 
     return () => {
+      document.removeEventListener('click', handlePrisonDirectNavigation, true);
       clearTimeout(utilityTimer);
       clearTimeout(pokemonTimer);
       clearTimeout(noticeTimer);
@@ -162,6 +173,20 @@ export default function Home() {
             padding: 12px 14px !important;
           }
 
+          .jangjisu-left-nav-mode header nav a > span:first-child {
+            display: inline-flex !important;
+            width: 26px !important;
+            min-width: 26px !important;
+            justify-content: center !important;
+            text-align: center !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a > span:nth-child(2) {
+            display: inline-flex !important;
+            align-items: center !important;
+            text-align: left !important;
+          }
+
           .jangjisu-left-nav-mode .sou-pokemon-card-mode-link {
             border-color: rgba(251,191,36,0.30) !important;
             background: linear-gradient(135deg, rgba(251,191,36,0.16), rgba(239,68,68,0.10)) !important;
@@ -169,7 +194,17 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode main {
+            width: calc(100% - 218px) !important;
+            max-width: none !important;
             margin-left: 218px !important;
+            margin-right: 0 !important;
+          }
+
+          .jangjisu-left-nav-mode main > section,
+          .jangjisu-left-nav-mode main > div {
+            max-width: 1280px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
           }
         }
       `}</style>
