@@ -227,7 +227,8 @@ export default function PokemonCardPage() {
           <header className="mb-7 flex flex-col gap-5 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:flex-row lg:items-center lg:justify-between lg:p-8">
             <div>
               <a href="/" className="mb-4 inline-flex rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs font-black text-white/60 transition hover:bg-white/10">← 팬 아카이브로</a>
-              <div className="text-[38px] font-black tracking-tight text-white lg:text-[54px]">🎴 포켓몬카드 모드</div>
+              <div className="text-xs font-black tracking-[0.46em] text-yellow-200/55">POKÉ CARD MARKET</div>
+              <div className="mt-2 text-[38px] font-black tracking-tight text-white lg:text-[54px]">포켓몬카드 모드</div>
               <p className="mt-2 text-sm font-bold text-white/45 lg:text-base">SNKRDUNK 스타일의 포켓몬 박스/싱글카드 시세판 · 원화/엔화/달러 · 최근거래 · 시세차트</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
