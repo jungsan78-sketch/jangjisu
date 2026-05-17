@@ -6,6 +6,52 @@ const SHEET_ID = '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo';
 const SHEET_GID = '1672412190';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
 const CACHE_TTL_SECONDS = 60 * 60;
+const CACHE_PREFIX = 'schedule:youoneul:v3';
+
+const YOUONEUL_SCHEDULE_PATCHES = {
+  '2026-05': {
+    set: {
+      17: '마인짐 섭종\n롤페 읽고 섭종콘 참여',
+      24: '가족식사 휴방',
+      25: '장지수용소\n노래자랑',
+    },
+    clear: [26, 27, 28, 29, 30],
+  },
+};
+
+function getMonthKey(monthInfo) {
+  return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
+}
+
+function patchYouoneulScheduleItems(items, monthInfo) {
+  const patch = YOUONEUL_SCHEDULE_PATCHES[getMonthKey(monthInfo)];
+  if (!patch) return items;
+
+  const setMap = patch.set || {};
+  const clearSet = new Set(patch.clear || []);
+
+  return items.map((item) => {
+    const dayNumber = Number(item.dayNumber);
+
+    if (clearSet.has(dayNumber)) {
+      return {
+        ...item,
+        title: '',
+        empty: true,
+      };
+    }
+
+    if (Object.prototype.hasOwnProperty.call(setMap, dayNumber)) {
+      return {
+        ...item,
+        title: setMap[dayNumber],
+        empty: false,
+      };
+    }
+
+    return item;
+  });
+}
 
 function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
   return {
@@ -30,7 +76,7 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   const gridItems = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
   const listItems = parseScheduleListRows(rows, currentMonth.year, currentMonth.month);
-  const items = pickBestSchedule([gridItems, listItems]);
+  const items = patchYouoneulScheduleItems(pickBestSchedule([gridItems, listItems]), currentMonth);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return { ...emptyCurrentMonthPayload(currentMonth, fetchedUrl), items };
@@ -51,7 +97,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const currentMonth = getKstMonthInfo();
-  const cacheKey = makeMonthlyScheduleCacheKey('schedule:youoneul:v2', new Date());
+  const cacheKey = makeMonthlyScheduleCacheKey(CACHE_PREFIX, new Date());
   const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
