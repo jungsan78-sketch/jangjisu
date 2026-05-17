@@ -5,11 +5,22 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 
 const JANGJISU_MONTHLY_GIDS = {
   '2026-04': '315851366',
   '2026-05': '215076926',
+};
+
+const JANGJISU_SCHEDULE_PATCHES = {
+  '2026-05': {
+    set: {
+      17: '마인짐 섭종\n롤페 읽고 섭종콘 참여',
+      24: '가족식사 휴방',
+      25: '장지수용소\n노래자랑',
+    },
+    clear: [26, 27, 28, 29, 30],
+  },
 };
 
 function getMonthKey(monthInfo) {
@@ -22,6 +33,36 @@ function makeCacheKey(monthInfo) {
 
 function getCurrentMonthGid(monthInfo) {
   return JANGJISU_MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
+}
+
+function patchJangjisuScheduleItems(items, monthInfo) {
+  const patch = JANGJISU_SCHEDULE_PATCHES[getMonthKey(monthInfo)];
+  if (!patch) return items;
+
+  const setMap = patch.set || {};
+  const clearSet = new Set(patch.clear || []);
+
+  return items.map((item) => {
+    const dayNumber = Number(item.dayNumber);
+
+    if (clearSet.has(dayNumber)) {
+      return {
+        ...item,
+        title: '',
+        empty: true,
+      };
+    }
+
+    if (Object.prototype.hasOwnProperty.call(setMap, dayNumber)) {
+      return {
+        ...item,
+        title: setMap[dayNumber],
+        empty: false,
+      };
+    }
+
+    return item;
+  });
 }
 
 function emptyCurrentMonthPayload(currentMonth, message = '현재 월 일정 데이터를 불러오지 못했습니다.') {
@@ -47,7 +88,8 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   try {
     const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, gid);
-    const items = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
+    const parsedItems = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
+    const items = patchJangjisuScheduleItems(parsedItems, currentMonth);
 
     return {
       ok: items.some((item) => !item.empty),
