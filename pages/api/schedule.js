@@ -5,11 +5,12 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 
 const JANGJISU_MONTHLY_GIDS = {
   '2026-04': '315851366',
   '2026-05': '215076926',
+  '2026-06': '1486425307',
 };
 
 function getMonthKey(monthInfo) {
