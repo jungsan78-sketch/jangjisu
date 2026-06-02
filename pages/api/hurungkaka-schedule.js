@@ -8,7 +8,9 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo, makeMonthlyScheduleCacheKey } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1gWZgS8ExyOdZAJGW6MMY49zCMgf4QAA2aQokkY31z4Y';
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+const MONTHLY_GIDS = {
+  '2026-06': '997630242',
+};
 const CACHE_TTL_SECONDS = 60 * 60;
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -18,6 +20,20 @@ const EXTRA_SHEET_NAME_CANDIDATES = (monthInfo) => [
   `${String(monthInfo.year).slice(2)}년 ${monthInfo.month}월`,
   `${monthInfo.month}`,
 ];
+
+function getMonthKey(monthInfo) {
+  return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
+}
+
+function getCurrentMonthGid(monthInfo) {
+  return MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
+}
+
+function getSheetUrl(gid = '') {
+  return gid
+    ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}#gid=${gid}`
+    : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+}
 
 function normalizeText(value) {
   return String(value || '')
@@ -126,11 +142,13 @@ function parseHurungkakaCalendarRows(rows, targetYear, targetMonth) {
 }
 
 function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
+  const gid = getCurrentMonthGid(currentMonth);
   return {
     ok: false,
     source: 'google_sheet_auto',
-    sourceUrl: SHEET_URL,
+    sourceUrl: getSheetUrl(gid),
     monthLabel: currentMonth.monthLabel,
+    gid,
     items: buildEmptyMonthItems(currentMonth.year, currentMonth.month),
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -139,6 +157,12 @@ function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
 }
 
 async function fetchCurrentMonthRows(currentMonth) {
+  const gid = getCurrentMonthGid(currentMonth);
+  if (gid) {
+    const result = await fetchRowsByGid(SHEET_ID, gid);
+    return { ...result, source: 'gid', gid };
+  }
+
   const candidates = [
     ...buildMonthCandidates(new Date(currentMonth.year, currentMonth.month - 1, 1)).map((candidate) => candidate.sheetName),
     ...EXTRA_SHEET_NAME_CANDIDATES(currentMonth),
@@ -184,7 +208,7 @@ async function buildFreshScheduleResponse(currentMonth) {
   return {
     ok: true,
     source: `google_sheet_${source}`,
-    sourceUrl: SHEET_URL,
+    sourceUrl: getSheetUrl(gid),
     monthLabel: currentMonth.monthLabel,
     sheetName,
     gid,
@@ -198,7 +222,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const currentMonth = getKstMonthInfo();
-  const cacheKey = makeMonthlyScheduleCacheKey('schedule:hurungkaka:v2', new Date());
+  const cacheKey = makeMonthlyScheduleCacheKey('schedule:hurungkaka:v3', new Date());
   const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
@@ -230,7 +254,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok: false,
-      sourceUrl: SHEET_URL,
+      sourceUrl: getSheetUrl(getCurrentMonthGid(currentMonth)),
       monthLabel: currentMonth.monthLabel,
       items: buildEmptyMonthItems(currentMonth.year, currentMonth.month),
       message: '후룽카카 일정 데이터를 불러오지 못했습니다.',
