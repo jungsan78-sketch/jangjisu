@@ -3,62 +3,33 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo';
-const SHEET_GID = '1672412190';
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}#gid=${SHEET_GID}`;
-const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_PREFIX = 'schedule:youoneul:v3';
-
-const YOUONEUL_SCHEDULE_PATCHES = {
-  '2026-05': {
-    set: {
-      17: '마인짐 섭종\n롤페 읽고 섭종콘 참여',
-      24: '가족식사 휴방',
-      25: '장지수용소\n노래자랑',
-    },
-    clear: [26, 27, 28, 29, 30],
-  },
+const MONTHLY_GIDS = {
+  '2026-05': '1672412190',
+  '2026-06': '398367854',
 };
+const CACHE_TTL_SECONDS = 60 * 60;
+const CACHE_PREFIX = 'schedule:youoneul:v4';
 
 function getMonthKey(monthInfo) {
   return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
 }
 
-function patchYouoneulScheduleItems(items, monthInfo) {
-  const patch = YOUONEUL_SCHEDULE_PATCHES[getMonthKey(monthInfo)];
-  if (!patch) return items;
+function getCurrentMonthGid(monthInfo) {
+  return MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
+}
 
-  const setMap = patch.set || {};
-  const clearSet = new Set(patch.clear || []);
-
-  return items.map((item) => {
-    const dayNumber = Number(item.dayNumber);
-
-    if (clearSet.has(dayNumber)) {
-      return {
-        ...item,
-        title: '',
-        empty: true,
-      };
-    }
-
-    if (Object.prototype.hasOwnProperty.call(setMap, dayNumber)) {
-      return {
-        ...item,
-        title: setMap[dayNumber],
-        empty: false,
-      };
-    }
-
-    return item;
-  });
+function getSheetUrl(gid = '') {
+  return gid ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}#gid=${gid}` : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 }
 
 function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
+  const gid = getCurrentMonthGid(currentMonth);
   return {
     ok: false,
     source: 'google_sheet_gid',
-    sourceUrl: SHEET_URL,
+    sourceUrl: getSheetUrl(gid),
     monthLabel: currentMonth.monthLabel,
+    gid,
     items: [],
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -67,7 +38,10 @@ function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
 }
 
 async function buildFreshScheduleResponse(currentMonth) {
-  const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, SHEET_GID);
+  const gid = getCurrentMonthGid(currentMonth);
+  if (!gid) return emptyCurrentMonthPayload(currentMonth);
+
+  const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, gid);
   const detected = detectMonthFromRows(rows, new Date());
 
   if (!sameScheduleMonth(detected, currentMonth)) {
@@ -76,7 +50,7 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   const gridItems = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
   const listItems = parseScheduleListRows(rows, currentMonth.year, currentMonth.month);
-  const items = patchYouoneulScheduleItems(pickBestSchedule([gridItems, listItems]), currentMonth);
+  const items = pickBestSchedule([gridItems, listItems]);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return { ...emptyCurrentMonthPayload(currentMonth, fetchedUrl), items };
@@ -85,8 +59,9 @@ async function buildFreshScheduleResponse(currentMonth) {
   return {
     ok: true,
     source: 'google_sheet_gid',
-    sourceUrl: SHEET_URL,
+    sourceUrl: getSheetUrl(gid),
     monthLabel: currentMonth.monthLabel,
+    gid,
     items,
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -111,6 +86,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ...payload, cache: cached?.payload ? 'refresh' : 'miss', cachedAt: new Date(now).toISOString() });
   } catch {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale', cachedAt: new Date(cached.cachedAt).toISOString() });
-    return res.status(200).json({ ok: false, sourceUrl: SHEET_URL, monthLabel: currentMonth.monthLabel, items: [], message: '유오늘 일정 데이터를 불러오지 못했습니다.', fetchedAt: new Date().toISOString(), cache: 'unavailable' });
+    return res.status(200).json({ ok: false, sourceUrl: getSheetUrl(getCurrentMonthGid(currentMonth)), monthLabel: currentMonth.monthLabel, items: [], message: '유오늘 일정 데이터를 불러오지 못했습니다.', fetchedAt: new Date().toISOString(), cache: 'unavailable' });
   }
 }
