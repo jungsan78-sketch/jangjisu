@@ -8,7 +8,7 @@ const MONTHLY_GIDS = {
   '2026-06': '64375554',
 };
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_PREFIX = 'schedule:ddikku:v4';
+const CACHE_PREFIX = 'schedule:ddikku:v5';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
   '띠어트 (영공)',
@@ -91,7 +91,7 @@ function buildEmptyMonthItems(targetYear, targetMonth) {
 
 function isDateRow(row) {
   const numericCount = row.filter((cell) => /^\d{1,2}$/.test(normalizeText(cell))).length;
-  return numericCount >= 4;
+  return numericCount >= 2;
 }
 
 function extractDayColumns(row, daysInMonth) {
