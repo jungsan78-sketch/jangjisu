@@ -8,7 +8,7 @@ const MONTHLY_GIDS = {
   '2026-06': '1058789800',
 };
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_PREFIX = 'schedule:rinring:v3';
+const CACHE_PREFIX = 'schedule:rinring:v4';
 
 function getMonthKey(monthInfo) {
   return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
@@ -20,6 +20,25 @@ function getCurrentMonthGid(monthInfo) {
 
 function getSheetUrl(gid = '') {
   return gid ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}#gid=${gid}` : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+}
+
+function sanitizeRinringScheduleItems(items) {
+  return items.map((item) => {
+    const title = String(item.title || '');
+    if (!title) return item;
+
+    const cleanedParts = title
+      .split(/\s*\/\s*/g)
+      .map((part) => part.trim())
+      .filter((part) => part && !/^\d{1,2}$/.test(part));
+    const cleanedTitle = Array.from(new Set(cleanedParts)).join(' / ');
+
+    return {
+      ...item,
+      title: cleanedTitle,
+      empty: cleanedTitle.length === 0,
+    };
+  });
 }
 
 function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
@@ -50,7 +69,7 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   const gridItems = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
   const listItems = parseScheduleListRows(rows, currentMonth.year, currentMonth.month);
-  const items = pickBestSchedule([gridItems, listItems]);
+  const items = sanitizeRinringScheduleItems(pickBestSchedule([gridItems, listItems]));
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
     return { ...emptyCurrentMonthPayload(currentMonth, fetchedUrl), items };
