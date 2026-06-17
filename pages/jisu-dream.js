@@ -101,62 +101,60 @@ export default function JisuDreamPage() {
         </div>
 
         <div className="relative mx-auto max-w-[1380px]">
-          <section className="overflow-hidden rounded-[36px] border border-cyan-200/14 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),transparent_38%),linear-gradient(135deg,rgba(10,17,31,0.98),rgba(7,10,19,0.98))] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.38)] sm:p-6 lg:p-8">
-            <div className="relative mx-auto max-w-[1040px] overflow-hidden rounded-[30px] border border-white/12 bg-[#06101d] p-2 shadow-[0_20px_70px_rgba(0,0,0,0.42)] sm:p-3">
-              <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#07111f]">
+          <section className="overflow-hidden rounded-[36px] border border-cyan-200/[0.08] bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),transparent_38%),linear-gradient(135deg,rgba(10,17,31,0.98),rgba(7,10,19,0.98))] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.025)] sm:p-6 lg:p-8">
+            <div className="relative mx-auto max-w-[1040px] overflow-hidden rounded-[30px] border border-white/[0.055] bg-[#06101d] p-2 shadow-[0_20px_70px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.025)] sm:p-3">
+              <div className="relative overflow-hidden rounded-[24px] border border-white/[0.045] bg-[#07111f]">
                 <img src="/jisu-dream-hero.png" alt="지수의꿈" className="block h-auto w-full object-contain" />
               </div>
             </div>
 
             <div className="mt-7">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]" />
-                  <h2 className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">모집기간 및 일정</h2>
-                </div>
-                {serverCountdown ? (
-                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-cyan-200/16 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(59,130,246,0.10))] px-4 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_26px_rgba(34,211,238,0.10)]">
-                    <span className="text-xs font-black tracking-[0.12em] text-cyan-100/60">서버오픈</span>
-                    <span className="text-xl font-black tabular-nums tracking-[-0.04em] text-cyan-100">{serverCountdown}</span>
-                  </div>
-                ) : null}
+              <div className="mb-4 flex items-center gap-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]" />
+                <h2 className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">모집기간 및 일정</h2>
               </div>
 
+              {serverCountdown ? (
+                <div className="mb-5 flex justify-center">
+                  <div className="inline-flex items-center gap-3 rounded-full border border-cyan-200/[0.10] bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(59,130,246,0.10))] px-5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_0_28px_rgba(34,211,238,0.10)]">
+                    <span className="text-sm font-black tracking-[0.08em] text-cyan-100/68">서버오픈</span>
+                    <span className="text-2xl font-black tabular-nums tracking-[-0.04em] text-cyan-100">{serverCountdown}</span>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="grid gap-3 lg:grid-cols-3">
-                <div className="rounded-[22px] border border-cyan-200/12 bg-[linear-gradient(145deg,rgba(34,211,238,0.10),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.20)]">
-                  <div className="text-[11px] font-black tracking-[0.16em] text-cyan-100/48">SERVER PERIOD</div>
-                  <div className="mt-2 text-base font-black text-white">서버기간</div>
+                <div className="rounded-[22px] border border-cyan-200/[0.08] bg-[linear-gradient(145deg,rgba(34,211,238,0.10),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025),0_16px_36px_rgba(0,0,0,0.20)]">
+                  <div className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">서버기간</div>
                   <div className="mt-3 text-xl font-black tracking-[-0.03em] text-cyan-100">7월 4일 ~ 7월 11일</div>
                   <div className="mt-2 inline-flex rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-100/80">8일간</div>
                 </div>
 
-                <div className="rounded-[22px] border border-amber-200/12 bg-[linear-gradient(145deg,rgba(245,158,11,0.10),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.20)]">
-                  <div className="text-[11px] font-black tracking-[0.16em] text-amber-100/48">APPLICATION CLOSE</div>
-                  <div className="mt-2 text-base font-black text-white">모집 마감 일정</div>
+                <div className="rounded-[22px] border border-amber-200/[0.08] bg-[linear-gradient(145deg,rgba(245,158,11,0.10),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025),0_16px_36px_rgba(0,0,0,0.20)]">
+                  <div className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">모집 마감 일정</div>
                   <div className="mt-3 text-xl font-black tracking-[-0.03em] text-amber-100">6월 30일 23:59</div>
                   <div className="mt-2 inline-flex rounded-full bg-amber-300/10 px-3 py-1 text-xs font-black text-amber-100/80">마감</div>
                 </div>
 
-                <div className="rounded-[22px] border border-violet-200/12 bg-[linear-gradient(145deg,rgba(139,92,246,0.11),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(0,0,0,0.20)]">
-                  <div className="text-[11px] font-black tracking-[0.16em] text-violet-100/48">RESULT ANNOUNCEMENT</div>
-                  <div className="mt-2 text-base font-black text-white">인원발표</div>
+                <div className="rounded-[22px] border border-violet-200/[0.08] bg-[linear-gradient(145deg,rgba(139,92,246,0.11),rgba(15,23,42,0.52))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.025),0_16px_36px_rgba(0,0,0,0.20)]">
+                  <div className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">인원발표</div>
                   <div className="mt-3 text-xl font-black tracking-[-0.03em] text-violet-100">7월 1일</div>
                   <div className="mt-2 inline-flex rounded-full bg-violet-300/10 px-3 py-1 text-xs font-black text-violet-100/80">장지수 방송국</div>
                 </div>
               </div>
 
               <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/15 bg-amber-300/8 px-3 py-2 text-xs font-black text-amber-100/80">현재 합격 커트라인은 70위입니다.</div>
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/[0.09] bg-amber-300/8 px-3 py-2 text-xs font-black text-amber-100/80">현재 합격 커트라인은 70위입니다.</div>
                 <div className="flex flex-wrap gap-3">
-                  <a href={POST_URL} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white/72">SOOP 신청 게시글</a>
-                  <button onClick={() => loadRanking(true)} disabled={refreshing} className="rounded-full border border-cyan-200/20 bg-cyan-300/12 px-5 py-3 text-sm font-black text-cyan-100 disabled:opacity-50">{refreshing ? '순위 갱신중' : '지금 갱신'}</button>
+                  <a href={POST_URL} target="_blank" rel="noreferrer" className="rounded-full border border-white/[0.055] bg-white/[0.035] px-4 py-3 text-sm font-black text-white/72">SOOP 신청 게시글</a>
+                  <button onClick={() => loadRanking(true)} disabled={refreshing} className="rounded-full border border-cyan-200/[0.10] bg-cyan-300/12 px-5 py-3 text-sm font-black text-cyan-100 disabled:opacity-50">{refreshing ? '순위 갱신중' : '지금 갱신'}</button>
                 </div>
               </div>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {[['신청자', state.participantCount], ['집계 댓글', state.commentCount], ['누적 UP', state.totalUpCount]].map(([label, value]) => <div key={label} className="rounded-[22px] border border-white/10 bg-black/20 p-5"><div className="text-[11px] font-black text-white/38">{label}</div><div className="mt-2 text-3xl font-black tabular-nums text-white">{formatNumber(value)}</div></div>)}
-              <div className="rounded-[22px] border border-white/10 bg-black/20 p-5"><div className="text-[11px] font-black text-white/38">최근 갱신</div><div className="mt-2 text-xl font-black text-white">{formatFetchedAt(state.fetchedAt)}</div></div>
+              {[['신청자', state.participantCount], ['집계 댓글', state.commentCount], ['누적 UP', state.totalUpCount]].map(([label, value]) => <div key={label} className="rounded-[22px] border border-white/[0.05] bg-black/20 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"><div className="text-[11px] font-black text-white/38">{label}</div><div className="mt-2 text-3xl font-black tabular-nums text-white">{formatNumber(value)}</div></div>)}
+              <div className="rounded-[22px] border border-white/[0.05] bg-black/20 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"><div className="text-[11px] font-black text-white/38">최근 갱신</div><div className="mt-2 text-xl font-black text-white">{formatFetchedAt(state.fetchedAt)}</div></div>
             </div>
           </section>
 
