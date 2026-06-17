@@ -1,6 +1,6 @@
 import { fetchSoopPostUpRanking } from '../../lib/soop/postCommentRanking';
 
-const TEST_POST_URL = 'https://www.sooplive.com/station/chaenna02/post/196058089';
+const TEST_POST_URL = 'https://www.sooplive.com/station/iamquaddurup/post/198923295';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=120');
