@@ -22,14 +22,9 @@ function DreamNavItem({ href, label, icon, tone = 'blue' }) {
 function DreamSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-[218px] border-r border-white/10 bg-[linear-gradient(180deg,rgba(3,7,18,0.97),rgba(5,10,20,0.94))] px-4 py-5 shadow-[24px_0_70px_rgba(0,0,0,0.34)] backdrop-blur-xl lg:block">
-      <a href="/" className="mx-auto mb-6 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.05] hover:border-white/20">
-        <img src="/site-icon.png" alt="SOU" className="h-full w-full object-cover" />
+      <a href="/" className="mx-auto mb-8 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.05] hover:border-white/20">
+        <img src="/site-icon.png" alt="지수의꿈" className="h-full w-full object-cover" />
       </a>
-
-      <div className="mb-4 px-2">
-        <div className="text-[10px] font-black tracking-[0.28em] text-cyan-100/40">JISU DREAM</div>
-        <div className="mt-1 text-lg font-black text-white">지수의꿈 서버</div>
-      </div>
 
       <nav className="space-y-2.5">
         {NAV_ITEMS.map((item) => <DreamNavItem key={item.href} {...item} />)}
@@ -48,8 +43,7 @@ function DreamMobileNav() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/90 px-4 py-3 backdrop-blur-xl lg:hidden">
       <div className="flex items-center justify-between gap-3">
         <a href="/" className="flex items-center gap-3">
-          <img src="/site-icon.png" alt="SOU" className="h-11 w-11 rounded-full border border-white/10" />
-          <div><div className="text-[10px] font-black tracking-[0.24em] text-cyan-100/40">JISU DREAM</div><div className="text-sm font-black text-white">지수의꿈 서버</div></div>
+          <img src="/site-icon.png" alt="지수의꿈" className="h-11 w-11 rounded-full border border-white/10" />
         </a>
         <a href="/" className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white/70">홈</a>
       </div>
