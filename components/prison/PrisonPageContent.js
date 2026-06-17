@@ -50,7 +50,7 @@ function SidebarLogo({ compact = false }) {
   );
 }
 
-function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
+function SidebarNavItem({ href, label, icon, tone = 'blue', external = false, compact = false }) {
   const toneClass = tone === 'green'
     ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
     : tone === 'red'
@@ -60,9 +60,9 @@ function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) 
         : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] px-4 py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/30 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]">{icon}</span>
-      <span>{label}</span>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center ${compact ? 'justify-center gap-2 px-2.5' : 'gap-3 px-4'} rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
+      <span className={`flex ${compact ? 'h-7 w-7 text-sm' : 'h-8 w-8 text-base'} shrink-0 items-center justify-center rounded-xl bg-black/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]`}>{icon}</span>
+      <span className={compact ? 'whitespace-nowrap text-[12px]' : ''}>{label}</span>
     </a>
   );
 }
@@ -198,7 +198,10 @@ function PrisonSidebar() {
       </a>
 
       <nav className="space-y-2.5">
-        <SidebarNavItem href="#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <SidebarNavItem href="#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" compact />
+          <SidebarNavItem href="/" label="SOU 아카이브" icon="S" compact />
+        </div>
         <SidebarNavItem href="#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
@@ -222,6 +225,7 @@ function MobilePrisonNav() {
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <a href="#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
+        <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">SOU 아카이브</a>
         <a href="#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
