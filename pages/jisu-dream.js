@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DreamServerLayout from '../components/dream/DreamServerLayout';
 
 const POST_URL = 'https://www.sooplive.com/station/chaenna02/post/196058089';
@@ -14,6 +14,10 @@ function formatFetchedAt(value) {
   const date = new Date(value || '');
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function getParticipantKey(item) {
+  return String(item?.userId || item?.nickname || '').trim().toLowerCase();
 }
 
 function RankBadge({ rank, eliminated = false }) {
@@ -39,12 +43,40 @@ function CutoffDivider() {
   );
 }
 
+function ChangeBadge({ item }) {
+  const hasRankChange = Number(item.rankDelta || 0) !== 0;
+  const hasUpChange = Number(item.upDelta || 0) !== 0;
+  if (!hasRankChange && !hasUpChange) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      {hasRankChange ? (
+        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${item.rankDelta > 0 ? 'border-emerald-200/20 bg-emerald-300/10 text-emerald-100' : 'border-red-200/18 bg-red-400/10 text-red-100'}`}>
+          {item.rankDelta > 0 ? `▲ ${item.rankDelta}위 상승` : `▼ ${Math.abs(item.rankDelta)}위 하락`}
+        </span>
+      ) : null}
+      {hasUpChange ? (
+        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${item.upDelta > 0 ? 'border-cyan-200/20 bg-cyan-300/10 text-cyan-100' : 'border-red-200/18 bg-red-400/10 text-red-100'}`}>
+          {item.upDelta > 0 ? `+${formatNumber(item.upDelta)} UP` : `${formatNumber(item.upDelta)} UP`}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function RankingRow({ item }) {
   const eliminated = item.rank > CUTOFF_RANK;
   const isCutoff = item.rank === CUTOFF_RANK;
+  const motionClass = item.rankDelta > 0
+    ? 'animate-[rankRise_700ms_cubic-bezier(0.22,1,0.36,1)]'
+    : item.rankDelta < 0
+      ? 'animate-[rankDrop_700ms_cubic-bezier(0.22,1,0.36,1)]'
+      : item.upDelta > 0
+        ? 'animate-[upPulse_850ms_ease-out]'
+        : '';
 
   return (
-    <div className={`relative grid gap-4 overflow-hidden rounded-[24px] border p-4 shadow-[0_18px_50px_rgba(0,0,0,0.20)] transition sm:grid-cols-[52px_1fr_auto] sm:items-center sm:p-5 ${
+    <div className={`relative grid gap-4 overflow-hidden rounded-[24px] border p-4 shadow-[0_18px_50px_rgba(0,0,0,0.20)] transition sm:grid-cols-[52px_1fr_auto] sm:items-center sm:p-5 ${motionClass} ${
       eliminated
         ? 'border-red-200/10 bg-[linear-gradient(180deg,rgba(239,68,68,0.055),rgba(255,255,255,0.012))] opacity-65 hover:opacity-90'
         : isCutoff
@@ -63,6 +95,7 @@ function RankingRow({ item }) {
               {isCutoff ? <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-2 py-0.5 text-[10px] font-black text-amber-100">현재 커트라인</span> : null}
               {eliminated ? <span className="rounded-full border border-red-200/15 bg-red-400/10 px-2 py-0.5 text-[10px] font-black text-red-100/65">탈락 예정</span> : null}
             </div>
+            <ChangeBadge item={item} />
           </div>
         </div>
         {item.latestComment ? <div className={`mt-3 line-clamp-2 text-sm font-semibold leading-6 ${eliminated ? 'text-white/28' : 'text-white/50'}`}>{item.latestComment}</div> : null}
@@ -70,6 +103,7 @@ function RankingRow({ item }) {
       <div className={`rounded-[20px] border px-5 py-3 text-right ${eliminated ? 'border-red-200/10 bg-red-400/8' : isCutoff ? 'border-amber-200/20 bg-amber-300/10' : 'border-cyan-200/15 bg-cyan-300/10'}`}>
         <div className={`text-[10px] font-black tracking-[0.18em] ${eliminated ? 'text-red-100/35' : isCutoff ? 'text-amber-100/45' : 'text-cyan-100/45'}`}>TOTAL UP</div>
         <div className={`mt-1 whitespace-nowrap text-2xl font-black tabular-nums ${eliminated ? 'text-red-100/50' : isCutoff ? 'text-amber-100' : 'text-cyan-200'}`}>{formatNumber(item.upCount)}</div>
+        {item.upDelta > 0 ? <div className="mt-1 text-[11px] font-black text-cyan-100/70">+{formatNumber(item.upDelta)} since last</div> : null}
       </div>
     </div>
   );
@@ -78,6 +112,7 @@ function RankingRow({ item }) {
 export default function JisuDreamPage() {
   const [state, setState] = useState({ loading: true, error: '', ranking: [], participantCount: 0, commentCount: 0, totalUpCount: 0, fetchedAt: '' });
   const [refreshing, setRefreshing] = useState(false);
+  const previousRankingRef = useRef([]);
 
   const loadRanking = async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -85,10 +120,23 @@ export default function JisuDreamPage() {
       const response = await fetch(`/api/jisu-dream-up-ranking?t=${Date.now()}`);
       const payload = await response.json();
       if (!response.ok || !payload.ok) throw new Error(payload.error || 'UP 순위를 불러오지 못했습니다.');
+
+      const rawRanking = Array.isArray(payload.ranking) ? payload.ranking : [];
+      const previousMap = new Map(previousRankingRef.current.map((item) => [getParticipantKey(item), item]));
+      const changeId = Date.now();
+      const ranking = rawRanking.map((item) => {
+        const previous = previousMap.get(getParticipantKey(item));
+        if (!previous) return { ...item, rankDelta: 0, upDelta: 0, changeId: 0 };
+        const rankDelta = Number(previous.rank || 0) - Number(item.rank || 0);
+        const upDelta = Number(item.upCount || 0) - Number(previous.upCount || 0);
+        return { ...item, rankDelta, upDelta, changeId: rankDelta || upDelta ? changeId : 0 };
+      });
+
+      previousRankingRef.current = rawRanking;
       setState({
         loading: false,
         error: '',
-        ranking: Array.isArray(payload.ranking) ? payload.ranking : [],
+        ranking,
         participantCount: Number(payload.participantCount || 0),
         commentCount: Number(payload.commentCount || 0),
         totalUpCount: Number(payload.totalUpCount || 0),
@@ -114,15 +162,32 @@ export default function JisuDreamPage() {
         <meta name="description" content="지수의꿈 서버 실시간 UP 순위" />
       </Head>
       <DreamServerLayout>
+        <style jsx global>{`
+          @keyframes rankRise {
+            0% { opacity: 0.45; transform: translateY(34px) scale(0.985); box-shadow: 0 0 0 rgba(16,185,129,0); }
+            55% { opacity: 1; transform: translateY(-4px) scale(1.006); box-shadow: 0 0 34px rgba(16,185,129,0.16); }
+            100% { opacity: 1; transform: translateY(0) scale(1); box-shadow: inherit; }
+          }
+          @keyframes rankDrop {
+            0% { opacity: 0.45; transform: translateY(-34px) scale(0.985); box-shadow: 0 0 0 rgba(248,113,113,0); }
+            55% { opacity: 1; transform: translateY(4px) scale(1.006); box-shadow: 0 0 34px rgba(248,113,113,0.14); }
+            100% { opacity: 1; transform: translateY(0) scale(1); box-shadow: inherit; }
+          }
+          @keyframes upPulse {
+            0% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+            40% { box-shadow: 0 0 0 1px rgba(103,232,249,0.22), 0 0 40px rgba(34,211,238,0.17); }
+            100% { box-shadow: inherit; }
+          }
+        `}</style>
         <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-32 left-[18%] h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" /><div className="absolute right-[-100px] top-16 h-[28rem] w-[28rem] rounded-full bg-violet-500/10 blur-3xl" /><div className="absolute bottom-[-160px] left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" /></div>
         <div className="relative mx-auto max-w-[1380px]">
           <section className="overflow-hidden rounded-[36px] border border-cyan-200/14 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),transparent_38%),linear-gradient(135deg,rgba(10,17,31,0.98),rgba(7,10,19,0.98))] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.38)] sm:p-6 lg:p-8">
-            <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-[#06101d] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_70px_rgba(0,0,0,0.42)] sm:p-3">
+            <div className="relative mx-auto max-w-[1040px] overflow-hidden rounded-[30px] border border-white/12 bg-[#06101d] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_70px_rgba(0,0,0,0.42)] sm:p-3">
               <div className="pointer-events-none absolute inset-0 rounded-[30px] ring-1 ring-inset ring-cyan-200/10" />
               <div className="pointer-events-none absolute inset-x-[12%] -top-8 h-24 rounded-full bg-cyan-300/18 blur-3xl" />
-              <div className="relative aspect-[16/7] overflow-hidden rounded-[24px] border border-white/10 bg-[#07111f]">
-                <img src="/jisu-dream-hero.png" alt="지수의꿈" className="h-full w-full object-cover object-center" />
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(3,7,18,0.24))]" />
+              <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#07111f]">
+                <img src="/jisu-dream-hero.png" alt="지수의꿈" className="block h-auto w-full object-contain" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_72%,rgba(3,7,18,0.10))]" />
               </div>
               <div className="pointer-events-none absolute inset-0 rounded-[30px] border border-white/5 shadow-[inset_0_0_34px_rgba(103,232,249,0.07)]" />
             </div>
@@ -152,7 +217,7 @@ export default function JisuDreamPage() {
             {state.loading ? <div className="mt-6 rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">신청자 순위와 UP 데이터를 불러오는 중입니다.</div> : null}
             {!state.loading && state.error ? <div className="mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8"><div className="text-base font-black text-red-100">순위 데이터를 불러오지 못했습니다</div><div className="mt-2 text-sm font-semibold leading-6 text-red-100/65">{state.error}</div><div className="mt-3 text-xs font-bold text-white/35">잠시 후 자동으로 다시 갱신됩니다.</div></div> : null}
 
-            {!state.loading && !state.error ? <div className="mt-6 space-y-3">{state.ranking.map((item) => <div key={`${item.userId || item.nickname}-${item.rank}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<RankingRow item={item} /></div>)}{state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">아직 집계된 신청자가 없습니다.</div> : null}</div> : null}
+            {!state.loading && !state.error ? <div className="mt-6 space-y-3">{state.ranking.map((item) => <div key={`${getParticipantKey(item)}-${item.changeId || 0}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<RankingRow item={item} /></div>)}{state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">아직 집계된 신청자가 없습니다.</div> : null}</div> : null}
           </section>
         </div>
       </DreamServerLayout>
