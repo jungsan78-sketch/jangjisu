@@ -1,5 +1,5 @@
 const NAV_ITEMS = [
-  { href: '/jisu-dream#up-ranking', label: '지수의꿈 UP순', icon: 'UP', tone: 'dream' },
+  { href: '/jisu-dream#up-ranking', label: '신청자 UP순위', icon: 'UP', tone: 'dream' },
 ];
 
 function DreamNavItem({ href, label, icon, tone = 'blue' }) {
