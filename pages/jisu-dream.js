@@ -52,12 +52,12 @@ function ChangeBadge({ item }) {
     <div className="mt-2 flex flex-wrap items-center gap-2">
       {hasRankChange ? (
         <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${item.rankDelta > 0 ? 'border-emerald-200/20 bg-emerald-300/10 text-emerald-100' : 'border-red-200/18 bg-red-400/10 text-red-100'}`}>
-          {item.rankDelta > 0 ? `▲ ${item.rankDelta}위 상승` : `▼ ${Math.abs(item.rankDelta)}위 하락`}
+          {item.rankDelta > 0 ? `+${item.rankDelta} UP` : `-${Math.abs(item.rankDelta)} DOWN`}
         </span>
       ) : null}
       {hasUpChange ? (
         <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${item.upDelta > 0 ? 'border-cyan-200/20 bg-cyan-300/10 text-cyan-100' : 'border-red-200/18 bg-red-400/10 text-red-100'}`}>
-          {item.upDelta > 0 ? `+${formatNumber(item.upDelta)} UP` : `${formatNumber(item.upDelta)} UP`}
+          {item.upDelta > 0 ? `+${formatNumber(item.upDelta)} UP` : `${formatNumber(item.upDelta)} DOWN`}
         </span>
       ) : null}
     </div>
@@ -103,7 +103,7 @@ function RankingRow({ item }) {
       <div className={`rounded-[20px] border px-5 py-3 text-right ${eliminated ? 'border-red-200/10 bg-red-400/8' : isCutoff ? 'border-amber-200/20 bg-amber-300/10' : 'border-cyan-200/15 bg-cyan-300/10'}`}>
         <div className={`text-[10px] font-black tracking-[0.18em] ${eliminated ? 'text-red-100/35' : isCutoff ? 'text-amber-100/45' : 'text-cyan-100/45'}`}>TOTAL UP</div>
         <div className={`mt-1 whitespace-nowrap text-2xl font-black tabular-nums ${eliminated ? 'text-red-100/50' : isCutoff ? 'text-amber-100' : 'text-cyan-200'}`}>{formatNumber(item.upCount)}</div>
-        {item.upDelta > 0 ? <div className="mt-1 text-[11px] font-black text-cyan-100/70">+{formatNumber(item.upDelta)} since last</div> : null}
+        {item.upDelta > 0 ? <div className="mt-1 text-[11px] font-black text-cyan-100/70">+{formatNumber(item.upDelta)} UP</div> : item.upDelta < 0 ? <div className="mt-1 text-[11px] font-black text-red-100/70">-{formatNumber(Math.abs(item.upDelta))} DOWN</div> : null}
       </div>
     </div>
   );
