@@ -22,8 +22,8 @@ function DreamNavItem({ href, label, icon, tone = 'blue' }) {
 function DreamSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-[218px] border-r border-white/10 bg-[linear-gradient(180deg,rgba(3,7,18,0.97),rgba(5,10,20,0.94))] px-4 py-5 shadow-[24px_0_70px_rgba(0,0,0,0.34)] backdrop-blur-xl lg:block">
-      <a href="/" className="mx-auto mb-8 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border border-white/10 shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.05] hover:border-white/20">
-        <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-full w-full object-cover" />
+      <a href="/" className="mx-auto mb-8 flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-full border border-white/10 bg-black/10 shadow-[0_0_34px_rgba(59,130,246,0.16)] transition hover:scale-[1.04] hover:border-white/20">
+        <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-full w-full scale-[1.42] object-contain" />
       </a>
 
       <nav className="space-y-2.5">
@@ -42,8 +42,8 @@ function DreamMobileNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/90 px-4 py-3 backdrop-blur-xl lg:hidden">
       <div className="flex items-center justify-between gap-3">
-        <a href="/" className="flex items-center gap-3">
-          <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-11 w-11 rounded-full border border-white/10" />
+        <a href="/" className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-black/10">
+          <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-full w-full scale-[1.34] object-contain" />
         </a>
         <a href="/" className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white/70">홈</a>
       </div>
