@@ -105,7 +105,7 @@ function RankingRow({ item, cutoffUpCount = 0 }) {
         {item.latestComment ? <div className={`mt-3 line-clamp-2 text-sm font-semibold leading-6 ${eliminated ? 'text-white/28' : 'text-white/50'}`}>{item.latestComment}</div> : null}
       </div>
       <div className={`rounded-[20px] border px-5 py-3 text-right ${eliminated ? 'border-red-200/10 bg-red-400/8' : isCutoff ? 'border-amber-200/20 bg-amber-300/10' : 'border-cyan-200/15 bg-cyan-300/10'}`}>
-        <div className={`text-[10px] font-black tracking-[0.18em] ${eliminated ? 'text-red-100/35' : isCutoff ? 'text-amber-100/45' : 'text-cyan-100/45'}`}>TOTAL UP</div>
+        <div className={`text-[10px] font-black tracking-[0.18em] ${eliminated ? 'text-red-100/35' : isCutoff ? 'text-amber-100/45' : 'text-cyan-100/45'}`}>UP</div>
         <div className={`mt-1 whitespace-nowrap text-2xl font-black tabular-nums ${eliminated ? 'text-red-100/50' : isCutoff ? 'text-amber-100' : 'text-cyan-200'}`}>{formatNumber(item.upCount)}</div>
         {item.upDelta > 0 ? <div className="mt-1 text-[11px] font-black text-cyan-100/70">+{formatNumber(item.upDelta)} UP</div> : item.upDelta < 0 ? <div className="mt-1 text-[11px] font-black text-red-100/70">-{formatNumber(Math.abs(item.upDelta))} DOWN</div> : null}
       </div>
