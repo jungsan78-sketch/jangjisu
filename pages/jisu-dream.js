@@ -116,13 +116,21 @@ export default function JisuDreamPage() {
       <DreamServerLayout>
         <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-32 left-[18%] h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" /><div className="absolute right-[-100px] top-16 h-[28rem] w-[28rem] rounded-full bg-violet-500/10 blur-3xl" /><div className="absolute bottom-[-160px] left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" /></div>
         <div className="relative mx-auto max-w-[1380px]">
-          <section className="overflow-hidden rounded-[34px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.13),transparent_32%),linear-gradient(135deg,rgba(10,17,31,0.98),rgba(7,10,19,0.98))] p-6 shadow-[0_28px_100px_rgba(0,0,0,0.34)] lg:p-9">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <section className="overflow-hidden rounded-[36px] border border-cyan-200/14 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),transparent_38%),linear-gradient(135deg,rgba(10,17,31,0.98),rgba(7,10,19,0.98))] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.38)] sm:p-6 lg:p-8">
+            <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-[#06101d] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_70px_rgba(0,0,0,0.42)] sm:p-3">
+              <div className="pointer-events-none absolute inset-0 rounded-[30px] ring-1 ring-inset ring-cyan-200/10" />
+              <div className="pointer-events-none absolute inset-x-[12%] -top-8 h-24 rounded-full bg-cyan-300/18 blur-3xl" />
+              <div className="relative aspect-[16/7] overflow-hidden rounded-[24px] border border-white/10 bg-[#07111f]">
+                <img src="/jisu-dream-hero.png" alt="지수의꿈" className="h-full w-full object-cover object-center" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(3,7,18,0.24))]" />
+              </div>
+              <div className="pointer-events-none absolute inset-0 rounded-[30px] border border-white/5 shadow-[inset_0_0_34px_rgba(103,232,249,0.07)]" />
+            </div>
+
+            <div className="mt-6 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/15 bg-cyan-300/10 px-4 py-2 text-xs font-black tracking-[0.08em] text-cyan-100"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-black/25 text-[8px]">UP</span> LIVE RANKING</div>
-                <h1 className="mt-5 text-[38px] font-black tracking-[-0.035em] text-white sm:text-[52px]">지수의꿈 UP순</h1>
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-white/58 sm:text-base">지수의꿈 서버 신청자들의 UP을 30초 간격으로 갱신합니다.</p>
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200/15 bg-amber-300/8 px-3 py-2 text-xs font-black text-amber-100/80"><span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.8)]" />현재 합격 커트라인은 70위입니다.</div>
+                <p className="max-w-2xl text-sm font-semibold leading-7 text-white/58 sm:text-base">지수의꿈 서버 신청자들의 UP을 30초 간격으로 갱신합니다.</p>
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/15 bg-amber-300/8 px-3 py-2 text-xs font-black text-amber-100/80"><span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.8)]" />현재 합격 커트라인은 70위입니다.</div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <a href={POST_URL} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white/72 transition hover:bg-white/10 hover:text-white">SOOP 신청 게시글</a>
@@ -139,7 +147,7 @@ export default function JisuDreamPage() {
           </section>
 
           <section id="up-ranking" className="mt-7 rounded-[34px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_26px_90px_rgba(0,0,0,0.26)] sm:p-7">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><div className="text-xs font-black tracking-[0.26em] text-cyan-100/35">REALTIME BOARD</div><h2 className="mt-2 text-3xl font-black tracking-[-0.025em] text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/42">UP이 높은 순서대로 정렬되며, 70위까지 합격권으로 표시됩니다.</p></div><div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/40">30초 자동 갱신</div></div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-3xl font-black tracking-[-0.025em] text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/42">UP이 높은 순서대로 정렬되며, 70위까지 합격권으로 표시됩니다.</p></div><div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/40">30초 자동 갱신</div></div>
 
             {state.loading ? <div className="mt-6 rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">신청자 순위와 UP 데이터를 불러오는 중입니다.</div> : null}
             {!state.loading && state.error ? <div className="mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8"><div className="text-base font-black text-red-100">순위 데이터를 불러오지 못했습니다</div><div className="mt-2 text-sm font-semibold leading-6 text-red-100/65">{state.error}</div><div className="mt-3 text-xs font-bold text-white/35">잠시 후 자동으로 다시 갱신됩니다.</div></div> : null}
