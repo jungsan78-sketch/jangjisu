@@ -22,8 +22,8 @@ function DreamNavItem({ href, label, icon, tone = 'blue' }) {
 function DreamSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-[218px] border-r border-white/[0.055] bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.07),transparent_28%),linear-gradient(180deg,rgba(3,7,18,0.985),rgba(4,9,18,0.97))] px-4 py-5 shadow-[24px_0_70px_rgba(0,0,0,0.30)] backdrop-blur-xl lg:block">
-      <a href="/" className="mx-auto mb-8 flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-full border border-white/[0.06] bg-[radial-gradient(circle_at_50%_30%,rgba(59,130,246,0.10),rgba(0,0,0,0.08))] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_0_34px_rgba(59,130,246,0.12)] transition hover:scale-[1.04] hover:border-white/[0.10]">
-        <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-full w-full scale-[1.42] object-contain" />
+      <a href="/" className="mx-auto mb-8 flex h-[108px] w-[150px] items-center justify-center transition hover:scale-[1.035]">
+        <img src="/jisu-dream-logo.png" alt="지수의꿈" className="max-h-full max-w-full object-contain drop-shadow-[0_0_22px_rgba(59,130,246,0.18)]" />
       </a>
 
       <nav className="space-y-2.5">
@@ -42,8 +42,8 @@ function DreamMobileNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/[0.055] bg-[#05070c]/92 px-4 py-3 backdrop-blur-xl lg:hidden">
       <div className="flex items-center justify-between gap-3">
-        <a href="/" className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/[0.06] bg-black/10 shadow-[0_0_20px_rgba(59,130,246,0.08)]">
-          <img src="/jisu-dream-logo.png" alt="지수의꿈" className="h-full w-full scale-[1.34] object-contain" />
+        <a href="/" className="flex h-12 w-[88px] items-center justify-start">
+          <img src="/jisu-dream-logo.png" alt="지수의꿈" className="max-h-full max-w-full object-contain drop-shadow-[0_0_14px_rgba(59,130,246,0.14)]" />
         </a>
         <a href="/" className="rounded-full border border-white/[0.06] bg-white/[0.035] px-3 py-2 text-xs font-black text-white/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">홈</a>
       </div>
