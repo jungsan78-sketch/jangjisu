@@ -93,11 +93,10 @@ function RankingRow({ item, cutoffUpCount = 0 }) {
           {item.profileImage ? <img src={item.profileImage} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" /> : <div className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-base font-black ${eliminated ? 'text-red-100/45' : 'text-cyan-100'}`}>{String(item.nickname || '?').slice(0, 1)}</div>}
           <div className="min-w-0">
             <div className={`truncate text-lg font-black tracking-[-0.02em] sm:text-xl ${eliminated ? 'text-white/55' : 'text-white'}`}>{item.nickname}</div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-white/35">
-              <span>댓글 {formatNumber(item.commentCount)}개</span>
+            {(isCutoff || eliminated) ? <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-white/35">
               {isCutoff ? <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-2 py-0.5 text-[10px] font-black text-amber-100">현재 커트라인</span> : null}
               {eliminated ? <span className="rounded-full border border-red-200/15 bg-red-400/10 px-2 py-0.5 text-[10px] font-black text-red-100/65">탈락 예정</span> : null}
-            </div>
+            </div> : null}
             {cutoffGap > 0 ? <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-red-200/15 bg-red-400/8 px-2.5 py-1 text-[11px] font-black text-red-100/70"><span className="h-1.5 w-1.5 rounded-full bg-red-300/80" />커트라인까지 {formatNumber(cutoffGap)} UP 부족</div> : null}
             <ChangeBadge item={item} />
           </div>
