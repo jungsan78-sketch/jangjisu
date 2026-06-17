@@ -31,7 +31,7 @@ function DreamSidebar() {
       </nav>
 
       <div className="absolute inset-x-4 bottom-5 space-y-2 border-t border-white/[0.055] pt-4">
-        <DreamNavItem href="/" label="팬 아카이브" icon="H" />
+        <DreamNavItem href="/" label="SOU 아카이브" icon="H" />
         <DreamNavItem href="/jangjisu-prison" label="장지수용소 모드" icon="P" />
       </div>
     </aside>
