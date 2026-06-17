@@ -106,17 +106,18 @@ export default function JisuDreamPage() {
             </div>
           </section>
 
-          <section id="up-ranking" className="mt-7 rounded-[34px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_26px_90px_rgba(0,0,0,0.26)] sm:p-7">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div><h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/42">UP 기준 순위이며, 크루 멤버는 프리패스로 표시됩니다.</p></div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/40">30초 자동 갱신</div>
+          <section id="up-ranking" className="mt-7 overflow-hidden rounded-[34px] border border-cyan-200/10 bg-[radial-gradient(circle_at_12%_0%,rgba(34,211,238,0.08),transparent_34%),linear-gradient(135deg,rgba(9,20,36,0.98),rgba(8,14,28,0.98))] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.035)] sm:p-7">
+            <div className="pointer-events-none absolute inset-x-[18%] top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(103,232,249,0.28),transparent)]" />
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div><h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/50">UP 기준 순위이며, 크루 멤버는 프리패스로 표시됩니다.</p></div>
+              <div className="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/48">30초 자동 갱신</div>
             </div>
 
-            {state.loading ? <div className="mt-6 rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">순위를 불러오는 중입니다.</div> : null}
-            {!state.loading && state.error ? <div className="mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8 text-red-100">{state.error}</div> : null}
-            {!state.loading && !state.error ? <div className="mt-6 space-y-3">
+            {state.loading ? <div className="relative mt-6 rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">순위를 불러오는 중입니다.</div> : null}
+            {!state.loading && state.error ? <div className="relative mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8 text-red-100">{state.error}</div> : null}
+            {!state.loading && !state.error ? <div className="relative mt-6 space-y-3">
               {state.ranking.map((item) => <div key={`${participantKey(item)}-${item.changeId || 0}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<DreamRankingRow item={item} cutoffUpCount={cutoffUpCount} /></div>)}
-              {state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-white/45">아직 집계된 신청자가 없습니다.</div> : null}
+              {state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-white/45">아직 집계된 신청자가 없습니다.</div> : null}
             </div> : null}
           </section>
         </div>
