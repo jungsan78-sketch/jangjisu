@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import DreamServerLayout from '../components/dream/DreamServerLayout';
 
-const POST_URL = 'https://www.sooplive.com/station/chaenna02/post/196058089';
+const POST_URL = 'https://www.sooplive.com/station/iamquaddurup/post/198923295';
 const POLL_INTERVAL_MS = 30 * 1000;
 const CUTOFF_RANK = 70;
 
