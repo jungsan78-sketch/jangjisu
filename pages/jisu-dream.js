@@ -64,9 +64,12 @@ function ChangeBadge({ item }) {
   );
 }
 
-function RankingRow({ item }) {
+function RankingRow({ item, cutoffUpCount = 0 }) {
   const eliminated = item.rank > CUTOFF_RANK;
   const isCutoff = item.rank === CUTOFF_RANK;
+  const cutoffGap = eliminated && cutoffUpCount > 0
+    ? Math.max(1, Number(cutoffUpCount) - Number(item.upCount || 0) + 1)
+    : 0;
   const motionClass = item.rankDelta > 0
     ? 'animate-[rankRise_700ms_cubic-bezier(0.22,1,0.36,1)]'
     : item.rankDelta < 0
@@ -87,14 +90,15 @@ function RankingRow({ item }) {
       <RankBadge rank={item.rank} eliminated={eliminated} />
       <div className="min-w-0">
         <div className="flex items-center gap-3">
-          {item.profileImage ? <img src={item.profileImage} alt="" className="h-10 w-10 rounded-full border border-white/10 object-cover" /> : <div className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/30 text-sm font-black ${eliminated ? 'text-red-100/45' : 'text-cyan-100'}`}>{String(item.nickname || '?').slice(0, 1)}</div>}
+          {item.profileImage ? <img src={item.profileImage} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" /> : <div className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-base font-black ${eliminated ? 'text-red-100/45' : 'text-cyan-100'}`}>{String(item.nickname || '?').slice(0, 1)}</div>}
           <div className="min-w-0">
-            <div className={`truncate text-base font-black ${eliminated ? 'text-white/55' : 'text-white'}`}>{item.nickname}</div>
+            <div className={`truncate text-lg font-black tracking-[-0.02em] sm:text-xl ${eliminated ? 'text-white/55' : 'text-white'}`}>{item.nickname}</div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-white/35">
               <span>댓글 {formatNumber(item.commentCount)}개</span>
               {isCutoff ? <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-2 py-0.5 text-[10px] font-black text-amber-100">현재 커트라인</span> : null}
               {eliminated ? <span className="rounded-full border border-red-200/15 bg-red-400/10 px-2 py-0.5 text-[10px] font-black text-red-100/65">탈락 예정</span> : null}
             </div>
+            {cutoffGap > 0 ? <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-red-200/15 bg-red-400/8 px-2.5 py-1 text-[11px] font-black text-red-100/70"><span className="h-1.5 w-1.5 rounded-full bg-red-300/80" />커트라인까지 {formatNumber(cutoffGap)} UP 부족</div> : null}
             <ChangeBadge item={item} />
           </div>
         </div>
@@ -154,6 +158,8 @@ export default function JisuDreamPage() {
     const timer = setInterval(() => loadRanking(), POLL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, []);
+
+  const cutoffUpCount = Number(state.ranking.find((item) => Number(item.rank) === CUTOFF_RANK)?.upCount || 0);
 
   return (
     <>
@@ -217,7 +223,7 @@ export default function JisuDreamPage() {
             {state.loading ? <div className="mt-6 rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">신청자 순위와 UP 데이터를 불러오는 중입니다.</div> : null}
             {!state.loading && state.error ? <div className="mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8"><div className="text-base font-black text-red-100">순위 데이터를 불러오지 못했습니다</div><div className="mt-2 text-sm font-semibold leading-6 text-red-100/65">{state.error}</div><div className="mt-3 text-xs font-bold text-white/35">잠시 후 자동으로 다시 갱신됩니다.</div></div> : null}
 
-            {!state.loading && !state.error ? <div className="mt-6 space-y-3">{state.ranking.map((item) => <div key={`${getParticipantKey(item)}-${item.changeId || 0}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<RankingRow item={item} /></div>)}{state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">아직 집계된 신청자가 없습니다.</div> : null}</div> : null}
+            {!state.loading && !state.error ? <div className="mt-6 space-y-3">{state.ranking.map((item) => <div key={`${getParticipantKey(item)}-${item.changeId || 0}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<RankingRow item={item} cutoffUpCount={cutoffUpCount} /></div>)}{state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/10 bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">아직 집계된 신청자가 없습니다.</div> : null}</div> : null}
           </section>
         </div>
       </DreamServerLayout>
