@@ -61,7 +61,7 @@ function SidebarNavItem({ href, label, icon, tone = 'blue', external = false, co
 
   return (
     <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center ${compact ? 'justify-center gap-2 px-2.5' : 'gap-3 px-4'} rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
-      <span className={`flex ${compact ? 'h-7 w-7 text-sm' : 'h-8 w-8 text-base'} shrink-0 items-center justify-center rounded-xl bg-black/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]`}>{icon}</span>
+      {icon ? <span className={`flex ${compact ? 'h-7 w-7 text-sm' : 'h-8 w-8 text-base'} shrink-0 items-center justify-center rounded-xl bg-black/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]`}>{icon}</span> : null}
       <span className={compact ? 'whitespace-nowrap text-[12px]' : ''}>{label}</span>
     </a>
   );
@@ -200,7 +200,7 @@ function PrisonSidebar() {
       <nav className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2.5">
           <SidebarNavItem href="#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" compact />
-          <SidebarNavItem href="/" label="SOU 아카이브" icon="S" compact />
+          <SidebarNavItem href="/" label="SOU 아카이브" compact />
         </div>
         <SidebarNavItem href="#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
