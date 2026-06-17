@@ -14,6 +14,23 @@ export default function Home() {
       }
     };
 
+    const ensureDreamServerModeLink = () => {
+      const prisonLink = document.querySelector('a[href="/jangjisu-prison"]');
+      if (!prisonLink || document.querySelector('a[href="/jisu-dream"]')) return;
+
+      const dreamLink = prisonLink.cloneNode(true);
+      dreamLink.setAttribute('href', '/jisu-dream');
+      dreamLink.classList.add('sou-jisu-dream-mode-link');
+      dreamLink.removeAttribute('onclick');
+
+      const spans = dreamLink.querySelectorAll('span');
+      if (spans[0]) spans[0].textContent = '◉';
+      if (spans[1]) spans[1].textContent = '지수의꿈 서버';
+      if (!spans.length) dreamLink.textContent = '◉ 지수의꿈 서버';
+
+      prisonLink.insertAdjacentElement('beforebegin', dreamLink);
+    };
+
     const placeMainNoticeAfterSchedule = () => {
       const noticeSections = Array.from(document.querySelectorAll('section#notice'));
       const placeholder = noticeSections.find((section) => section.textContent?.includes('SOOP 탭은 점검 중'));
@@ -26,13 +43,13 @@ export default function Home() {
       }
     };
 
-    const handlePrisonDirectNavigation = (event) => {
-      const prisonLink = event.target?.closest?.('a[href="/jangjisu-prison"]');
-      if (!prisonLink) return;
+    const handleModeDirectNavigation = (event) => {
+      const link = event.target?.closest?.('a[href="/jangjisu-prison"], a[href="/jisu-dream"]');
+      if (!link) return;
       event.preventDefault();
       event.stopPropagation();
       if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-      window.location.href = '/jangjisu-prison';
+      window.location.href = link.getAttribute('href');
     };
 
     let didActivateShorts = false;
@@ -59,14 +76,17 @@ export default function Home() {
       return true;
     };
 
-    document.addEventListener('click', handlePrisonDirectNavigation, true);
+    document.addEventListener('click', handleModeDirectNavigation, true);
     moveUtilityMenu();
+    ensureDreamServerModeLink();
     placeMainNoticeAfterSchedule();
     prioritizeYoutubeTabs();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 600);
+    const dreamTimer = setTimeout(ensureDreamServerModeLink, 600);
     const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 600);
     const youtubeInterval = setInterval(() => {
+      ensureDreamServerModeLink();
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
       }
@@ -74,8 +94,9 @@ export default function Home() {
     const youtubeTimeout = setTimeout(() => clearInterval(youtubeInterval), 4000);
 
     return () => {
-      document.removeEventListener('click', handlePrisonDirectNavigation, true);
+      document.removeEventListener('click', handleModeDirectNavigation, true);
       clearTimeout(utilityTimer);
+      clearTimeout(dreamTimer);
       clearTimeout(noticeTimer);
       clearInterval(youtubeInterval);
       clearTimeout(youtubeTimeout);
@@ -173,6 +194,24 @@ export default function Home() {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
+          }
+
+          .jangjisu-left-nav-mode .sou-jisu-dream-mode-link {
+            border-color: rgba(103,232,249,0.24) !important;
+            background: linear-gradient(135deg, rgba(34,211,238,0.17), rgba(139,92,246,0.12)) !important;
+            color: #cffafe !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 26px rgba(34,211,238,0.08) !important;
+          }
+
+          .jangjisu-left-nav-mode .sou-jisu-dream-mode-link > span:first-child {
+            height: 26px !important;
+            width: 26px !important;
+            min-width: 26px !important;
+            align-items: center !important;
+            border: 1px solid rgba(255,255,255,0.20) !important;
+            border-radius: 999px !important;
+            background: linear-gradient(180deg, rgba(103,232,249,0.28) 0 48%, rgba(255,255,255,0.08) 48% 52%, rgba(8,15,28,0.72) 52% 100%) !important;
+            color: white !important;
           }
 
           .jangjisu-left-nav-mode main {
