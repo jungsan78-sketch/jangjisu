@@ -6,6 +6,7 @@ import DreamRankingRow, { CutoffDivider } from '../components/dream/DreamRanking
 const POST_URL = 'https://www.sooplive.com/station/iamquaddurup/post/198923295';
 const POLL_INTERVAL_MS = 30000;
 const CUTOFF_RANK = 70;
+const SERVER_OPEN_AT = '2026-07-04T00:00:00+09:00';
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('ko-KR');
 const participantKey = (item) => String(item?.userId || item?.nickname || '').trim().toLowerCase();
@@ -15,9 +16,20 @@ function formatFetchedAt(value) {
   return Number.isNaN(date.getTime()) ? '-' : date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+function getServerCountdown() {
+  const target = new Date(SERVER_OPEN_AT).getTime();
+  const now = Date.now();
+  const diff = target - now;
+  const oneDay = 24 * 60 * 60 * 1000;
+  if (diff > 0) return `D-${Math.ceil(diff / oneDay)}`;
+  if (diff > -oneDay) return 'D-DAY';
+  return `D+${Math.floor(Math.abs(diff) / oneDay)}`;
+}
+
 export default function JisuDreamPage() {
   const [state, setState] = useState({ loading: true, error: '', ranking: [], participantCount: 0, commentCount: 0, totalUpCount: 0, fetchedAt: '' });
   const [refreshing, setRefreshing] = useState(false);
+  const [serverCountdown, setServerCountdown] = useState('');
   const previousRankingRef = useRef([]);
 
   const loadRanking = async (manual = false) => {
@@ -61,6 +73,13 @@ export default function JisuDreamPage() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const updateCountdown = () => setServerCountdown(getServerCountdown());
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const cutoffUpCount = Number(state.ranking.find((item) => Number(item.rank) === CUTOFF_RANK)?.upCount || 0);
 
   return (
@@ -90,9 +109,17 @@ export default function JisuDreamPage() {
             </div>
 
             <div className="mt-7">
-              <div className="mb-4 flex items-center gap-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]" />
-                <h2 className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">모집기간 및 일정</h2>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]" />
+                  <h2 className="text-lg font-black tracking-[-0.02em] text-white sm:text-xl">모집기간 및 일정</h2>
+                </div>
+                {serverCountdown ? (
+                  <div className="inline-flex w-fit items-center gap-3 rounded-full border border-cyan-200/16 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(59,130,246,0.10))] px-4 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_26px_rgba(34,211,238,0.10)]">
+                    <span className="text-xs font-black tracking-[0.12em] text-cyan-100/60">서버오픈</span>
+                    <span className="text-xl font-black tabular-nums tracking-[-0.04em] text-cyan-100">{serverCountdown}</span>
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid gap-3 lg:grid-cols-3">
