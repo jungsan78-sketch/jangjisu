@@ -164,12 +164,22 @@ export default function JisuDreamPage() {
 
           <section id="up-ranking" className="mt-7 overflow-hidden rounded-[34px] border border-cyan-200/10 bg-[radial-gradient(circle_at_12%_0%,rgba(34,211,238,0.08),transparent_34%),linear-gradient(135deg,rgba(9,20,36,0.98),rgba(8,14,28,0.98))] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.035)] sm:p-7">
             <div className="pointer-events-none absolute inset-x-[18%] top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(103,232,249,0.28),transparent)]" />
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div><h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/50">UP 기준 순위이며, 프리패스 제외 버튼을 누르면 일반 신청자끼리 순위를 다시 계산합니다.</p></div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => setExcludeFreePass((value) => !value)} className={`rounded-full border px-4 py-2.5 text-xs font-black transition ${excludeFreePass ? 'border-emerald-200/25 bg-emerald-300/15 text-emerald-50 shadow-[0_0_24px_rgba(52,211,153,0.12)]' : 'border-white/[0.08] bg-white/[0.045] text-white/65 hover:border-emerald-200/18 hover:bg-emerald-300/8 hover:text-emerald-50'}`}>{excludeFreePass ? '✓ 프리패스 제외중' : '프리패스 제외'}</button>
-                <div className="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/48">30초 자동 갱신</div>
+            <div className="relative">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2>
+                  <p className="mt-2 text-sm font-semibold text-white/50">UP 기준 순위이며, 프리패스 인원을 제외한 일반 신청자 순위도 확인할 수 있습니다.</p>
+                </div>
+                <div className="shrink-0 rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/48">30초 자동 갱신</div>
               </div>
+
+              <button onClick={() => setExcludeFreePass((value) => !value)} className={`mt-5 flex w-full items-center justify-between rounded-[22px] border px-5 py-4 text-left transition sm:max-w-[520px] ${excludeFreePass ? 'border-emerald-200/30 bg-[linear-gradient(135deg,rgba(52,211,153,0.19),rgba(16,185,129,0.10))] text-emerald-50 shadow-[0_14px_34px_rgba(16,185,129,0.12),inset_0_1px_0_rgba(255,255,255,0.07)]' : 'border-cyan-200/14 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(59,130,246,0.08))] text-cyan-50 shadow-[0_14px_34px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.045)] hover:-translate-y-0.5 hover:border-cyan-200/25 hover:bg-[linear-gradient(135deg,rgba(34,211,238,0.17),rgba(59,130,246,0.11))]'}`}>
+                <span>
+                  <span className="block text-base font-black sm:text-lg">{excludeFreePass ? '✓ 프리패스 제외 적용중' : '프리패스 인원 제외하기'}</span>
+                  <span className={`mt-1 block text-xs font-bold ${excludeFreePass ? 'text-emerald-100/65' : 'text-cyan-100/55'}`}>{excludeFreePass ? '일반 신청자끼리 등수를 다시 계산하고 있습니다.' : '누르면 프리패스 인원을 숨기고 순위를 다시 계산합니다.'}</span>
+                </span>
+                <span className={`ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-lg font-black ${excludeFreePass ? 'border-emerald-100/25 bg-emerald-100/10 text-emerald-50' : 'border-cyan-100/20 bg-cyan-100/8 text-cyan-50'}`}>{excludeFreePass ? 'ON' : '→'}</span>
+              </button>
             </div>
 
             {state.loading ? <div className="relative mt-6 rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">순위를 불러오는 중입니다.</div> : null}
