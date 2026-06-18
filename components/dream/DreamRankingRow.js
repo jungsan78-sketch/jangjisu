@@ -48,11 +48,12 @@ export function CutoffDivider() {
   );
 }
 
-export default function DreamRankingRow({ item, cutoffUpCount = 0 }) {
+export default function DreamRankingRow({ item, cutoffUpCount = 0, displayRank }) {
   const group = getDreamFreePassGroup(item);
   const freePass = Boolean(group);
-  const eliminated = item.rank > CUTOFF_RANK && !freePass;
-  const isCutoff = item.rank === CUTOFF_RANK;
+  const effectiveRank = Number(displayRank || item.rank || 0);
+  const eliminated = effectiveRank > CUTOFF_RANK && !freePass;
+  const isCutoff = effectiveRank === CUTOFF_RANK;
   const cutoffGap = eliminated && cutoffUpCount > 0 ? Math.max(1, Number(cutoffUpCount) - Number(item.upCount || 0) + 1) : 0;
   const motionClass = item.rankDelta > 0 ? 'animate-[rankRise_700ms_cubic-bezier(0.22,1,0.36,1)]' : item.rankDelta < 0 ? 'animate-[rankDrop_700ms_cubic-bezier(0.22,1,0.36,1)]' : item.upDelta > 0 ? 'animate-[upPulse_850ms_ease-out]' : '';
   const cardClass = freePass
@@ -66,7 +67,7 @@ export default function DreamRankingRow({ item, cutoffUpCount = 0 }) {
   return (
     <div className={`relative grid gap-4 overflow-hidden rounded-[24px] border p-4 shadow-[0_18px_50px_rgba(0,0,0,0.20)] transition sm:grid-cols-[52px_1fr_auto] sm:items-center sm:p-5 ${motionClass} ${cardClass}`}>
       {freePass ? <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(110,231,183,0.72),transparent)]" /> : isCutoff ? <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(251,191,36,0.85),transparent)]" /> : null}
-      <RankBadge rank={item.rank} eliminated={eliminated} />
+      <RankBadge rank={effectiveRank} eliminated={eliminated} />
       <div className="min-w-0">
         <div className="flex items-center gap-3">
           {item.profileImage ? <img src={item.profileImage} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" /> : <div className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-base font-black ${eliminated ? 'text-red-100/45' : 'text-cyan-100'}`}>{String(item.nickname || '?').slice(0, 1)}</div>}
