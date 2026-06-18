@@ -1,3 +1,5 @@
+import SiteFooter from '../SiteFooter';
+
 const NAV_ITEMS = [
   { href: '/jisu-dream#up-ranking', label: '신청자 UP순위', icon: 'UP', tone: 'dream' },
 ];
@@ -61,6 +63,7 @@ export default function DreamServerLayout({ children }) {
       <div className="lg:pl-[218px]">
         <DreamMobileNav />
         <main className="relative min-h-screen px-5 py-7 lg:px-8 lg:py-9">{children}</main>
+        <SiteFooter />
       </div>
     </div>
   );
