@@ -1,9 +1,11 @@
 import Head from 'next/head';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import JangJisuFanSite from '../components/JangJisuFanSite';
 import MainJangJisuNoticeSection from '../components/MainJangJisuNoticeSection';
 
 export default function Home() {
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
+
   useEffect(() => {
     const moveUtilityMenu = () => {
       const links = Array.from(document.querySelectorAll('a[href="/utility"]'));
@@ -76,28 +78,41 @@ export default function Home() {
       return true;
     };
 
-    document.addEventListener('click', handleModeDirectNavigation, true);
-    moveUtilityMenu();
-    ensureDreamServerModeLink();
-    placeMainNoticeAfterSchedule();
-    prioritizeYoutubeTabs();
+    const finalizeLayout = () => {
+      moveUtilityMenu();
+      ensureDreamServerModeLink();
+      placeMainNoticeAfterSchedule();
+      prioritizeYoutubeTabs();
+      setIsLayoutReady(true);
+    };
 
-    const utilityTimer = setTimeout(moveUtilityMenu, 600);
-    const dreamTimer = setTimeout(ensureDreamServerModeLink, 600);
-    const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 600);
+    document.addEventListener('click', handleModeDirectNavigation, true);
+    finalizeLayout();
+
+    const utilityTimer = setTimeout(moveUtilityMenu, 300);
+    const dreamTimer = setTimeout(ensureDreamServerModeLink, 300);
+    const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 300);
+    const readyTimer = setTimeout(() => {
+      finalizeLayout();
+    }, 520);
     const youtubeInterval = setInterval(() => {
       ensureDreamServerModeLink();
+      placeMainNoticeAfterSchedule();
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
       }
-    }, 300);
-    const youtubeTimeout = setTimeout(() => clearInterval(youtubeInterval), 4000);
+    }, 120);
+    const youtubeTimeout = setTimeout(() => {
+      clearInterval(youtubeInterval);
+      finalizeLayout();
+    }, 1800);
 
     return () => {
       document.removeEventListener('click', handleModeDirectNavigation, true);
       clearTimeout(utilityTimer);
       clearTimeout(dreamTimer);
       clearTimeout(noticeTimer);
+      clearTimeout(readyTimer);
       clearInterval(youtubeInterval);
       clearTimeout(youtubeTimeout);
     };
@@ -110,11 +125,15 @@ export default function Home() {
         <meta name="description" content="장지수 방송 상태, 공지, VOD, 팬카페를 한 곳에서 보는 팬메이드 허브" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className="jangjisu-left-nav-mode">
-        <JangJisuFanSite />
+      <div className={`sou-archive-ready-shell transition-opacity duration-200 ${isLayoutReady ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+        <div className="jangjisu-left-nav-mode">
+          <JangJisuFanSite />
+        </div>
+        <MainJangJisuNoticeSection />
       </div>
-      <MainJangJisuNoticeSection />
+      {!isLayoutReady ? <div className="fixed inset-0 z-[200] bg-[#05070c]" aria-hidden="true" /> : null}
       <style jsx global>{`
+        body { background: #05070c; }
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
             padding-left: 218px !important;
