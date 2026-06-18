@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import DreamServerLayout from '../components/dream/DreamServerLayout';
 import DreamRankingRow, { CutoffDivider } from '../components/dream/DreamRankingRow';
+import { getDreamFreePassGroup } from '../lib/dreamFreePass';
 
 const POST_URL = 'https://www.sooplive.com/station/iamquaddurup/post/198923295';
 const POLL_INTERVAL_MS = 30000;
@@ -30,6 +31,7 @@ export default function JisuDreamPage() {
   const [state, setState] = useState({ loading: true, error: '', ranking: [], participantCount: 0, commentCount: 0, totalUpCount: 0, fetchedAt: '' });
   const [refreshing, setRefreshing] = useState(false);
   const [serverCountdown, setServerCountdown] = useState('');
+  const [excludeFreePass, setExcludeFreePass] = useState(false);
   const previousRankingRef = useRef([]);
 
   const loadRanking = async (manual = false) => {
@@ -80,7 +82,9 @@ export default function JisuDreamPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const cutoffUpCount = Number(state.ranking.find((item) => Number(item.rank) === CUTOFF_RANK)?.upCount || 0);
+  const visibleRanking = (excludeFreePass ? state.ranking.filter((item) => !getDreamFreePassGroup(item)) : state.ranking)
+    .map((item, index) => ({ ...item, displayRank: excludeFreePass ? index + 1 : Number(item.rank || index + 1) }));
+  const cutoffUpCount = Number(visibleRanking.find((item) => item.displayRank === CUTOFF_RANK)?.upCount || 0);
 
   return (
     <>
@@ -160,16 +164,19 @@ export default function JisuDreamPage() {
 
           <section id="up-ranking" className="mt-7 overflow-hidden rounded-[34px] border border-cyan-200/10 bg-[radial-gradient(circle_at_12%_0%,rgba(34,211,238,0.08),transparent_34%),linear-gradient(135deg,rgba(9,20,36,0.98),rgba(8,14,28,0.98))] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.035)] sm:p-7">
             <div className="pointer-events-none absolute inset-x-[18%] top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(103,232,249,0.28),transparent)]" />
-            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div><h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/50">UP 기준 순위이며, 크루 멤버는 프리패스로 표시됩니다.</p></div>
-              <div className="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/48">30초 자동 갱신</div>
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div><h2 className="text-3xl font-black text-white">지수의꿈 서버 신청자 순위</h2><p className="mt-2 text-sm font-semibold text-white/50">UP 기준 순위이며, 프리패스 제외 버튼을 누르면 일반 신청자끼리 순위를 다시 계산합니다.</p></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={() => setExcludeFreePass((value) => !value)} className={`rounded-full border px-4 py-2.5 text-xs font-black transition ${excludeFreePass ? 'border-emerald-200/25 bg-emerald-300/15 text-emerald-50 shadow-[0_0_24px_rgba(52,211,153,0.12)]' : 'border-white/[0.08] bg-white/[0.045] text-white/65 hover:border-emerald-200/18 hover:bg-emerald-300/8 hover:text-emerald-50'}`}>{excludeFreePass ? '✓ 프리패스 제외중' : '프리패스 제외'}</button>
+                <div className="rounded-full border border-white/[0.07] bg-white/[0.04] px-3 py-2 text-xs font-bold text-white/48">30초 자동 갱신</div>
+              </div>
             </div>
 
             {state.loading ? <div className="relative mt-6 rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-sm font-black text-white/45">순위를 불러오는 중입니다.</div> : null}
             {!state.loading && state.error ? <div className="relative mt-6 rounded-[26px] border border-red-200/15 bg-red-400/10 px-6 py-8 text-red-100">{state.error}</div> : null}
             {!state.loading && !state.error ? <div className="relative mt-6 space-y-3">
-              {state.ranking.map((item) => <div key={`${participantKey(item)}-${item.changeId || 0}`}>{item.rank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<DreamRankingRow item={item} cutoffUpCount={cutoffUpCount} /></div>)}
-              {state.ranking.length === 0 ? <div className="rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-white/45">아직 집계된 신청자가 없습니다.</div> : null}
+              {visibleRanking.map((item) => <div key={`${participantKey(item)}-${item.changeId || 0}`}>{item.displayRank === CUTOFF_RANK + 1 ? <CutoffDivider /> : null}<DreamRankingRow item={item} displayRank={item.displayRank} cutoffUpCount={cutoffUpCount} /></div>)}
+              {visibleRanking.length === 0 ? <div className="rounded-[26px] border border-white/[0.07] bg-black/20 px-6 py-14 text-center text-white/45">표시할 신청자가 없습니다.</div> : null}
             </div> : null}
           </section>
         </div>
