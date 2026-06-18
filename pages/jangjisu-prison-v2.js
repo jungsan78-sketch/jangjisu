@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import PrisonPageContent from '../components/prison/PrisonPageContent';
+import SiteFooter from '../components/SiteFooter';
 
 const PRISON_FAVICON = '/prison-logo.webp?v=sou-prison-logo-20260428-2';
 
@@ -59,6 +60,9 @@ export default function JangjisuPrisonV2Page() {
       `}</style>
       <div className="min-h-screen bg-[#05070c] text-white">
         <PrisonPageContent />
+        <div className="xl:ml-[274px]">
+          <SiteFooter />
+        </div>
       </div>
     </>
   );
