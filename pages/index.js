@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import JangJisuFanSite from '../components/JangJisuFanSite';
 import MainJangJisuNoticeSection from '../components/MainJangJisuNoticeSection';
 import SiteFooter from '../components/SiteFooter';
+import SOUCinematicHero from '../components/SOUCinematicHero';
 
 export default function Home() {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -130,6 +131,7 @@ export default function Home() {
         <div className="jangjisu-left-nav-mode">
           <JangJisuFanSite />
         </div>
+        <SOUCinematicHero />
         <MainJangJisuNoticeSection />
         <div className="lg:pl-[218px]">
           <SiteFooter />
