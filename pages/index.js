@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import JangJisuFanSite from '../components/JangJisuFanSite';
 import MainJangJisuNoticeSection from '../components/MainJangJisuNoticeSection';
+import SiteFooter from '../components/SiteFooter';
 
 export default function Home() {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -130,10 +131,14 @@ export default function Home() {
           <JangJisuFanSite />
         </div>
         <MainJangJisuNoticeSection />
+        <div className="lg:pl-[218px]">
+          <SiteFooter />
+        </div>
       </div>
       {!isLayoutReady ? <div className="fixed inset-0 z-[200] bg-[#05070c]" aria-hidden="true" /> : null}
       <style jsx global>{`
         body { background: #05070c; }
+        .jangjisu-left-nav-mode footer { display: none !important; }
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
             padding-left: 218px !important;
