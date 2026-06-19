@@ -54,6 +54,7 @@ export default function DreamRankingRow({ item, cutoffUpCount = 0, displayRank }
   const effectiveRank = Number(displayRank || item.rank || 0);
   const eliminated = effectiveRank > CUTOFF_RANK && !freePass;
   const isCutoff = effectiveRank === CUTOFF_RANK;
+  const extraCommentCount = Math.max(0, Number(item.commentCount || 0) - 1);
   const cutoffGap = eliminated && cutoffUpCount > 0 ? Math.max(1, Number(cutoffUpCount) - Number(item.upCount || 0) + 1) : 0;
   const motionClass = item.rankDelta > 0 ? 'animate-[rankRise_700ms_cubic-bezier(0.22,1,0.36,1)]' : item.rankDelta < 0 ? 'animate-[rankDrop_700ms_cubic-bezier(0.22,1,0.36,1)]' : item.upDelta > 0 ? 'animate-[upPulse_850ms_ease-out]' : '';
   const cardClass = freePass
@@ -73,7 +74,7 @@ export default function DreamRankingRow({ item, cutoffUpCount = 0, displayRank }
           {item.profileImage ? <img src={item.profileImage} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" /> : <div className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 text-base font-black ${eliminated ? 'text-red-100/45' : 'text-cyan-100'}`}>{String(item.nickname || '?').slice(0, 1)}</div>}
           <div className="min-w-0">
             <div className={`truncate text-lg font-black tracking-[-0.02em] sm:text-xl ${eliminated ? 'text-white/55' : 'text-white'}`}>{item.nickname}</div>
-            {group ? <div className="mt-1.5 flex flex-wrap items-center gap-1.5"><CrewBadge group={group} /><span className="rounded-full border border-emerald-200/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-black text-emerald-100">프리패스</span></div> : null}
+            {(group || extraCommentCount > 0) ? <div className="mt-1.5 flex flex-wrap items-center gap-1.5">{group ? <><CrewBadge group={group} /><span className="rounded-full border border-emerald-200/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-black text-emerald-100">프리패스</span></> : null}{extraCommentCount > 0 ? <span className="rounded-full border border-fuchsia-200/20 bg-fuchsia-300/10 px-2.5 py-1 text-[10px] font-black text-fuchsia-100">추가댓글작성 {extraCommentCount}개</span> : null}</div> : null}
             {(isCutoff || eliminated) ? <div className="mt-1.5 flex flex-wrap items-center gap-2">{isCutoff ? <span className="rounded-full border border-amber-200/20 bg-amber-300/10 px-2 py-0.5 text-[10px] font-black text-amber-100">현재 커트라인</span> : null}{eliminated ? <span className="rounded-full border border-red-200/15 bg-red-400/10 px-2 py-0.5 text-[10px] font-black text-red-100/65">탈락 예정</span> : null}</div> : null}
             {cutoffGap > 0 ? <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-red-200/15 bg-red-400/8 px-2.5 py-1 text-[11px] font-black text-red-100/70"><span className="h-1.5 w-1.5 rounded-full bg-red-300/80" />커트라인까지 {formatNumber(cutoffGap)} UP 부족</div> : null}
             <ChangeBadge item={item} />
