@@ -24,12 +24,6 @@ export const PRISON_SCHEDULE_SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1306533963#gid=1306533963',
   },
   {
-    key: 'popo',
-    member: '포포',
-    endpoint: '/api/popo-schedule',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1bZwCSbYQ_8g-SmDFf0cWo6Nh6Ysyo1pCmrRhNXJGzpI/edit?gid=167079174#gid=167079174',
-  },
-  {
     key: 'ddikku',
     member: '띠꾸',
     endpoint: '/api/ddikku-schedule',
