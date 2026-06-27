@@ -1,18 +1,12 @@
-import { fetchRowsByGid, normalizeScheduleText } from '../../lib/scheduleSheet';
+import { fetchRowsBySheetName, normalizeScheduleText } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-
-const JANGJISU_MONTHLY_GIDS = {
-  '2026-04': '315851366',
-  '2026-05': '215076926',
-  '2026-06': '1486425307',
-};
 
 function getMonthKey(monthInfo) {
   return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
@@ -20,10 +14,6 @@ function getMonthKey(monthInfo) {
 
 function makeCacheKey(monthInfo) {
   return `schedule:jangjisu:${getMonthKey(monthInfo)}:${CACHE_VERSION}`;
-}
-
-function getCurrentMonthGid(monthInfo) {
-  return JANGJISU_MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
 }
 
 function isDateRow(row) {
@@ -115,14 +105,12 @@ function parseCurrentMonthRows(rows, targetYear, targetMonth) {
 }
 
 function emptyCurrentMonthPayload(currentMonth, message = '현재 월 일정 데이터를 불러오지 못했습니다.') {
-  const gid = getCurrentMonthGid(currentMonth);
   return {
     ok: false,
-    source: 'google_sheet_gid',
-    sourceUrl: gid ? `${SHEET_URL}?gid=${gid}#gid=${gid}` : SHEET_URL,
+    source: 'google_sheet_name',
+    sourceUrl: SHEET_URL,
     monthLabel: currentMonth.monthLabel,
     sheetName: currentMonth.sheetName,
-    gid,
     items: [],
     message,
     fetchedAt: new Date().toISOString(),
@@ -130,28 +118,22 @@ function emptyCurrentMonthPayload(currentMonth, message = '현재 월 일정 데
 }
 
 async function buildFreshScheduleResponse(currentMonth) {
-  const gid = getCurrentMonthGid(currentMonth);
-  if (!gid) {
-    return emptyCurrentMonthPayload(currentMonth, '현재 월에 연결된 장지수 일정 시트 gid가 없습니다.');
-  }
-
   try {
-    const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, gid);
+    const { rows, fetchedUrl } = await fetchRowsBySheetName(SHEET_ID, currentMonth.sheetName);
     const items = parseCurrentMonthRows(rows, currentMonth.year, currentMonth.month);
 
     return {
       ok: items.some((item) => !item.empty),
-      source: 'google_sheet_gid',
-      sourceUrl: `${SHEET_URL}?gid=${gid}#gid=${gid}`,
+      source: 'google_sheet_name',
+      sourceUrl: SHEET_URL,
       monthLabel: currentMonth.monthLabel,
       sheetName: currentMonth.sheetName,
-      gid,
       fetchedUrl,
       items,
       fetchedAt: new Date().toISOString(),
     };
   } catch {
-    return emptyCurrentMonthPayload(currentMonth);
+    return emptyCurrentMonthPayload(currentMonth, `${currentMonth.sheetName} 탭을 찾지 못했거나 일정 데이터를 불러오지 못했습니다.`);
   }
 }
 
