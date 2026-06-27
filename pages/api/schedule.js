@@ -1,11 +1,12 @@
-import { fetchRowsByGid, parseScheduleRows } from '../../lib/scheduleSheet';
+import { fetchRowsByGid, normalizeScheduleText } from '../../lib/scheduleSheet';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const JANGJISU_MONTHLY_GIDS = {
   '2026-04': '315851366',
@@ -23,6 +24,94 @@ function makeCacheKey(monthInfo) {
 
 function getCurrentMonthGid(monthInfo) {
   return JANGJISU_MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
+}
+
+function isDateRow(row) {
+  return row.filter((cell) => /^\d{1,2}$/.test(String(cell || '').trim())).length >= 5;
+}
+
+function buildMonthItems(targetYear, targetMonth, itemsMap) {
+  const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    const existing = itemsMap.get(day);
+    if (existing) return existing;
+    const dateObject = new Date(targetYear, targetMonth - 1, day);
+    return {
+      dayNumber: day,
+      day: DAY_LABELS[dateObject.getDay()],
+      date: `${targetMonth}월 ${day}일`,
+      title: '',
+      empty: true,
+    };
+  });
+}
+
+function parseCurrentMonthRows(rows, targetYear, targetMonth) {
+  const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+  const itemsMap = new Map();
+  let lastIncludedDay = 0;
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex];
+    if (!isDateRow(row)) continue;
+
+    const numericCells = row
+      .map((cell, columnIndex) => ({ text: String(cell || '').trim(), columnIndex }))
+      .filter(({ text }) => /^\d{1,2}$/.test(text));
+
+    const activeDays = [];
+    numericCells.forEach(({ text, columnIndex }) => {
+      const day = Number(text);
+      if (day < 1 || day > daysInMonth) return;
+
+      if (lastIncludedDay === 0) {
+        if (day <= 7) {
+          activeDays.push({ day, columnIndex });
+          lastIncludedDay = day;
+        }
+        return;
+      }
+
+      if (day > lastIncludedDay) {
+        activeDays.push({ day, columnIndex });
+        lastIncludedDay = day;
+      }
+    });
+
+    if (activeDays.length === 0) continue;
+
+    let nextRowIndex = rowIndex + 1;
+    const detailRows = [];
+    while (nextRowIndex < rows.length && !isDateRow(rows[nextRowIndex])) {
+      detailRows.push(rows[nextRowIndex]);
+      nextRowIndex += 1;
+    }
+
+    activeDays.forEach(({ day, columnIndex }) => {
+      const nextNumericColumn = numericCells.find((cell) => cell.columnIndex > columnIndex)?.columnIndex ?? row.length;
+      const detailTexts = [];
+
+      detailRows.forEach((detailRow) => {
+        for (let column = columnIndex; column < nextNumericColumn; column += 1) {
+          const text = normalizeScheduleText(detailRow[column] || '');
+          if (text) detailTexts.push(text);
+        }
+      });
+
+      const uniqueTexts = Array.from(new Set(detailTexts));
+      const dateObject = new Date(targetYear, targetMonth - 1, day);
+      itemsMap.set(day, {
+        dayNumber: day,
+        day: DAY_LABELS[dateObject.getDay()],
+        date: `${targetMonth}월 ${day}일`,
+        title: uniqueTexts.join(' / '),
+        empty: uniqueTexts.length === 0,
+      });
+    });
+  }
+
+  return buildMonthItems(targetYear, targetMonth, itemsMap);
 }
 
 function emptyCurrentMonthPayload(currentMonth, message = '현재 월 일정 데이터를 불러오지 못했습니다.') {
@@ -48,7 +137,7 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   try {
     const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, gid);
-    const items = parseScheduleRows(rows, currentMonth.year, currentMonth.month);
+    const items = parseCurrentMonthRows(rows, currentMonth.year, currentMonth.month);
 
     return {
       ok: items.some((item) => !item.empty),
