@@ -1,14 +1,10 @@
-import { detectMonthFromRows, fetchRowsByGid } from '../../lib/scheduleSheet';
+import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
-import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
+import { getKstMonthInfo, makeMonthlyScheduleCacheKey } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '165CKJlUjtZW9NYzHRPZuHDxNKLETpgYt48cxrMKuUGc';
-const MONTHLY_GIDS = {
-  '2026-05': '1553307664',
-  '2026-06': '64375554',
-};
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_PREFIX = 'schedule:ddikku:v5';
+const CACHE_PREFIX = 'schedule:ddikku:v6';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const IGNORED_FALLBACK_TEXTS = new Set([
   '띠어트 (영공)',
@@ -29,18 +25,6 @@ const IGNORED_FALLBACK_TEXTS = new Set([
   '3부',
   '4부',
 ]);
-
-function getMonthKey(monthInfo) {
-  return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
-}
-
-function getCurrentMonthGid(monthInfo) {
-  return MONTHLY_GIDS[getMonthKey(monthInfo)] || '';
-}
-
-function getSheetUrl(gid = '') {
-  return gid ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}#gid=${gid}` : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-}
 
 function normalizeText(value) {
   return String(value || '')
@@ -177,19 +161,12 @@ function extractPartsFromBlock(blockRows, startColumnIndex, endColumnIndexExclus
   const uniqueFallbackTexts = Array.from(new Set(fallbackTexts.filter(Boolean)));
   const uniqueOffReasons = Array.from(new Set(offReasonCandidates.filter(Boolean)));
 
-  if (uniqueParts.length > 0) {
-    return uniqueParts.join('/');
-  }
-
+  if (uniqueParts.length > 0) return uniqueParts.join('/');
   if (hasOffDay) {
     const reason = uniqueOffReasons.join('/');
     return reason ? `휴방/${reason}` : '휴방';
   }
-
-  if (uniqueFallbackTexts.length > 0) {
-    return uniqueFallbackTexts.join('/');
-  }
-
+  if (uniqueFallbackTexts.length > 0) return uniqueFallbackTexts.join('/');
   return '';
 }
 
@@ -224,14 +201,13 @@ function parseDdikkuRows(rows, targetYear, targetMonth) {
   return items;
 }
 
-function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
-  const gid = getCurrentMonthGid(currentMonth);
+function emptyCurrentMonthPayload(currentMonth, sourceUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, fetchedUrl = '') {
   return {
     ok: false,
-    source: 'google_sheet_gid',
-    sourceUrl: getSheetUrl(gid),
+    source: 'google_sheet_name',
+    sourceUrl,
     monthLabel: currentMonth.monthLabel,
-    gid,
+    sheetName: `${currentMonth.month}월`,
     items: buildEmptyMonthItems(currentMonth.year, currentMonth.month),
     fetchedUrl,
     fetchedAt: new Date().toISOString(),
@@ -240,30 +216,19 @@ function emptyCurrentMonthPayload(currentMonth, fetchedUrl = '') {
 }
 
 async function buildFreshScheduleResponse(currentMonth) {
-  const gid = getCurrentMonthGid(currentMonth);
-  if (!gid) return emptyCurrentMonthPayload(currentMonth);
-
-  const { rows, fetchedUrl } = await fetchRowsByGid(SHEET_ID, gid);
-  const detected = detectMonthFromRows(rows, new Date());
-
-  if (!sameScheduleMonth(detected, currentMonth)) {
-    return emptyCurrentMonthPayload(currentMonth, fetchedUrl);
-  }
-
+  const { rows, fetchedUrl, sourceUrl, sheetName, gid } = await fetchMonthlySheet(SHEET_ID, currentMonth, 'month');
   const items = parseDdikkuRows(rows, currentMonth.year, currentMonth.month);
 
   if (!items.some((item) => !item.empty && String(item.title || '').trim())) {
-    return {
-      ...emptyCurrentMonthPayload(currentMonth, fetchedUrl),
-      items,
-    };
+    return { ...emptyCurrentMonthPayload(currentMonth, sourceUrl, fetchedUrl), sheetName, gid, items };
   }
 
   return {
     ok: true,
-    source: 'google_sheet_gid',
-    sourceUrl: getSheetUrl(gid),
+    source: 'google_sheet_name',
+    sourceUrl,
     monthLabel: currentMonth.monthLabel,
+    sheetName,
     gid,
     items,
     fetchedUrl,
@@ -289,6 +254,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ...payload, cache: cached?.payload ? 'refresh' : 'miss', cachedAt: new Date(now).toISOString() });
   } catch {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale', cachedAt: new Date(cached.cachedAt).toISOString() });
-    return res.status(200).json({ ok: false, sourceUrl: getSheetUrl(getCurrentMonthGid(currentMonth)), monthLabel: currentMonth.monthLabel, items: [], message: '띠꾸 일정 데이터를 불러오지 못했습니다.', fetchedAt: new Date().toISOString(), cache: 'unavailable' });
+    return res.status(200).json({ ...emptyCurrentMonthPayload(currentMonth), cache: 'unavailable' });
   }
 }
