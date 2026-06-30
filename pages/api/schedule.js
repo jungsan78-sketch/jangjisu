@@ -6,8 +6,13 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const KNOWN_MONTH_GIDS = {
+  '2026-04': '315851366',
+  '2026-05': '215076926',
+  '2026-06': '1486425307',
+};
 
 function getMonthKey(monthInfo) {
   return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
@@ -15,6 +20,11 @@ function getMonthKey(monthInfo) {
 
 function makeCacheKey(monthInfo) {
   return `schedule:jangjisu:${getMonthKey(monthInfo)}:${CACHE_VERSION}`;
+}
+
+function getKnownMonthSourceUrl(monthInfo) {
+  const gid = KNOWN_MONTH_GIDS[getMonthKey(monthInfo)] || '';
+  return gid ? `${SHEET_URL}?gid=${gid}#gid=${gid}` : '';
 }
 
 function isDateRow(row) {
@@ -120,22 +130,29 @@ function emptyCurrentMonthPayload(currentMonth, sourceUrl = SHEET_URL, message =
 
 async function buildFreshScheduleResponse(currentMonth) {
   try {
-    const { rows, fetchedUrl, sourceUrl, sheetName, gid } = await fetchMonthlySheet(SHEET_ID, currentMonth, 'short-year-month');
-    const items = parseCurrentMonthRows(rows, currentMonth.year, currentMonth.month);
+    const result = await fetchMonthlySheet(SHEET_ID, currentMonth, 'short-year-month');
+    const knownSourceUrl = getKnownMonthSourceUrl(currentMonth);
+    const sourceUrl = knownSourceUrl || result.sourceUrl || SHEET_URL;
+    const gid = KNOWN_MONTH_GIDS[getMonthKey(currentMonth)] || result.gid || '';
+    const items = parseCurrentMonthRows(result.rows, currentMonth.year, currentMonth.month);
 
     return {
       ok: items.some((item) => !item.empty),
       source: 'google_sheet_name',
       sourceUrl,
       monthLabel: currentMonth.monthLabel,
-      sheetName,
+      sheetName: currentMonth.sheetName,
       gid,
-      fetchedUrl,
+      fetchedUrl: result.fetchedUrl,
       items,
       fetchedAt: new Date().toISOString(),
     };
   } catch {
-    return emptyCurrentMonthPayload(currentMonth, SHEET_URL, `${currentMonth.sheetName} 탭을 찾지 못했거나 일정 데이터를 불러오지 못했습니다.`);
+    return emptyCurrentMonthPayload(
+      currentMonth,
+      getKnownMonthSourceUrl(currentMonth) || SHEET_URL,
+      `${currentMonth.sheetName} 탭을 찾지 못했거나 일정 데이터를 불러오지 못했습니다.`,
+    );
   }
 }
 
@@ -177,7 +194,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      ...emptyCurrentMonthPayload(currentMonth),
+      ...emptyCurrentMonthPayload(currentMonth, getKnownMonthSourceUrl(currentMonth) || SHEET_URL),
       cache: 'unavailable',
       cacheKey,
     });
