@@ -1,4 +1,4 @@
-import { normalizeScheduleText } from '../../lib/scheduleSheet';
+import { fetchRowsByGid, normalizeScheduleText } from '../../lib/scheduleSheet';
 import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
@@ -6,12 +6,13 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KNOWN_MONTH_GIDS = {
   '2026-04': '315851366',
   '2026-05': '215076926',
   '2026-06': '1486425307',
+  '2026-07': '1207442777',
 };
 
 function getMonthKey(monthInfo) {
@@ -22,8 +23,12 @@ function makeCacheKey(monthInfo) {
   return `schedule:jangjisu:${getMonthKey(monthInfo)}:${CACHE_VERSION}`;
 }
 
+function getKnownMonthGid(monthInfo) {
+  return KNOWN_MONTH_GIDS[getMonthKey(monthInfo)] || '';
+}
+
 function getKnownMonthSourceUrl(monthInfo) {
-  const gid = KNOWN_MONTH_GIDS[getMonthKey(monthInfo)] || '';
+  const gid = getKnownMonthGid(monthInfo);
   return gid ? `${SHEET_URL}?gid=${gid}#gid=${gid}` : '';
 }
 
@@ -118,7 +123,7 @@ function parseCurrentMonthRows(rows, targetYear, targetMonth) {
 function emptyCurrentMonthPayload(currentMonth, sourceUrl = SHEET_URL, message = '현재 월 일정 데이터를 불러오지 못했습니다.') {
   return {
     ok: false,
-    source: 'google_sheet_name',
+    source: 'google_sheet_gid',
     sourceUrl,
     monthLabel: currentMonth.monthLabel,
     sheetName: currentMonth.sheetName,
@@ -128,21 +133,37 @@ function emptyCurrentMonthPayload(currentMonth, sourceUrl = SHEET_URL, message =
   };
 }
 
+async function fetchCurrentMonthRows(currentMonth) {
+  const knownGid = getKnownMonthGid(currentMonth);
+  if (knownGid) {
+    const result = await fetchRowsByGid(SHEET_ID, knownGid);
+    return {
+      ...result,
+      gid: knownGid,
+      sourceUrl: `${SHEET_URL}?gid=${knownGid}#gid=${knownGid}`,
+      source: 'google_sheet_gid',
+    };
+  }
+
+  const result = await fetchMonthlySheet(SHEET_ID, currentMonth, 'short-year-month');
+  return {
+    ...result,
+    source: 'google_sheet_name',
+  };
+}
+
 async function buildFreshScheduleResponse(currentMonth) {
   try {
-    const result = await fetchMonthlySheet(SHEET_ID, currentMonth, 'short-year-month');
-    const knownSourceUrl = getKnownMonthSourceUrl(currentMonth);
-    const sourceUrl = knownSourceUrl || result.sourceUrl || SHEET_URL;
-    const gid = KNOWN_MONTH_GIDS[getMonthKey(currentMonth)] || result.gid || '';
+    const result = await fetchCurrentMonthRows(currentMonth);
     const items = parseCurrentMonthRows(result.rows, currentMonth.year, currentMonth.month);
 
     return {
       ok: items.some((item) => !item.empty),
-      source: 'google_sheet_name',
-      sourceUrl,
+      source: result.source,
+      sourceUrl: result.sourceUrl || getKnownMonthSourceUrl(currentMonth) || SHEET_URL,
       monthLabel: currentMonth.monthLabel,
       sheetName: currentMonth.sheetName,
-      gid,
+      gid: result.gid || '',
       fetchedUrl: result.fetchedUrl,
       items,
       fetchedAt: new Date().toISOString(),
