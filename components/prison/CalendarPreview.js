@@ -12,8 +12,30 @@ function parseMonthFromLabel(label) {
   return { year: Number(matched[1]), month: Number(matched[2]) };
 }
 
+function getCurrentKstDate() {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(new Date()).map((part) => [part.type, part.value]));
+  return new Date(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+}
+
 function getCurrentKstMonth() {
-  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const kst = getCurrentKstDate();
   const year = kst.getFullYear();
   const month = kst.getMonth() + 1;
   return { year, month, monthLabel: `${year}년 ${month}월` };
@@ -76,14 +98,14 @@ function FilterButton({ label, image, active, linked, onClick }) {
 
 export default function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체보기');
-  const [centerDate, setCenterDate] = useState(() => startOfDay(new Date()));
-  const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], loaded: false }])));
+  const [centerDate, setCenterDate] = useState(() => startOfDay(getCurrentKstDate()));
+  const [scheduleState, setScheduleState] = useState(() => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, { monthLabel: '', items: [], sourceUrl: '', loaded: false }])));
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
-      const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(source.endpoint).then((res) => res.json())));
+      const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(`${source.endpoint}?t=${Date.now()}`, { cache: 'no-store' }).then((res) => res.json())));
       if (!mounted) return;
       const nextState = {};
       PRISON_SCHEDULE_SOURCES.forEach((source, index) => {
@@ -91,6 +113,7 @@ export default function CalendarPreview() {
         nextState[source.key] = {
           monthLabel: result.status === 'fulfilled' ? result.value.monthLabel || '' : '',
           items: result.status === 'fulfilled' && Array.isArray(result.value.items) ? result.value.items : [],
+          sourceUrl: result.status === 'fulfilled' ? result.value.sourceUrl || source.sourceUrl || '' : source.sourceUrl || '',
           loaded: true,
         };
       });
@@ -109,7 +132,7 @@ export default function CalendarPreview() {
   const monthLabel = currentMonth.monthLabel;
   const parsedMonth = currentMonth;
   const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => {
-    const state = scheduleState[source.key] || { monthLabel: '', items: [], loaded: false };
+    const state = scheduleState[source.key] || { monthLabel: '', items: [], sourceUrl: '', loaded: false };
     const entryMonth = parseMonthFromLabel(state.monthLabel);
     const keepCurrentMonth = isSameMonth(entryMonth, currentMonth);
     return {
@@ -163,7 +186,7 @@ export default function CalendarPreview() {
     return map;
   }, [visibleSchedules]);
   const memberCalendarCells = useMemo(() => buildCalendarCells(monthLabel, selectedSource?.items || []), [monthLabel, selectedSource]);
-  const today = new Date();
+  const today = getCurrentKstDate();
 
   if (!isLoaded || !parsedMonth) return <div id="schedule" aria-hidden="true" style={{ display: 'none' }} />;
 
@@ -197,7 +220,7 @@ export default function CalendarPreview() {
                 const day = Number(cell.dayNumber);
                 const hasItem = Boolean(String(cell.title || '').trim());
                 const offDay = String(cell.title || '').includes('휴방');
-                const isToday = today.getMonth() + 1 === parsedMonth.month && today.getDate() === day;
+                const isToday = today.getFullYear() === parsedMonth.year && today.getMonth() + 1 === parsedMonth.month && today.getDate() === day;
                 return (
                   <div key={day} className={`group relative min-h-[82px] overflow-hidden rounded-[16px] p-2 transition-all duration-300 hover:-translate-y-1 sm:min-h-[132px] sm:rounded-[22px] sm:p-3.5 ${isToday ? 'bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[inset_0_0_0_1px_rgba(103,232,249,0.16),0_0_22px_rgba(103,232,249,0.08)]' : offDay ? 'bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] shadow-[inset_0_0_0_1px_rgba(251,146,60,0.12)]' : hasItem ? 'bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
                     <div className="relative flex items-start justify-between gap-1 sm:gap-2">
