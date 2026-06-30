@@ -13,24 +13,14 @@ function parseMonthFromLabel(label) {
 }
 
 function getCurrentKstDate() {
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hourCycle: 'h23',
-  });
-  const parts = Object.fromEntries(formatter.formatToParts(new Date()).map((part) => [part.type, part.value]));
+  const shifted = new Date(Date.now() + (9 * 60 * 60 * 1000));
   return new Date(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour),
-    Number(parts.minute),
-    Number(parts.second),
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate(),
+    shifted.getUTCHours(),
+    shifted.getUTCMinutes(),
+    shifted.getUTCSeconds(),
   );
 }
 
@@ -128,7 +118,17 @@ export default function CalendarPreview() {
     };
   }, []);
 
-  const currentMonth = useMemo(() => getCurrentKstMonth(), []);
+  const currentMonth = useMemo(() => {
+    const jangjisuMonth = parseMonthFromLabel(scheduleState.jangjisu?.monthLabel);
+    if (jangjisuMonth) {
+      return {
+        ...jangjisuMonth,
+        monthLabel: `${jangjisuMonth.year}년 ${jangjisuMonth.month}월`,
+      };
+    }
+    return getCurrentKstMonth();
+  }, [scheduleState.jangjisu?.monthLabel]);
+
   const monthLabel = currentMonth.monthLabel;
   const parsedMonth = currentMonth;
   const scheduleEntries = useMemo(() => PRISON_SCHEDULE_SOURCES.map((source) => {
@@ -220,11 +220,12 @@ export default function CalendarPreview() {
                 const day = Number(cell.dayNumber);
                 const hasItem = Boolean(String(cell.title || '').trim());
                 const offDay = String(cell.title || '').includes('휴방');
+                const weekdayIndex = new Date(parsedMonth.year, parsedMonth.month - 1, day).getDay();
                 const isToday = today.getFullYear() === parsedMonth.year && today.getMonth() + 1 === parsedMonth.month && today.getDate() === day;
                 return (
                   <div key={day} className={`group relative min-h-[82px] overflow-hidden rounded-[16px] p-2 transition-all duration-300 hover:-translate-y-1 sm:min-h-[132px] sm:rounded-[22px] sm:p-3.5 ${isToday ? 'bg-[linear-gradient(180deg,rgba(7,27,46,0.98),rgba(5,12,24,0.98))] shadow-[inset_0_0_0_1px_rgba(103,232,249,0.16),0_0_22px_rgba(103,232,249,0.08)]' : offDay ? 'bg-[linear-gradient(180deg,rgba(34,20,7,0.82),rgba(8,14,25,0.98))] shadow-[inset_0_0_0_1px_rgba(251,146,60,0.12)]' : hasItem ? 'bg-[linear-gradient(180deg,rgba(11,23,38,0.96),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
                     <div className="relative flex items-start justify-between gap-1 sm:gap-2">
-                      <div className={`text-[12px] font-black sm:text-[17px] ${[5, 12, 19, 26].includes(day) ? 'text-[#ff8e8e]' : [4, 11, 18, 25].includes(day) ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                      <div className={`text-[12px] font-black sm:text-[17px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
                       {isToday ? <span className="rounded-full bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 shadow-[0_0_12px_rgba(103,232,249,0.16)] sm:px-2 sm:text-[10px]">TODAY</span> : hasItem ? <span className={`mt-1 h-2 w-2 rounded-full sm:mt-1.5 sm:h-2.5 sm:w-2.5 ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
                     </div>
                     {hasItem ? <div className={`relative mt-2 line-clamp-3 text-[9px] font-black leading-4 break-keep sm:mt-4 sm:text-[13px] sm:leading-6 ${offDay ? 'text-rose-100' : 'text-white/92'}`}>{cell.title}</div> : null}
