@@ -1,11 +1,24 @@
-import { detectMonthFromRows, parseScheduleListRows, parseScheduleRows, pickBestSchedule } from '../../lib/scheduleSheet';
+import { detectMonthFromRows, fetchRowsByGid, parseScheduleListRows, parseScheduleRows, pickBestSchedule } from '../../lib/scheduleSheet';
 import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo, makeMonthlyScheduleCacheKey, sameScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0';
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_PREFIX = 'schedule:rinring:v5';
+const CACHE_PREFIX = 'schedule:rinring:v6';
+const MONTHLY_GIDS = {
+  '2026-07': '1838232194',
+};
+
+function getMonthKey(monthInfo) {
+  return `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
+}
+
+function getSheetUrl(gid = '') {
+  return gid
+    ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}#gid=${gid}`
+    : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+}
 
 function sanitizeRinringScheduleItems(items) {
   return items.map((item) => {
@@ -26,10 +39,10 @@ function sanitizeRinringScheduleItems(items) {
   });
 }
 
-function emptyCurrentMonthPayload(currentMonth, sourceUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, fetchedUrl = '') {
+function emptyCurrentMonthPayload(currentMonth, sourceUrl = getSheetUrl(), fetchedUrl = '') {
   return {
     ok: false,
-    source: 'google_sheet_name',
+    source: 'google_sheet_gid',
     sourceUrl,
     monthLabel: currentMonth.monthLabel,
     sheetName: `${currentMonth.month}월 일정표`,
@@ -40,8 +53,17 @@ function emptyCurrentMonthPayload(currentMonth, sourceUrl = `https://docs.google
   };
 }
 
+async function fetchCurrentMonthRows(currentMonth) {
+  const gid = MONTHLY_GIDS[getMonthKey(currentMonth)] || '';
+  if (gid) {
+    const result = await fetchRowsByGid(SHEET_ID, gid);
+    return { ...result, gid, sheetName: `${currentMonth.month}월 일정표`, sourceUrl: getSheetUrl(gid) };
+  }
+  return fetchMonthlySheet(SHEET_ID, currentMonth, 'month-schedule');
+}
+
 async function buildFreshScheduleResponse(currentMonth) {
-  const { rows, fetchedUrl, sourceUrl, sheetName, gid } = await fetchMonthlySheet(SHEET_ID, currentMonth, 'month-schedule');
+  const { rows, fetchedUrl, sourceUrl, sheetName, gid } = await fetchCurrentMonthRows(currentMonth);
   const detected = detectMonthFromRows(rows, new Date());
 
   if (detected && !sameScheduleMonth(detected, currentMonth)) {
@@ -58,7 +80,7 @@ async function buildFreshScheduleResponse(currentMonth) {
 
   return {
     ok: true,
-    source: 'google_sheet_name',
+    source: gid ? 'google_sheet_gid' : 'google_sheet_name',
     sourceUrl,
     monthLabel: currentMonth.monthLabel,
     sheetName,
