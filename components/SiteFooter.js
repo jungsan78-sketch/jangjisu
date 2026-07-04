@@ -38,41 +38,50 @@ export default function SiteFooter({ className = '' }) {
 
       {dreamMenuOpen ? (
         <div
-          className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/72 px-5 backdrop-blur-md"
+          className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/90 px-5 backdrop-blur-sm"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setDreamMenuOpen(false);
           }}
         >
-          <div className="w-full max-w-sm rounded-[28px] border border-cyan-200/15 bg-[#08101d]/98 p-5 text-white shadow-[0_30px_100px_rgba(0,0,0,0.72),0_0_48px_rgba(34,211,238,0.12)]">
-            <div className="mb-5 flex items-center justify-between gap-4">
+          <div className="w-full max-w-md rounded-[30px] border border-white/16 bg-[#08111f] p-6 text-white shadow-[0_34px_110px_rgba(0,0,0,0.88),0_0_0_1px_rgba(255,255,255,0.03),0_0_60px_rgba(34,211,238,0.14)] sm:p-7">
+            <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <div className="text-lg font-black tracking-tight">지수의꿈 서버</div>
-                <div className="mt-1 text-xs font-bold text-white/45">이동할 메뉴를 선택해주세요.</div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-200/20 bg-cyan-300/12 text-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">◉</span>
+                  <div className="text-[22px] font-black tracking-tight text-white">지수의꿈 서버</div>
+                </div>
+                <div className="mt-3 text-sm font-bold leading-6 text-white/70">원하는 메뉴를 선택해주세요.</div>
               </div>
               <button
                 type="button"
                 onClick={() => setDreamMenuOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-lg font-black text-white/65 transition hover:bg-white/[0.11] hover:text-white"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-xl font-black text-white/80 transition hover:bg-white/[0.14] hover:text-white"
                 aria-label="닫기"
               >
                 ×
               </button>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid gap-4">
               <a
                 href={PARTICIPANT_LIST_URL}
-                className="flex items-center justify-between rounded-2xl border border-cyan-200/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.13),rgba(59,130,246,0.09))] px-5 py-4 text-sm font-black text-cyan-50 transition hover:-translate-y-0.5 hover:border-cyan-100/30 hover:bg-[linear-gradient(135deg,rgba(34,211,238,0.20),rgba(59,130,246,0.14))]"
+                className="group flex items-center justify-between rounded-[22px] border border-cyan-200/28 bg-[#0d2233] px-5 py-5 text-base font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_14px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 hover:border-cyan-100/45 hover:bg-[#123049]"
               >
-                <span>참가자 목록</span>
-                <span className="text-cyan-200/70">→</span>
+                <div>
+                  <div className="text-[17px] font-black text-cyan-50">참가자 목록</div>
+                  <div className="mt-1 text-xs font-bold text-cyan-100/65">신청자와 순위를 확인합니다.</div>
+                </div>
+                <span className="text-xl text-cyan-200 transition group-hover:translate-x-1">→</span>
               </a>
               <a
                 href={SERVER_WIKI_URL}
-                className="flex items-center justify-between rounded-2xl border border-violet-200/15 bg-[linear-gradient(135deg,rgba(139,92,246,0.13),rgba(59,130,246,0.08))] px-5 py-4 text-sm font-black text-violet-50 transition hover:-translate-y-0.5 hover:border-violet-100/30 hover:bg-[linear-gradient(135deg,rgba(139,92,246,0.20),rgba(59,130,246,0.13))]"
+                className="group flex items-center justify-between rounded-[22px] border border-violet-200/28 bg-[#1a1730] px-5 py-5 text-base font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_14px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 hover:border-violet-100/45 hover:bg-[#252044]"
               >
-                <span>서버 위키</span>
-                <span className="text-violet-200/70">→</span>
+                <div>
+                  <div className="text-[17px] font-black text-violet-50">서버 위키</div>
+                  <div className="mt-1 text-xs font-bold text-violet-100/65">서버 정보와 이용 안내를 확인합니다.</div>
+                </div>
+                <span className="text-xl text-violet-200 transition group-hover:translate-x-1">→</span>
               </a>
             </div>
           </div>
