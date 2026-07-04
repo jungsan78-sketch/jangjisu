@@ -48,7 +48,7 @@ export default function Home() {
     };
 
     const handleModeDirectNavigation = (event) => {
-      const link = event.target?.closest?.('a[href="/jangjisu-prison"], a[href="/jisu-dream"]');
+      const link = event.target?.closest?.('a[href="/jangjisu-prison"]');
       if (!link) return;
       event.preventDefault();
       event.stopPropagation();
