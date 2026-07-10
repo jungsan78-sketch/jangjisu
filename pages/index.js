@@ -133,7 +133,7 @@ export default function Home() {
         </div>
         <SOUCinematicHero />
         <MainJangJisuNoticeSection />
-        <div className="lg:pl-[218px]">
+        <div className="lg:pl-[250px]">
           <SiteFooter />
         </div>
       </div>
@@ -143,18 +143,18 @@ export default function Home() {
         .jangjisu-left-nav-mode footer { display: none !important; }
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
-            padding-left: 218px !important;
+            padding-left: 250px !important;
           }
 
           .jangjisu-left-nav-mode header {
             position: fixed !important;
             inset: 0 auto 0 0 !important;
             z-index: 70 !important;
-            width: 218px !important;
-            border-right: 1px solid rgba(255,255,255,0.10) !important;
+            width: 250px !important;
+            border-right: 1px solid rgba(255,255,255,0.12) !important;
             border-bottom: 0 !important;
-            background: linear-gradient(180deg, rgba(3,7,18,0.96), rgba(5,10,20,0.92)) !important;
-            box-shadow: 24px 0 70px rgba(0,0,0,0.34) !important;
+            background: linear-gradient(180deg, rgba(3,7,18,0.98), rgba(5,10,20,0.94)) !important;
+            box-shadow: 28px 0 78px rgba(0,0,0,0.36) !important;
           }
 
           .jangjisu-left-nav-mode header > div {
@@ -163,14 +163,14 @@ export default function Home() {
             flex-direction: column !important;
             align-items: stretch !important;
             justify-content: flex-start !important;
-            gap: 22px !important;
-            padding: 22px 16px !important;
+            gap: 24px !important;
+            padding: 24px 20px !important;
           }
 
           .jangjisu-left-nav-mode header a[href="#"] {
             margin: 0 auto !important;
-            height: 72px !important;
-            width: 72px !important;
+            height: 78px !important;
+            width: 78px !important;
           }
 
           .jangjisu-left-nav-mode header nav,
@@ -182,36 +182,53 @@ export default function Home() {
 
           .jangjisu-left-nav-mode header nav {
             flex: 1 !important;
-            gap: 16px !important;
+            gap: 17px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav::after {
+            content: 'JANGJISU FAN HUB';
+            display: block;
+            margin: 10px 2px 0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 14px;
+            color: rgba(180,205,235,0.46);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.18em;
           }
 
           .jangjisu-left-nav-mode header nav > div:first-child,
           .jangjisu-left-nav-mode header nav > div:last-child {
             display: flex !important;
             flex-direction: column !important;
-            gap: 9px !important;
+            gap: 10px !important;
           }
 
           .jangjisu-left-nav-mode header nav > div:last-child {
             margin-top: auto !important;
-            border-top: 1px solid rgba(255,255,255,0.10) !important;
-            padding-top: 14px !important;
+            border-top: 1px solid rgba(255,255,255,0.12) !important;
+            padding-top: 16px !important;
           }
 
           .jangjisu-left-nav-mode header nav a {
             width: 100% !important;
+            min-height: 48px !important;
             justify-content: flex-start !important;
             border-radius: 18px !important;
-            padding: 12px 14px !important;
+            padding: 13px 16px !important;
+            font-size: 14px !important;
+            letter-spacing: -0.01em !important;
           }
 
           .jangjisu-left-nav-mode header nav a > span:first-child {
             display: inline-flex !important;
-            width: 26px !important;
-            min-width: 26px !important;
+            width: 30px !important;
+            min-width: 30px !important;
+            height: 30px !important;
+            align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            font-size: 10px !important;
+            font-size: 11px !important;
             font-weight: 900 !important;
             letter-spacing: 0.04em !important;
           }
@@ -220,23 +237,26 @@ export default function Home() {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
+            font-size: 14px !important;
+            font-weight: 900 !important;
+            line-height: 1.15 !important;
           }
 
           .jangjisu-left-nav-mode .sou-jisu-dream-mode-link {
-            border-color: rgba(103,232,249,0.24) !important;
-            background: linear-gradient(135deg, rgba(34,211,238,0.17), rgba(139,92,246,0.12)) !important;
-            color: #cffafe !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 26px rgba(34,211,238,0.08) !important;
+            border-color: rgba(103,232,249,0.32) !important;
+            background: linear-gradient(135deg, rgba(34,211,238,0.22), rgba(139,92,246,0.15)) !important;
+            color: #e0faff !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 32px rgba(34,211,238,0.12) !important;
           }
 
           .jangjisu-left-nav-mode .sou-jisu-dream-mode-link > span:first-child {
-            height: 26px !important;
-            width: 26px !important;
-            min-width: 26px !important;
+            height: 30px !important;
+            width: 30px !important;
+            min-width: 30px !important;
             align-items: center !important;
-            border: 1px solid rgba(255,255,255,0.20) !important;
+            border: 1px solid rgba(255,255,255,0.24) !important;
             border-radius: 999px !important;
-            background: linear-gradient(180deg, rgba(103,232,249,0.28) 0 48%, rgba(255,255,255,0.08) 48% 52%, rgba(8,15,28,0.72) 52% 100%) !important;
+            background: linear-gradient(180deg, rgba(103,232,249,0.34) 0 48%, rgba(255,255,255,0.10) 48% 52%, rgba(8,15,28,0.78) 52% 100%) !important;
             color: white !important;
           }
 
