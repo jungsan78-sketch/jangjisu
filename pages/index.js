@@ -133,7 +133,7 @@ export default function Home() {
         </div>
         <SOUCinematicHero />
         <MainJangJisuNoticeSection />
-        <div className="lg:pl-[250px]">
+        <div className="lg:pl-[258px]">
           <SiteFooter />
         </div>
       </div>
@@ -143,14 +143,14 @@ export default function Home() {
         .jangjisu-left-nav-mode footer { display: none !important; }
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
-            padding-left: 250px !important;
+            padding-left: 258px !important;
           }
 
           .jangjisu-left-nav-mode header {
             position: fixed !important;
             inset: 0 auto 0 0 !important;
             z-index: 70 !important;
-            width: 250px !important;
+            width: 258px !important;
             border-right: 1px solid rgba(255,255,255,0.12) !important;
             border-bottom: 0 !important;
             background: linear-gradient(180deg, rgba(3,7,18,0.98), rgba(5,10,20,0.94)) !important;
@@ -164,13 +164,13 @@ export default function Home() {
             align-items: stretch !important;
             justify-content: flex-start !important;
             gap: 24px !important;
-            padding: 24px 20px !important;
+            padding: 24px 21px !important;
           }
 
           .jangjisu-left-nav-mode header a[href="#"] {
             margin: 0 auto !important;
-            height: 78px !important;
-            width: 78px !important;
+            height: 80px !important;
+            width: 80px !important;
           }
 
           .jangjisu-left-nav-mode header nav,
@@ -212,23 +212,23 @@ export default function Home() {
 
           .jangjisu-left-nav-mode header nav a {
             width: 100% !important;
-            min-height: 48px !important;
+            min-height: 52px !important;
             justify-content: flex-start !important;
-            border-radius: 18px !important;
-            padding: 13px 16px !important;
-            font-size: 14px !important;
-            letter-spacing: -0.01em !important;
+            border-radius: 19px !important;
+            padding: 14px 17px !important;
+            font-size: 15px !important;
+            letter-spacing: -0.015em !important;
           }
 
           .jangjisu-left-nav-mode header nav a > span:first-child {
             display: inline-flex !important;
-            width: 30px !important;
-            min-width: 30px !important;
-            height: 30px !important;
+            width: 32px !important;
+            min-width: 32px !important;
+            height: 32px !important;
             align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
             font-weight: 900 !important;
             letter-spacing: 0.04em !important;
           }
@@ -237,7 +237,7 @@ export default function Home() {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
-            font-size: 14px !important;
+            font-size: 15px !important;
             font-weight: 900 !important;
             line-height: 1.15 !important;
           }
@@ -250,9 +250,9 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode .sou-jisu-dream-mode-link > span:first-child {
-            height: 30px !important;
-            width: 30px !important;
-            min-width: 30px !important;
+            height: 32px !important;
+            width: 32px !important;
+            min-width: 32px !important;
             align-items: center !important;
             border: 1px solid rgba(255,255,255,0.24) !important;
             border-radius: 999px !important;
