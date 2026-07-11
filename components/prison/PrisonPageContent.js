@@ -57,9 +57,7 @@ function SidebarNavItem({ href, label, icon, tone = 'blue', external = false, co
       ? 'text-red-50 hover:bg-red-500/10 hover:shadow-[0_0_26px_rgba(239,68,68,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
       : tone === 'gold'
         ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-        : tone === 'dream'
-          ? 'border border-cyan-200/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(139,92,246,0.10))] text-cyan-50 hover:bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(139,92,246,0.14))] hover:shadow-[0_0_28px_rgba(34,211,238,0.12),inset_0_1px_0_rgba(255,255,255,0.08)]'
-          : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
+        : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
     <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center ${compact ? 'justify-center gap-2 px-2.5' : 'gap-3 px-4'} rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
@@ -209,7 +207,6 @@ function PrisonSidebar() {
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
-        <SidebarNavItem href="/jisu-dream" label="지수의꿈 서버" icon="◉" tone="dream" />
       </nav>
 
       <LiveMemberList />
@@ -229,7 +226,6 @@ function MobilePrisonNav() {
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <a href="#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
         <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">SOU 아카이브</a>
-        <a href="/jisu-dream" className="shrink-0 rounded-full bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(139,92,246,0.10))] px-4 py-2 text-xs font-black text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">◉ 지수의꿈 서버</a>
         <a href="#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
