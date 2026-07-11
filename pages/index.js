@@ -28,7 +28,7 @@ export default function Home() {
       if (placeholder) placeholder.remove();
 
       const scheduleSection = document.getElementById('schedule');
-      const mainNotice = Array.from(document.querySelectorAll('section#notice')).find((section) => section.textContent?.includes('장지수 공지'));
+      const mainNotice = Array.from(document.querySelectorAll('section#notice')).find((section) => section.textContent?.includes('공지사항'));
       if (scheduleSection && mainNotice && scheduleSection.nextElementSibling !== mainNotice) {
         scheduleSection.insertAdjacentElement('afterend', mainNotice);
       }
@@ -155,19 +155,19 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode header a[href="#"] {
-            margin: 0 auto 8px !important;
-            height: 98px !important;
-            width: 98px !important;
-            min-height: 98px !important;
+            margin: 0 auto 10px !important;
+            height: 108px !important;
+            width: 108px !important;
+            min-height: 108px !important;
             padding: 0 !important;
           }
 
           .jangjisu-left-nav-mode header a[href="#"] img,
           .jangjisu-left-nav-mode header a[href="#"] > * {
-            width: 98px !important;
-            height: 98px !important;
-            max-width: 98px !important;
-            max-height: 98px !important;
+            width: 108px !important;
+            height: 108px !important;
+            max-width: 108px !important;
+            max-height: 108px !important;
           }
 
           .jangjisu-left-nav-mode header nav,
@@ -183,15 +183,8 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode header nav::after {
-            content: 'JANGJISU FAN HUB';
-            display: block;
-            margin: 8px 4px 0;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 14px;
-            color: rgba(180,205,235,0.46);
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.18em;
+            content: none !important;
+            display: none !important;
           }
 
           .jangjisu-left-nav-mode header nav > div:first-child,
@@ -374,6 +367,20 @@ export default function Home() {
             max-width: 80rem !important;
             margin-left: auto !important;
             margin-right: auto !important;
+          }
+
+          .jangjisu-left-nav-mode main > section:not(:first-of-type),
+          .jangjisu-left-nav-mode section#notice,
+          .jangjisu-left-nav-mode #schedule {
+            border-color: transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+          }
+
+          .jangjisu-left-nav-mode section#notice,
+          .jangjisu-left-nav-mode #schedule {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
           }
         }
       `}</style>
