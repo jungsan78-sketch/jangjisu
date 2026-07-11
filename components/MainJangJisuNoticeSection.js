@@ -18,7 +18,7 @@ function formatRelativeTime(value) {
 
 function NoticeCard({ item }) {
   return (
-    <a href={item.url} target="_blank" rel="noreferrer" className="group relative block min-h-[210px] overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_20%_0%,rgba(59,130,246,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-1 hover:border-blue-200/35 hover:bg-white/[0.07] hover:shadow-[0_28px_90px_rgba(0,0,0,0.32)]">
+    <a href={item.url} target="_blank" rel="noreferrer" className="group relative block min-h-[210px] overflow-hidden rounded-[26px] border border-white/[0.075] bg-[radial-gradient(circle_at_20%_0%,rgba(59,130,246,0.13),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.022))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-1 hover:border-blue-200/24 hover:bg-white/[0.065] hover:shadow-[0_28px_90px_rgba(0,0,0,0.28)]">
       <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue-200/[0.035] transition group-hover:bg-blue-200/[0.07]" />
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
@@ -33,7 +33,7 @@ function NoticeCard({ item }) {
       </div>
 
       <div className="relative mt-5 line-clamp-2 text-[17px] font-black leading-7 text-white">{item.title}</div>
-      <div className="relative mt-3 line-clamp-3 min-h-[66px] rounded-[18px] border border-white/[0.07] bg-black/15 px-4 py-3 text-[13px] font-semibold leading-[22px] text-white/65">
+      <div className="relative mt-3 line-clamp-3 min-h-[66px] rounded-[18px] border border-white/[0.055] bg-black/12 px-4 py-3 text-[13px] font-semibold leading-[22px] text-white/65">
         {item.summary || '본문 요약을 불러오는 중입니다.'}
       </div>
       <div className="relative mt-4 flex items-center justify-between">
@@ -72,12 +72,12 @@ export default function MainJangJisuNoticeSection() {
   }, []);
 
   return (
-    <section id="notice" className="relative mx-auto mt-8 max-w-7xl rounded-[32px] border border-white/10 bg-white/[0.04] p-6 text-white shadow-xl shadow-black/20 lg:p-8">
+    <section id="notice" className="relative mx-auto mt-8 max-w-7xl rounded-[32px] border border-transparent bg-transparent p-6 text-white shadow-none lg:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-200/20 bg-blue-500/12 text-lg text-blue-100">📢</span>
           <div>
-            <h3 className="text-[28px] font-black tracking-tight text-white sm:text-[34px]">장지수 공지</h3>
+            <h3 className="text-[28px] font-black tracking-tight text-white sm:text-[34px]">공지사항</h3>
             <p className="mt-1 text-sm font-semibold text-white/45">장지수 방송국에 직접 올라온 최근 글만 보여줍니다.</p>
           </div>
         </div>
@@ -85,13 +85,13 @@ export default function MainJangJisuNoticeSection() {
       </div>
 
       {!loaded ? (
-        <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm font-semibold text-white/65">장지수 공지를 불러오는 중입니다.</div>
+        <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm font-semibold text-white/65">공지를 불러오는 중입니다.</div>
       ) : notices.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {notices.slice(0, 6).map((item) => <NoticeCard key={item.id} item={item} />)}
         </div>
       ) : (
-        <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm font-semibold text-white/65">최근 1주일 기준으로 수집된 장지수 공지가 없습니다.</div>
+        <div className="rounded-[24px] border border-white/10 bg-[#0b0f17] p-6 text-sm font-semibold text-white/65">최근 1주일 기준으로 수집된 공지가 없습니다.</div>
       )}
     </section>
   );
