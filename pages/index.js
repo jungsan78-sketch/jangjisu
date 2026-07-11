@@ -18,21 +18,8 @@ export default function Home() {
       }
     };
 
-    const ensureDreamServerModeLink = () => {
-      const prisonLink = document.querySelector('a[href="/jangjisu-prison"]');
-      if (!prisonLink || document.querySelector('a[href="/jisu-dream"]')) return;
-
-      const dreamLink = prisonLink.cloneNode(true);
-      dreamLink.setAttribute('href', '/jisu-dream');
-      dreamLink.classList.add('sou-jisu-dream-mode-link');
-      dreamLink.removeAttribute('onclick');
-
-      const spans = dreamLink.querySelectorAll('span');
-      if (spans[0]) spans[0].textContent = '◉';
-      if (spans[1]) spans[1].textContent = '지수의꿈 서버';
-      if (!spans.length) dreamLink.textContent = '◉ 지수의꿈 서버';
-
-      prisonLink.insertAdjacentElement('beforebegin', dreamLink);
+    const removeDreamServerModeLink = () => {
+      document.querySelectorAll('a[href="/jisu-dream"], .sou-jisu-dream-mode-link').forEach((link) => link.remove());
     };
 
     const placeMainNoticeAfterSchedule = () => {
@@ -82,7 +69,7 @@ export default function Home() {
 
     const finalizeLayout = () => {
       moveUtilityMenu();
-      ensureDreamServerModeLink();
+      removeDreamServerModeLink();
       placeMainNoticeAfterSchedule();
       prioritizeYoutubeTabs();
       setIsLayoutReady(true);
@@ -92,13 +79,13 @@ export default function Home() {
     finalizeLayout();
 
     const utilityTimer = setTimeout(moveUtilityMenu, 300);
-    const dreamTimer = setTimeout(ensureDreamServerModeLink, 300);
+    const dreamCleanupTimer = setTimeout(removeDreamServerModeLink, 300);
     const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 300);
     const readyTimer = setTimeout(() => {
       finalizeLayout();
     }, 520);
     const youtubeInterval = setInterval(() => {
-      ensureDreamServerModeLink();
+      removeDreamServerModeLink();
       placeMainNoticeAfterSchedule();
       if (prioritizeYoutubeTabs() && didActivateShorts) {
         clearInterval(youtubeInterval);
@@ -112,7 +99,7 @@ export default function Home() {
     return () => {
       document.removeEventListener('click', handleModeDirectNavigation, true);
       clearTimeout(utilityTimer);
-      clearTimeout(dreamTimer);
+      clearTimeout(dreamCleanupTimer);
       clearTimeout(noticeTimer);
       clearTimeout(readyTimer);
       clearInterval(youtubeInterval);
@@ -168,7 +155,7 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode header a[href="#"] {
-            margin: 0 auto !important;
+            margin: 0 auto 2px !important;
             height: 80px !important;
             width: 80px !important;
           }
@@ -182,13 +169,13 @@ export default function Home() {
 
           .jangjisu-left-nav-mode header nav {
             flex: 1 !important;
-            gap: 16px !important;
+            gap: 18px !important;
           }
 
           .jangjisu-left-nav-mode header nav::after {
             content: 'JANGJISU FAN HUB';
             display: block;
-            margin: 10px 2px 0;
+            margin: 8px 4px 0;
             border-top: 1px solid rgba(255,255,255,0.08);
             padding-top: 14px;
             color: rgba(180,205,235,0.46);
@@ -197,31 +184,127 @@ export default function Home() {
             letter-spacing: 0.18em;
           }
 
-          .jangjisu-left-nav-mode header nav > div:first-child {
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-          }
-
+          .jangjisu-left-nav-mode header nav > div:first-child,
           .jangjisu-left-nav-mode header nav > div:last-child {
             display: flex !important;
             flex-direction: column !important;
-            gap: 10px !important;
+            gap: 15px !important;
+          }
+
+          .jangjisu-left-nav-mode header nav > div:last-child {
             margin-top: auto !important;
             border-top: 1px solid rgba(255,255,255,0.12) !important;
             padding-top: 16px !important;
           }
 
-          .jangjisu-left-nav-mode header nav a {
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]) {
+            position: relative !important;
+            display: flex !important;
+            width: 100% !important;
+            min-height: 34px !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 4px 4px 4px 18px !important;
+            color: rgba(232,241,255,0.78) !important;
+            font-size: 15px !important;
+            font-weight: 900 !important;
+            letter-spacing: -0.01em !important;
+            box-shadow: none !important;
+            transform: none !important;
+            transition: color 220ms ease, transform 220ms ease, letter-spacing 220ms ease !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"])::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: 50%;
+            width: 5px;
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(125,211,252,0.44);
+            box-shadow: 0 0 14px rgba(56,189,248,0.18);
+            transform: translateY(-50%);
+            transition: width 220ms ease, background 220ms ease, box-shadow 220ms ease;
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"])::after {
+            content: '';
+            position: absolute;
+            left: 18px;
+            right: 12px;
+            bottom: -3px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(125,211,252,0.0), rgba(125,211,252,0.34), rgba(125,211,252,0.0));
+            opacity: 0;
+            transform: scaleX(0.2);
+            transition: opacity 220ms ease, transform 220ms ease;
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]):hover {
+            color: #ffffff !important;
+            letter-spacing: 0.01em !important;
+            transform: translateX(5px) !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]):hover::before {
+            width: 16px;
+            background: #67e8f9;
+            box-shadow: 0 0 18px rgba(103,232,249,0.58);
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]):hover::after {
+            opacity: 1;
+            transform: scaleX(1);
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]) > span:first-child {
+            display: none !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]) > span:nth-child(2),
+          .jangjisu-left-nav-mode header nav a:not([href="/jangjisu-prison"]) > span:last-child {
+            display: inline-flex !important;
+            align-items: center !important;
+            text-align: left !important;
+            color: inherit !important;
+            font-size: 15px !important;
+            font-weight: 900 !important;
+            line-height: 1.15 !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="#youtube"] {
+            color: rgba(254,226,226,0.82) !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="#youtube"]::before {
+            background: rgba(248,113,113,0.50);
+            box-shadow: 0 0 14px rgba(248,113,113,0.18);
+          }
+
+          .jangjisu-left-nav-mode header nav a[href*="cafe.naver.com"] {
+            color: rgba(209,250,229,0.82) !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href*="cafe.naver.com"]::before {
+            background: rgba(52,211,153,0.50);
+            box-shadow: 0 0 14px rgba(52,211,153,0.18);
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"] {
             width: 100% !important;
             min-height: 52px !important;
             justify-content: flex-start !important;
             gap: 12px !important;
             border-radius: 18px !important;
-            border: 1px solid rgba(255,255,255,0.10) !important;
-            background: linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.018)) !important;
+            border: 1px solid rgba(251,191,36,0.30) !important;
+            background: linear-gradient(180deg, rgba(120,53,15,0.32), rgba(255,255,255,0.018)) !important;
             padding: 13px 16px !important;
-            color: rgba(240,249,255,0.92) !important;
+            color: #fef3c7 !important;
             font-size: 15px !important;
             font-weight: 900 !important;
             letter-spacing: -0.015em !important;
@@ -229,20 +312,13 @@ export default function Home() {
             transform: none !important;
           }
 
-          .jangjisu-left-nav-mode header nav a:hover {
+          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"]:hover {
             transform: translateY(-2px) !important;
-            background: linear-gradient(180deg, rgba(255,255,255,0.074), rgba(255,255,255,0.028)) !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 38px rgba(0,0,0,0.26), 0 0 24px rgba(56,189,248,0.10) !important;
+            background: linear-gradient(180deg, rgba(120,53,15,0.42), rgba(255,255,255,0.032)) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 38px rgba(0,0,0,0.26), 0 0 24px rgba(245,158,11,0.12) !important;
           }
 
-          .jangjisu-left-nav-mode header nav > div:first-child a {
-            min-height: 52px !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            padding: 13px 10px !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a > span:first-child {
+          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"] > span:first-child {
             display: inline-flex !important;
             width: 32px !important;
             min-width: 32px !important;
@@ -259,11 +335,7 @@ export default function Home() {
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 18px rgba(0,0,0,0.18) !important;
           }
 
-          .jangjisu-left-nav-mode header nav > div:first-child a > span:first-child {
-            display: none !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a > span:nth-child(2) {
+          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"] > span:nth-child(2) {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
@@ -271,45 +343,6 @@ export default function Home() {
             font-size: 15px !important;
             font-weight: 900 !important;
             line-height: 1.15 !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a[href="#schedule"],
-          .jangjisu-left-nav-mode header nav a[href="#notice"],
-          .jangjisu-left-nav-mode header nav a[href="/utility"] {
-            border-color: rgba(96,165,250,0.20) !important;
-            color: #e0f2fe !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a[href="#youtube"] {
-            border-color: rgba(248,113,113,0.28) !important;
-            background: linear-gradient(180deg, rgba(127,29,29,0.34), rgba(255,255,255,0.018)) !important;
-            color: #fee2e2 !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a[href*="cafe.naver.com"] {
-            border-color: rgba(52,211,153,0.24) !important;
-            background: linear-gradient(180deg, rgba(6,78,59,0.28), rgba(255,255,255,0.018)) !important;
-            color: #d1fae5 !important;
-          }
-
-          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"] {
-            border-color: rgba(251,191,36,0.30) !important;
-            background: linear-gradient(180deg, rgba(120,53,15,0.32), rgba(255,255,255,0.018)) !important;
-            color: #fef3c7 !important;
-          }
-
-          .jangjisu-left-nav-mode .sou-jisu-dream-mode-link {
-            border-color: rgba(103,232,249,0.32) !important;
-            background: linear-gradient(135deg, rgba(34,211,238,0.22), rgba(139,92,246,0.15)) !important;
-            color: #e0faff !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 32px rgba(34,211,238,0.12) !important;
-          }
-
-          .jangjisu-left-nav-mode .sou-jisu-dream-mode-link > span:first-child {
-            border: 1px solid rgba(255,255,255,0.24) !important;
-            border-radius: 999px !important;
-            background: linear-gradient(180deg, rgba(103,232,249,0.34) 0 48%, rgba(255,255,255,0.10) 48% 52%, rgba(8,15,28,0.78) 52% 100%) !important;
-            color: white !important;
           }
 
           .jangjisu-left-nav-mode main {
