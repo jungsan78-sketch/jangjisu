@@ -182,7 +182,7 @@ export default function Home() {
 
           .jangjisu-left-nav-mode header nav {
             flex: 1 !important;
-            gap: 17px !important;
+            gap: 16px !important;
           }
 
           .jangjisu-left-nav-mode header nav::after {
@@ -197,14 +197,16 @@ export default function Home() {
             letter-spacing: 0.18em;
           }
 
-          .jangjisu-left-nav-mode header nav > div:first-child,
-          .jangjisu-left-nav-mode header nav > div:last-child {
-            display: flex !important;
-            flex-direction: column !important;
+          .jangjisu-left-nav-mode header nav > div:first-child {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 10px !important;
           }
 
           .jangjisu-left-nav-mode header nav > div:last-child {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
             margin-top: auto !important;
             border-top: 1px solid rgba(255,255,255,0.12) !important;
             padding-top: 16px !important;
@@ -214,10 +216,30 @@ export default function Home() {
             width: 100% !important;
             min-height: 52px !important;
             justify-content: flex-start !important;
-            border-radius: 19px !important;
-            padding: 14px 17px !important;
+            gap: 12px !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(255,255,255,0.10) !important;
+            background: linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.018)) !important;
+            padding: 13px 16px !important;
+            color: rgba(240,249,255,0.92) !important;
             font-size: 15px !important;
+            font-weight: 900 !important;
             letter-spacing: -0.015em !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.045), 0 14px 30px rgba(0,0,0,0.20) !important;
+            transform: none !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a:hover {
+            transform: translateY(-2px) !important;
+            background: linear-gradient(180deg, rgba(255,255,255,0.074), rgba(255,255,255,0.028)) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 38px rgba(0,0,0,0.26), 0 0 24px rgba(56,189,248,0.10) !important;
+          }
+
+          .jangjisu-left-nav-mode header nav > div:first-child a {
+            min-height: 52px !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            padding: 13px 10px !important;
           }
 
           .jangjisu-left-nav-mode header nav a > span:first-child {
@@ -227,19 +249,53 @@ export default function Home() {
             height: 32px !important;
             align-items: center !important;
             justify-content: center !important;
+            border-radius: 12px !important;
+            background: rgba(0,0,0,0.30) !important;
+            color: rgba(255,255,255,0.92) !important;
             text-align: center !important;
-            font-size: 12px !important;
+            font-size: 13px !important;
             font-weight: 900 !important;
             letter-spacing: 0.04em !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 18px rgba(0,0,0,0.18) !important;
+          }
+
+          .jangjisu-left-nav-mode header nav > div:first-child a > span:first-child {
+            display: none !important;
           }
 
           .jangjisu-left-nav-mode header nav a > span:nth-child(2) {
             display: inline-flex !important;
             align-items: center !important;
             text-align: left !important;
+            color: inherit !important;
             font-size: 15px !important;
             font-weight: 900 !important;
             line-height: 1.15 !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="#schedule"],
+          .jangjisu-left-nav-mode header nav a[href="#notice"],
+          .jangjisu-left-nav-mode header nav a[href="/utility"] {
+            border-color: rgba(96,165,250,0.20) !important;
+            color: #e0f2fe !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="#youtube"] {
+            border-color: rgba(248,113,113,0.28) !important;
+            background: linear-gradient(180deg, rgba(127,29,29,0.34), rgba(255,255,255,0.018)) !important;
+            color: #fee2e2 !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href*="cafe.naver.com"] {
+            border-color: rgba(52,211,153,0.24) !important;
+            background: linear-gradient(180deg, rgba(6,78,59,0.28), rgba(255,255,255,0.018)) !important;
+            color: #d1fae5 !important;
+          }
+
+          .jangjisu-left-nav-mode header nav a[href="/jangjisu-prison"] {
+            border-color: rgba(251,191,36,0.30) !important;
+            background: linear-gradient(180deg, rgba(120,53,15,0.32), rgba(255,255,255,0.018)) !important;
+            color: #fef3c7 !important;
           }
 
           .jangjisu-left-nav-mode .sou-jisu-dream-mode-link {
@@ -250,10 +306,6 @@ export default function Home() {
           }
 
           .jangjisu-left-nav-mode .sou-jisu-dream-mode-link > span:first-child {
-            height: 32px !important;
-            width: 32px !important;
-            min-width: 32px !important;
-            align-items: center !important;
             border: 1px solid rgba(255,255,255,0.24) !important;
             border-radius: 999px !important;
             background: linear-gradient(180deg, rgba(103,232,249,0.34) 0 48%, rgba(255,255,255,0.10) 48% 52%, rgba(8,15,28,0.78) 52% 100%) !important;
