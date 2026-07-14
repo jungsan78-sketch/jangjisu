@@ -60,7 +60,6 @@ function getBroadcastStartDay(broadcast, parsedMonth) {
   if (!endDay || !parsedMonth) return endDay;
   const durationSeconds = Number(broadcast?.durationSeconds || 0);
   if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return endDay;
-
   const spanDays = Math.floor(Math.max(0, durationSeconds - 1) / DAY_SECONDS);
   return Math.max(1, endDay - spanDays);
 }
@@ -69,6 +68,19 @@ function isMultiDayBroadcast(broadcast, parsedMonth) {
   const startDay = getBroadcastStartDay(broadcast, parsedMonth);
   const endDay = getBroadcastEndDay(broadcast);
   return Boolean(startDay && endDay && endDay > startDay);
+}
+
+function applyTitleOverrides(items, overrides) {
+  if (!overrides || typeof overrides !== 'object') return Array.isArray(items) ? items : [];
+  return (Array.isArray(items) ? items : []).map((day) => {
+    const broadcasts = (day.broadcasts || []).map((broadcast) => {
+      const override = overrides[broadcast.id] || overrides[String(broadcast.titleNo || '')];
+      const title = String(override?.title || '').trim();
+      return title ? { ...broadcast, originalTitle: broadcast.title, title } : broadcast;
+    });
+    const totalSeconds = broadcasts.reduce((sum, item) => sum + Number(item.durationSeconds || 0), 0);
+    return { ...day, broadcasts, totalSeconds, totalDurationText: formatDurationText(totalSeconds) };
+  });
 }
 
 function buildCalendarCells(monthLabel, items, selectedMember) {
@@ -113,7 +125,6 @@ function buildWeekSegments(weekCells, parsedMonth) {
   if (!parsedMonth) return [];
   const realCells = weekCells.filter(Boolean);
   if (!realCells.length) return [];
-
   const weekStart = Number(realCells[0].dayNumber);
   const weekEnd = Number(realCells[realCells.length - 1].dayNumber);
   const seen = new Set();
@@ -124,19 +135,15 @@ function buildWeekSegments(weekCells, parsedMonth) {
       const id = String(broadcast?.id || `${broadcast?.member}-${broadcast?.title}-${broadcast?._calendarDay}`);
       if (seen.has(id)) return;
       seen.add(id);
-
       const startDay = getBroadcastStartDay(broadcast, parsedMonth);
       const endDay = getBroadcastEndDay(broadcast);
       if (!startDay || !endDay || endDay <= startDay) return;
-
       const segmentStart = Math.max(startDay, weekStart);
       const segmentEnd = Math.min(endDay, weekEnd);
       if (segmentStart > segmentEnd) return;
-
       const startIndex = weekCells.findIndex((weekCell) => Number(weekCell?.dayNumber) === segmentStart);
       const endIndex = weekCells.findIndex((weekCell) => Number(weekCell?.dayNumber) === segmentEnd);
       if (startIndex < 0 || endIndex < 0) return;
-
       candidates.push({
         broadcast,
         startDay,
@@ -187,7 +194,6 @@ function MultiDayBroadcastCard({ segment }) {
         </div>
         <div className="shrink-0 rounded-2xl bg-black/24 px-3 py-2 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
           <div className="text-[13px] font-black text-teal-50 sm:text-[15px]">{duration}</div>
-          <div className="mt-0.5 text-[9px] font-black tracking-[0.18em] text-teal-100/36">PLAY</div>
         </div>
       </div>
     </a>
@@ -203,14 +209,9 @@ function BroadcastPill({ broadcast }) {
       rel="noreferrer"
       className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
     >
-      <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">
-        {duration}
-      </span>
+      <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">{duration}</span>
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
-      <div
-        className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]"
-        style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}
-      >
+      <div className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         {broadcast.title}
       </div>
       <div className="relative mt-2 flex items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
@@ -257,6 +258,7 @@ function MemberFilterButton({ stat, active, onClick }) {
 
 export default function BroadcastSummaryCalendar() {
   const [payload, setPayload] = useState(null);
+  const [overrides, setOverrides] = useState({});
   const [loaded, setLoaded] = useState(false);
   const [selectedMember, setSelectedMember] = useState('장지수');
   const [expandedDays, setExpandedDays] = useState({});
@@ -265,9 +267,16 @@ export default function BroadcastSummaryCalendar() {
     let mounted = true;
     async function load() {
       try {
-        const res = await fetch(`/api/prison-broadcast-summary?t=${Date.now()}`, { cache: 'no-store' });
-        const json = res.ok ? await res.json() : null;
-        if (mounted) setPayload(json || null);
+        const [summaryRes, overrideRes] = await Promise.all([
+          fetch(`/api/prison-broadcast-summary?t=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`/api/prison-broadcast-overrides?t=${Date.now()}`, { cache: 'no-store' }),
+        ]);
+        const json = summaryRes.ok ? await summaryRes.json() : null;
+        const overrideJson = overrideRes.ok ? await overrideRes.json() : null;
+        if (mounted) {
+          setPayload(json || null);
+          setOverrides(overrideJson?.overrides || {});
+        }
       } catch {
         if (mounted) setPayload(null);
       } finally {
@@ -288,7 +297,8 @@ export default function BroadcastSummaryCalendar() {
   const memberStats = rawMemberStats.length ? rawMemberStats : [{ member: '장지수', memberImage: '/profile-jangjisu.png', totalSeconds: 0, broadcastCount: 0 }];
   const selectedStat = memberStats.find((stat) => stat.member === selectedMember) || memberStats[0];
   const activeMember = selectedStat?.member || '장지수';
-  const items = Array.isArray(payload?.items) ? payload.items : [];
+  const rawItems = Array.isArray(payload?.items) ? payload.items : [];
+  const items = useMemo(() => applyTitleOverrides(rawItems, overrides), [rawItems, overrides]);
   const cells = useMemo(() => buildCalendarCells(monthLabel, items, activeMember), [monthLabel, items, activeMember]);
   const weeks = useMemo(() => buildWeeks(cells), [cells]);
   const totalCount = Number(payload?.totalCount || 0);
@@ -304,11 +314,7 @@ export default function BroadcastSummaryCalendar() {
   }, [activeMember, monthLabel]);
 
   return (
-    <section
-      id="broadcast-summary"
-      className="relative left-1/2 mx-auto w-full -translate-x-1/2 rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7"
-      style={{ width: 'min(calc(100vw - 326px), 3200px)', maxWidth: '3200px' }}
-    >
+    <section id="broadcast-summary" className="relative left-1/2 mx-auto w-full -translate-x-1/2 rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7" style={{ width: 'min(calc(100vw - 326px), 3200px)', maxWidth: '3200px' }}>
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
         <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
@@ -364,11 +370,7 @@ export default function BroadcastSummaryCalendar() {
                 const weekSegments = buildWeekSegments(week, parsedMonth);
                 const laneCount = weekSegments.length ? Math.max(...weekSegments.map((segment) => segment.lane)) + 1 : 0;
                 return (
-                  <div
-                    key={`week-${weekIndex}`}
-                    className="grid grid-cols-7 gap-1.5 sm:gap-3"
-                    style={{ gridTemplateRows: `auto repeat(${laneCount}, minmax(86px, auto))` }}
-                  >
+                  <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-1.5 sm:gap-3" style={{ gridTemplateRows: `auto repeat(${laneCount}, minmax(86px, auto))` }}>
                     {week.map((cell, index) => {
                       if (!cell) return <div key={`empty-${weekIndex}-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" style={{ gridColumn: index + 1, gridRow: 1 }} />;
                       const day = Number(cell.dayNumber);
@@ -391,11 +393,7 @@ export default function BroadcastSummaryCalendar() {
                           <div className="space-y-2">
                             {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
                             {broadcasts.length > 3 ? (
-                              <button
-                                type="button"
-                                onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))}
-                                className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]"
-                              >
+                              <button type="button" onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))} className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]">
                                 {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
                               </button>
                             ) : null}
