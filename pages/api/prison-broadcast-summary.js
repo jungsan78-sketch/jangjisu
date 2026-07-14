@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const MEMBER_LIMIT = 16;
 const DETAIL_LIMIT = 120;
 const REQUEST_HEADERS = {
@@ -29,12 +29,36 @@ function cacheKey(monthInfo) {
   return `prison:broadcast-summary:${monthKey(monthInfo)}:${CACHE_VERSION}`;
 }
 
+function getMonthRange(monthInfo) {
+  const lastDay = new Date(monthInfo.year, monthInfo.month, 0).getDate();
+  return {
+    startDate: `${monthInfo.year}-${pad(monthInfo.month)}-01`,
+    endDate: `${monthInfo.year}-${pad(monthInfo.month)}-${pad(lastDay)}`,
+  };
+}
+
 function toDate(value) {
   if (!value) return null;
-  const text = String(value).replace(/\./g, '-').replace(' ', 'T');
-  const date = new Date(text.includes('T') ? text : `${text}T00:00:00+09:00`);
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  if (/^\d{10}$/.test(raw)) {
+    const unix = new Date(Number(raw) * 1000);
+    return Number.isNaN(unix.getTime()) ? null : unix;
+  }
+  if (/^\d{13}$/.test(raw)) {
+    const unixMs = new Date(Number(raw));
+    return Number.isNaN(unixMs.getTime()) ? null : unixMs;
+  }
+
+  const normalized = raw.replace(/\./g, '-').replace(/\s+/g, 'T');
+  const withTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(normalized)
+    ? normalized
+    : `${normalized.includes('T') ? normalized : `${normalized}T00:00:00`}+09:00`;
+  const date = new Date(withTimezone);
   if (!Number.isNaN(date.getTime())) return date;
-  const fallback = new Date(String(value));
+
+  const fallback = new Date(raw);
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
 
@@ -53,17 +77,44 @@ function pickFirst(object, keys) {
   return '';
 }
 
+function scoreVodArray(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.reduce((score, item) => {
+    if (!item || typeof item !== 'object') return score;
+    const hasId = pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']);
+    const hasTitle = pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents']);
+    const hasDate = pickFirst(item, ['reg_date', 'regDate', 'created_at', 'createdAt', 'start_date', 'startDate', 'broad_start', 'broadStart', 'broad_start_date', 'broadStartDate', 'write_date', 'writeDate']);
+    return score + (hasId ? 3 : 0) + (hasTitle ? 2 : 0) + (hasDate ? 3 : 0);
+  }, 0);
+}
+
+function collectArrays(node, arrays = []) {
+  if (!node) return arrays;
+  if (Array.isArray(node)) {
+    arrays.push(node);
+    node.forEach((item) => collectArrays(item, arrays));
+    return arrays;
+  }
+  if (typeof node === 'object') Object.values(node).forEach((value) => collectArrays(value, arrays));
+  return arrays;
+}
+
 function extractList(json) {
-  const candidates = [
+  const directCandidates = [
     json?.data?.list,
     json?.data?.vods,
     json?.data?.items,
     json?.data?.contents,
+    json?.data?.data,
     json?.data,
     json?.list,
     json?.items,
-  ];
-  return candidates.find((item) => Array.isArray(item)) || [];
+    json?.contents,
+  ].filter(Array.isArray);
+
+  const recursiveCandidates = collectArrays(json, []);
+  return [...directCandidates, ...recursiveCandidates]
+    .sort((a, b) => scoreVodArray(b) - scoreVodArray(a) || b.length - a.length)[0] || [];
 }
 
 function secondsFromDuration(value) {
@@ -74,6 +125,12 @@ function secondsFromDuration(value) {
   if (/^\d+$/.test(text)) {
     const number = Number(text);
     return number > 100000 ? Math.floor(number / 1000) : number;
+  }
+  const koreanHour = text.match(/(\d+)\s*시간/);
+  const koreanMinute = text.match(/(\d+)\s*분/);
+  const koreanSecond = text.match(/(\d+)\s*초/);
+  if (koreanHour || koreanMinute || koreanSecond) {
+    return Number(koreanHour?.[1] || 0) * 3600 + Number(koreanMinute?.[1] || 0) * 60 + Number(koreanSecond?.[1] || 0);
   }
   const parts = text.split(':').map((part) => Number(part));
   if (parts.some((part) => Number.isNaN(part))) return 0;
@@ -146,15 +203,23 @@ function extractTimelineFromDetail(json, fallbackTitle) {
 }
 
 function parseVodItem(item, member, monthInfo) {
-  const startedAtValue = pickFirst(item, ['reg_date', 'regDate', 'created_at', 'createdAt', 'start_date', 'startDate', 'broad_start', 'broadStart', 'write_date']);
+  const startedAtValue = pickFirst(item, [
+    'reg_date', 'regDate', 'reg_datetime', 'regDatetime', 'created_at', 'createdAt',
+    'start_date', 'startDate', 'start_time', 'startTime', 'broad_start', 'broadStart',
+    'broad_start_date', 'broadStartDate', 'broad_start_time', 'broadStartTime', 'write_date', 'writeDate',
+  ]);
   const startedAt = toDate(startedAtValue);
   if (!isSameMonth(startedAt, monthInfo)) return null;
 
-  const id = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id']));
+  const id = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']));
   if (!id) return null;
 
-  const seconds = secondsFromDuration(pickFirst(item, ['duration', 'play_time', 'playTime', 'total_time', 'totalTime', 'file_duration', 'fileDuration', 'running_time', 'runningTime']));
-  const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'vod_title', 'vodTitle', 'contents'])) || '다시보기';
+  const seconds = secondsFromDuration(pickFirst(item, [
+    'duration', 'duration_time', 'durationTime', 'play_time', 'playTime', 'playtime',
+    'total_time', 'totalTime', 'total_file_duration', 'file_duration', 'fileDuration',
+    'running_time', 'runningTime', 'broad_time', 'broadTime', 'view_time', 'viewTime',
+  ]));
+  const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content'])) || '다시보기';
   const bjId = getMemberId(member);
 
   return {
@@ -187,7 +252,17 @@ async function fetchMemberVods(member, monthInfo) {
   const bjId = getMemberId(member);
   if (!bjId) return [];
 
-  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?startDate=&endDate=&keyword=&orderBy=reg_date&perPage=60&page=1&field=title,contents,user_nick,user_id`;
+  const { startDate, endDate } = getMonthRange(monthInfo);
+  const query = new URLSearchParams({
+    startDate,
+    endDate,
+    keyword: '',
+    orderBy: 'reg_date',
+    perPage: '60',
+    page: '1',
+  });
+
+  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
   const json = await fetchJson(url, { headers: { referer: `https://www.sooplive.com/station/${bjId}/vod/review` } });
   const list = extractList(json);
   return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
