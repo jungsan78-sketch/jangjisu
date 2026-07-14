@@ -231,7 +231,7 @@ export function MobilePrisonNav() {
   );
 }
 
-export function PrisonPageChrome({ children }) {
+export function PrisonPageChrome({ children, wide = false }) {
   return (
     <>
       <style jsx global>{`
@@ -251,14 +251,31 @@ export function PrisonPageChrome({ children }) {
             padding-left: 0 !important;
             padding-right: 0 !important;
           }
+          .sou-prison-main.sou-prison-main-wide {
+            width: calc(100vw - 274px) !important;
+            max-width: calc(100vw - 274px) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            overflow-x: visible !important;
+          }
           .sou-prison-main > *,
           .sou-prison-main #members,
           .sou-prison-main #schedule,
-          .sou-prison-main #broadcast-summary,
           .sou-prison-main #recent-youtube,
           .sou-prison-main .sou-member-live-section {
             width: 100% !important;
             max-width: none !important;
+          }
+          .sou-prison-main.sou-prison-main-wide > *,
+          .sou-prison-main.sou-prison-main-wide #broadcast-summary {
+            width: 100% !important;
+            max-width: none !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            transform: none !important;
+            left: auto !important;
           }
         }
         @keyframes youtubeTabIn {
@@ -278,7 +295,7 @@ export function PrisonPageChrome({ children }) {
           <PrisonSidebar />
           <div className="sou-prison-content min-w-0 max-w-none">
             <MobilePrisonNav />
-            <main className="sou-prison-main relative w-full max-w-none overflow-x-hidden px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7">
+            <main className={`sou-prison-main relative w-full max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 ${wide ? 'sou-prison-main-wide overflow-x-visible' : 'overflow-x-hidden'}`}>
               {children}
             </main>
           </div>
