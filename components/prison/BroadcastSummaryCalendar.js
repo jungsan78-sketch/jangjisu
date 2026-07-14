@@ -98,7 +98,7 @@ function MemberFilterButton({ stat, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group flex items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-teal-200/35 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.06)]' : 'border-teal-200/12 bg-white/[0.035] text-white/72 hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.07] hover:text-white'}`}
+      className={`group flex items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-[#2fbfb2]/32 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.045)]' : 'border-[#253f4c]/80 bg-slate-950/28 text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:-translate-y-0.5 hover:border-[#2fbfb2]/28 hover:bg-teal-300/[0.07] hover:text-white hover:shadow-[0_0_20px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.035)]'}`}
     >
       <img src={stat.memberImage} alt="" className="h-8 w-8 rounded-full bg-slate-900 object-cover shadow-[0_0_14px_rgba(255,255,255,0.06)]" loading="lazy" />
       <span>{stat.member}</span>
@@ -155,7 +155,11 @@ export default function BroadcastSummaryCalendar() {
   }, [activeMember, monthLabel]);
 
   return (
-    <section id="broadcast-summary" className="mx-auto w-full max-w-[2400px] rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
+    <section
+      id="broadcast-summary"
+      className="relative left-1/2 mx-auto w-full -translate-x-1/2 rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7"
+      style={{ width: 'min(calc(100vw - 326px), 3200px)', maxWidth: '3200px' }}
+    >
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
         <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
