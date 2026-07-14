@@ -3,9 +3,9 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const MEMBER_LIMIT = 16;
-const DETAIL_LIMIT = 120;
+const DETAIL_LIMIT = 140;
 const REQUEST_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.sooplive.com',
@@ -163,43 +163,79 @@ function cleanTimelineTitle(value) {
     .trim();
   if (!text) return '';
   if (/^\d+$/.test(text)) return '';
+  if (/^(null|undefined|vod|review)$/i.test(text)) return '';
   if (text.length > 28) return text.slice(0, 28).trim();
   return text;
 }
 
-function collectStrings(node, bucket = []) {
-  if (!node || bucket.length > 12) return bucket;
-  if (typeof node === 'string') {
-    const cleaned = cleanTimelineTitle(node);
-    if (cleaned) bucket.push(cleaned);
-    return bucket;
-  }
-  if (Array.isArray(node)) {
-    node.forEach((item) => collectStrings(item, bucket));
-    return bucket;
-  }
-  if (typeof node === 'object') {
-    const title = pickFirst(node, ['title', 'subject', 'szTitle', 'szSubject', 'file_title', 'playlist_title', 'chapter_title', 'segment_title']);
-    if (title) {
-      const cleaned = cleanTimelineTitle(title);
-      if (cleaned) bucket.push(cleaned);
-    }
-    Object.entries(node).forEach(([key, value]) => {
-      if (/title|subject|playlist|chapter|file/i.test(key)) collectStrings(value, bucket);
-    });
-  }
-  return bucket;
+function unique(values, limit = 8) {
+  return Array.from(new Set(values.map(cleanTimelineTitle).filter(Boolean))).slice(0, limit);
 }
 
-function unique(values) {
-  return Array.from(new Set(values.map(cleanTimelineTitle).filter(Boolean))).slice(0, 8);
+function timelineTitleFromObject(item) {
+  return pickFirst(item, [
+    'title', 'subject', 'szTitle', 'szSubject', 'file_title', 'fileTitle',
+    'playlist_title', 'playlistTitle', 'chapter_title', 'chapterTitle',
+    'segment_title', 'segmentTitle', 'broad_title', 'broadTitle', 'name',
+  ]);
+}
+
+function scoreTimelineArray(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.reduce((score, item) => {
+    if (!item || typeof item !== 'object') return score;
+    const title = cleanTimelineTitle(timelineTitleFromObject(item));
+    const hasIndex = pickFirst(item, ['nPlaylistIdx', 'playlistIdx', 'file_order', 'fileOrder', 'index', 'seq']);
+    const duration = extractDurationSeconds(item, 0);
+    return score + (title ? 4 : 0) + (hasIndex !== '' ? 1 : 0) + (duration > 0 ? 1 : 0);
+  }, 0);
 }
 
 function extractTimelineFromDetail(json, fallbackTitle) {
-  const collected = collectStrings(json, []);
-  const result = unique(collected);
-  if (result.length > 0) return result;
-  return unique(String(fallbackTitle || '').split(/\s*[>→▶|/]\s*/g));
+  const arrays = collectArrays(json, [])
+    .filter((items) => items.length > 0)
+    .sort((a, b) => scoreTimelineArray(b) - scoreTimelineArray(a) || b.length - a.length);
+
+  for (const items of arrays) {
+    const titles = unique(items.map(timelineTitleFromObject), 10);
+    if (titles.length >= 2) return titles;
+  }
+
+  const oneTitleArray = arrays.map((items) => unique(items.map(timelineTitleFromObject), 10)).find((titles) => titles.length > 0);
+  if (oneTitleArray?.length) return oneTitleArray;
+
+  return unique(String(fallbackTitle || '').split(/\s*[>→▶|/]\s*/g), 8);
+}
+
+function extractDurationSeconds(node, depth = 0) {
+  if (!node || depth > 7) return 0;
+  if (Array.isArray(node)) {
+    const values = node.map((item) => extractDurationSeconds(item, depth + 1)).filter((value) => value > 0);
+    const sum = values.reduce((total, value) => total + value, 0);
+    const max = Math.max(0, ...values);
+    if (sum >= 60 && sum <= 48 * 3600 && values.length >= 2) return sum;
+    return max;
+  }
+  if (typeof node !== 'object') return 0;
+
+  let best = 0;
+  Object.entries(node).forEach(([key, value]) => {
+    const keyText = String(key || '');
+    if (/date|time_stamp|timestamp|start|end|reg/i.test(keyText)) {
+      if (!/duration|play|running|broad_time|total_time|file_time/i.test(keyText)) return;
+    }
+
+    if (/duration|playtime|play_time|running|run_time|total_time|broad_time|file_duration|view_time|length|runtime/i.test(keyText)) {
+      const seconds = secondsFromDuration(value);
+      if (seconds > best && seconds < 48 * 3600) best = seconds;
+    }
+
+    if (typeof value === 'object') {
+      const nested = extractDurationSeconds(value, depth + 1);
+      if (nested > best && nested < 48 * 3600) best = nested;
+    }
+  });
+  return best;
 }
 
 function parseVodItem(item, member, monthInfo) {
@@ -268,7 +304,18 @@ async function fetchMemberVods(member, monthInfo) {
   return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
 }
 
-async function fetchVodTimeline(vod) {
+async function fetchMobileVodDetail(vod) {
+  try {
+    const query = new URLSearchParams({ nTitleNo: vod.titleNo, nApiLevel: '11', nPlaylistIdx: '0' });
+    return await fetchJson(`https://api.m.sooplive.com/station/video/a/view?${query.toString()}`, {
+      headers: { referer: `https://vod.sooplive.com/player/${vod.titleNo}` },
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPlaylistVodDetail(vod) {
   try {
     const params = new URLSearchParams({
       szDataType: 'PLAYLIST',
@@ -277,20 +324,43 @@ async function fetchVodTimeline(vod) {
       szFileType: 'REVIEW',
       platform: 'pc',
       nPlaylistIdx: '0',
-      nLimit: '20',
+      nLimit: '50',
       nVersion: '2',
       szDataSrcType: 'reload',
     });
-    const json = await fetchJson('https://stbbs.sooplive.com/api/get_vod_list.php', {
+    return await fetchJson('https://stbbs.sooplive.com/api/get_vod_list.php', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` },
       body: params.toString(),
     });
-    const timeline = extractTimelineFromDetail(json, vod.title);
-    return { ...vod, timeline: timeline.length ? timeline : vod.timeline };
   } catch {
-    return vod;
+    return null;
   }
+}
+
+async function fetchVodTimeline(vod) {
+  const [mobileDetail, playlistDetail] = await Promise.all([
+    fetchMobileVodDetail(vod),
+    fetchPlaylistVodDetail(vod),
+  ]);
+
+  const playlistTimeline = playlistDetail ? extractTimelineFromDetail(playlistDetail, '') : [];
+  const mobileTimeline = mobileDetail ? extractTimelineFromDetail(mobileDetail, '') : [];
+  const fallbackTimeline = unique(String(vod.title || '').split(/\s*[>→▶|/]\s*/g));
+  const timeline = playlistTimeline.length ? playlistTimeline : mobileTimeline.length ? mobileTimeline : fallbackTimeline;
+
+  const detailDuration = Math.max(
+    extractDurationSeconds(playlistDetail),
+    extractDurationSeconds(mobileDetail),
+    Number(vod.durationSeconds || 0),
+  );
+
+  return {
+    ...vod,
+    durationSeconds: detailDuration,
+    durationText: formatDuration(detailDuration),
+    timeline: timeline.length ? timeline : vod.timeline,
+  };
 }
 
 function buildCalendarItems(vods, monthInfo) {
@@ -308,7 +378,8 @@ function buildCalendarItems(vods, monthInfo) {
   return Array.from({ length: daysInMonth }, (_, index) => {
     const dayNumber = index + 1;
     const broadcasts = (byDay.get(dayNumber) || []).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
-    return { dayNumber, broadcasts };
+    const totalSeconds = broadcasts.reduce((sum, broadcast) => sum + Number(broadcast.durationSeconds || 0), 0);
+    return { dayNumber, broadcasts, totalSeconds, totalDurationText: formatDuration(totalSeconds) || '' };
   });
 }
 
@@ -355,8 +426,8 @@ async function buildPayload(monthInfo) {
   const uniqueVods = Array.from(new Map(vods.map((vod) => [`${vod.bjId}-${vod.titleNo}`, vod])).values())
     .sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
 
-  const withTimeline = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodTimeline));
-  const merged = uniqueVods.map((vod) => withTimeline.find((item) => item.id === vod.id) || vod);
+  const withDetail = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodTimeline));
+  const merged = uniqueVods.map((vod) => withDetail.find((item) => item.id === vod.id) || vod);
   const items = buildCalendarItems(merged, monthInfo);
   const memberStats = buildMemberStats(merged);
 
