@@ -11,7 +11,9 @@ export default function PrisonBroadcastSummaryPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <PrisonPageChrome>
-        <BroadcastSummaryCalendar />
+        <div className="min-h-[calc(100vh-56px)] w-full pt-0">
+          <BroadcastSummaryCalendar />
+        </div>
       </PrisonPageChrome>
     </>
   );
