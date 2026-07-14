@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 function getCurrentKstMonthLabel() {
-  const shifted = new Date(Date.now() + KST_OFFSET_MS);
+  const shifted = new Date(Date.now() + (9 * 60 * 60 * 1000));
   const year = shifted.getUTCFullYear();
   const month = shifted.getUTCMonth() + 1;
   return `${year}년 ${month}월`;
@@ -24,49 +23,6 @@ function formatDurationText(seconds) {
   if (hours > 0) return `${hours}시간`;
   if (minutes > 0) return `${minutes}분`;
   return '0분';
-}
-
-function getKstPartsFromDate(date) {
-  const shifted = new Date(date.getTime() + KST_OFFSET_MS);
-  return {
-    year: shifted.getUTCFullYear(),
-    month: shifted.getUTCMonth() + 1,
-    day: shifted.getUTCDate(),
-  };
-}
-
-function getBroadcastStartDay(broadcast) {
-  const fromKey = Number(String(broadcast?.dateKey || '').slice(-2));
-  if (Number.isFinite(fromKey) && fromKey > 0) return fromKey;
-  const startedAt = new Date(broadcast?.startedAt || '');
-  if (Number.isNaN(startedAt.getTime())) return 0;
-  return getKstPartsFromDate(startedAt).day;
-}
-
-function getBroadcastEndDay(broadcast, parsedMonth) {
-  const startDay = getBroadcastStartDay(broadcast);
-  if (!startDay || !parsedMonth) return startDay;
-
-  const durationSeconds = Number(broadcast?.durationSeconds || 0);
-  if (!durationSeconds) return startDay;
-
-  const startedAt = new Date(broadcast?.startedAt || '');
-  const daysInMonth = new Date(parsedMonth.year, parsedMonth.month, 0).getDate();
-
-  if (Number.isNaN(startedAt.getTime())) {
-    return Math.min(daysInMonth, startDay + Math.floor(durationSeconds / 86400));
-  }
-
-  const endDate = new Date(startedAt.getTime() + durationSeconds * 1000);
-  const endParts = getKstPartsFromDate(endDate);
-
-  if (endParts.year < parsedMonth.year || (endParts.year === parsedMonth.year && endParts.month < parsedMonth.month)) return startDay;
-  if (endParts.year > parsedMonth.year || (endParts.year === parsedMonth.year && endParts.month > parsedMonth.month)) return daysInMonth;
-  return Math.max(startDay, Math.min(daysInMonth, endParts.day));
-}
-
-function isMultiDayBroadcast(broadcast, parsedMonth) {
-  return getBroadcastEndDay(broadcast, parsedMonth) > getBroadcastStartDay(broadcast);
 }
 
 function buildCalendarCells(monthLabel, items, selectedMember) {
@@ -90,111 +46,6 @@ function buildCalendarCells(monthLabel, items, selectedMember) {
   });
 }
 
-function buildWeeks(cells) {
-  return Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
-}
-
-function getAllBroadcasts(items, activeMember) {
-  const map = new Map();
-  (Array.isArray(items) ? items : []).forEach((item) => {
-    (item?.broadcasts || []).forEach((broadcast) => {
-      if (activeMember && broadcast.member !== activeMember) return;
-      const key = broadcast.id || `${broadcast.member}-${broadcast.dateKey}-${broadcast.title}`;
-      map.set(key, broadcast);
-    });
-  });
-  return Array.from(map.values());
-}
-
-function assignLanes(segments) {
-  const laneEnds = [];
-  return segments
-    .sort((a, b) => a.startColumn - b.startColumn || b.span - a.span)
-    .map((segment) => {
-      let lane = laneEnds.findIndex((end) => segment.startColumn > end);
-      if (lane < 0) lane = laneEnds.length;
-      laneEnds[lane] = segment.endColumn;
-      return { ...segment, lane };
-    });
-}
-
-function buildWeekSegments(weekCells, parsedMonth, broadcasts) {
-  if (!parsedMonth) return [];
-  const realCells = weekCells.filter(Boolean);
-  if (!realCells.length) return [];
-
-  const weekStart = Number(realCells[0].dayNumber);
-  const weekEnd = Number(realCells[realCells.length - 1].dayNumber);
-
-  const segments = (broadcasts || []).flatMap((broadcast) => {
-    const startDay = getBroadcastStartDay(broadcast);
-    const endDay = getBroadcastEndDay(broadcast, parsedMonth);
-    if (!startDay || !endDay || endDay <= startDay) return [];
-    if (endDay < weekStart || startDay > weekEnd) return [];
-
-    const segmentStart = Math.max(startDay, weekStart);
-    const segmentEnd = Math.min(endDay, weekEnd);
-    const startIndex = weekCells.findIndex((cell) => Number(cell?.dayNumber) === segmentStart);
-    const endIndex = weekCells.findIndex((cell) => Number(cell?.dayNumber) === segmentEnd);
-    if (startIndex < 0 || endIndex < 0) return [];
-
-    return [{
-      broadcast,
-      startDay,
-      endDay,
-      segmentStart,
-      segmentEnd,
-      startColumn: startIndex + 1,
-      endColumn: endIndex + 1,
-      span: endIndex - startIndex + 1,
-      isStart: segmentStart === startDay,
-      isEnd: segmentEnd === endDay,
-    }];
-  });
-
-  return assignLanes(segments).slice(0, 4);
-}
-
-function MultiDaySpanCard({ segment }) {
-  const duration = segment.broadcast.durationText || formatDurationText(segment.broadcast.durationSeconds);
-  const rangeText = `${segment.startDay}일 ~ ${segment.endDay}일`;
-  const segmentRange = segment.isStart && segment.isEnd
-    ? rangeText
-    : segment.isStart
-      ? `${segment.startDay}일 시작`
-      : segment.isEnd
-        ? `${segment.endDay}일 종료`
-        : '방송 이어짐';
-
-  return (
-    <a
-      href={segment.broadcast.url}
-      target="_blank"
-      rel="noreferrer"
-      className={`group relative z-20 flex min-h-[96px] flex-col justify-between overflow-hidden border border-teal-100/18 bg-[radial-gradient(circle_at_0%_0%,rgba(94,234,212,0.24),transparent_34%),linear-gradient(135deg,rgba(20,184,166,0.72),rgba(11,38,53,0.96))] px-4 py-3 text-left text-white shadow-[0_18px_44px_rgba(0,0,0,0.34),0_0_34px_rgba(45,212,191,0.18),inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:-translate-y-0.5 hover:border-teal-50/35 hover:shadow-[0_24px_58px_rgba(0,0,0,0.45),0_0_46px_rgba(45,212,191,0.28),inset_0_1px_0_rgba(255,255,255,0.24)] ${segment.isStart ? 'rounded-l-[24px]' : 'rounded-l-md'} ${segment.isEnd ? 'rounded-r-[24px]' : 'rounded-r-md'}`}
-      style={{ gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`, gridRow: segment.lane + 1 }}
-      title={`${segment.broadcast.title} · ${duration} · ${rangeText}`}
-    >
-      <div className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full bg-white/[0.08] blur-sm transition group-hover:bg-white/[0.12]" />
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-black/26 px-2.5 py-1 text-[11px] font-black text-teal-50/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">{segmentRange}</span>
-            <span className="rounded-full bg-white/[0.09] px-2.5 py-1 text-[11px] font-black text-white/78">{segment.broadcast.member}</span>
-          </div>
-          <div className="line-clamp-2 text-left text-[15px] font-black leading-snug tracking-[-0.035em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-            {segment.broadcast.title}
-          </div>
-        </div>
-        <span className="shrink-0 rounded-full bg-black/32 px-3 py-1.5 text-[12px] font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">{duration}</span>
-      </div>
-      <div className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-black/24">
-        <div className="h-full w-full rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.75),rgba(94,234,212,0.45))]" />
-      </div>
-    </a>
-  );
-}
-
 function BroadcastPill({ broadcast }) {
   const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
   return (
@@ -202,14 +53,14 @@ function BroadcastPill({ broadcast }) {
       href={broadcast.url}
       target="_blank"
       rel="noreferrer"
-      className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
+      className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
     >
       <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">
         {duration}
       </span>
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
       <div
-        className="relative line-clamp-3 text-left text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]"
+        className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]"
         style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}
       >
         {broadcast.title}
@@ -291,8 +142,6 @@ export default function BroadcastSummaryCalendar() {
   const activeMember = selectedStat?.member || '장지수';
   const items = Array.isArray(payload?.items) ? payload.items : [];
   const cells = useMemo(() => buildCalendarCells(monthLabel, items, activeMember), [monthLabel, items, activeMember]);
-  const weeks = useMemo(() => buildWeeks(cells), [cells]);
-  const allBroadcasts = useMemo(() => getAllBroadcasts(items, activeMember), [items, activeMember]);
   const totalCount = Number(payload?.totalCount || 0);
   const ranking = memberStats.filter((stat) => Number(stat.totalSeconds || 0) > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
 
@@ -361,53 +210,37 @@ export default function BroadcastSummaryCalendar() {
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[13px] font-black text-white/62 sm:mb-4 sm:gap-3 sm:text-[16px]">
               {DAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
             </div>
-            <div className="space-y-3 sm:space-y-4">
-              {weeks.map((week, weekIndex) => {
-                const weekSegments = buildWeekSegments(week, parsedMonth, allBroadcasts);
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
+              {cells.map((cell, index) => {
+                if (!cell) return <div key={`empty-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" />;
+                const day = Number(cell.dayNumber);
+                const broadcasts = cell.broadcasts || [];
+                const hasItems = broadcasts.length > 0;
+                const weekdayIndex = parsedMonth ? new Date(parsedMonth.year, parsedMonth.month - 1, day).getDay() : 0;
+                const dayKey = `${activeMember}-${day}`;
+                const isExpanded = Boolean(expandedDays[dayKey]);
+                const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
                 return (
-                  <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-1.5 sm:gap-3">
-                    {week.map((cell, index) => {
-                      if (!cell) return <div key={`empty-${weekIndex}-${index}`} className="min-h-[118px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[210px] sm:rounded-[24px]" />;
-                      const day = Number(cell.dayNumber);
-                      const originalBroadcasts = cell.broadcasts || [];
-                      const broadcasts = originalBroadcasts.filter((broadcast) => !isMultiDayBroadcast(broadcast, parsedMonth));
-                      const hasItems = originalBroadcasts.length > 0;
-                      const hasSingleDayItems = broadcasts.length > 0;
-                      const weekdayIndex = parsedMonth ? new Date(parsedMonth.year, parsedMonth.month - 1, day).getDay() : 0;
-                      const dayKey = `${activeMember}-${day}`;
-                      const isExpanded = Boolean(expandedDays[dayKey]);
-                      const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
-                      return (
-                        <div key={day} className={`relative min-h-[118px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[210px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
-                          <div className="mb-2 flex items-start justify-between gap-1">
-                            <div>
-                              <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
-                              {hasItems ? <div className="mt-1 rounded-full bg-teal-300/10 px-2 py-0.5 text-[9px] font-black text-teal-100/80 sm:text-[11px]">총 {cell.totalDurationText}</div> : null}
-                            </div>
-                            {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{originalBroadcasts.length}개</span> : null}
-                          </div>
-                          {hasSingleDayItems ? (
-                            <div className="space-y-2">
-                              {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
-                              {broadcasts.length > 3 ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))}
-                                  className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]"
-                                >
-                                  {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
-                                </button>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                    {weekSegments.length ? (
-                      <div className="col-span-7 grid grid-cols-7 gap-1.5 sm:gap-3">
-                        {weekSegments.map((segment) => <MultiDaySpanCard key={`${segment.broadcast.id}-${segment.segmentStart}-${segment.segmentEnd}`} segment={segment} />)}
+                  <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
+                    <div className="mb-2 flex items-start justify-between gap-1">
+                      <div>
+                        <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                        {hasItems ? <div className="mt-1 rounded-full bg-teal-300/10 px-2 py-0.5 text-[9px] font-black text-teal-100/80 sm:text-[11px]">총 {cell.totalDurationText}</div> : null}
                       </div>
-                    ) : null}
+                      {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{broadcasts.length}개</span> : null}
+                    </div>
+                    <div className="space-y-2">
+                      {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
+                      {broadcasts.length > 3 ? (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))}
+                          className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]"
+                        >
+                          {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 );
               })}
