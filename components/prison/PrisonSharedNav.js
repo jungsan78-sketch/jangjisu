@@ -16,10 +16,10 @@ function SidebarLogo({ compact = false }) {
 function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
   const toneClass = tone === 'green'
     ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-    : tone === 'red'
-      ? 'text-red-50 hover:bg-red-500/10 hover:shadow-[0_0_26px_rgba(239,68,68,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-      : tone === 'gold'
-        ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+    : tone === 'gold'
+      ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+      : tone === 'teal'
+        ? 'text-teal-50 hover:bg-teal-300/10 hover:shadow-[0_0_26px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
         : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
@@ -33,13 +33,12 @@ function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) 
 export function PrisonSharedSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-      <a href="/jangjisu-prison-v2#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
+      <a href="/jangjisu-prison#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
         <SidebarLogo />
       </a>
       <nav className="space-y-2.5">
-        <SidebarNavItem href="/jangjisu-prison-v2#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" />
-        <SidebarNavItem href="/jangjisu-prison-v2#schedule" label="일정" icon="⛓" />
-        <SidebarNavItem href="/jangjisu-prison-v2#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
+        <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" icon="🏆" tone="gold" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="방송요약" icon="▤" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
       </nav>
@@ -51,15 +50,14 @@ export function PrisonSharedMobileNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/88 px-4 py-3 backdrop-blur-xl xl:hidden">
       <div className="flex items-center justify-between gap-3">
-        <a href="/jangjisu-prison-v2#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
+        <a href="/jangjisu-prison#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
           <SidebarLogo compact />
         </a>
         <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="/jangjisu-prison-v2#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
-        <a href="/jangjisu-prison-v2#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
-        <a href="/jangjisu-prison-v2#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
+        <a href="/jangjisu-prison" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 수용소 메인</a>
+        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송요약</a>
         <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
       </nav>
     </header>
