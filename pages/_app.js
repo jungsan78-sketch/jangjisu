@@ -6,7 +6,6 @@ import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
 import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
-import UtilityLiveSidebar from '../components/UtilityLiveSidebar';
 
 const SCHEDULE_POLLING_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -82,7 +81,6 @@ export default function App({ Component, pageProps }) {
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
       <PrisonMemberLiveGrid />
-      <UtilityLiveSidebar />
       <Analytics />
     </>
   );
