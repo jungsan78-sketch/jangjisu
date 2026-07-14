@@ -53,13 +53,11 @@ function SidebarLogo({ compact = false }) {
 function SidebarNavItem({ href, label, icon, tone = 'blue', external = false, compact = false }) {
   const toneClass = tone === 'green'
     ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-    : tone === 'red'
-      ? 'text-red-50 hover:bg-red-500/10 hover:shadow-[0_0_26px_rgba(239,68,68,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-      : tone === 'gold'
-        ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-        : tone === 'teal'
-          ? 'text-teal-50 hover:bg-teal-300/10 hover:shadow-[0_0_26px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-          : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
+    : tone === 'gold'
+      ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+      : tone === 'teal'
+        ? 'text-teal-50 hover:bg-teal-300/10 hover:shadow-[0_0_26px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+        : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
 
   return (
     <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center ${compact ? 'justify-center gap-2 px-2.5' : 'gap-3 px-4'} rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
@@ -201,12 +199,10 @@ export function PrisonSidebar() {
 
       <nav className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2.5">
-          <SidebarNavItem href="/jangjisu-prison#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" compact />
+          <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" icon="🏆" tone="gold" compact />
           <SidebarNavItem href="/" label="SOU 아카이브" compact />
         </div>
-        <SidebarNavItem href="/jangjisu-prison#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="방송요약" icon="▤" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
       </nav>
@@ -226,11 +222,9 @@ export function MobilePrisonNav() {
         <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="/jangjisu-prison#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
+        <a href="/jangjisu-prison" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 수용소 메인</a>
         <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">SOU 아카이브</a>
-        <a href="/jangjisu-prison#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송요약</a>
-        <a href="/jangjisu-prison#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
       </nav>
     </header>
