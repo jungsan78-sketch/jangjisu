@@ -207,7 +207,6 @@ export function PrisonSidebar() {
         <SidebarNavItem href="/jangjisu-prison#schedule" label="일정" icon="⛓" />
         <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="방송요약" icon="▤" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
-        <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
       </nav>
@@ -232,7 +231,6 @@ export function MobilePrisonNav() {
         <a href="/jangjisu-prison#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
         <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송요약</a>
         <a href="/jangjisu-prison#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
-        <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
         <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
       </nav>
     </header>
@@ -262,6 +260,7 @@ export function PrisonPageChrome({ children }) {
           .sou-prison-main > *,
           .sou-prison-main #members,
           .sou-prison-main #schedule,
+          .sou-prison-main #broadcast-summary,
           .sou-prison-main #recent-youtube,
           .sou-prison-main .sou-member-live-section {
             width: 100% !important;
