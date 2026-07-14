@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_SECONDS = 24 * 60 * 60;
 
 function getCurrentKstMonthLabel() {
-  const shifted = new Date(Date.now() + (9 * 60 * 60 * 1000));
+  const shifted = new Date(Date.now() + KST_OFFSET_MS);
   const year = shifted.getUTCFullYear();
   const month = shifted.getUTCMonth() + 1;
   return `${year}년 ${month}월`;
@@ -25,6 +27,50 @@ function formatDurationText(seconds) {
   return '0분';
 }
 
+function getKstDateParts(value) {
+  const date = new Date(value || '');
+  if (Number.isNaN(date.getTime())) return null;
+  const shifted = new Date(date.getTime() + KST_OFFSET_MS);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+  };
+}
+
+function extractDateKeyDay(value) {
+  const text = String(value || '');
+  const compact = text.match(/(\d{4})[-./]?(\d{1,2})[-./]?(\d{1,2})/);
+  if (!compact) return 0;
+  const day = Number(compact[3]);
+  return Number.isFinite(day) ? day : 0;
+}
+
+function getBroadcastEndDay(broadcast) {
+  const fromDateKey = extractDateKeyDay(broadcast?.dateKey);
+  if (fromDateKey > 0) return fromDateKey;
+  const fromCalendar = Number(broadcast?._calendarDay || 0);
+  if (Number.isFinite(fromCalendar) && fromCalendar > 0) return fromCalendar;
+  const fromStartedAt = getKstDateParts(broadcast?.startedAt)?.day || 0;
+  return fromStartedAt;
+}
+
+function getBroadcastStartDay(broadcast, parsedMonth) {
+  const endDay = getBroadcastEndDay(broadcast);
+  if (!endDay || !parsedMonth) return endDay;
+  const durationSeconds = Number(broadcast?.durationSeconds || 0);
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return endDay;
+
+  const spanDays = Math.floor(Math.max(0, durationSeconds - 1) / DAY_SECONDS);
+  return Math.max(1, endDay - spanDays);
+}
+
+function isMultiDayBroadcast(broadcast, parsedMonth) {
+  const startDay = getBroadcastStartDay(broadcast, parsedMonth);
+  const endDay = getBroadcastEndDay(broadcast);
+  return Boolean(startDay && endDay && endDay > startDay);
+}
+
 function buildCalendarCells(monthLabel, items, selectedMember) {
   const parsed = parseMonthLabel(monthLabel);
   if (!parsed) return [];
@@ -38,12 +84,114 @@ function buildCalendarCells(monthLabel, items, selectedMember) {
     const day = index - lead + 1;
     if (day < 1 || day > days) return null;
     const base = map.get(day) || { dayNumber: day, broadcasts: [] };
-    const broadcasts = selectedMember
+    const broadcasts = (selectedMember
       ? (base.broadcasts || []).filter((broadcast) => broadcast.member === selectedMember)
-      : (base.broadcasts || []);
+      : (base.broadcasts || [])
+    ).map((broadcast) => ({ ...broadcast, _calendarDay: day }));
     const totalSeconds = broadcasts.reduce((sum, item) => sum + Number(item.durationSeconds || 0), 0);
     return { ...base, broadcasts, totalSeconds, totalDurationText: formatDurationText(totalSeconds) };
   });
+}
+
+function buildWeeks(cells) {
+  return Array.from({ length: Math.ceil(cells.length / 7) }, (_, index) => cells.slice(index * 7, index * 7 + 7));
+}
+
+function assignSegmentLanes(segments) {
+  const laneEnds = [];
+  return segments
+    .sort((a, b) => a.startColumn - b.startColumn || b.span - a.span || String(a.broadcast.title || '').localeCompare(String(b.broadcast.title || '')))
+    .map((segment) => {
+      let lane = laneEnds.findIndex((endColumn) => segment.startColumn > endColumn);
+      if (lane < 0) lane = laneEnds.length;
+      laneEnds[lane] = segment.endColumn;
+      return { ...segment, lane };
+    });
+}
+
+function buildWeekSegments(weekCells, parsedMonth) {
+  if (!parsedMonth) return [];
+  const realCells = weekCells.filter(Boolean);
+  if (!realCells.length) return [];
+
+  const weekStart = Number(realCells[0].dayNumber);
+  const weekEnd = Number(realCells[realCells.length - 1].dayNumber);
+  const seen = new Set();
+  const candidates = [];
+
+  realCells.forEach((cell) => {
+    (cell.broadcasts || []).forEach((broadcast) => {
+      const id = String(broadcast?.id || `${broadcast?.member}-${broadcast?.title}-${broadcast?._calendarDay}`);
+      if (seen.has(id)) return;
+      seen.add(id);
+
+      const startDay = getBroadcastStartDay(broadcast, parsedMonth);
+      const endDay = getBroadcastEndDay(broadcast);
+      if (!startDay || !endDay || endDay <= startDay) return;
+
+      const segmentStart = Math.max(startDay, weekStart);
+      const segmentEnd = Math.min(endDay, weekEnd);
+      if (segmentStart > segmentEnd) return;
+
+      const startIndex = weekCells.findIndex((weekCell) => Number(weekCell?.dayNumber) === segmentStart);
+      const endIndex = weekCells.findIndex((weekCell) => Number(weekCell?.dayNumber) === segmentEnd);
+      if (startIndex < 0 || endIndex < 0) return;
+
+      candidates.push({
+        broadcast,
+        startDay,
+        endDay,
+        segmentStart,
+        segmentEnd,
+        startColumn: startIndex + 1,
+        endColumn: endIndex + 1,
+        span: endIndex - startIndex + 1,
+        isStart: segmentStart === startDay,
+        isEnd: segmentEnd === endDay,
+      });
+    });
+  });
+
+  return assignSegmentLanes(candidates);
+}
+
+function MultiDayBroadcastCard({ segment }) {
+  const duration = segment.broadcast.durationText || formatDurationText(segment.broadcast.durationSeconds);
+  const rangeText = segment.isStart && segment.isEnd
+    ? `${segment.startDay}일 ~ ${segment.endDay}일`
+    : segment.isStart
+      ? `${segment.startDay}일 시작`
+      : segment.isEnd
+        ? `${segment.endDay}일 종료`
+        : '방송 이어짐';
+
+  return (
+    <a
+      href={segment.broadcast.url}
+      target="_blank"
+      rel="noreferrer"
+      className={`group relative z-20 block min-h-[86px] overflow-hidden border border-teal-100/[0.16] bg-[radial-gradient(circle_at_96%_0%,rgba(94,234,212,0.18),transparent_36%),linear-gradient(90deg,rgba(20,184,166,0.34),rgba(8,28,38,0.94)_34%,rgba(7,17,31,0.98))] px-4 py-3 text-left shadow-[0_22px_46px_rgba(0,0,0,0.34),0_0_32px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.075)] transition hover:-translate-y-0.5 hover:border-teal-100/30 hover:shadow-[0_28px_60px_rgba(0,0,0,0.42),0_0_42px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] ${segment.isStart ? 'rounded-l-[22px]' : 'rounded-l-md'} ${segment.isEnd ? 'rounded-r-[22px]' : 'rounded-r-md'}`}
+      style={{ gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`, gridRow: segment.lane + 2 }}
+      title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
+    >
+      <div className="pointer-events-none absolute -right-10 -top-14 h-28 w-36 rounded-full bg-teal-200/[0.055] transition group-hover:bg-teal-200/[0.09]" />
+      <div className="relative flex h-full min-w-0 items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-teal-300/14 px-2.5 py-1 text-[11px] font-black text-teal-50/86 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{rangeText}</span>
+            <span className="text-[11px] font-black text-white/42">{segment.broadcast.member}</span>
+          </div>
+          <div className="line-clamp-2 text-[15px] font-black leading-snug tracking-[-0.035em] text-white sm:text-[18px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+            {segment.broadcast.title}
+          </div>
+        </div>
+        <div className="shrink-0 rounded-2xl bg-black/24 px-3 py-2 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
+          <div className="text-[13px] font-black text-teal-50 sm:text-[15px]">{duration}</div>
+          <div className="mt-0.5 text-[9px] font-black tracking-[0.18em] text-teal-100/36">PLAY</div>
+        </div>
+      </div>
+    </a>
+  );
 }
 
 function BroadcastPill({ broadcast }) {
@@ -142,6 +290,7 @@ export default function BroadcastSummaryCalendar() {
   const activeMember = selectedStat?.member || '장지수';
   const items = Array.isArray(payload?.items) ? payload.items : [];
   const cells = useMemo(() => buildCalendarCells(monthLabel, items, activeMember), [monthLabel, items, activeMember]);
+  const weeks = useMemo(() => buildWeeks(cells), [cells]);
   const totalCount = Number(payload?.totalCount || 0);
   const ranking = memberStats.filter((stat) => Number(stat.totalSeconds || 0) > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
 
@@ -167,7 +316,7 @@ export default function BroadcastSummaryCalendar() {
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-teal-200/16 bg-teal-300/10 text-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">▤</span>
               <div className="text-[28px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[42px]">이번 달 다시보기 달력</div>
             </div>
-            <p className="mt-2 text-[14px] font-bold leading-6 text-white/52 sm:text-[16px]">다시보기 시작일 기준으로 이번 달 방송시간과 다시보기 제목을 달력에 정리합니다.</p>
+            <p className="mt-2 text-[14px] font-bold leading-6 text-white/52 sm:text-[16px]">다시보기 종료일과 플레이타임을 기준으로 방송 기간을 달력에 정리합니다.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[12px] font-black text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">1시간마다 갱신</span>
@@ -210,37 +359,51 @@ export default function BroadcastSummaryCalendar() {
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[13px] font-black text-white/62 sm:mb-4 sm:gap-3 sm:text-[16px]">
               {DAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
             </div>
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
-              {cells.map((cell, index) => {
-                if (!cell) return <div key={`empty-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" />;
-                const day = Number(cell.dayNumber);
-                const broadcasts = cell.broadcasts || [];
-                const hasItems = broadcasts.length > 0;
-                const weekdayIndex = parsedMonth ? new Date(parsedMonth.year, parsedMonth.month - 1, day).getDay() : 0;
-                const dayKey = `${activeMember}-${day}`;
-                const isExpanded = Boolean(expandedDays[dayKey]);
-                const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
+            <div className="space-y-1.5 sm:space-y-3">
+              {weeks.map((week, weekIndex) => {
+                const weekSegments = buildWeekSegments(week, parsedMonth);
+                const laneCount = weekSegments.length ? Math.max(...weekSegments.map((segment) => segment.lane)) + 1 : 0;
                 return (
-                  <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
-                    <div className="mb-2 flex items-start justify-between gap-1">
-                      <div>
-                        <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
-                        {hasItems ? <div className="mt-1 rounded-full bg-teal-300/10 px-2 py-0.5 text-[9px] font-black text-teal-100/80 sm:text-[11px]">총 {cell.totalDurationText}</div> : null}
-                      </div>
-                      {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{broadcasts.length}개</span> : null}
-                    </div>
-                    <div className="space-y-2">
-                      {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
-                      {broadcasts.length > 3 ? (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))}
-                          className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]"
-                        >
-                          {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
-                        </button>
-                      ) : null}
-                    </div>
+                  <div
+                    key={`week-${weekIndex}`}
+                    className="grid grid-cols-7 gap-1.5 sm:gap-3"
+                    style={{ gridTemplateRows: `auto repeat(${laneCount}, minmax(86px, auto))` }}
+                  >
+                    {week.map((cell, index) => {
+                      if (!cell) return <div key={`empty-${weekIndex}-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" style={{ gridColumn: index + 1, gridRow: 1 }} />;
+                      const day = Number(cell.dayNumber);
+                      const allBroadcasts = cell.broadcasts || [];
+                      const broadcasts = allBroadcasts.filter((broadcast) => !isMultiDayBroadcast(broadcast, parsedMonth));
+                      const hasItems = allBroadcasts.length > 0;
+                      const weekdayIndex = parsedMonth ? new Date(parsedMonth.year, parsedMonth.month - 1, day).getDay() : 0;
+                      const dayKey = `${activeMember}-${day}`;
+                      const isExpanded = Boolean(expandedDays[dayKey]);
+                      const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
+                      return (
+                        <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`} style={{ gridColumn: index + 1, gridRow: 1 }}>
+                          <div className="mb-2 flex items-start justify-between gap-1">
+                            <div>
+                              <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                              {hasItems ? <div className="mt-1 rounded-full bg-teal-300/10 px-2 py-0.5 text-[9px] font-black text-teal-100/80 sm:text-[11px]">총 {cell.totalDurationText}</div> : null}
+                            </div>
+                            {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{allBroadcasts.length}개</span> : null}
+                          </div>
+                          <div className="space-y-2">
+                            {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
+                            {broadcasts.length > 3 ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))}
+                                className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]"
+                              >
+                                {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {weekSegments.map((segment) => <MultiDayBroadcastCard key={`${segment.broadcast.id}-${weekIndex}-${segment.segmentStart}-${segment.segmentEnd}`} segment={segment} />)}
                   </div>
                 );
               })}
