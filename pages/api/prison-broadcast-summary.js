@@ -3,9 +3,11 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v6-title-history-duration';
+const CACHE_VERSION = 'v7-monthly-playtime-calendar';
 const MEMBER_LIMIT = 16;
-const DETAIL_LIMIT = 140;
+const DETAIL_LIMIT = 220;
+const PAGE_LIMIT = 12;
+const PER_PAGE = 100;
 const REQUEST_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.sooplive.com',
@@ -157,7 +159,7 @@ function normalizeTitle(value) {
     .trim();
 }
 
-function cleanTimelineTitle(value) {
+function cleanTitle(value) {
   const text = normalizeTitle(value)
     .replace(/^\d{1,2}:\d{2}(:\d{2})?\s*/g, '')
     .replace(/^(다시보기|방송|생방송|라이브|제목)\s*/g, '')
@@ -166,12 +168,11 @@ function cleanTimelineTitle(value) {
   if (!text) return '';
   if (/^\d+$/.test(text)) return '';
   if (/^(review|playlist|vod|title)$/i.test(text)) return '';
-  if (text.length > 34) return `${text.slice(0, 34).trim()}…`;
-  return text;
+  return text.length > 50 ? `${text.slice(0, 50).trim()}…` : text;
 }
 
 function unique(values, limit = 10) {
-  return Array.from(new Set(values.map(cleanTimelineTitle).filter(Boolean))).slice(0, limit);
+  return Array.from(new Set(values.map(cleanTitle).filter(Boolean))).slice(0, limit);
 }
 
 function findFirstByKey(node, keyPattern) {
@@ -195,8 +196,28 @@ function findFirstByKey(node, keyPattern) {
   return '';
 }
 
+function collectDurationValues(node, bucket = []) {
+  if (!node || bucket.length > 400) return bucket;
+  if (Array.isArray(node)) {
+    node.forEach((item) => collectDurationValues(item, bucket));
+    return bucket;
+  }
+  if (typeof node === 'object') {
+    Object.entries(node).forEach(([key, value]) => {
+      if (/(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i.test(key)) {
+        const seconds = secondsFromDuration(value);
+        if (seconds > 0) bucket.push(seconds);
+      }
+      collectDurationValues(value, bucket);
+    });
+  }
+  return bucket;
+}
+
 function extractDurationFromObject(json) {
-  return secondsFromDuration(findFirstByKey(json, /(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i));
+  const values = collectDurationValues(json, []).filter((value) => value > 0 && value < 7 * 24 * 3600);
+  if (!values.length) return 0;
+  return Math.max(...values);
 }
 
 function extractCategoryFromObject(json) {
@@ -204,10 +225,10 @@ function extractCategoryFromObject(json) {
   return value ? String(value) : '';
 }
 
-function collectTimelineTitles(node, bucket = []) {
-  if (!node || bucket.length > 40) return bucket;
+function collectTitleCandidates(node, bucket = []) {
+  if (!node || bucket.length > 80) return bucket;
   if (Array.isArray(node)) {
-    node.forEach((item) => collectTimelineTitles(item, bucket));
+    node.forEach((item) => collectTitleCandidates(item, bucket));
     return bucket;
   }
   if (typeof node !== 'object') return bucket;
@@ -219,13 +240,13 @@ function collectTimelineTitles(node, bucket = []) {
   if (title) bucket.push(title);
 
   Object.entries(node).forEach(([key, value]) => {
-    if (/list|playlist|chapter|segment|file|title|history|data|item/i.test(key)) collectTimelineTitles(value, bucket);
+    if (/list|playlist|chapter|segment|file|title|history|data|item/i.test(key)) collectTitleCandidates(value, bucket);
   });
   return bucket;
 }
 
-function extractTitleHistoryFromDetail(json) {
-  return unique(collectTimelineTitles(json, []), 12);
+function extractTitlesFromDetail(json) {
+  return unique(collectTitleCandidates(json, []), 12);
 }
 
 function parseJsonMaybe(text) {
@@ -242,11 +263,11 @@ function parseJsonMaybe(text) {
 function extractDurationFromText(text) {
   const source = String(text || '');
   const patterns = [
-    /vod-duration[=:\"']+(\d+)/i,
-    /vod_duration[=:\"']+(\d+)/i,
-    /duration[=:\"']+(\d+)/i,
-    /play_time[=:\"']+(\d+)/i,
-    /running_time[=:\"']+(\d+)/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{1,3}:\d{2}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{1,5}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{2,8})/i,
+    /"duration"\s*:\s*"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})"?/i,
+    /"playTime"\s*:\s*"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})"?/i,
   ];
   for (const pattern of patterns) {
     const match = source.match(pattern);
@@ -255,12 +276,12 @@ function extractDurationFromText(text) {
   return 0;
 }
 
-function extractTitleHistoryFromText(text) {
+function extractTitlesFromText(text) {
   const source = String(text || '');
   const titles = [];
   const regexes = [
-    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)\"?\s*[:=]\s*\"([^\"]{2,80})\"/gi,
-    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)'?\s*[:=]\s*'([^']{2,80})'/gi,
+    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)"?\s*[:=]\s*"([^"]{2,100})"/gi,
+    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)'?\s*[:=]\s*'([^']{2,100})'/gi,
   ];
   regexes.forEach((regex) => {
     let match;
@@ -317,8 +338,6 @@ function parseVodItem(item, member, monthInfo) {
     title,
     durationSeconds: seconds,
     durationText: formatDuration(seconds),
-    titleHistory: [],
-    timeline: [],
     url: `https://vod.sooplive.com/player/${id}`,
   };
 }
@@ -328,25 +347,40 @@ async function fetchMemberVods(member, monthInfo) {
   if (!bjId) return [];
 
   const { startDate, endDate } = getMonthRange(monthInfo);
-  const query = new URLSearchParams({
-    startDate,
-    endDate,
-    keyword: '',
-    orderBy: 'reg_date',
-    perPage: '60',
-    page: '1',
-  });
+  const collected = [];
 
-  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
-  const json = await fetchJson(url, { headers: { referer: `https://www.sooplive.com/station/${bjId}/vod/review` } });
-  const list = extractList(json);
-  return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
+  for (let page = 1; page <= PAGE_LIMIT; page += 1) {
+    const query = new URLSearchParams({
+      startDate,
+      endDate,
+      keyword: '',
+      orderBy: 'reg_date',
+      perPage: String(PER_PAGE),
+      page: String(page),
+    });
+
+    const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
+    let list = [];
+    try {
+      const json = await fetchJson(url, { headers: { referer: `https://www.sooplive.com/station/${bjId}/vod/review` } });
+      list = extractList(json);
+    } catch {
+      break;
+    }
+
+    if (!list.length) break;
+    const parsed = list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
+    collected.push(...parsed);
+    if (list.length < PER_PAGE) break;
+  }
+
+  return collected;
 }
 
 async function fetchVodDetail(vod) {
   let durationSeconds = Number(vod.durationSeconds || 0);
   let categoryNo = vod.categoryNo || '';
-  let titleHistory = [];
+  let titleCandidates = [];
 
   try {
     const body = new URLSearchParams({ nTitleNo: vod.titleNo, nApiLevel: '11', nPlaylistIdx: '0' });
@@ -359,17 +393,17 @@ async function fetchVodDetail(vod) {
     if (detailJson) {
       durationSeconds = durationSeconds || extractDurationFromObject(detailJson);
       categoryNo = categoryNo || extractCategoryFromObject(detailJson);
-      titleHistory = titleHistory.concat(extractTitleHistoryFromDetail(detailJson));
+      titleCandidates = titleCandidates.concat(extractTitlesFromDetail(detailJson));
     }
     durationSeconds = durationSeconds || extractDurationFromText(detailText);
-    titleHistory = titleHistory.concat(extractTitleHistoryFromText(detailText));
+    titleCandidates = titleCandidates.concat(extractTitlesFromText(detailText));
   } catch {}
 
   try {
     const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` } });
     durationSeconds = durationSeconds || extractDurationFromText(playerText);
-    titleHistory = titleHistory.concat(extractTitleHistoryFromText(playerText));
-    const categoryMatch = playerText.match(/(?:nVodCateNo|category|cate_no)[=:\"']+([0-9]{6,})/i);
+    titleCandidates = titleCandidates.concat(extractTitlesFromText(playerText));
+    const categoryMatch = playerText.match(/(?:nVodCateNo|category|cate_no)[=:"']+([0-9]{4,})/i);
     if (!categoryNo && categoryMatch?.[1]) categoryNo = categoryMatch[1];
   } catch {}
 
@@ -396,23 +430,37 @@ async function fetchVodDetail(vod) {
     const playlistJson = parseJsonMaybe(playlistText);
     if (playlistJson) {
       durationSeconds = durationSeconds || extractDurationFromObject(playlistJson);
-      titleHistory = titleHistory.concat(extractTitleHistoryFromDetail(playlistJson));
+      titleCandidates = titleCandidates.concat(extractTitlesFromDetail(playlistJson));
     }
     durationSeconds = durationSeconds || extractDurationFromText(playlistText);
-    titleHistory = titleHistory.concat(extractTitleHistoryFromText(playlistText));
+    titleCandidates = titleCandidates.concat(extractTitlesFromText(playlistText));
   } catch {}
 
-  const cleanedHistory = unique(titleHistory, 12)
-    .filter((title) => title && title !== vod.title && !title.includes('https://') && !title.includes('static.sooplive'));
+  const cleanedTitles = unique([vod.title, ...titleCandidates], 12)
+    .filter((title) => title && !title.includes('https://') && !title.includes('static.sooplive'));
+  const titleHistory = cleanedTitles.length ? cleanedTitles : [vod.title];
 
   return {
     ...vod,
     categoryNo,
     durationSeconds,
     durationText: formatDuration(durationSeconds),
-    titleHistory: cleanedHistory,
-    timeline: cleanedHistory,
+    titleHistory,
+    timeline: titleHistory,
   };
+}
+
+function dedupeVods(vods) {
+  const map = new Map();
+  vods.forEach((vod) => {
+    const titleKey = normalizeTitle(vod.title).toLowerCase();
+    const key = vod.titleNo
+      ? `${vod.bjId}:${vod.titleNo}`
+      : `${vod.bjId}:${vod.dateKey}:${titleKey}`;
+    const existing = map.get(key);
+    if (!existing || Number(vod.durationSeconds || 0) > Number(existing.durationSeconds || 0)) map.set(key, vod);
+  });
+  return Array.from(map.values()).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
 }
 
 function buildCalendarItems(vods, monthInfo) {
@@ -429,7 +477,7 @@ function buildCalendarItems(vods, monthInfo) {
 
   return Array.from({ length: daysInMonth }, (_, index) => {
     const dayNumber = index + 1;
-    const broadcasts = (byDay.get(dayNumber) || []).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+    const broadcasts = dedupeVods(byDay.get(dayNumber) || []);
     const totalSeconds = broadcasts.reduce((sum, item) => sum + Number(item.durationSeconds || 0), 0);
     return { dayNumber, broadcasts, totalSeconds, totalDurationText: formatDuration(totalSeconds) || '0분' };
   });
@@ -475,11 +523,11 @@ async function buildPayload(monthInfo) {
   const members = ALL_PRISON_MEMBERS.slice(0, MEMBER_LIMIT);
   const settled = await Promise.allSettled(members.map((member) => fetchMemberVods(member, monthInfo)));
   const vods = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-  const uniqueVods = Array.from(new Map(vods.map((vod) => [`${vod.bjId}-${vod.titleNo}`, vod])).values())
-    .sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+  const uniqueVods = dedupeVods(vods);
 
   const detailed = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodDetail));
-  const merged = uniqueVods.map((vod) => detailed.find((item) => item.id === vod.id) || vod);
+  const detailedMap = new Map(detailed.map((item) => [item.id, item]));
+  const merged = uniqueVods.map((vod) => detailedMap.get(vod.id) || vod);
   const items = buildCalendarItems(merged, monthInfo);
   const memberStats = buildMemberStats(merged);
 
