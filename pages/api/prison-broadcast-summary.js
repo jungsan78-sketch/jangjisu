@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const MEMBER_LIMIT = 16;
 const DETAIL_LIMIT = 80;
 const REQUEST_HEADERS = {
@@ -15,6 +15,10 @@ const REQUEST_HEADERS = {
 
 function getMemberId(member) {
   return String(member.station || '').split('/').filter(Boolean).pop() || '';
+}
+
+function getReviewPageUrl(bjId) {
+  return `https://www.sooplive.com/station/${encodeURIComponent(bjId)}/vod/review`;
 }
 
 function pad(value) {
@@ -155,12 +159,13 @@ function parseVodItem(item, member, monthInfo) {
 
   const seconds = secondsFromDuration(pickFirst(item, ['duration', 'play_time', 'playTime', 'total_time', 'totalTime', 'file_duration', 'fileDuration', 'running_time', 'runningTime']));
   const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'vod_title', 'vodTitle', 'contents'])) || '다시보기';
+  const bjId = getMemberId(member);
 
   return {
     id: `${member.nickname}-${id}`,
     titleNo: id,
     member: member.nickname,
-    bjId: getMemberId(member),
+    bjId,
     dateKey: formatDateKey(startedAt),
     startedAt: startedAt.toISOString(),
     title,
@@ -168,6 +173,7 @@ function parseVodItem(item, member, monthInfo) {
     durationText: formatDuration(seconds),
     timeline: unique(title.split(/\s*[>→▶|/]\s*/g)),
     url: `https://vod.sooplive.com/player/${id}`,
+    reviewPageUrl: getReviewPageUrl(bjId),
   };
 }
 
@@ -185,8 +191,19 @@ async function fetchMemberVods(member, monthInfo) {
   const bjId = getMemberId(member);
   if (!bjId) return [];
 
-  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/all/streamer?startDate=&endDate=&keyword=&orderBy=reg_date&perPage=60&page=1&field=title,contents,user_nick,user_id`;
-  const json = await fetchJson(url);
+  const params = new URLSearchParams({
+    startDate: '',
+    endDate: '',
+    keyword: '',
+    orderBy: 'reg_date',
+    perPage: '60',
+    page: '1',
+    field: 'title,contents,user_nick,user_id',
+  });
+  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${params.toString()}`;
+  const json = await fetchJson(url, {
+    headers: { referer: getReviewPageUrl(bjId) },
+  });
   const list = extractList(json);
   return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
 }
@@ -206,7 +223,10 @@ async function fetchVodTimeline(vod) {
     });
     const json = await fetchJson('https://stbbs.sooplive.com/api/get_vod_list.php', {
       method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        referer: getReviewPageUrl(vod.bjId),
+      },
       body: params.toString(),
     });
     const timeline = extractTimelineFromDetail(json, vod.title);
@@ -251,6 +271,7 @@ async function buildPayload(monthInfo) {
     monthLabel: monthInfo.monthLabel,
     items,
     totalCount: merged.length,
+    sourceType: 'review',
     fetchedAt: new Date().toISOString(),
   };
 }
