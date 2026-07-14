@@ -6,12 +6,12 @@ export default function PrisonBroadcastSummaryPage() {
   return (
     <>
       <Head>
-        <title>방송요약 | 장지수용소</title>
-        <meta name="description" content="장지수용소 멤버들의 이번 달 다시보기 흐름을 달력으로 보는 방송요약 페이지" />
+        <title>이번 달 다시보기 달력 | 장지수용소</title>
+        <meta name="description" content="장지수용소 멤버들의 이번 달 다시보기 방송시간과 제목을 달력으로 보는 페이지" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <PrisonPageChrome>
-        <div className="min-h-[calc(100vh-56px)] w-full pt-0">
+        <div className="min-h-[calc(100vh-56px)] w-full pt-0 xl:-mx-12 xl:w-[calc(100%+6rem)] 2xl:-mx-20 2xl:w-[calc(100%+10rem)]">
           <BroadcastSummaryCalendar />
         </div>
       </PrisonPageChrome>
