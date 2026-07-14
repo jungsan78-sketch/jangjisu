@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6-title-history-duration';
 const MEMBER_LIMIT = 16;
 const DETAIL_LIMIT = 140;
 const REQUEST_HEADERS = {
@@ -151,6 +151,7 @@ function formatDuration(seconds) {
 
 function normalizeTitle(value) {
   return String(value || '')
+    .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .replace(/[\[\]【】]/g, '')
     .trim();
@@ -159,83 +160,128 @@ function normalizeTitle(value) {
 function cleanTimelineTitle(value) {
   const text = normalizeTitle(value)
     .replace(/^\d{1,2}:\d{2}(:\d{2})?\s*/g, '')
-    .replace(/^(다시보기|방송|생방송|라이브)\s*/g, '')
+    .replace(/^(다시보기|방송|생방송|라이브|제목)\s*/g, '')
+    .replace(/\s*[|▶→>]\s*$/g, '')
     .trim();
   if (!text) return '';
   if (/^\d+$/.test(text)) return '';
-  if (/^(null|undefined|vod|review)$/i.test(text)) return '';
-  if (text.length > 28) return text.slice(0, 28).trim();
+  if (/^(review|playlist|vod|title)$/i.test(text)) return '';
+  if (text.length > 34) return `${text.slice(0, 34).trim()}…`;
   return text;
 }
 
-function unique(values, limit = 8) {
+function unique(values, limit = 10) {
   return Array.from(new Set(values.map(cleanTimelineTitle).filter(Boolean))).slice(0, limit);
 }
 
-function timelineTitleFromObject(item) {
-  return pickFirst(item, [
-    'title', 'subject', 'szTitle', 'szSubject', 'file_title', 'fileTitle',
-    'playlist_title', 'playlistTitle', 'chapter_title', 'chapterTitle',
-    'segment_title', 'segmentTitle', 'broad_title', 'broadTitle', 'name',
-  ]);
-}
-
-function scoreTimelineArray(items) {
-  if (!Array.isArray(items)) return 0;
-  return items.reduce((score, item) => {
-    if (!item || typeof item !== 'object') return score;
-    const title = cleanTimelineTitle(timelineTitleFromObject(item));
-    const hasIndex = pickFirst(item, ['nPlaylistIdx', 'playlistIdx', 'file_order', 'fileOrder', 'index', 'seq']);
-    const duration = extractDurationSeconds(item, 0);
-    return score + (title ? 4 : 0) + (hasIndex !== '' ? 1 : 0) + (duration > 0 ? 1 : 0);
-  }, 0);
-}
-
-function extractTimelineFromDetail(json, fallbackTitle) {
-  const arrays = collectArrays(json, [])
-    .filter((items) => items.length > 0)
-    .sort((a, b) => scoreTimelineArray(b) - scoreTimelineArray(a) || b.length - a.length);
-
-  for (const items of arrays) {
-    const titles = unique(items.map(timelineTitleFromObject), 10);
-    if (titles.length >= 2) return titles;
-  }
-
-  const oneTitleArray = arrays.map((items) => unique(items.map(timelineTitleFromObject), 10)).find((titles) => titles.length > 0);
-  if (oneTitleArray?.length) return oneTitleArray;
-
-  return unique(String(fallbackTitle || '').split(/\s*[>→▶|/]\s*/g), 8);
-}
-
-function extractDurationSeconds(node, depth = 0) {
-  if (!node || depth > 7) return 0;
+function findFirstByKey(node, keyPattern) {
+  if (!node) return '';
   if (Array.isArray(node)) {
-    const values = node.map((item) => extractDurationSeconds(item, depth + 1)).filter((value) => value > 0);
-    const sum = values.reduce((total, value) => total + value, 0);
-    const max = Math.max(0, ...values);
-    if (sum >= 60 && sum <= 48 * 3600 && values.length >= 2) return sum;
-    return max;
+    for (const item of node) {
+      const found = findFirstByKey(item, keyPattern);
+      if (found !== '') return found;
+    }
+    return '';
   }
-  if (typeof node !== 'object') return 0;
+  if (typeof node === 'object') {
+    for (const [key, value] of Object.entries(node)) {
+      if (keyPattern.test(key) && value !== undefined && value !== null && value !== '') return value;
+    }
+    for (const value of Object.values(node)) {
+      const found = findFirstByKey(value, keyPattern);
+      if (found !== '') return found;
+    }
+  }
+  return '';
+}
 
-  let best = 0;
+function extractDurationFromObject(json) {
+  return secondsFromDuration(findFirstByKey(json, /(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i));
+}
+
+function extractCategoryFromObject(json) {
+  const value = findFirstByKey(json, /(vod.?cate.?no|cate.?no|category.?no|category)$/i);
+  return value ? String(value) : '';
+}
+
+function collectTimelineTitles(node, bucket = []) {
+  if (!node || bucket.length > 40) return bucket;
+  if (Array.isArray(node)) {
+    node.forEach((item) => collectTimelineTitles(item, bucket));
+    return bucket;
+  }
+  if (typeof node !== 'object') return bucket;
+
+  const title = pickFirst(node, [
+    'title', 'subject', 'szTitle', 'szSubject', 'file_title', 'fileTitle', 'playlist_title', 'playlistTitle',
+    'chapter_title', 'chapterTitle', 'segment_title', 'segmentTitle', 'broad_title', 'broadTitle', 'station_title', 'stationTitle',
+  ]);
+  if (title) bucket.push(title);
+
   Object.entries(node).forEach(([key, value]) => {
-    const keyText = String(key || '');
-    if (/date|time_stamp|timestamp|start|end|reg/i.test(keyText)) {
-      if (!/duration|play|running|broad_time|total_time|file_time/i.test(keyText)) return;
-    }
-
-    if (/duration|playtime|play_time|running|run_time|total_time|broad_time|file_duration|view_time|length|runtime/i.test(keyText)) {
-      const seconds = secondsFromDuration(value);
-      if (seconds > best && seconds < 48 * 3600) best = seconds;
-    }
-
-    if (typeof value === 'object') {
-      const nested = extractDurationSeconds(value, depth + 1);
-      if (nested > best && nested < 48 * 3600) best = nested;
-    }
+    if (/list|playlist|chapter|segment|file|title|history|data|item/i.test(key)) collectTimelineTitles(value, bucket);
   });
-  return best;
+  return bucket;
+}
+
+function extractTitleHistoryFromDetail(json) {
+  return unique(collectTimelineTitles(json, []), 12);
+}
+
+function parseJsonMaybe(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch {}
+  const trimmed = String(text).trim();
+  const first = trimmed.search(/[\[{]/);
+  if (first >= 0) {
+    try { return JSON.parse(trimmed.slice(first)); } catch {}
+  }
+  return null;
+}
+
+function extractDurationFromText(text) {
+  const source = String(text || '');
+  const patterns = [
+    /vod-duration[=:\"']+(\d+)/i,
+    /vod_duration[=:\"']+(\d+)/i,
+    /duration[=:\"']+(\d+)/i,
+    /play_time[=:\"']+(\d+)/i,
+    /running_time[=:\"']+(\d+)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (match?.[1]) return secondsFromDuration(match[1]);
+  }
+  return 0;
+}
+
+function extractTitleHistoryFromText(text) {
+  const source = String(text || '');
+  const titles = [];
+  const regexes = [
+    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)\"?\s*[:=]\s*\"([^\"]{2,80})\"/gi,
+    /(?:playlist_title|file_title|broad_title|chapter_title|segment_title|szTitle|title)'?\s*[:=]\s*'([^']{2,80})'/gi,
+  ];
+  regexes.forEach((regex) => {
+    let match;
+    while ((match = regex.exec(source))) titles.push(match[1]);
+  });
+  return unique(titles, 12);
+}
+
+async function fetchText(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: { ...REQUEST_HEADERS, ...(options.headers || {}) },
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`request failed ${response.status}`);
+  return response.text();
+}
+
+async function fetchJson(url, options = {}) {
+  const text = await fetchText(url, options);
+  return parseJsonMaybe(text) || {};
 }
 
 function parseVodItem(item, member, monthInfo) {
@@ -253,10 +299,11 @@ function parseVodItem(item, member, monthInfo) {
   const seconds = secondsFromDuration(pickFirst(item, [
     'duration', 'duration_time', 'durationTime', 'play_time', 'playTime', 'playtime',
     'total_time', 'totalTime', 'total_file_duration', 'file_duration', 'fileDuration',
-    'running_time', 'runningTime', 'broad_time', 'broadTime', 'view_time', 'viewTime',
+    'running_time', 'runningTime', 'broad_time', 'broadTime', 'view_time', 'viewTime', 'vod_duration', 'vodDuration',
   ]));
   const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content'])) || '다시보기';
   const bjId = getMemberId(member);
+  const categoryNo = String(pickFirst(item, ['nVodCateNo', 'vod_cate_no', 'vodCateNo', 'cate_no', 'cateNo', 'category_no', 'categoryNo', 'category']));
 
   return {
     id: `${member.nickname}-${id}`,
@@ -264,24 +311,16 @@ function parseVodItem(item, member, monthInfo) {
     member: member.nickname,
     memberImage: member.image || '',
     bjId,
+    categoryNo,
     dateKey: formatDateKey(startedAt),
     startedAt: startedAt.toISOString(),
     title,
     durationSeconds: seconds,
     durationText: formatDuration(seconds),
-    timeline: unique(title.split(/\s*[>→▶|/]\s*/g)),
+    titleHistory: [],
+    timeline: [],
     url: `https://vod.sooplive.com/player/${id}`,
   };
-}
-
-async function fetchJson(url, options = {}) {
-  const response = await fetch(url, {
-    ...options,
-    headers: { ...REQUEST_HEADERS, ...(options.headers || {}) },
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error(`request failed ${response.status}`);
-  return response.json();
 }
 
 async function fetchMemberVods(member, monthInfo) {
@@ -304,18 +343,36 @@ async function fetchMemberVods(member, monthInfo) {
   return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
 }
 
-async function fetchMobileVodDetail(vod) {
-  try {
-    const query = new URLSearchParams({ nTitleNo: vod.titleNo, nApiLevel: '11', nPlaylistIdx: '0' });
-    return await fetchJson(`https://api.m.sooplive.com/station/video/a/view?${query.toString()}`, {
-      headers: { referer: `https://vod.sooplive.com/player/${vod.titleNo}` },
-    });
-  } catch {
-    return null;
-  }
-}
+async function fetchVodDetail(vod) {
+  let durationSeconds = Number(vod.durationSeconds || 0);
+  let categoryNo = vod.categoryNo || '';
+  let titleHistory = [];
 
-async function fetchPlaylistVodDetail(vod) {
+  try {
+    const body = new URLSearchParams({ nTitleNo: vod.titleNo, nApiLevel: '11', nPlaylistIdx: '0' });
+    const detailText = await fetchText('https://api.m.sooplive.com/station/video/a/view', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
+      body: body.toString(),
+    });
+    const detailJson = parseJsonMaybe(detailText);
+    if (detailJson) {
+      durationSeconds = durationSeconds || extractDurationFromObject(detailJson);
+      categoryNo = categoryNo || extractCategoryFromObject(detailJson);
+      titleHistory = titleHistory.concat(extractTitleHistoryFromDetail(detailJson));
+    }
+    durationSeconds = durationSeconds || extractDurationFromText(detailText);
+    titleHistory = titleHistory.concat(extractTitleHistoryFromText(detailText));
+  } catch {}
+
+  try {
+    const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` } });
+    durationSeconds = durationSeconds || extractDurationFromText(playerText);
+    titleHistory = titleHistory.concat(extractTitleHistoryFromText(playerText));
+    const categoryMatch = playerText.match(/(?:nVodCateNo|category|cate_no)[=:\"']+([0-9]{6,})/i);
+    if (!categoryNo && categoryMatch?.[1]) categoryNo = categoryMatch[1];
+  } catch {}
+
   try {
     const params = new URLSearchParams({
       szDataType: 'PLAYLIST',
@@ -323,43 +380,38 @@ async function fetchPlaylistVodDetail(vod) {
       szBjId: vod.bjId,
       szFileType: 'REVIEW',
       platform: 'pc',
+      nVodCateNo: categoryNo || '00040017',
       nPlaylistIdx: '0',
       nLimit: '50',
+      szMenuId: '',
+      szKeyword: '',
       nVersion: '2',
       szDataSrcType: 'reload',
     });
-    return await fetchJson('https://stbbs.sooplive.com/api/get_vod_list.php', {
+    const playlistText = await fetchText('https://stbbs.sooplive.com/api/get_vod_list.php', {
       method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` },
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
       body: params.toString(),
     });
-  } catch {
-    return null;
-  }
-}
+    const playlistJson = parseJsonMaybe(playlistText);
+    if (playlistJson) {
+      durationSeconds = durationSeconds || extractDurationFromObject(playlistJson);
+      titleHistory = titleHistory.concat(extractTitleHistoryFromDetail(playlistJson));
+    }
+    durationSeconds = durationSeconds || extractDurationFromText(playlistText);
+    titleHistory = titleHistory.concat(extractTitleHistoryFromText(playlistText));
+  } catch {}
 
-async function fetchVodTimeline(vod) {
-  const [mobileDetail, playlistDetail] = await Promise.all([
-    fetchMobileVodDetail(vod),
-    fetchPlaylistVodDetail(vod),
-  ]);
-
-  const playlistTimeline = playlistDetail ? extractTimelineFromDetail(playlistDetail, '') : [];
-  const mobileTimeline = mobileDetail ? extractTimelineFromDetail(mobileDetail, '') : [];
-  const fallbackTimeline = unique(String(vod.title || '').split(/\s*[>→▶|/]\s*/g));
-  const timeline = playlistTimeline.length ? playlistTimeline : mobileTimeline.length ? mobileTimeline : fallbackTimeline;
-
-  const detailDuration = Math.max(
-    extractDurationSeconds(playlistDetail),
-    extractDurationSeconds(mobileDetail),
-    Number(vod.durationSeconds || 0),
-  );
+  const cleanedHistory = unique(titleHistory, 12)
+    .filter((title) => title && title !== vod.title && !title.includes('https://') && !title.includes('static.sooplive'));
 
   return {
     ...vod,
-    durationSeconds: detailDuration,
-    durationText: formatDuration(detailDuration),
-    timeline: timeline.length ? timeline : vod.timeline,
+    categoryNo,
+    durationSeconds,
+    durationText: formatDuration(durationSeconds),
+    titleHistory: cleanedHistory,
+    timeline: cleanedHistory,
   };
 }
 
@@ -378,8 +430,8 @@ function buildCalendarItems(vods, monthInfo) {
   return Array.from({ length: daysInMonth }, (_, index) => {
     const dayNumber = index + 1;
     const broadcasts = (byDay.get(dayNumber) || []).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
-    const totalSeconds = broadcasts.reduce((sum, broadcast) => sum + Number(broadcast.durationSeconds || 0), 0);
-    return { dayNumber, broadcasts, totalSeconds, totalDurationText: formatDuration(totalSeconds) || '' };
+    const totalSeconds = broadcasts.reduce((sum, item) => sum + Number(item.durationSeconds || 0), 0);
+    return { dayNumber, broadcasts, totalSeconds, totalDurationText: formatDuration(totalSeconds) || '0분' };
   });
 }
 
@@ -426,8 +478,8 @@ async function buildPayload(monthInfo) {
   const uniqueVods = Array.from(new Map(vods.map((vod) => [`${vod.bjId}-${vod.titleNo}`, vod])).values())
     .sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
 
-  const withDetail = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodTimeline));
-  const merged = uniqueVods.map((vod) => withDetail.find((item) => item.id === vod.id) || vod);
+  const detailed = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodDetail));
+  const merged = uniqueVods.map((vod) => detailed.find((item) => item.id === vod.id) || vod);
   const items = buildCalendarItems(merged, monthInfo);
   const memberStats = buildMemberStats(merged);
 
