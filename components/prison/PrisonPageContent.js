@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CalendarPreview from './CalendarPreview';
-import BroadcastSummaryCalendar from './BroadcastSummaryCalendar';
 import RecentYoutubeSection from './RecentYoutubeSection';
 import { PrisonMemberLiveGridContent } from '../PrisonMemberLiveGrid';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
@@ -193,21 +192,21 @@ function LiveMemberList() {
   );
 }
 
-function PrisonSidebar() {
+export function PrisonSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[274px] border-r border-white/10 bg-[#05070c]/92 px-5 py-5 shadow-[18px_0_70px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:block">
-      <a href="#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
+      <a href="/jangjisu-prison#top" className="mb-5 flex h-[210px] items-center justify-center overflow-visible p-0">
         <SidebarLogo />
       </a>
 
       <nav className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2.5">
-          <SidebarNavItem href="#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" compact />
+          <SidebarNavItem href="/jangjisu-prison#shorts-hall" label="명예의 쇼츠" icon="🏆" tone="gold" compact />
           <SidebarNavItem href="/" label="SOU 아카이브" compact />
         </div>
-        <SidebarNavItem href="#schedule" label="일정" icon="⛓" />
-        <SidebarNavItem href="#broadcast-summary" label="방송요약" icon="▤" tone="teal" />
-        <SidebarNavItem href="#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
+        <SidebarNavItem href="/jangjisu-prison#schedule" label="일정" icon="⛓" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="방송요약" icon="▤" tone="teal" />
+        <SidebarNavItem href="/jangjisu-prison#recent-youtube" label="YOUTUBE" icon="▶" tone="red" />
         <SidebarNavItem href="/utility" label="유틸리티" icon="🛠" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
@@ -218,21 +217,21 @@ function PrisonSidebar() {
   );
 }
 
-function MobilePrisonNav() {
+export function MobilePrisonNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/88 px-4 py-3 backdrop-blur-xl xl:hidden">
       <div className="flex items-center justify-between gap-3">
-        <a href="#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
+        <a href="/jangjisu-prison#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
           <SidebarLogo compact />
         </a>
         <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
+        <a href="/jangjisu-prison#shorts-hall" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 명예의 쇼츠</a>
         <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">SOU 아카이브</a>
-        <a href="#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
-        <a href="#broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송요약</a>
-        <a href="#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
+        <a href="/jangjisu-prison#schedule" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">일정</a>
+        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송요약</a>
+        <a href="/jangjisu-prison#recent-youtube" className="shrink-0 rounded-full bg-red-500/8 px-4 py-2 text-xs font-black text-red-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">YOUTUBE</a>
         <a href="/utility" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">유틸리티</a>
         <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
       </nav>
@@ -240,7 +239,7 @@ function MobilePrisonNav() {
   );
 }
 
-export default function PrisonPageContent() {
+export function PrisonPageChrome({ children }) {
   return (
     <>
       <style jsx global>{`
@@ -263,7 +262,6 @@ export default function PrisonPageContent() {
           .sou-prison-main > *,
           .sou-prison-main #members,
           .sou-prison-main #schedule,
-          .sou-prison-main #broadcast-summary,
           .sou-prison-main #recent-youtube,
           .sou-prison-main .sou-member-live-section {
             width: 100% !important;
@@ -288,24 +286,31 @@ export default function PrisonPageContent() {
           <div className="sou-prison-content min-w-0 max-w-none">
             <MobilePrisonNav />
             <main className="sou-prison-main relative w-full max-w-none overflow-x-hidden px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7">
-              <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
-                <div className="relative overflow-hidden">
-                  <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,12,0.18),transparent_16%,transparent_84%,rgba(5,7,12,0.18)),linear-gradient(180deg,rgba(0,0,0,0.015),transparent_52%,rgba(5,7,12,0.14))]" />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#05070c]/45 to-transparent sm:h-16" />
-                </div>
-              </section>
-
-              <div id="members" className="scroll-mt-6 w-full max-w-none overflow-x-hidden">
-                <PrisonMemberLiveGridContent />
-              </div>
-              <CalendarPreview />
-              <BroadcastSummaryCalendar />
-              <RecentYoutubeSection />
+              {children}
             </main>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+export default function PrisonPageContent() {
+  return (
+    <PrisonPageChrome>
+      <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
+        <div className="relative overflow-hidden">
+          <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,12,0.18),transparent_16%,transparent_84%,rgba(5,7,12,0.18)),linear-gradient(180deg,rgba(0,0,0,0.015),transparent_52%,rgba(5,7,12,0.14))]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#05070c]/45 to-transparent sm:h-16" />
+        </div>
+      </section>
+
+      <div id="members" className="scroll-mt-6 w-full max-w-none overflow-x-hidden">
+        <PrisonMemberLiveGridContent />
+      </div>
+      <CalendarPreview />
+      <RecentYoutubeSection />
+    </PrisonPageChrome>
   );
 }
