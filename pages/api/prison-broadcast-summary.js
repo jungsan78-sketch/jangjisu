@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v8-review-list-empty-date-playtime';
+const CACHE_VERSION = 'v9-f12-all-streamer-list';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 8;
 const PER_PAGE = 60;
@@ -283,12 +283,13 @@ async function fetchMemberVods(member, monthInfo) {
       orderBy: 'reg_date',
       perPage: String(PER_PAGE),
       page: String(page),
+      field: 'title,contents,user_nick,user_id',
     });
-    const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
+    const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/all/streamer?${query.toString()}`;
 
     let list = [];
     try {
-      const json = await fetchJson(url, { headers: { referer: `https://www.sooplive.com/station/${bjId}/vod/review` } });
+      const json = await fetchJson(url, { headers: { referer: 'https://www.sooplive.com/' } });
       list = extractList(json);
     } catch {
       break;
@@ -320,7 +321,7 @@ async function fetchVodDetail(vod) {
 
   if (!durationSeconds) {
     try {
-      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` } });
+      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod` } });
       durationSeconds = extractDurationFromText(playerText);
     } catch {}
   }
@@ -400,7 +401,7 @@ async function buildPayload(monthInfo) {
 
   return {
     ok: true,
-    sourceType: 'review',
+    sourceType: 'all-streamer',
     monthLabel: monthInfo.monthLabel,
     items: buildCalendarItems(vods, monthInfo),
     memberStats: buildMemberStats(vods),
@@ -428,7 +429,7 @@ export default async function handler(req, res) {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale' });
     return res.status(200).json({
       ok: false,
-      sourceType: 'review',
+      sourceType: 'all-streamer',
       monthLabel: monthInfo.monthLabel,
       items: [],
       memberStats: buildMemberStats([]),
