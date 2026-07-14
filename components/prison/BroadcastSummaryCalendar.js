@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
+function getCurrentKstMonthLabel() {
+  const shifted = new Date(Date.now() + (9 * 60 * 60 * 1000));
+  const year = shifted.getUTCFullYear();
+  const month = shifted.getUTCMonth() + 1;
+  return `${year}년 ${month}월`;
+}
+
 function parseMonthLabel(label) {
   const matched = String(label || '').match(/(\d{4})년\s*(\d{1,2})월/);
   if (!matched) return null;
@@ -11,12 +18,11 @@ function parseMonthLabel(label) {
 function buildCalendarCells(monthLabel, items, selectedMember) {
   const parsed = parseMonthLabel(monthLabel);
   if (!parsed) return [];
-
   const { year, month } = parsed;
   const days = new Date(year, month, 0).getDate();
   const lead = new Date(year, month - 1, 1).getDay();
   const total = Math.ceil((lead + days) / 7) * 7;
-  const map = new Map((items || []).map((item) => [Number(item.dayNumber), item]));
+  const map = new Map((Array.isArray(items) ? items : []).map((item) => [Number(item.dayNumber), item]));
 
   return Array.from({ length: total }, (_, index) => {
     const day = index - lead + 1;
@@ -40,14 +46,9 @@ function formatDurationText(seconds) {
 }
 
 function BroadcastPill({ broadcast }) {
-  const timeline = (broadcast.timeline || []).slice(0, 4);
+  const timeline = Array.isArray(broadcast.timeline) ? broadcast.timeline.slice(0, 4) : [];
   return (
-    <a
-      href={broadcast.url}
-      target="_blank"
-      rel="noreferrer"
-      className="group block rounded-[14px] border border-white/[0.065] bg-white/[0.045] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition hover:-translate-y-0.5 hover:border-cyan-200/20 hover:bg-cyan-300/[0.08] sm:rounded-[16px] sm:px-3 sm:py-2.5"
-    >
+    <a href={broadcast.url} target="_blank" rel="noreferrer" className="group block rounded-[14px] border border-white/[0.065] bg-white/[0.045] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition hover:-translate-y-0.5 hover:border-cyan-200/20 hover:bg-cyan-300/[0.08] sm:rounded-[16px] sm:px-3 sm:py-2.5">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-[10px] font-black text-cyan-100 sm:text-xs">{broadcast.member}</span>
         {broadcast.durationText ? <span className="shrink-0 rounded-full bg-black/22 px-1.5 py-0.5 text-[8px] font-black text-white/62 sm:text-[10px]">{broadcast.durationText}</span> : null}
@@ -55,9 +56,7 @@ function BroadcastPill({ broadcast }) {
       <div className="mt-1 truncate text-[10px] font-black leading-4 text-white/88 sm:text-[12px] sm:leading-5">{broadcast.title}</div>
       {timeline.length ? (
         <div className="mt-1.5 flex flex-wrap gap-1">
-          {timeline.map((title, index) => (
-            <span key={`${broadcast.id}-${title}-${index}`} className="max-w-full truncate rounded-full bg-black/18 px-1.5 py-0.5 text-[8px] font-extrabold text-white/56 sm:text-[10px]">{title}</span>
-          ))}
+          {timeline.map((title, index) => <span key={`${broadcast.id}-${title}-${index}`} className="max-w-full truncate rounded-full bg-black/18 px-1.5 py-0.5 text-[8px] font-extrabold text-white/56 sm:text-[10px]">{title}</span>)}
         </div>
       ) : null}
     </a>
@@ -86,11 +85,7 @@ function RankCard({ stat, rank }) {
 
 function MemberFilterButton({ stat, active, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex items-center gap-2 rounded-full border px-2 py-1.5 pr-3 text-xs font-black transition sm:text-sm ${active ? 'border-teal-100/40 bg-teal-300/15 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.08)]' : 'border-white/8 bg-white/[0.045] text-white/68 hover:-translate-y-0.5 hover:border-teal-100/24 hover:bg-teal-300/[0.08] hover:text-white'}`}
-    >
+    <button type="button" onClick={onClick} className={`group flex items-center gap-2 rounded-full border px-2 py-1.5 pr-3 text-xs font-black transition sm:text-sm ${active ? 'border-teal-100/40 bg-teal-300/15 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.08)]' : 'border-white/8 bg-white/[0.045] text-white/68 hover:-translate-y-0.5 hover:border-teal-100/24 hover:bg-teal-300/[0.08] hover:text-white'}`}>
       <img src={stat.memberImage} alt="" className="h-7 w-7 rounded-full bg-slate-900 object-cover shadow-[0_0_14px_rgba(255,255,255,0.06)]" loading="lazy" />
       <span>{stat.member}</span>
       <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[10px] text-white/50">{formatDurationText(stat.totalSeconds)}</span>
@@ -116,7 +111,6 @@ export default function BroadcastSummaryCalendar() {
         if (mounted) setLoaded(true);
       }
     }
-
     load();
     const timer = setInterval(load, 60 * 60 * 1000);
     return () => {
@@ -125,14 +119,16 @@ export default function BroadcastSummaryCalendar() {
     };
   }, []);
 
-  const monthLabel = payload?.monthLabel || '';
+  const monthLabel = payload?.monthLabel || getCurrentKstMonthLabel();
   const parsedMonth = parseMonthLabel(monthLabel);
-  const memberStats = payload?.memberStats || [];
+  const rawMemberStats = Array.isArray(payload?.memberStats) ? payload.memberStats : [];
+  const memberStats = rawMemberStats.length ? rawMemberStats : [{ member: '장지수', memberImage: '/profile-jangjisu.png', totalSeconds: 0, broadcastCount: 0 }];
   const selectedStat = memberStats.find((stat) => stat.member === selectedMember) || memberStats[0];
-  const activeMember = selectedStat?.member || selectedMember;
-  const cells = useMemo(() => buildCalendarCells(monthLabel, payload?.items || [], activeMember), [monthLabel, payload, activeMember]);
-  const totalCount = payload?.totalCount || 0;
-  const ranking = memberStats.filter((stat) => stat.totalSeconds > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
+  const activeMember = selectedStat?.member || '장지수';
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  const cells = useMemo(() => buildCalendarCells(monthLabel, items, activeMember), [monthLabel, items, activeMember]);
+  const totalCount = Number(payload?.totalCount || 0);
+  const ranking = memberStats.filter((stat) => Number(stat.totalSeconds || 0) > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
 
   useEffect(() => {
     if (!memberStats.length) return;
@@ -157,19 +153,21 @@ export default function BroadcastSummaryCalendar() {
           </div>
         </div>
 
-        {ranking.length ? (
-          <div className="mb-7">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <div className="text-[22px] font-black text-white sm:text-[30px]">{parsedMonth ? `${parsedMonth.month}월 다시보기 시간 순위` : '다시보기 시간 순위'}</div>
-                <div className="mt-1 text-xs font-bold text-white/42">이번 달 다시보기 방송시간 합산 기준입니다.</div>
-              </div>
+        <div className="mb-7">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[22px] font-black text-white sm:text-[30px]">{parsedMonth ? `${parsedMonth.month}월 다시보기 시간 순위` : '다시보기 시간 순위'}</div>
+              <div className="mt-1 text-xs font-bold text-white/42">이번 달 다시보기 방송시간 합산 기준입니다.</div>
             </div>
+          </div>
+          {ranking.length ? (
             <div className="grid gap-3 xl:grid-cols-3">
               {ranking.slice(0, 3).map((stat, index) => <RankCard key={stat.member} stat={stat} rank={`${index + 1}위`} />)}
             </div>
-          </div>
-        ) : null}
+          ) : (
+            <div className="rounded-[22px] bg-[#05101d] p-5 text-sm font-bold text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">아직 이번 달 다시보기 시간이 집계되지 않았습니다.</div>
+          )}
+        </div>
 
         <div className="mb-5 rounded-[22px] bg-[#05101d] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-4">
           <div className="mb-3 text-sm font-black text-white/70">멤버 선택</div>
