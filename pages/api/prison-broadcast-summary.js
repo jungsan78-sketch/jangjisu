@@ -3,9 +3,9 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const MEMBER_LIMIT = 16;
-const DETAIL_LIMIT = 80;
+const DETAIL_LIMIT = 120;
 const REQUEST_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.sooplive.com',
@@ -15,10 +15,6 @@ const REQUEST_HEADERS = {
 
 function getMemberId(member) {
   return String(member.station || '').split('/').filter(Boolean).pop() || '';
-}
-
-function getReviewPageUrl(bjId) {
-  return `https://www.sooplive.com/station/${encodeURIComponent(bjId)}/vod/review`;
 }
 
 function pad(value) {
@@ -165,6 +161,7 @@ function parseVodItem(item, member, monthInfo) {
     id: `${member.nickname}-${id}`,
     titleNo: id,
     member: member.nickname,
+    memberImage: member.image || '',
     bjId,
     dateKey: formatDateKey(startedAt),
     startedAt: startedAt.toISOString(),
@@ -173,7 +170,6 @@ function parseVodItem(item, member, monthInfo) {
     durationText: formatDuration(seconds),
     timeline: unique(title.split(/\s*[>→▶|/]\s*/g)),
     url: `https://vod.sooplive.com/player/${id}`,
-    reviewPageUrl: getReviewPageUrl(bjId),
   };
 }
 
@@ -191,19 +187,8 @@ async function fetchMemberVods(member, monthInfo) {
   const bjId = getMemberId(member);
   if (!bjId) return [];
 
-  const params = new URLSearchParams({
-    startDate: '',
-    endDate: '',
-    keyword: '',
-    orderBy: 'reg_date',
-    perPage: '60',
-    page: '1',
-    field: 'title,contents,user_nick,user_id',
-  });
-  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${params.toString()}`;
-  const json = await fetchJson(url, {
-    headers: { referer: getReviewPageUrl(bjId) },
-  });
+  const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?startDate=&endDate=&keyword=&orderBy=reg_date&perPage=60&page=1&field=title,contents,user_nick,user_id`;
+  const json = await fetchJson(url, { headers: { referer: `https://www.sooplive.com/station/${bjId}/vod/review` } });
   const list = extractList(json);
   return list.map((item) => parseVodItem(item, member, monthInfo)).filter(Boolean);
 }
@@ -223,10 +208,7 @@ async function fetchVodTimeline(vod) {
     });
     const json = await fetchJson('https://stbbs.sooplive.com/api/get_vod_list.php', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        referer: getReviewPageUrl(vod.bjId),
-      },
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` },
       body: params.toString(),
     });
     const timeline = extractTimelineFromDetail(json, vod.title);
@@ -255,6 +237,42 @@ function buildCalendarItems(vods, monthInfo) {
   });
 }
 
+function buildMemberStats(vods) {
+  const memberMap = new Map(ALL_PRISON_MEMBERS.map((member) => [member.nickname, member]));
+  const statsMap = new Map();
+
+  vods.forEach((vod) => {
+    const existing = statsMap.get(vod.member) || {
+      member: vod.member,
+      memberImage: vod.memberImage || memberMap.get(vod.member)?.image || '',
+      totalSeconds: 0,
+      broadcastCount: 0,
+    };
+    existing.totalSeconds += Number(vod.durationSeconds || 0);
+    existing.broadcastCount += 1;
+    statsMap.set(vod.member, existing);
+  });
+
+  ALL_PRISON_MEMBERS.forEach((member) => {
+    if (!statsMap.has(member.nickname)) {
+      statsMap.set(member.nickname, {
+        member: member.nickname,
+        memberImage: member.image || '',
+        totalSeconds: 0,
+        broadcastCount: 0,
+      });
+    }
+  });
+
+  return Array.from(statsMap.values())
+    .map((stat) => ({ ...stat, totalDurationText: formatDuration(stat.totalSeconds) || '0분' }))
+    .sort((a, b) => {
+      if (a.member === '장지수') return -1;
+      if (b.member === '장지수') return 1;
+      return b.totalSeconds - a.totalSeconds || a.member.localeCompare(b.member, 'ko');
+    });
+}
+
 async function buildPayload(monthInfo) {
   const members = ALL_PRISON_MEMBERS.slice(0, MEMBER_LIMIT);
   const settled = await Promise.allSettled(members.map((member) => fetchMemberVods(member, monthInfo)));
@@ -265,13 +283,15 @@ async function buildPayload(monthInfo) {
   const withTimeline = await Promise.all(uniqueVods.slice(0, DETAIL_LIMIT).map(fetchVodTimeline));
   const merged = uniqueVods.map((vod) => withTimeline.find((item) => item.id === vod.id) || vod);
   const items = buildCalendarItems(merged, monthInfo);
+  const memberStats = buildMemberStats(merged);
 
   return {
     ok: true,
+    sourceType: 'review',
     monthLabel: monthInfo.monthLabel,
     items,
+    memberStats,
     totalCount: merged.length,
-    sourceType: 'review',
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -295,8 +315,10 @@ export default async function handler(req, res) {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale' });
     return res.status(200).json({
       ok: false,
+      sourceType: 'review',
       monthLabel: monthInfo.monthLabel,
       items: [],
+      memberStats: buildMemberStats([]),
       totalCount: 0,
       message: 'SOOP 다시보기 기록을 불러오지 못했습니다.',
       cache: 'unavailable',
