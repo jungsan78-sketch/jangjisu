@@ -47,23 +47,27 @@ function buildCalendarCells(monthLabel, items, selectedMember) {
 }
 
 function BroadcastPill({ broadcast }) {
+  const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
   return (
     <a
       href={broadcast.url}
       target="_blank"
       rel="noreferrer"
-      className="group relative block overflow-hidden rounded-[18px] border border-teal-200/[0.10] bg-[linear-gradient(180deg,rgba(255,255,255,0.060),rgba(255,255,255,0.026))] px-3.5 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_24px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:border-teal-200/26 hover:bg-teal-300/[0.08]"
+      className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
     >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-teal-200/[0.035] transition group-hover:bg-teal-200/[0.075]" />
-      <div className="relative flex items-start justify-between gap-2">
-        <span className="min-w-0 flex-1 line-clamp-2 text-[14px] font-black leading-5 tracking-[-0.03em] text-white sm:text-[16px] sm:leading-6">{broadcast.title}</span>
-        <span className="shrink-0 rounded-full bg-teal-300/12 px-2.5 py-1 text-[11px] font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:text-[12px]">
-          {broadcast.durationText || formatDurationText(broadcast.durationSeconds)}
-        </span>
+      <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">
+        {duration}
+      </span>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
+      <div
+        className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]"
+        style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}
+      >
+        {broadcast.title}
       </div>
-      <div className="relative mt-2 flex items-center justify-between gap-2 text-[11px] font-black text-white/42 sm:text-[12px]">
+      <div className="relative mt-2 flex items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
+        <span className="h-1.5 w-1.5 rounded-full bg-teal-200/60 shadow-[0_0_8px_rgba(94,234,212,0.5)]" />
         <span>{broadcast.member}</span>
-        <span className="text-teal-100/55">다시보기 열기 ↗</span>
       </div>
     </a>
   );
@@ -204,7 +208,7 @@ export default function BroadcastSummaryCalendar() {
             </div>
             <div className="grid grid-cols-7 gap-1.5 sm:gap-3">
               {cells.map((cell, index) => {
-                if (!cell) return <div key={`empty-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[230px] sm:rounded-[24px]" />;
+                if (!cell) return <div key={`empty-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" />;
                 const day = Number(cell.dayNumber);
                 const broadcasts = cell.broadcasts || [];
                 const hasItems = broadcasts.length > 0;
@@ -213,7 +217,7 @@ export default function BroadcastSummaryCalendar() {
                 const isExpanded = Boolean(expandedDays[dayKey]);
                 const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
                 return (
-                  <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[230px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
+                  <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
                     <div className="mb-2 flex items-start justify-between gap-1">
                       <div>
                         <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
