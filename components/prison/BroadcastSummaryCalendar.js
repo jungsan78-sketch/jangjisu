@@ -15,6 +15,16 @@ function parseMonthLabel(label) {
   return { year: Number(matched[1]), month: Number(matched[2]) };
 }
 
+function formatDurationText(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds || 0)));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  if (hours > 0 && minutes > 0) return `${hours}시간 ${minutes}분`;
+  if (hours > 0) return `${hours}시간`;
+  if (minutes > 0) return `${minutes}분`;
+  return '0분';
+}
+
 function buildCalendarCells(monthLabel, items, selectedMember) {
   const parsed = parseMonthLabel(monthLabel);
   if (!parsed) return [];
@@ -27,22 +37,13 @@ function buildCalendarCells(monthLabel, items, selectedMember) {
   return Array.from({ length: total }, (_, index) => {
     const day = index - lead + 1;
     if (day < 1 || day > days) return null;
-    const base = map.get(day) || { dayNumber: day, broadcasts: [] };
+    const base = map.get(day) || { dayNumber: day, broadcasts: [], totalSeconds: 0 };
     const broadcasts = selectedMember
       ? (base.broadcasts || []).filter((broadcast) => broadcast.member === selectedMember)
       : (base.broadcasts || []);
-    return { ...base, broadcasts };
+    const totalSeconds = broadcasts.reduce((sum, broadcast) => sum + Number(broadcast.durationSeconds || 0), 0);
+    return { ...base, broadcasts, totalSeconds, totalDurationText: totalSeconds > 0 ? formatDurationText(totalSeconds) : '' };
   });
-}
-
-function formatDurationText(seconds) {
-  const total = Math.max(0, Math.floor(Number(seconds || 0)));
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  if (hours > 0 && minutes > 0) return `${hours}시간 ${minutes}분`;
-  if (hours > 0) return `${hours}시간`;
-  if (minutes > 0) return `${minutes}분`;
-  return '0분';
 }
 
 function BroadcastPill({ broadcast }) {
@@ -197,7 +198,10 @@ export default function BroadcastSummaryCalendar() {
                 return (
                   <div key={day} className={`relative min-h-[110px] overflow-hidden rounded-[16px] p-2 transition-all duration-300 hover:-translate-y-1 sm:min-h-[170px] sm:rounded-[22px] sm:p-3 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`}>
                     <div className="mb-2 flex items-start justify-between gap-1">
-                      <div className={`text-[12px] font-black sm:text-[17px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                      <div>
+                        <div className={`text-[12px] font-black sm:text-[17px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
+                        {hasItems && cell.totalDurationText ? <div className="mt-1 rounded-full bg-teal-300/10 px-1.5 py-0.5 text-[8px] font-black text-teal-100/85 sm:text-[10px]">총 {cell.totalDurationText}</div> : null}
+                      </div>
                       {hasItems ? <span className="rounded-full bg-teal-300/12 px-1.5 py-0.5 text-[8px] font-black text-teal-100 sm:text-[10px]">{broadcasts.length}개</span> : null}
                     </div>
                     <div className="space-y-1.5 sm:space-y-2">
