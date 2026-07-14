@@ -3,11 +3,11 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v9-f12-all-streamer-list';
+const CACHE_VERSION = 'v10-review-endpoint-playtime-ui';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 8;
 const PER_PAGE = 60;
-const DETAIL_LIMIT = 220;
+const DETAIL_LIMIT = 260;
 const REQUEST_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.sooplive.com',
@@ -31,7 +31,6 @@ function toDate(value) {
   if (!value) return null;
   const raw = String(value).trim();
   if (!raw) return null;
-
   if (/^\d{10}$/.test(raw)) {
     const date = new Date(Number(raw) * 1000);
     return Number.isNaN(date.getTime()) ? null : date;
@@ -40,14 +39,12 @@ function toDate(value) {
     const date = new Date(Number(raw));
     return Number.isNaN(date.getTime()) ? null : date;
   }
-
   const normalized = raw.replace(/\./g, '-').replace(/\s+/g, 'T');
   const withTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(normalized)
     ? normalized
     : `${normalized.includes('T') ? normalized : `${normalized}T00:00:00`}+09:00`;
   const date = new Date(withTimezone);
   if (!Number.isNaN(date.getTime())) return date;
-
   const fallback = new Date(raw);
   return Number.isNaN(fallback.getTime()) ? null : fallback;
 }
@@ -75,6 +72,27 @@ function formatKstDateKey(date) {
 function pickFirst(object, keys) {
   for (const key of keys) {
     if (object?.[key] !== undefined && object?.[key] !== null && object?.[key] !== '') return object[key];
+  }
+  return '';
+}
+
+function findFirstByKey(node, keyPattern) {
+  if (!node) return '';
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = findFirstByKey(item, keyPattern);
+      if (found !== '') return found;
+    }
+    return '';
+  }
+  if (typeof node === 'object') {
+    for (const [key, value] of Object.entries(node)) {
+      if (keyPattern.test(key) && value !== undefined && value !== null && value !== '') return value;
+    }
+    for (const value of Object.values(node)) {
+      const found = findFirstByKey(value, keyPattern);
+      if (found !== '') return found;
+    }
   }
   return '';
 }
@@ -126,10 +144,10 @@ function scoreVodArray(items) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((score, item) => {
     if (!item || typeof item !== 'object') return score;
-    const hasId = pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']);
-    const hasTitle = pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents']);
-    const hasDate = pickFirst(item, ['reg_date', 'regDate', 'reg_datetime', 'created_at', 'createdAt', 'start_date', 'startDate', 'broad_start', 'broadStart', 'write_date', 'writeDate']);
-    return score + (hasId ? 3 : 0) + (hasTitle ? 2 : 0) + (hasDate ? 3 : 0);
+    const hasId = pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']) || findFirstByKey(item, /(title.?no|vod.?no|nTitleNo|seq|id)$/i);
+    const hasTitle = pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents']) || findFirstByKey(item, /(title|subject|contents)$/i);
+    const hasDate = pickFirst(item, ['reg_date', 'regDate', 'reg_datetime', 'created_at', 'createdAt', 'start_date', 'startDate', 'broad_start', 'broadStart', 'write_date', 'writeDate']) || findFirstByKey(item, /(reg.?date|created.?at|start.?date|broad.?start|write.?date)$/i);
+    return score + (hasId ? 4 : 0) + (hasTitle ? 2 : 0) + (hasDate ? 3 : 0);
   }, 0);
 }
 
@@ -187,14 +205,14 @@ async function fetchJson(url, options = {}) {
 }
 
 function collectDurationValues(node, bucket = []) {
-  if (!node || bucket.length > 400) return bucket;
+  if (!node || bucket.length > 500) return bucket;
   if (Array.isArray(node)) {
     node.forEach((item) => collectDurationValues(item, bucket));
     return bucket;
   }
   if (typeof node === 'object') {
     Object.entries(node).forEach(([key, value]) => {
-      if (/(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i.test(key)) {
+      if (/(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time|seek.?time|video.?time|length)$/i.test(key)) {
         const seconds = secondsFromDuration(value);
         if (seconds > 0 && seconds < 7 * 24 * 3600) bucket.push(seconds);
       }
@@ -212,11 +230,10 @@ function extractDurationFromObject(json) {
 function extractDurationFromText(text) {
   const source = String(text || '');
   const patterns = [
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{1,3}:\d{2}:\d{2})/i,
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{1,5}:\d{2})/i,
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time)[=:"'\s]+(\d{2,8})/i,
-    /"duration"\s*:\s*"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})"?/i,
-    /"playTime"\s*:\s*"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})"?/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{1,3}:\d{2}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{1,5}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{2,8})/i,
+    /\"(?:duration|playTime|play_time|runningTime|running_time|totalTime|total_time|fileDuration|file_duration)\"\s*:\s*\"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})\"?/i,
   ];
   for (const pattern of patterns) {
     const match = source.match(pattern);
@@ -230,19 +247,19 @@ function parseVodItem(item, member, monthInfo) {
     'reg_date', 'regDate', 'reg_datetime', 'regDatetime', 'created_at', 'createdAt',
     'start_date', 'startDate', 'start_time', 'startTime', 'broad_start', 'broadStart',
     'broad_start_date', 'broadStartDate', 'broad_start_time', 'broadStartTime', 'write_date', 'writeDate',
-  ]);
+  ]) || findFirstByKey(item, /(reg.?date|created.?at|start.?date|start.?time|broad.?start|write.?date)$/i);
   const startedAt = toDate(startedAtValue);
   if (!isSameKstMonth(startedAt, monthInfo)) return null;
 
-  const titleNo = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']));
+  const titleNo = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']) || findFirstByKey(item, /(title.?no|vod.?no|nTitleNo|seq)$/i));
   if (!titleNo) return null;
 
   const durationSeconds = secondsFromDuration(pickFirst(item, [
     'duration', 'duration_time', 'durationTime', 'play_time', 'playTime', 'playtime',
     'total_time', 'totalTime', 'total_file_duration', 'file_duration', 'fileDuration',
     'running_time', 'runningTime', 'broad_time', 'broadTime', 'view_time', 'viewTime', 'vod_duration', 'vodDuration',
-  ]));
-  const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content'])) || '다시보기';
+  ]) || findFirstByKey(item, /(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i));
+  const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content']) || findFirstByKey(item, /(title|subject|contents)$/i)) || '다시보기';
   const bjId = getMemberId(member);
 
   return {
@@ -285,7 +302,7 @@ async function fetchMemberVods(member, monthInfo) {
       page: String(page),
       field: 'title,contents,user_nick,user_id',
     });
-    const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/all/streamer?${query.toString()}`;
+    const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
 
     let list = [];
     try {
@@ -304,6 +321,31 @@ async function fetchMemberVods(member, monthInfo) {
   return dedupeVods(collected);
 }
 
+async function fetchPlaylistDuration(vod) {
+  try {
+    const params = new URLSearchParams({
+      szDataType: 'PLAYLIST',
+      nTitleNo: vod.titleNo,
+      szBjId: vod.bjId,
+      szFileType: 'REVIEW',
+      platform: 'pc',
+      nPlaylistIdx: '0',
+      nLimit: '100',
+      nVersion: '2',
+      szDataSrcType: 'reload',
+    });
+    const text = await fetchText('https://stbbs.sooplive.com/api/get_vod_list.php', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
+      body: params.toString(),
+    });
+    const json = parseJsonMaybe(text);
+    return (json ? extractDurationFromObject(json) : 0) || extractDurationFromText(text);
+  } catch {
+    return 0;
+  }
+}
+
 async function fetchVodDetail(vod) {
   let durationSeconds = Number(vod.durationSeconds || 0);
 
@@ -319,9 +361,11 @@ async function fetchVodDetail(vod) {
     durationSeconds = durationSeconds || extractDurationFromText(detailText);
   } catch {}
 
+  durationSeconds = durationSeconds || await fetchPlaylistDuration(vod);
+
   if (!durationSeconds) {
     try {
-      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod` } });
+      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` } });
       durationSeconds = extractDurationFromText(playerText);
     } catch {}
   }
@@ -331,6 +375,32 @@ async function fetchVodDetail(vod) {
     durationSeconds,
     durationText: formatDuration(durationSeconds),
   };
+}
+
+function fillEstimatedDurations(vods) {
+  const byMember = new Map();
+  vods.forEach((vod) => {
+    const list = byMember.get(vod.bjId) || [];
+    list.push(vod);
+    byMember.set(vod.bjId, list);
+  });
+
+  byMember.forEach((list) => {
+    list.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+    list.forEach((vod, index) => {
+      if (vod.durationSeconds) return;
+      const next = list[index + 1];
+      if (!next) return;
+      const gap = Math.floor((new Date(next.startedAt).getTime() - new Date(vod.startedAt).getTime()) / 1000);
+      if (gap >= 10 * 60 && gap <= 18 * 3600) {
+        vod.durationSeconds = gap;
+        vod.durationText = formatDuration(gap);
+        vod.estimatedDuration = true;
+      }
+    });
+  });
+
+  return vods;
 }
 
 function buildCalendarItems(vods, monthInfo) {
@@ -397,11 +467,11 @@ async function buildPayload(monthInfo) {
   const detailedMap = new Map(detailed
     .filter((result) => result.status === 'fulfilled')
     .map((result) => [result.value.id, result.value]));
-  const vods = listVods.map((vod) => detailedMap.get(vod.id) || vod);
+  const vods = fillEstimatedDurations(listVods.map((vod) => detailedMap.get(vod.id) || vod));
 
   return {
     ok: true,
-    sourceType: 'all-streamer',
+    sourceType: 'review',
     monthLabel: monthInfo.monthLabel,
     items: buildCalendarItems(vods, monthInfo),
     memberStats: buildMemberStats(vods),
@@ -429,7 +499,7 @@ export default async function handler(req, res) {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale' });
     return res.status(200).json({
       ok: false,
-      sourceType: 'all-streamer',
+      sourceType: 'review',
       monthLabel: monthInfo.monthLabel,
       items: [],
       memberStats: buildMemberStats([]),
