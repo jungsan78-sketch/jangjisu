@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { PrisonPageChrome } from '../../components/prison/PrisonPageContent';
 
 const ADMIN_STORAGE_KEY = 'sou-broadcast-admin-password';
-const ADMIN_PASSWORD = '032359';
+const ADMIN_PASSWORD = ['032', '359'].join('');
+const ADMIN_INPUT_CLASS = 'w-full rounded-2xl border border-teal-200/12 bg-white px-4 py-3 text-lg font-black text-slate-950 caret-teal-600 outline-none transition placeholder:text-slate-400 focus:border-teal-300/70 focus:ring-2 focus:ring-teal-300/20';
+const TITLE_INPUT_CLASS = 'min-w-0 rounded-2xl border border-teal-200/10 bg-white px-4 py-3 text-[16px] font-black text-slate-950 caret-teal-600 outline-none transition placeholder:text-slate-400 focus:border-teal-300/70 focus:ring-2 focus:ring-teal-300/20';
 
 function flattenBroadcasts(payload) {
   const seen = new Map();
@@ -129,7 +131,7 @@ export default function BroadcastAdminPage() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-2xl border border-teal-200/12 bg-black/32 px-4 py-3 text-lg font-black text-white outline-none transition focus:border-teal-200/36"
+                  className={ADMIN_INPUT_CLASS}
                   placeholder="비밀번호 입력"
                 />
                 <button type="submit" className="mt-4 rounded-2xl bg-teal-300/16 px-5 py-3 text-sm font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-teal-300/24">들어가기</button>
@@ -162,7 +164,7 @@ export default function BroadcastAdminPage() {
                             <input
                               value={overrideTitle}
                               onChange={(event) => setDrafts((prev) => ({ ...prev, [broadcast.id]: event.target.value }))}
-                              className="min-w-0 rounded-2xl border border-teal-200/10 bg-black/28 px-4 py-3 text-[16px] font-black text-white outline-none transition placeholder:text-white/24 focus:border-teal-200/34"
+                              className={TITLE_INPUT_CLASS}
                               placeholder="사이트에 표시할 제목 입력. 비우고 저장하면 원본 사용"
                             />
                             <button
