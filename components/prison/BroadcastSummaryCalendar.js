@@ -39,10 +39,6 @@ function getKstDateParts(value) {
   };
 }
 
-function padTime(value) {
-  return String(value).padStart(2, '0');
-}
-
 function getBroadcastTimeRangeText(broadcast) {
   const endedAt = getBroadcastEndedAt(broadcast);
   if (Number.isNaN(endedAt.getTime())) return '';
@@ -51,8 +47,8 @@ function getBroadcastTimeRangeText(broadcast) {
   const start = getKstDateParts(startedAt);
   const end = getKstDateParts(endedAt);
   if (!start || !end) return '';
-  const startTime = `${padTime(start.hour)}:${padTime(start.minute)}`;
-  const endTime = `${padTime(end.hour)}:${padTime(end.minute)}`;
+  const startTime = `${String(start.hour).padStart(2, '0')}시`;
+  const endTime = `${String(end.hour).padStart(2, '0')}시`;
   const sameDay = start.year === end.year && start.month === end.month && start.day === end.day;
   if (sameDay) return `${start.day}일 ${startTime} ~ ${endTime}`;
   const sameMonth = start.year === end.year && start.month === end.month;
@@ -376,7 +372,6 @@ export default function BroadcastSummaryCalendar() {
                 <div key={`mobile-${cell.dayNumber}`} className="rounded-[22px] bg-[#05101d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_14px_32px_rgba(0,0,0,0.16)]">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="text-[20px] font-black text-white">{parsedMonth?.month}월 {cell.dayNumber}일</div>
-                    <div className="rounded-full bg-teal-300/10 px-3 py-1 text-[11px] font-black text-teal-100">총 {cell.totalDurationText}</div>
                   </div>
                   <div className="space-y-2">{cell.broadcasts.map((broadcast) => {
                     const rangeText = getBroadcastTimeRangeText(broadcast);
@@ -410,7 +405,6 @@ export default function BroadcastSummaryCalendar() {
                           <div className="mb-2 flex items-start justify-between gap-1">
                             <div>
                               <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
-                              {hasItems ? <div className="mt-1 rounded-full bg-teal-300/10 px-2 py-0.5 text-[9px] font-black text-teal-100/80 sm:text-[11px]">총 {cell.totalDurationText}</div> : null}
                             </div>
                             {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{allBroadcasts.length}개</span> : null}
                           </div>
