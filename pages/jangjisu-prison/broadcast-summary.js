@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import BroadcastSummaryCalendar from '../../components/prison/BroadcastSummaryCalendar';
 import { PrisonPageChrome } from '../../components/prison/PrisonPageContent';
+import SiteFooter from '../../components/SiteFooter';
 
 export default function PrisonBroadcastSummaryPage() {
   return (
@@ -14,6 +15,7 @@ export default function PrisonBroadcastSummaryPage() {
         <div className="min-h-[calc(100vh-56px)] w-full pt-0">
           <BroadcastSummaryCalendar />
         </div>
+        <SiteFooter />
       </PrisonPageChrome>
     </>
   );
