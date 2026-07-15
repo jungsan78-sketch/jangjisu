@@ -184,29 +184,23 @@ function MultiDayBroadcastCard({ segment }) {
       href={segment.broadcast.url}
       target="_blank"
       rel="noreferrer"
-      className={`group relative z-20 block min-h-[86px] overflow-hidden border border-teal-100/[0.16] bg-[radial-gradient(circle_at_96%_0%,rgba(94,234,212,0.18),transparent_36%),linear-gradient(90deg,rgba(20,184,166,0.34),rgba(8,28,38,0.94)_34%,rgba(7,17,31,0.98))] px-4 py-3 text-left shadow-[0_22px_46px_rgba(0,0,0,0.34),0_0_32px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.075)] transition hover:-translate-y-0.5 hover:border-teal-100/30 hover:shadow-[0_28px_60px_rgba(0,0,0,0.42),0_0_42px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] ${segment.isStart ? 'rounded-l-[22px]' : 'rounded-l-md'} ${segment.isEnd ? 'rounded-r-[22px]' : 'rounded-r-md'}`}
+      className={`group relative z-20 block h-[78px] overflow-hidden border border-teal-100/[0.18] bg-[linear-gradient(90deg,rgba(15,118,110,0.90),rgba(7,31,39,0.98)_32%,rgba(5,20,31,0.99))] px-3 py-2.5 text-left shadow-[0_12px_28px_rgba(0,0,0,0.34),0_0_22px_rgba(45,212,191,0.09),inset_0_1px_0_rgba(255,255,255,0.07)] transition hover:-translate-y-0.5 hover:border-teal-100/32 hover:shadow-[0_16px_34px_rgba(0,0,0,0.40),0_0_28px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.09)] ${segment.isStart ? 'rounded-l-[18px]' : 'rounded-l-sm border-l-0'} ${segment.isEnd ? 'rounded-r-[18px]' : 'rounded-r-sm border-r-0'}`}
       style={{
         gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
         gridRow: 1,
         alignSelf: 'end',
-        marginBottom: `${12 + segment.lane * 94}px`,
+        marginBottom: `${10 + segment.lane * 86}px`,
       }}
       title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
     >
-      <div className="pointer-events-none absolute -right-10 -top-14 h-28 w-36 rounded-full bg-teal-200/[0.055] transition group-hover:bg-teal-200/[0.09]" />
-      <div className="relative flex h-full min-w-0 items-center justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-teal-300/14 px-2.5 py-1 text-[11px] font-black text-teal-50/86 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{rangeText}</span>
-            <span className="text-[11px] font-black text-white/42">{segment.broadcast.member}</span>
-          </div>
-          <div className="line-clamp-2 text-[15px] font-black leading-snug tracking-[-0.035em] text-white sm:text-[18px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-            {segment.broadcast.title}
-          </div>
-        </div>
-        <div className="shrink-0 rounded-2xl bg-black/24 px-3 py-2 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">
-          <div className="text-[13px] font-black text-teal-50 sm:text-[15px]">{duration}</div>
-        </div>
+      <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-28 rounded-full bg-teal-100/[0.055] transition group-hover:bg-teal-100/[0.09]" />
+      <div className="relative flex min-w-0 items-center justify-between gap-2">
+        <span className="min-w-0 truncate rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black text-teal-50/90 sm:text-[11px]">{rangeText}</span>
+        <span className="shrink-0 text-[11px] font-black text-teal-50 sm:text-[12px]">{duration}</span>
+      </div>
+      <div className="relative mt-1.5 flex min-w-0 items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[13px] font-black tracking-[-0.025em] text-white sm:text-[15px]">{segment.broadcast.title}</span>
+        <span className="shrink-0 text-[10px] font-black text-white/38">↗</span>
       </div>
     </a>
   );
@@ -412,7 +406,7 @@ export default function BroadcastSummaryCalendar() {
                       const isExpanded = Boolean(expandedDays[dayKey]);
                       const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
                       return (
-                        <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`} style={{ gridColumn: index + 1, gridRow: 1, paddingBottom: laneCount ? `${laneCount * 94 + 18}px` : undefined }}>
+                        <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`} style={{ gridColumn: index + 1, gridRow: 1, paddingBottom: laneCount ? `${laneCount * 86 + 18}px` : undefined }}>
                           <div className="mb-2 flex items-start justify-between gap-1">
                             <div>
                               <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
