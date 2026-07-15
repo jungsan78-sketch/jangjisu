@@ -168,7 +168,12 @@ function MultiDayBroadcastCard({ segment }) {
       target="_blank"
       rel="noreferrer"
       className={`group relative z-20 block min-h-[86px] overflow-hidden border border-teal-100/[0.16] bg-[radial-gradient(circle_at_96%_0%,rgba(94,234,212,0.18),transparent_36%),linear-gradient(90deg,rgba(20,184,166,0.34),rgba(8,28,38,0.94)_34%,rgba(7,17,31,0.98))] px-4 py-3 text-left shadow-[0_22px_46px_rgba(0,0,0,0.34),0_0_32px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.075)] transition hover:-translate-y-0.5 hover:border-teal-100/30 hover:shadow-[0_28px_60px_rgba(0,0,0,0.42),0_0_42px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.10)] ${segment.isStart ? 'rounded-l-[22px]' : 'rounded-l-md'} ${segment.isEnd ? 'rounded-r-[22px]' : 'rounded-r-md'}`}
-      style={{ gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`, gridRow: segment.lane + 2 }}
+      style={{
+        gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+        gridRow: 1,
+        alignSelf: 'end',
+        marginBottom: `${12 + segment.lane * 94}px`,
+      }}
       title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
     >
       <div className="pointer-events-none absolute -right-10 -top-14 h-28 w-36 rounded-full bg-teal-200/[0.055] transition group-hover:bg-teal-200/[0.09]" />
@@ -380,7 +385,7 @@ export default function BroadcastSummaryCalendar() {
                 const weekSegments = buildWeekSegments(week, parsedMonth, activeBroadcasts);
                 const laneCount = weekSegments.length ? Math.max(...weekSegments.map((segment) => segment.lane)) + 1 : 0;
                 return (
-                  <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-1.5 sm:gap-3" style={{ gridTemplateRows: `auto repeat(${laneCount}, minmax(86px, auto))` }}>
+                  <div key={`week-${weekIndex}`} className="relative grid grid-cols-7 gap-1.5 sm:gap-3">
                     {week.map((cell, index) => {
                       if (!cell) return <div key={`empty-${weekIndex}-${index}`} className="min-h-[130px] rounded-[18px] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-h-[250px] sm:rounded-[24px]" style={{ gridColumn: index + 1, gridRow: 1 }} />;
                       const day = Number(cell.dayNumber);
@@ -392,7 +397,7 @@ export default function BroadcastSummaryCalendar() {
                       const isExpanded = Boolean(expandedDays[dayKey]);
                       const visibleBroadcasts = isExpanded ? broadcasts : broadcasts.slice(0, 3);
                       return (
-                        <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`} style={{ gridColumn: index + 1, gridRow: 1 }}>
+                        <div key={day} className={`relative min-h-[130px] overflow-hidden rounded-[18px] p-2.5 transition-all duration-300 hover:-translate-y-1 sm:min-h-[250px] sm:rounded-[24px] sm:p-3.5 ${hasItems ? 'bg-[linear-gradient(180deg,rgba(8,28,38,0.95),rgba(7,17,31,0.98))] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.08),0_0_18px_rgba(45,212,191,0.04)]' : 'bg-[#07111f] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'}`} style={{ gridColumn: index + 1, gridRow: 1, paddingBottom: laneCount ? `${laneCount * 94 + 18}px` : undefined }}>
                           <div className="mb-2 flex items-start justify-between gap-1">
                             <div>
                               <div className={`text-[14px] font-black sm:text-[19px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
