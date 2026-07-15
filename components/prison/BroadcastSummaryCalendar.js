@@ -34,7 +34,30 @@ function getKstDateParts(value) {
     year: shifted.getUTCFullYear(),
     month: shifted.getUTCMonth() + 1,
     day: shifted.getUTCDate(),
+    hour: shifted.getUTCHours(),
+    minute: shifted.getUTCMinutes(),
   };
+}
+
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function getBroadcastTimeRangeText(broadcast) {
+  const endedAt = getBroadcastEndedAt(broadcast);
+  if (Number.isNaN(endedAt.getTime())) return '';
+  const durationSeconds = Math.max(0, Number(broadcast?.durationSeconds || 0));
+  const startedAt = new Date(endedAt.getTime() - durationSeconds * 1000);
+  const start = getKstDateParts(startedAt);
+  const end = getKstDateParts(endedAt);
+  if (!start || !end) return '';
+  const startTime = `${padTime(start.hour)}:${padTime(start.minute)}`;
+  const endTime = `${padTime(end.hour)}:${padTime(end.minute)}`;
+  const sameDay = start.year === end.year && start.month === end.month && start.day === end.day;
+  if (sameDay) return `${start.day}일 ${startTime} ~ ${endTime}`;
+  const sameMonth = start.year === end.year && start.month === end.month;
+  if (sameMonth) return `${start.day}일 ${startTime} ~ ${end.day}일 ${endTime}`;
+  return `${start.month}/${start.day} ${startTime} ~ ${end.month}/${end.day} ${endTime}`;
 }
 
 function compareMonth(parts, parsedMonth) {
@@ -154,13 +177,7 @@ function buildWeekSegments(weekCells, parsedMonth, allBroadcasts) {
 
 function MultiDayBroadcastCard({ segment }) {
   const duration = segment.broadcast.durationText || formatDurationText(segment.broadcast.durationSeconds);
-  const rangeText = segment.isStart && segment.isEnd
-    ? `${segment.startDay}일 ~ ${segment.endDay}일`
-    : segment.isStart
-      ? `${segment.startDay}일 시작`
-      : segment.isEnd
-        ? `${segment.endDay}일 종료`
-        : '방송 이어짐';
+  const rangeText = getBroadcastTimeRangeText(segment.broadcast) || `${segment.startDay}일 ~ ${segment.endDay}일`;
 
   return (
     <a
@@ -368,9 +385,7 @@ export default function BroadcastSummaryCalendar() {
                     <div className="rounded-full bg-teal-300/10 px-3 py-1 text-[11px] font-black text-teal-100">총 {cell.totalDurationText}</div>
                   </div>
                   <div className="space-y-2">{cell.broadcasts.map((broadcast) => {
-                    const startDay = getBroadcastStartDay(broadcast, parsedMonth);
-                    const endDay = getBroadcastEndDay(broadcast, parsedMonth);
-                    const rangeText = startDay && endDay && endDay > startDay ? `${startDay}일 ~ ${endDay}일` : '';
+                    const rangeText = getBroadcastTimeRangeText(broadcast);
                     return <BroadcastPill key={broadcast.id} broadcast={broadcast} rangeText={rangeText} />;
                   })}</div>
                 </div>
@@ -406,7 +421,7 @@ export default function BroadcastSummaryCalendar() {
                             {hasItems ? <span className="rounded-full bg-teal-300/12 px-2 py-1 text-[9px] font-black text-teal-100 sm:text-[11px]">{allBroadcasts.length}개</span> : null}
                           </div>
                           <div className="space-y-2">
-                            {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}
+                            {visibleBroadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} rangeText={getBroadcastTimeRangeText(broadcast)} />)}
                             {broadcasts.length > 3 ? (
                               <button type="button" onClick={() => setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }))} className="w-full rounded-full border border-teal-200/10 bg-teal-300/[0.055] px-2 py-1.5 text-center text-[11px] font-black text-teal-50/80 transition hover:border-teal-200/24 hover:bg-teal-300/[0.10] sm:text-[12px]">
                                 {isExpanded ? '접기' : `+${broadcasts.length - 3}개 더보기`}
