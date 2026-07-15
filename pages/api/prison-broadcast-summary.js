@@ -3,11 +3,14 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v12-clean-review-title-symbols';
+const CACHE_VERSION = 'v13-bounded-review-title-symbols';
 const MEMBER_LIMIT = 16;
-const PAGE_LIMIT = 8;
+const PAGE_LIMIT = 3;
 const PER_PAGE = 60;
-const DETAIL_LIMIT = 260;
+const DETAIL_LIMIT = 32;
+const DETAIL_CONCURRENCY = 8;
+const LIST_TIMEOUT_MS = 6000;
+const DETAIL_TIMEOUT_MS = 4000;
 const REQUEST_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.sooplive.com',
@@ -206,7 +209,15 @@ function parseJsonMaybe(text) {
 }
 
 async function fetchText(url, options = {}) {
-  const response = await fetch(url, { ...options, headers: { ...REQUEST_HEADERS, ...(options.headers || {}) }, cache: 'no-store' });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(options.timeoutMs || LIST_TIMEOUT_MS));
+  const { timeoutMs, ...fetchOptions } = options;
+  let response;
+  try {
+    response = await fetch(url, { ...fetchOptions, headers: { ...REQUEST_HEADERS, ...(fetchOptions.headers || {}) }, cache: 'no-store', signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!response.ok) throw new Error(`request failed ${response.status}`);
   return response.text();
 }
@@ -305,6 +316,7 @@ async function fetchMemberVods(member, monthInfo) {
   const bjId = getMemberId(member);
   if (!bjId) return [];
   const collected = [];
+  let requestSucceeded = false;
 
   for (let page = 1; page <= PAGE_LIMIT; page += 1) {
     const query = new URLSearchParams({ startDate: '', endDate: '', keyword: '', orderBy: 'reg_date', perPage: String(PER_PAGE), page: String(page), field: 'title,contents,user_nick,user_id' });
@@ -313,9 +325,10 @@ async function fetchMemberVods(member, monthInfo) {
     let list = [];
     try {
       const json = await fetchJson(url, { headers: { referer: 'https://www.sooplive.com/' } });
+      requestSucceeded = true;
       list = extractList(json);
     } catch {
-      break;
+      return { success: requestSucceeded, vods: dedupeVods(collected) };
     }
 
     if (!list.length) break;
@@ -324,7 +337,7 @@ async function fetchMemberVods(member, monthInfo) {
     if (list.length < PER_PAGE) break;
   }
 
-  return dedupeVods(collected);
+  return { success: requestSucceeded, vods: dedupeVods(collected) };
 }
 
 async function fetchPlaylistDuration(vod) {
@@ -334,6 +347,7 @@ async function fetchPlaylistDuration(vod) {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
       body: params.toString(),
+      timeoutMs: DETAIL_TIMEOUT_MS,
     });
     const json = parseJsonMaybe(text);
     return (json ? extractDurationFromObject(json) : 0) || extractDurationFromText(text);
@@ -351,6 +365,7 @@ async function fetchVodDetail(vod) {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
       body: body.toString(),
+      timeoutMs: DETAIL_TIMEOUT_MS,
     });
     const detailJson = parseJsonMaybe(detailText);
     if (detailJson) durationSeconds = durationSeconds || extractDurationFromObject(detailJson);
@@ -361,7 +376,7 @@ async function fetchVodDetail(vod) {
 
   if (!durationSeconds) {
     try {
-      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` } });
+      const playerText = await fetchText(vod.url, { headers: { origin: 'https://vod.sooplive.com', referer: `https://www.sooplive.com/station/${vod.bjId}/vod/review` }, timeoutMs: DETAIL_TIMEOUT_MS });
       durationSeconds = extractDurationFromText(playerText);
     } catch {}
   }
@@ -440,12 +455,29 @@ function buildMemberStats(vods) {
 async function buildPayload(monthInfo) {
   const members = ALL_PRISON_MEMBERS.slice(0, MEMBER_LIMIT);
   const settled = await Promise.allSettled(members.map((member) => fetchMemberVods(member, monthInfo)));
-  const listVods = dedupeVods(settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : [])));
-  const detailed = await Promise.allSettled(listVods.slice(0, DETAIL_LIMIT).map(fetchVodDetail));
+  const outcomes = settled.map((result) => (result.status === 'fulfilled' ? result.value : { success: false, vods: [] }));
+  const successfulMembers = outcomes.filter((outcome) => outcome.success).length;
+  if (!successfulMembers) throw new Error('all SOOP member requests failed');
+  const listVods = dedupeVods(outcomes.flatMap((outcome) => outcome.vods || []));
+  const detailTargets = listVods.filter((vod) => !vod.durationSeconds).slice(0, DETAIL_LIMIT);
+  const detailed = [];
+  for (let index = 0; index < detailTargets.length; index += DETAIL_CONCURRENCY) {
+    const chunk = detailTargets.slice(index, index + DETAIL_CONCURRENCY);
+    detailed.push(...await Promise.allSettled(chunk.map(fetchVodDetail)));
+  }
   const detailedMap = new Map(detailed.filter((result) => result.status === 'fulfilled').map((result) => [result.value.id, result.value]));
   const vods = fillEstimatedDurations(listVods.map((vod) => detailedMap.get(vod.id) || vod));
 
-  return { ok: true, sourceType: 'review', monthLabel: monthInfo.monthLabel, items: buildCalendarItems(vods, monthInfo), memberStats: buildMemberStats(vods), totalCount: vods.length, fetchedAt: new Date().toISOString() };
+  return {
+    ok: true,
+    sourceType: 'review',
+    monthLabel: monthInfo.monthLabel,
+    items: buildCalendarItems(vods, monthInfo),
+    memberStats: buildMemberStats(vods),
+    totalCount: vods.length,
+    sourceHealth: { successfulMembers, failedMembers: members.length - successfulMembers, totalMembers: members.length },
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 export default async function handler(req, res) {

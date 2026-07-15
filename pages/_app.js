@@ -32,8 +32,7 @@ function ReplayTitleCleanupHydrator() {
     if (typeof document === 'undefined') return undefined;
 
     const cleanRoot = (root) => {
-      const scope = root?.querySelector?.('#broadcast-summary, [data-broadcast-admin-root]') ||
-        (root?.id === 'broadcast-summary' || root?.dataset?.broadcastAdminRoot !== undefined ? root : null);
+      const scope = root?.querySelector?.('#broadcast-summary') || (root?.id === 'broadcast-summary' ? root : null);
       if (!scope) return;
       const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
       const nodes = [];
@@ -52,7 +51,7 @@ function ReplayTitleCleanupHydrator() {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) cleanRoot(node);
-          if (node.parentElement?.closest?.('#broadcast-summary, [data-broadcast-admin-root]') && node.nodeType === Node.TEXT_NODE) {
+          if (node.parentElement?.closest?.('#broadcast-summary') && node.nodeType === Node.TEXT_NODE) {
             const cleaned = cleanReplayTitleText(node.nodeValue || '');
             if (cleaned && cleaned !== node.nodeValue) node.nodeValue = cleaned;
           }

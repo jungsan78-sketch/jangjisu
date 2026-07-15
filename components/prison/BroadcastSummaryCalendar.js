@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DAY_SECONDS = 24 * 60 * 60;
 
 function getCurrentKstMonthLabel() {
   const shifted = new Date(Date.now() + KST_OFFSET_MS);
@@ -38,49 +37,36 @@ function getKstDateParts(value) {
   };
 }
 
-function extractDateKeyDay(value) {
-  const text = String(value || '');
-  const compact = text.match(/(\d{4})[-./]?(\d{1,2})[-./]?(\d{1,2})/);
-  if (!compact) return 0;
-  const day = Number(compact[3]);
-  return Number.isFinite(day) ? day : 0;
-}
-
-function getBroadcastEndDay(broadcast) {
-  const fromDateKey = extractDateKeyDay(broadcast?.dateKey);
-  if (fromDateKey > 0) return fromDateKey;
-  const fromCalendar = Number(broadcast?._calendarDay || 0);
-  if (Number.isFinite(fromCalendar) && fromCalendar > 0) return fromCalendar;
-  const fromStartedAt = getKstDateParts(broadcast?.startedAt)?.day || 0;
-  return fromStartedAt;
+function compareMonth(parts, parsedMonth) {
+  if (!parts || !parsedMonth) return 0;
+  return (parts.year * 12 + parts.month) - (parsedMonth.year * 12 + parsedMonth.month);
 }
 
 function getBroadcastStartDay(broadcast, parsedMonth) {
-  const endDay = getBroadcastEndDay(broadcast);
-  if (!endDay || !parsedMonth) return endDay;
-  const durationSeconds = Number(broadcast?.durationSeconds || 0);
-  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return endDay;
-  const spanDays = Math.floor(Math.max(0, durationSeconds - 1) / DAY_SECONDS);
-  return Math.max(1, endDay - spanDays);
+  const parts = getKstDateParts(broadcast?.startedAt);
+  if (!parts || !parsedMonth) return Number(broadcast?._calendarDay || 0);
+  const monthDiff = compareMonth(parts, parsedMonth);
+  if (monthDiff < 0) return 1;
+  if (monthDiff > 0) return 0;
+  return parts.day;
+}
+
+function getBroadcastEndDay(broadcast, parsedMonth) {
+  const startedAt = new Date(broadcast?.startedAt || '');
+  if (Number.isNaN(startedAt.getTime()) || !parsedMonth) return getBroadcastStartDay(broadcast, parsedMonth);
+  const durationSeconds = Math.max(0, Number(broadcast?.durationSeconds || 0));
+  const endedAt = new Date(startedAt.getTime() + durationSeconds * 1000);
+  const parts = getKstDateParts(endedAt);
+  const monthDiff = compareMonth(parts, parsedMonth);
+  if (monthDiff < 0) return 0;
+  if (monthDiff > 0) return new Date(parsedMonth.year, parsedMonth.month, 0).getDate();
+  return parts?.day || getBroadcastStartDay(broadcast, parsedMonth);
 }
 
 function isMultiDayBroadcast(broadcast, parsedMonth) {
   const startDay = getBroadcastStartDay(broadcast, parsedMonth);
-  const endDay = getBroadcastEndDay(broadcast);
+  const endDay = getBroadcastEndDay(broadcast, parsedMonth);
   return Boolean(startDay && endDay && endDay > startDay);
-}
-
-function applyTitleOverrides(items, overrides) {
-  if (!overrides || typeof overrides !== 'object') return Array.isArray(items) ? items : [];
-  return (Array.isArray(items) ? items : []).map((day) => {
-    const broadcasts = (day.broadcasts || []).map((broadcast) => {
-      const override = overrides[broadcast.id] || overrides[String(broadcast.titleNo || '')];
-      const title = String(override?.title || '').trim();
-      return title ? { ...broadcast, originalTitle: broadcast.title, title } : broadcast;
-    });
-    const totalSeconds = broadcasts.reduce((sum, item) => sum + Number(item.durationSeconds || 0), 0);
-    return { ...day, broadcasts, totalSeconds, totalDurationText: formatDurationText(totalSeconds) };
-  });
 }
 
 function buildCalendarCells(monthLabel, items, selectedMember) {
@@ -121,7 +107,7 @@ function assignSegmentLanes(segments) {
     });
 }
 
-function buildWeekSegments(weekCells, parsedMonth) {
+function buildWeekSegments(weekCells, parsedMonth, allBroadcasts) {
   if (!parsedMonth) return [];
   const realCells = weekCells.filter(Boolean);
   if (!realCells.length) return [];
@@ -130,13 +116,12 @@ function buildWeekSegments(weekCells, parsedMonth) {
   const seen = new Set();
   const candidates = [];
 
-  realCells.forEach((cell) => {
-    (cell.broadcasts || []).forEach((broadcast) => {
+  (allBroadcasts || []).forEach((broadcast) => {
       const id = String(broadcast?.id || `${broadcast?.member}-${broadcast?.title}-${broadcast?._calendarDay}`);
       if (seen.has(id)) return;
       seen.add(id);
       const startDay = getBroadcastStartDay(broadcast, parsedMonth);
-      const endDay = getBroadcastEndDay(broadcast);
+      const endDay = getBroadcastEndDay(broadcast, parsedMonth);
       if (!startDay || !endDay || endDay <= startDay) return;
       const segmentStart = Math.max(startDay, weekStart);
       const segmentEnd = Math.min(endDay, weekEnd);
@@ -156,7 +141,6 @@ function buildWeekSegments(weekCells, parsedMonth) {
         isStart: segmentStart === startDay,
         isEnd: segmentEnd === endDay,
       });
-    });
   });
 
   return assignSegmentLanes(candidates);
@@ -247,7 +231,7 @@ function MemberFilterButton({ stat, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group flex items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-[#2fbfb2]/32 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.045)]' : 'border-[#253f4c]/80 bg-slate-950/28 text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:-translate-y-0.5 hover:border-[#2fbfb2]/28 hover:bg-teal-300/[0.07] hover:text-white hover:shadow-[0_0_20px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.035)]'}`}
+      className={`group flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-[#2fbfb2]/32 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.045)]' : 'border-[#253f4c]/80 bg-slate-950/28 text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:-translate-y-0.5 hover:border-[#2fbfb2]/28 hover:bg-teal-300/[0.07] hover:text-white hover:shadow-[0_0_20px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.035)]'}`}
     >
       <img src={stat.memberImage} alt="" className="h-8 w-8 rounded-full bg-slate-900 object-cover shadow-[0_0_14px_rgba(255,255,255,0.06)]" loading="lazy" />
       <span>{stat.member}</span>
@@ -258,7 +242,6 @@ function MemberFilterButton({ stat, active, onClick }) {
 
 export default function BroadcastSummaryCalendar() {
   const [payload, setPayload] = useState(null);
-  const [overrides, setOverrides] = useState({});
   const [loaded, setLoaded] = useState(false);
   const [selectedMember, setSelectedMember] = useState('장지수');
   const [expandedDays, setExpandedDays] = useState({});
@@ -267,15 +250,10 @@ export default function BroadcastSummaryCalendar() {
     let mounted = true;
     async function load() {
       try {
-        const [summaryRes, overrideRes] = await Promise.all([
-          fetch(`/api/prison-broadcast-summary?t=${Date.now()}`, { cache: 'no-store' }),
-          fetch(`/api/prison-broadcast-overrides?t=${Date.now()}`, { cache: 'no-store' }),
-        ]);
+        const summaryRes = await fetch(`/api/prison-broadcast-summary?t=${Date.now()}`, { cache: 'no-store' });
         const json = summaryRes.ok ? await summaryRes.json() : null;
-        const overrideJson = overrideRes.ok ? await overrideRes.json() : null;
         if (mounted) {
           setPayload(json || null);
-          setOverrides(overrideJson?.overrides || {});
         }
       } catch {
         if (mounted) setPayload(null);
@@ -298,9 +276,17 @@ export default function BroadcastSummaryCalendar() {
   const selectedStat = memberStats.find((stat) => stat.member === selectedMember) || memberStats[0];
   const activeMember = selectedStat?.member || '장지수';
   const rawItems = Array.isArray(payload?.items) ? payload.items : [];
-  const items = useMemo(() => applyTitleOverrides(rawItems, overrides), [rawItems, overrides]);
+  const items = rawItems;
   const cells = useMemo(() => buildCalendarCells(monthLabel, items, activeMember), [monthLabel, items, activeMember]);
   const weeks = useMemo(() => buildWeeks(cells), [cells]);
+  const activeBroadcasts = useMemo(() => {
+    const seen = new Map();
+    items.forEach((day) => (day.broadcasts || []).forEach((broadcast) => {
+      if (broadcast.member === activeMember && !seen.has(broadcast.id)) seen.set(broadcast.id, broadcast);
+    }));
+    return Array.from(seen.values());
+  }, [items, activeMember]);
+  const mobileCells = useMemo(() => cells.filter((cell) => cell?.broadcasts?.length), [cells]);
   const totalCount = Number(payload?.totalCount || 0);
   const ranking = memberStats.filter((stat) => Number(stat.totalSeconds || 0) > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
 
@@ -314,7 +300,7 @@ export default function BroadcastSummaryCalendar() {
   }, [activeMember, monthLabel]);
 
   return (
-    <section id="broadcast-summary" className="relative left-1/2 mx-auto w-full -translate-x-1/2 rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7" style={{ width: 'min(calc(100vw - 326px), 3200px)', maxWidth: '3200px' }}>
+    <section id="broadcast-summary" className="mx-auto w-full max-w-none rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
         <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
@@ -349,7 +335,7 @@ export default function BroadcastSummaryCalendar() {
 
         <div className="mb-6 rounded-[24px] bg-[#05101d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
           <div className="mb-3 text-[16px] font-black text-white/76">멤버 선택</div>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
             {memberStats.map((stat) => <MemberFilterButton key={stat.member} stat={stat} active={activeMember === stat.member} onClick={() => setSelectedMember(stat.member)} />)}
           </div>
         </div>
@@ -361,13 +347,25 @@ export default function BroadcastSummaryCalendar() {
         ) : !payload?.ok ? (
           <div className="rounded-[22px] bg-[#05101d] p-6 text-[15px] font-bold leading-7 text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{payload?.message || '이번 달 다시보기 기록을 아직 불러오지 못했습니다.'}</div>
         ) : (
-          <div className="w-full rounded-[24px] bg-[#05101d] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_42px_rgba(0,0,0,0.18)] sm:rounded-[30px] sm:p-5">
+          <>
+            <div className="space-y-3 md:hidden">
+              {mobileCells.length ? mobileCells.map((cell) => (
+                <div key={`mobile-${cell.dayNumber}`} className="rounded-[22px] bg-[#05101d] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_14px_32px_rgba(0,0,0,0.16)]">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-[20px] font-black text-white">{parsedMonth?.month}월 {cell.dayNumber}일</div>
+                    <div className="rounded-full bg-teal-300/10 px-3 py-1 text-[11px] font-black text-teal-100">총 {cell.totalDurationText}</div>
+                  </div>
+                  <div className="space-y-2">{cell.broadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}</div>
+                </div>
+              )) : <div className="rounded-[22px] bg-[#05101d] p-6 text-sm font-bold text-white/55">이번 달 다시보기가 없습니다.</div>}
+            </div>
+            <div className="hidden w-full rounded-[24px] bg-[#05101d] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_42px_rgba(0,0,0,0.18)] sm:rounded-[30px] sm:p-5 md:block">
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[13px] font-black text-white/62 sm:mb-4 sm:gap-3 sm:text-[16px]">
               {DAY_LABELS.map((dayLabel, index) => <div key={dayLabel} className={index === 0 ? 'text-[#ff8e8e]' : index === 6 ? 'text-[#89b4ff]' : ''}>{dayLabel}</div>)}
             </div>
             <div className="space-y-1.5 sm:space-y-3">
               {weeks.map((week, weekIndex) => {
-                const weekSegments = buildWeekSegments(week, parsedMonth);
+                const weekSegments = buildWeekSegments(week, parsedMonth, activeBroadcasts);
                 const laneCount = weekSegments.length ? Math.max(...weekSegments.map((segment) => segment.lane)) + 1 : 0;
                 return (
                   <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-1.5 sm:gap-3" style={{ gridTemplateRows: `auto repeat(${laneCount}, minmax(86px, auto))` }}>
@@ -406,7 +404,8 @@ export default function BroadcastSummaryCalendar() {
                 );
               })}
             </div>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </section>
