@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v10-review-endpoint-playtime-ui';
+const CACHE_VERSION = 'v11-clean-review-title';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 8;
 const PER_PAGE = 60;
@@ -140,6 +140,27 @@ function normalizeTitle(value) {
     .trim();
 }
 
+function cleanDisplayTitle(value) {
+  const normalized = normalizeTitle(value);
+  const cleaned = normalized
+    .replace(/뉴걸\s*[\/·|+-]?\s*장지수용소/g, '')
+    .replace(/장지수용소/g, '')
+    .replace(/뻐스\s*시간/g, '')
+    .replace(/룰렛\s*\d+(?:\s*[\/.,]\s*\d+)*/g, '')
+    .replace(/룰렛/g, '')
+    .replace(/\d+\s*\/\s*\d+(?:\s*\/\s*\d+)*/g, '')
+    .replace(/\d+\s*연차\s*\/\s*확정\s*[oOㅇ○]?/g, '')
+    .replace(/\d+\s*연차/g, '')
+    .replace(/확정\s*[oOㅇ○]/g, '')
+    .replace(/[|｜]{2,}/g, '|')
+    .replace(/\s*([+·|｜])\s*/g, ' $1 ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^\s*[-+·|｜/]\s*/g, '')
+    .replace(/\s*[-+·|｜/]\s*$/g, '')
+    .trim();
+  return cleaned || normalized || '다시보기';
+}
+
 function scoreVodArray(items) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((score, item) => {
@@ -163,19 +184,8 @@ function collectArrays(node, arrays = []) {
 }
 
 function extractList(json) {
-  const direct = [
-    json?.data?.list,
-    json?.data?.vods,
-    json?.data?.items,
-    json?.data?.contents,
-    json?.data?.data,
-    json?.data,
-    json?.list,
-    json?.items,
-    json?.contents,
-  ].filter(Array.isArray);
-  return [...direct, ...collectArrays(json, [])]
-    .sort((a, b) => scoreVodArray(b) - scoreVodArray(a) || b.length - a.length)[0] || [];
+  const direct = [json?.data?.list, json?.data?.vods, json?.data?.items, json?.data?.contents, json?.data?.data, json?.data, json?.list, json?.items, json?.contents].filter(Array.isArray);
+  return [...direct, ...collectArrays(json, [])].sort((a, b) => scoreVodArray(b) - scoreVodArray(a) || b.length - a.length)[0] || [];
 }
 
 function parseJsonMaybe(text) {
@@ -190,11 +200,7 @@ function parseJsonMaybe(text) {
 }
 
 async function fetchText(url, options = {}) {
-  const response = await fetch(url, {
-    ...options,
-    headers: { ...REQUEST_HEADERS, ...(options.headers || {}) },
-    cache: 'no-store',
-  });
+  const response = await fetch(url, { ...options, headers: { ...REQUEST_HEADERS, ...(options.headers || {}) }, cache: 'no-store' });
   if (!response.ok) throw new Error(`request failed ${response.status}`);
   return response.text();
 }
@@ -230,10 +236,10 @@ function extractDurationFromObject(json) {
 function extractDurationFromText(text) {
   const source = String(text || '');
   const patterns = [
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{1,3}:\d{2}:\d{2})/i,
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{1,5}:\d{2})/i,
-    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:\"'\s]+(\d{2,8})/i,
-    /\"(?:duration|playTime|play_time|runningTime|running_time|totalTime|total_time|fileDuration|file_duration)\"\s*:\s*\"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})\"?/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:"'\s]+(\d{1,3}:\d{2}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:"'\s]+(\d{1,5}:\d{2})/i,
+    /(?:vod-duration|vod_duration|duration|play_time|running_time|total_time|file_duration|broad_time|video_time|seek_time)[=:"'\s]+(\d{2,8})/i,
+    /"(?:duration|playTime|play_time|runningTime|running_time|totalTime|total_time|fileDuration|file_duration)"\s*:\s*"?(\d{1,3}:\d{2}:\d{2}|\d{1,5}:\d{2}|\d{2,8})"?/i,
   ];
   for (const pattern of patterns) {
     const match = source.match(pattern);
@@ -259,7 +265,8 @@ function parseVodItem(item, member, monthInfo) {
     'total_time', 'totalTime', 'total_file_duration', 'file_duration', 'fileDuration',
     'running_time', 'runningTime', 'broad_time', 'broadTime', 'view_time', 'viewTime', 'vod_duration', 'vodDuration',
   ]) || findFirstByKey(item, /(duration|play.?time|running.?time|broad.?time|total.?time|file.?duration|vod.?duration|view.?time)$/i));
-  const title = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content']) || findFirstByKey(item, /(title|subject|contents)$/i)) || '다시보기';
+  const originalTitle = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content']) || findFirstByKey(item, /(title|subject|contents)$/i)) || '다시보기';
+  const title = cleanDisplayTitle(originalTitle);
   const bjId = getMemberId(member);
 
   return {
@@ -271,6 +278,7 @@ function parseVodItem(item, member, monthInfo) {
     dateKey: formatKstDateKey(startedAt),
     startedAt: startedAt.toISOString(),
     title,
+    originalTitle,
     durationSeconds,
     durationText: formatDuration(durationSeconds),
     url: `https://vod.sooplive.com/player/${titleNo}`,
@@ -293,15 +301,7 @@ async function fetchMemberVods(member, monthInfo) {
   const collected = [];
 
   for (let page = 1; page <= PAGE_LIMIT; page += 1) {
-    const query = new URLSearchParams({
-      startDate: '',
-      endDate: '',
-      keyword: '',
-      orderBy: 'reg_date',
-      perPage: String(PER_PAGE),
-      page: String(page),
-      field: 'title,contents,user_nick,user_id',
-    });
+    const query = new URLSearchParams({ startDate: '', endDate: '', keyword: '', orderBy: 'reg_date', perPage: String(PER_PAGE), page: String(page), field: 'title,contents,user_nick,user_id' });
     const url = `https://api-channel.sooplive.com/v1.1/channel/${encodeURIComponent(bjId)}/vod/review?${query.toString()}`;
 
     let list = [];
@@ -323,17 +323,7 @@ async function fetchMemberVods(member, monthInfo) {
 
 async function fetchPlaylistDuration(vod) {
   try {
-    const params = new URLSearchParams({
-      szDataType: 'PLAYLIST',
-      nTitleNo: vod.titleNo,
-      szBjId: vod.bjId,
-      szFileType: 'REVIEW',
-      platform: 'pc',
-      nPlaylistIdx: '0',
-      nLimit: '100',
-      nVersion: '2',
-      szDataSrcType: 'reload',
-    });
+    const params = new URLSearchParams({ szDataType: 'PLAYLIST', nTitleNo: vod.titleNo, szBjId: vod.bjId, szFileType: 'REVIEW', platform: 'pc', nPlaylistIdx: '0', nLimit: '100', nVersion: '2', szDataSrcType: 'reload' });
     const text = await fetchText('https://stbbs.sooplive.com/api/get_vod_list.php', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8', origin: 'https://vod.sooplive.com', referer: vod.url },
@@ -370,11 +360,7 @@ async function fetchVodDetail(vod) {
     } catch {}
   }
 
-  return {
-    ...vod,
-    durationSeconds,
-    durationText: formatDuration(durationSeconds),
-  };
+  return { ...vod, durationSeconds, durationText: formatDuration(durationSeconds) };
 }
 
 function fillEstimatedDurations(vods) {
@@ -428,35 +414,21 @@ function buildMemberStats(vods) {
   const statsMap = new Map();
 
   vods.forEach((vod) => {
-    const existing = statsMap.get(vod.member) || {
-      member: vod.member,
-      memberImage: vod.memberImage || memberMap.get(vod.member)?.image || '',
-      totalSeconds: 0,
-      broadcastCount: 0,
-    };
+    const existing = statsMap.get(vod.member) || { member: vod.member, memberImage: vod.memberImage || memberMap.get(vod.member)?.image || '', totalSeconds: 0, broadcastCount: 0 };
     existing.totalSeconds += Number(vod.durationSeconds || 0);
     existing.broadcastCount += 1;
     statsMap.set(vod.member, existing);
   });
 
   ALL_PRISON_MEMBERS.forEach((member) => {
-    if (!statsMap.has(member.nickname)) {
-      statsMap.set(member.nickname, {
-        member: member.nickname,
-        memberImage: member.image || '',
-        totalSeconds: 0,
-        broadcastCount: 0,
-      });
-    }
+    if (!statsMap.has(member.nickname)) statsMap.set(member.nickname, { member: member.nickname, memberImage: member.image || '', totalSeconds: 0, broadcastCount: 0 });
   });
 
-  return Array.from(statsMap.values())
-    .map((stat) => ({ ...stat, totalDurationText: formatDuration(stat.totalSeconds) || '0분' }))
-    .sort((a, b) => {
-      if (a.member === '장지수') return -1;
-      if (b.member === '장지수') return 1;
-      return b.totalSeconds - a.totalSeconds || a.member.localeCompare(b.member, 'ko');
-    });
+  return Array.from(statsMap.values()).map((stat) => ({ ...stat, totalDurationText: formatDuration(stat.totalSeconds) || '0분' })).sort((a, b) => {
+    if (a.member === '장지수') return -1;
+    if (b.member === '장지수') return 1;
+    return b.totalSeconds - a.totalSeconds || a.member.localeCompare(b.member, 'ko');
+  });
 }
 
 async function buildPayload(monthInfo) {
@@ -464,20 +436,10 @@ async function buildPayload(monthInfo) {
   const settled = await Promise.allSettled(members.map((member) => fetchMemberVods(member, monthInfo)));
   const listVods = dedupeVods(settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : [])));
   const detailed = await Promise.allSettled(listVods.slice(0, DETAIL_LIMIT).map(fetchVodDetail));
-  const detailedMap = new Map(detailed
-    .filter((result) => result.status === 'fulfilled')
-    .map((result) => [result.value.id, result.value]));
+  const detailedMap = new Map(detailed.filter((result) => result.status === 'fulfilled').map((result) => [result.value.id, result.value]));
   const vods = fillEstimatedDurations(listVods.map((vod) => detailedMap.get(vod.id) || vod));
 
-  return {
-    ok: true,
-    sourceType: 'review',
-    monthLabel: monthInfo.monthLabel,
-    items: buildCalendarItems(vods, monthInfo),
-    memberStats: buildMemberStats(vods),
-    totalCount: vods.length,
-    fetchedAt: new Date().toISOString(),
-  };
+  return { ok: true, sourceType: 'review', monthLabel: monthInfo.monthLabel, items: buildCalendarItems(vods, monthInfo), memberStats: buildMemberStats(vods), totalCount: vods.length, fetchedAt: new Date().toISOString() };
 }
 
 export default async function handler(req, res) {
@@ -497,15 +459,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ ...payload, cache: cached?.payload ? 'refresh' : 'miss' });
   } catch {
     if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale' });
-    return res.status(200).json({
-      ok: false,
-      sourceType: 'review',
-      monthLabel: monthInfo.monthLabel,
-      items: [],
-      memberStats: buildMemberStats([]),
-      totalCount: 0,
-      message: 'SOOP 다시보기 기록을 불러오지 못했습니다.',
-      cache: 'unavailable',
-    });
+    return res.status(200).json({ ok: false, sourceType: 'review', monthLabel: monthInfo.monthLabel, items: [], memberStats: buildMemberStats([]), totalCount: 0, message: 'SOOP 다시보기 기록을 불러오지 못했습니다.', cache: 'unavailable' });
   }
 }
