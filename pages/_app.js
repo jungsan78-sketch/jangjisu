@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import '../styles/sidebar-logo.css';
 import '../styles/theme-soft-background.css';
 import Head from 'next/head';
+import { useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
@@ -16,6 +17,53 @@ if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
     const nextTimeout = Number(timeout) === 60 * 1000 ? SCHEDULE_POLLING_INTERVAL_MS : timeout;
     return originalSetInterval(handler, nextTimeout, ...args);
   };
+}
+
+function cleanReplayTitleText(value) {
+  return String(value || '')
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
+    .replace(/[|｜]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^\s+|\s+$/g, '');
+}
+
+function ReplayTitleCleanupHydrator() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const cleanRoot = (root) => {
+      const scope = root?.querySelector?.('#broadcast-summary, [data-broadcast-admin-root]') ||
+        (root?.id === 'broadcast-summary' || root?.dataset?.broadcastAdminRoot !== undefined ? root : null);
+      if (!scope) return;
+      const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach((node) => {
+        const parent = node.parentElement;
+        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'OPTION'].includes(parent.tagName)) return;
+        const original = node.nodeValue || '';
+        const cleaned = cleanReplayTitleText(original);
+        if (cleaned && cleaned !== original) node.nodeValue = cleaned;
+      });
+    };
+
+    cleanRoot(document.body);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) cleanRoot(node);
+          if (node.parentElement?.closest?.('#broadcast-summary, [data-broadcast-admin-root]') && node.nodeType === Node.TEXT_NODE) {
+            const cleaned = cleanReplayTitleText(node.nodeValue || '');
+            if (cleaned && cleaned !== node.nodeValue) node.nodeValue = cleaned;
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  return null;
 }
 
 function PrisonWideLayoutOverride() {
@@ -77,6 +125,7 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/site-icon.png" />
       </Head>
       <Component {...pageProps} />
+      <ReplayTitleCleanupHydrator />
       <PrisonWideLayoutOverride />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
