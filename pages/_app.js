@@ -2,7 +2,6 @@ import '../styles/globals.css';
 import '../styles/sidebar-logo.css';
 import '../styles/theme-soft-background.css';
 import Head from 'next/head';
-import { useLayoutEffect } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
@@ -17,32 +16,6 @@ if (typeof window !== 'undefined' && !window.__SOU_SCHEDULE_POLLING_PATCHED__) {
     const nextTimeout = Number(timeout) === 60 * 1000 ? SCHEDULE_POLLING_INTERVAL_MS : timeout;
     return originalSetInterval(handler, nextTimeout, ...args);
   };
-}
-
-function ReplayCalendarLabelHydrator() {
-  useLayoutEffect(() => {
-    if (typeof document === 'undefined') return undefined;
-    const replaceLabel = (root) => {
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      const nodes = [];
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-      nodes.forEach((node) => {
-        const value = node.nodeValue || '';
-        if (value.includes('이번 달 다시보기 달력')) node.nodeValue = value.replace(/이번 달 다시보기 달력/g, '다시보기 달력');
-      });
-      if (document.title.includes('이번 달 다시보기 달력')) document.title = document.title.replace(/이번 달 다시보기 달력/g, '다시보기 달력');
-    };
-    replaceLabel(document.body);
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === Node.TEXT_NODE && node.nodeValue?.includes('이번 달 다시보기 달력')) node.nodeValue = node.nodeValue.replace(/이번 달 다시보기 달력/g, '다시보기 달력');
-        if (node.nodeType === Node.ELEMENT_NODE) replaceLabel(node);
-      }));
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-  return null;
 }
 
 function PrisonWideLayoutOverride() {
@@ -104,7 +77,6 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/site-icon.png" />
       </Head>
       <Component {...pageProps} />
-      <ReplayCalendarLabelHydrator />
       <PrisonWideLayoutOverride />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
