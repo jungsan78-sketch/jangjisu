@@ -238,7 +238,6 @@ function RankCard({ stat, rank }) {
         </div>
         <div className="shrink-0 text-right">
           <div className="text-[24px] font-black tracking-[-0.04em] text-teal-50">{formatDurationText(stat.totalSeconds)}</div>
-          <div className="mt-1 text-[10px] font-black tracking-[0.18em] text-teal-100/35">PLAY TIME</div>
         </div>
       </div>
     </div>
@@ -321,26 +320,17 @@ export default function BroadcastSummaryCalendar() {
   return (
     <section id="broadcast-summary" className="mx-auto w-full max-w-none rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
-        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-teal-200/16 bg-teal-300/10 text-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">▤</span>
-              <div className="text-[28px] font-black tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[42px]">이번 달 다시보기 달력</div>
-            </div>
-            <p className="mt-2 text-[14px] font-bold leading-6 text-white/52 sm:text-[16px]">다시보기 종료일과 플레이타임을 기준으로 방송 기간을 달력에 정리합니다.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
             <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[12px] font-black text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">1시간마다 갱신</span>
             {loaded ? <span className="rounded-full bg-teal-300/10 px-3 py-1.5 text-[12px] font-black text-teal-100/80">{totalCount}개 다시보기</span> : null}
             <div className="text-[12px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{parsedMonth?.year || ''}</div>
-          </div>
         </div>
 
         <div className="mb-8">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <div className="text-[25px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 다시보기 시간 순위` : '다시보기 시간 순위'}</div>
-              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">이번 달 다시보기 플레이타임 합산 기준입니다.</div>
+              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">이번 달 다시보기 영상시간 합산 기준입니다.</div>
             </div>
           </div>
           {ranking.length ? (
@@ -359,6 +349,7 @@ export default function BroadcastSummaryCalendar() {
           </div>
         </div>
 
+        <div key={`${activeMember}-${monthLabel}`} className="member-calendar-enter">
         <div className="mb-4 text-[24px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 ${activeMember} 다시보기 방송시간 / 방송제목 통계` : '다시보기 방송시간 / 방송제목 통계'}</div>
 
         {!loaded ? (
@@ -427,7 +418,20 @@ export default function BroadcastSummaryCalendar() {
             </div>
           </>
         )}
+        </div>
       </div>
+      <style jsx>{`
+        @keyframes memberCalendarIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .member-calendar-enter {
+          animation: memberCalendarIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .member-calendar-enter { animation: none; }
+        }
+      `}</style>
     </section>
   );
 }
