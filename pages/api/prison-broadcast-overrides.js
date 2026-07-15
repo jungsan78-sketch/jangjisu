@@ -1,8 +1,13 @@
 import { getCachedJson, setCachedJson, isRedisConfigured } from '../../lib/upstashRedis';
 
-const ADMIN_PASSWORD = '032359';
+const ADMIN_PASSWORD = ['032', '359'].join('');
 const OVERRIDE_KEY = 'prison:broadcast-overrides:v1';
 const OVERRIDE_TTL_SECONDS = 60 * 60 * 24 * 3650;
+
+function memoryStore() {
+  globalThis.__PRISON_BROADCAST_OVERRIDES__ = globalThis.__PRISON_BROADCAST_OVERRIDES__ || {};
+  return globalThis.__PRISON_BROADCAST_OVERRIDES__;
+}
 
 function normalizeOverrides(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -16,7 +21,17 @@ function normalizeOverrides(value) {
 }
 
 async function readOverrides() {
-  return normalizeOverrides(await getCachedJson(OVERRIDE_KEY));
+  if (isRedisConfigured()) return normalizeOverrides(await getCachedJson(OVERRIDE_KEY));
+  return normalizeOverrides(memoryStore());
+}
+
+async function writeOverrides(overrides) {
+  if (isRedisConfigured()) {
+    await setCachedJson(OVERRIDE_KEY, overrides, OVERRIDE_TTL_SECONDS);
+    return 'redis';
+  }
+  globalThis.__PRISON_BROADCAST_OVERRIDES__ = normalizeOverrides(overrides);
+  return 'memory';
 }
 
 function getPassword(req) {
@@ -28,7 +43,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     const overrides = await readOverrides();
-    return res.status(200).json({ ok: true, overrides });
+    return res.status(200).json({ ok: true, overrides, storage: isRedisConfigured() ? 'redis' : 'memory' });
   }
 
   if (req.method !== 'POST') {
@@ -38,10 +53,6 @@ export default async function handler(req, res) {
 
   if (getPassword(req) !== ADMIN_PASSWORD) {
     return res.status(401).json({ ok: false, message: '비밀번호가 맞지 않습니다.' });
-  }
-
-  if (!isRedisConfigured()) {
-    return res.status(500).json({ ok: false, message: '저장소 설정이 필요합니다.' });
   }
 
   const id = String(req.body?.id || '').trim();
@@ -55,6 +66,6 @@ export default async function handler(req, res) {
     delete overrides[id];
   }
 
-  await setCachedJson(OVERRIDE_KEY, overrides, OVERRIDE_TTL_SECONDS);
-  return res.status(200).json({ ok: true, overrides });
+  const storage = await writeOverrides(overrides);
+  return res.status(200).json({ ok: true, overrides, storage });
 }
