@@ -42,8 +42,16 @@ function compareMonth(parts, parsedMonth) {
   return (parts.year * 12 + parts.month) - (parsedMonth.year * 12 + parsedMonth.month);
 }
 
+function getBroadcastEndedAt(broadcast) {
+  return new Date(broadcast?.endedAt || broadcast?.startedAt || '');
+}
+
 function getBroadcastStartDay(broadcast, parsedMonth) {
-  const parts = getKstDateParts(broadcast?.startedAt);
+  const endedAt = getBroadcastEndedAt(broadcast);
+  if (Number.isNaN(endedAt.getTime())) return Number(broadcast?._calendarDay || 0);
+  const durationSeconds = Math.max(0, Number(broadcast?.durationSeconds || 0));
+  const startedAt = new Date(endedAt.getTime() - durationSeconds * 1000);
+  const parts = getKstDateParts(startedAt);
   if (!parts || !parsedMonth) return Number(broadcast?._calendarDay || 0);
   const monthDiff = compareMonth(parts, parsedMonth);
   if (monthDiff < 0) return 1;
@@ -52,10 +60,8 @@ function getBroadcastStartDay(broadcast, parsedMonth) {
 }
 
 function getBroadcastEndDay(broadcast, parsedMonth) {
-  const startedAt = new Date(broadcast?.startedAt || '');
-  if (Number.isNaN(startedAt.getTime()) || !parsedMonth) return getBroadcastStartDay(broadcast, parsedMonth);
-  const durationSeconds = Math.max(0, Number(broadcast?.durationSeconds || 0));
-  const endedAt = new Date(startedAt.getTime() + durationSeconds * 1000);
+  const endedAt = getBroadcastEndedAt(broadcast);
+  if (Number.isNaN(endedAt.getTime()) || !parsedMonth) return Number(broadcast?._calendarDay || 0);
   const parts = getKstDateParts(endedAt);
   const monthDiff = compareMonth(parts, parsedMonth);
   if (monthDiff < 0) return 0;
@@ -184,7 +190,7 @@ function MultiDayBroadcastCard({ segment }) {
   );
 }
 
-function BroadcastPill({ broadcast }) {
+function BroadcastPill({ broadcast, rangeText = '' }) {
   const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
   return (
     <a
@@ -198,9 +204,10 @@ function BroadcastPill({ broadcast }) {
       <div className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         {broadcast.title}
       </div>
-      <div className="relative mt-2 flex items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
+      <div className="relative mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
         <span className="h-1.5 w-1.5 rounded-full bg-teal-200/60 shadow-[0_0_8px_rgba(94,234,212,0.5)]" />
         <span>{broadcast.member}</span>
+        {rangeText ? <span className="rounded-full bg-teal-300/10 px-2 py-0.5 text-teal-100/75">{rangeText}</span> : null}
       </div>
     </a>
   );
@@ -355,7 +362,12 @@ export default function BroadcastSummaryCalendar() {
                     <div className="text-[20px] font-black text-white">{parsedMonth?.month}월 {cell.dayNumber}일</div>
                     <div className="rounded-full bg-teal-300/10 px-3 py-1 text-[11px] font-black text-teal-100">총 {cell.totalDurationText}</div>
                   </div>
-                  <div className="space-y-2">{cell.broadcasts.map((broadcast) => <BroadcastPill key={broadcast.id} broadcast={broadcast} />)}</div>
+                  <div className="space-y-2">{cell.broadcasts.map((broadcast) => {
+                    const startDay = getBroadcastStartDay(broadcast, parsedMonth);
+                    const endDay = getBroadcastEndDay(broadcast, parsedMonth);
+                    const rangeText = startDay && endDay && endDay > startDay ? `${startDay}일 ~ ${endDay}일` : '';
+                    return <BroadcastPill key={broadcast.id} broadcast={broadcast} rangeText={rangeText} />;
+                  })}</div>
                 </div>
               )) : <div className="rounded-[22px] bg-[#05101d] p-6 text-sm font-bold text-white/55">이번 달 다시보기가 없습니다.</div>}
             </div>

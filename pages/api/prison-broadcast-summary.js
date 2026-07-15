@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v13-bounded-review-title-symbols';
+const CACHE_VERSION = 'v14-ended-at-span';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
 const PER_PAGE = 60;
@@ -266,13 +266,13 @@ function extractDurationFromText(text) {
 }
 
 function parseVodItem(item, member, monthInfo) {
-  const startedAtValue = pickFirst(item, [
+  const endedAtValue = pickFirst(item, [
     'reg_date', 'regDate', 'reg_datetime', 'regDatetime', 'created_at', 'createdAt',
     'start_date', 'startDate', 'start_time', 'startTime', 'broad_start', 'broadStart',
     'broad_start_date', 'broadStartDate', 'broad_start_time', 'broadStartTime', 'write_date', 'writeDate',
   ]) || findFirstByKey(item, /(reg.?date|created.?at|start.?date|start.?time|broad.?start|write.?date)$/i);
-  const startedAt = toDate(startedAtValue);
-  if (!isSameKstMonth(startedAt, monthInfo)) return null;
+  const endedAt = toDate(endedAtValue);
+  if (!isSameKstMonth(endedAt, monthInfo)) return null;
 
   const titleNo = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']) || findFirstByKey(item, /(title.?no|vod.?no|nTitleNo|seq)$/i));
   if (!titleNo) return null;
@@ -292,8 +292,8 @@ function parseVodItem(item, member, monthInfo) {
     member: member.nickname,
     memberImage: member.image || '',
     bjId,
-    dateKey: formatKstDateKey(startedAt),
-    startedAt: startedAt.toISOString(),
+    dateKey: formatKstDateKey(endedAt),
+    endedAt: endedAt.toISOString(),
     title,
     originalTitle,
     durationSeconds,
@@ -309,7 +309,7 @@ function dedupeVods(vods) {
     const existing = map.get(key);
     if (!existing || Number(vod.durationSeconds || 0) > Number(existing.durationSeconds || 0)) map.set(key, vod);
   });
-  return Array.from(map.values()).sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+  return Array.from(map.values()).sort((a, b) => String(a.endedAt || a.startedAt).localeCompare(String(b.endedAt || b.startedAt)));
 }
 
 async function fetchMemberVods(member, monthInfo) {
@@ -393,12 +393,12 @@ function fillEstimatedDurations(vods) {
   });
 
   byMember.forEach((list) => {
-    list.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+    list.sort((a, b) => new Date(a.endedAt || a.startedAt).getTime() - new Date(b.endedAt || b.startedAt).getTime());
     list.forEach((vod, index) => {
       if (vod.durationSeconds) return;
       const next = list[index + 1];
       if (!next) return;
-      const gap = Math.floor((new Date(next.startedAt).getTime() - new Date(vod.startedAt).getTime()) / 1000);
+      const gap = Math.floor((new Date(next.endedAt || next.startedAt).getTime() - new Date(vod.endedAt || vod.startedAt).getTime()) / 1000);
       if (gap >= 10 * 60 && gap <= 18 * 3600) {
         vod.durationSeconds = gap;
         vod.durationText = formatDuration(gap);
