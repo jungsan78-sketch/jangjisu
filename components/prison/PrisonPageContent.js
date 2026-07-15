@@ -202,7 +202,7 @@ export function PrisonSidebar() {
           <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" icon="🏆" tone="gold" compact />
           <SidebarNavItem href="/" label="SOU 아카이브" compact />
         </div>
-        <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="이번 달 다시보기 달력" icon="▤" tone="teal" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="다시보기 달력" icon="▤" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
       </nav>
@@ -224,7 +224,7 @@ export function MobilePrisonNav() {
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <a href="/jangjisu-prison" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 수용소 메인</a>
         <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">SOU 아카이브</a>
-        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">이번 달 다시보기 달력</a>
+        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">다시보기 달력</a>
         <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
       </nav>
     </header>
