@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v11-clean-review-title';
+const CACHE_VERSION = 'v12-clean-review-title-symbols';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 8;
 const PER_PAGE = 60;
@@ -140,9 +140,16 @@ function normalizeTitle(value) {
     .trim();
 }
 
+function stripDecorations(value) {
+  return String(value || '')
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ')
+    .replace(/[\uFE0E\uFE0F]/g, '')
+    .replace(/[|｜]+/g, ' ');
+}
+
 function cleanDisplayTitle(value) {
   const normalized = normalizeTitle(value);
-  const cleaned = normalized
+  const cleaned = stripDecorations(normalized)
     .replace(/뉴걸\s*[\/·|+-]?\s*장지수용소/g, '')
     .replace(/장지수용소/g, '')
     .replace(/뻐스\s*시간/g, '')
@@ -152,13 +159,12 @@ function cleanDisplayTitle(value) {
     .replace(/\d+\s*연차\s*\/\s*확정\s*[oOㅇ○]?/g, '')
     .replace(/\d+\s*연차/g, '')
     .replace(/확정\s*[oOㅇ○]/g, '')
-    .replace(/[|｜]{2,}/g, '|')
-    .replace(/\s*([+·|｜])\s*/g, ' $1 ')
+    .replace(/\s*([+·])\s*/g, ' $1 ')
     .replace(/\s{2,}/g, ' ')
-    .replace(/^\s*[-+·|｜/]\s*/g, '')
-    .replace(/\s*[-+·|｜/]\s*$/g, '')
+    .replace(/^\s*[-+·/]\s*/g, '')
+    .replace(/\s*[-+·/]\s*$/g, '')
     .trim();
-  return cleaned || normalized || '다시보기';
+  return cleaned || stripDecorations(normalized).trim() || '다시보기';
 }
 
 function scoreVodArray(items) {
