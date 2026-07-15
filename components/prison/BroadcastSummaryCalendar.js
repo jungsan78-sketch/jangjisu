@@ -180,7 +180,7 @@ function MultiDayBroadcastCard({ segment }) {
       href={segment.broadcast.url}
       target="_blank"
       rel="noreferrer"
-      className={`group relative z-20 block h-[78px] overflow-hidden border border-teal-100/[0.18] bg-[linear-gradient(90deg,rgba(15,118,110,0.90),rgba(7,31,39,0.98)_32%,rgba(5,20,31,0.99))] px-3 py-2.5 text-left shadow-[0_12px_28px_rgba(0,0,0,0.34),0_0_22px_rgba(45,212,191,0.09),inset_0_1px_0_rgba(255,255,255,0.07)] transition hover:-translate-y-0.5 hover:border-teal-100/32 hover:shadow-[0_16px_34px_rgba(0,0,0,0.40),0_0_28px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.09)] ${segment.isStart ? 'rounded-l-[18px]' : 'rounded-l-sm border-l-0'} ${segment.isEnd ? 'rounded-r-[18px]' : 'rounded-r-sm border-r-0'}`}
+      className={`group relative z-20 block h-[78px] overflow-hidden border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3 py-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_16px_30px_rgba(0,0,0,0.28)] ${segment.isStart ? 'rounded-l-[18px]' : 'rounded-l-sm border-l-0'} ${segment.isEnd ? 'rounded-r-[18px]' : 'rounded-r-sm border-r-0'}`}
       style={{
         gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
         gridRow: 1,
@@ -189,7 +189,7 @@ function MultiDayBroadcastCard({ segment }) {
       }}
       title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
     >
-      <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-28 rounded-full bg-teal-100/[0.055] transition group-hover:bg-teal-100/[0.09]" />
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
       <div className="relative flex min-w-0 items-center justify-between gap-2">
         <span className="min-w-0 truncate rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black text-teal-50/90 sm:text-[11px]">{rangeText}</span>
         <span className="shrink-0 text-[11px] font-black text-teal-50 sm:text-[12px]">{duration}</span>
