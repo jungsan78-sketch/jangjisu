@@ -300,45 +300,41 @@ function BroadcastPill({ broadcast, rangeText = '' }) {
       <div className="relative z-10 line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         {broadcast.title}
       </div>
-      <div className="relative z-10 mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
-        <span className="h-1.5 w-1.5 rounded-full bg-teal-200/60 shadow-[0_0_8px_rgba(94,234,212,0.5)]" />
-        <span>{broadcast.member}</span>
-        {rangeText ? <span className="rounded-full bg-teal-300/10 px-2 py-0.5 text-teal-100/75">{rangeText}</span> : null}
-      </div>
-    </a>
-  );
-}
-
-function RankCard({ stat, rank }) {
-  return (
-    <div className="group relative overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_18%_0%,rgba(45,212,191,0.16),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.060),rgba(255,255,255,0.020))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.055)] transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(0,0,0,0.34),0_0_36px_rgba(45,212,191,0.08),inset_0_1px_0_rgba(255,255,255,0.08)]">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-teal-200/[0.035] transition group-hover:bg-teal-200/[0.07]" />
-      <div className="relative flex items-center gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-teal-200/12 bg-black/24 text-[15px] font-black text-teal-100">{rank}</div>
-        <img src={stat.memberImage} alt="" className="h-16 w-16 shrink-0 rounded-2xl border border-teal-200/12 bg-slate-900 object-cover shadow-[0_0_20px_rgba(45,212,191,0.12)]" loading="lazy" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[19px] font-black text-white">{stat.member}</div>
-          <div className="mt-1 text-[13px] font-bold text-white/50">{stat.broadcastCount}개 다시보기</div>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="text-[24px] font-black tracking-[-0.04em] text-teal-50">{formatDurationText(stat.totalSeconds)}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MemberFilterButton({ stat, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-[#2fbfb2]/32 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.045)]' : 'border-[#253f4c]/80 bg-slate-950/28 text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:-translate-y-0.5 hover:border-[#2fbfb2]/28 hover:bg-teal-300/[0.07] hover:text-white hover:shadow-[0_0_20px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.035)]'}`}
-    >
-      <img src={stat.memberImage} alt="" className="h-8 w-8 rounded-full bg-slate-900 object-cover shadow-[0_0_14px_rgba(255,255,255,0.06)]" loading="lazy" />
+      <div className="relati�~-�G����ƭy�/>
       <span>{stat.member}</span>
       <span className="rounded-full bg-black/22 px-2 py-1 text-[11px] text-white/56 sm:text-[12px]">{formatDurationText(stat.totalSeconds)}</span>
     </button>
+  );
+}
+
+function ReplayCalendarLoading() {
+  return (
+    <section id="broadcast-summary" className="mx-auto w-full max-w-none rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
+      <div className="relative flex min-h-[520px] w-full items-center justify-center overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.14),transparent_34%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] px-5 py-16 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:min-h-[590px] sm:rounded-[30px]" role="status" aria-live="polite">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/[0.05]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/[0.07]" />
+        <div className="relative flex max-w-md flex-col items-center text-center">
+          <div className="relative mb-8 flex h-28 w-28 items-center justify-center sm:h-32 sm:w-32">
+            <div className="absolute inset-0 animate-spin rounded-full border border-transparent border-t-teal-200/80 border-r-teal-300/20 shadow-[0_0_34px_rgba(45,212,191,0.12)] [animation-duration:1.8s]" />
+            <div className="absolute inset-3 animate-pulse rounded-full bg-teal-300/[0.055] blur-sm" />
+            <div className="relative h-16 w-16 overflow-hidden rounded-[18px] border border-teal-100/25 bg-[#071824] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_30px_rgba(0,0,0,0.30)] sm:h-[72px] sm:w-[72px]">
+              <div className="h-4 border-b border-teal-100/15 bg-teal-300/10" />
+              <div className="grid grid-cols-3 gap-1.5 p-2.5">
+                {[0, 1, 2, 3, 4, 5].map((cell) => <span key={cell} className={`h-2 rounded-sm ${cell === 4 ? 'bg-teal-200/80 shadow-[0_0_10px_rgba(94,234,212,0.48)]' : 'bg-white/12'}`} />)}
+              </div>
+            </div>
+          </div>
+          <div className="text-[22px] font-black tracking-[-0.035em] text-white sm:text-[28px]">다시보기 달력을 준비하고 있어요</div>
+          <div className="mt-3 text-[13px] font-bold text-white/42 sm:text-[15px]">방송 기록과 영상시간을 정리하는 중입니다.</div>
+          <div className="mt-7 flex items-center gap-2" aria-hidden="true">
+            {[0, 1, 2].map((dot) => <span key={dot} className="h-2 w-2 animate-bounce rounded-full bg-teal-200/70" style={{ animationDelay: `${dot * 140}ms` }} />)}
+          </div>
+          <div className="mt-8 h-1 w-48 overflow-hidden rounded-full bg-white/[0.055] sm:w-60" aria-hidden="true">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-gradient-to-r from-transparent via-teal-200/75 to-transparent" />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -401,6 +397,8 @@ export default function BroadcastSummaryCalendar() {
     setExpandedDays({});
   }, [activeMember, monthLabel]);
 
+  if (!loaded) return <ReplayCalendarLoading />;
+
   return (
     <section id="broadcast-summary" className="mx-auto w-full max-w-none rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
@@ -436,9 +434,7 @@ export default function BroadcastSummaryCalendar() {
         <div key={`${activeMember}-${monthLabel}`} className="member-calendar-enter">
         <div className="mb-4 text-[24px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 ${activeMember} 다시보기 방송시간 / 방송제목 통계` : '다시보기 방송시간 / 방송제목 통계'}</div>
 
-        {!loaded ? (
-          <div className="rounded-[22px] bg-[#05101d] p-6 text-[15px] font-bold text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">다시보기 기록을 불러오는 중입니다.</div>
-        ) : !payload?.ok ? (
+        {!payload?.ok ? (
           <div className="rounded-[22px] bg-[#05101d] p-6 text-[15px] font-bold leading-7 text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{payload?.message || '이번 달 다시보기 기록을 아직 불러오지 못했습니다.'}</div>
         ) : (
           <>
