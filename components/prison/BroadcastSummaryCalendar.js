@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -171,13 +172,82 @@ function buildWeekSegments(weekCells, parsedMonth, allBroadcasts) {
   return assignSegmentLanes(candidates);
 }
 
+function FloatingVodPreview({ broadcast, anchorRef, active }) {
+  const [position, setPosition] = useState(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
+
+  useEffect(() => {
+    if (!active || !broadcast.thumbnailUrl || typeof window === 'undefined') return undefined;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined;
+
+    setShouldLoad(true);
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const viewportPadding = 12;
+      const gap = 12;
+      const width = Math.min(320, Math.max(260, window.innerWidth - viewportPadding * 2));
+      const estimatedHeight = width * 0.5625 + 62;
+      const left = Math.min(
+        window.innerWidth - width - viewportPadding,
+        Math.max(viewportPadding, rect.left + rect.width / 2 - width / 2),
+      );
+      const placeAbove = rect.top >= estimatedHeight + gap + viewportPadding;
+      const top = placeAbove
+        ? rect.top - estimatedHeight - gap
+        : Math.min(window.innerHeight - estimatedHeight - viewportPadding, rect.bottom + gap);
+      const arrowLeft = Math.min(width - 22, Math.max(22, rect.left + rect.width / 2 - left));
+      setPosition({ left, top: Math.max(viewportPadding, top), width, placeAbove, arrowLeft });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [active, anchorRef, broadcast.thumbnailUrl]);
+
+  if (!shouldLoad || !position || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      className={`pointer-events-none fixed z-[300] transition-all duration-200 ease-out ${active ? 'translate-y-0 opacity-100' : `${position.placeAbove ? 'translate-y-1' : '-translate-y-1'} opacity-0`}`}
+      style={{ left: position.left, top: position.top, width: position.width }}
+      aria-hidden="true"
+    >
+      <div className="overflow-hidden rounded-[18px] border border-teal-200/25 bg-[#07131f] shadow-[0_24px_65px_rgba(0,0,0,0.58),0_0_30px_rgba(45,212,191,0.10)]">
+        <div className="relative aspect-video overflow-hidden bg-slate-950">
+          <img src={broadcast.thumbnailUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+          <span className="absolute bottom-2 right-2 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-black text-white shadow-sm">{duration}</span>
+        </div>
+        <div className="px-3.5 py-3">
+          <div className="truncate text-[14px] font-black tracking-[-0.025em] text-white">{broadcast.title}</div>
+          <div className="mt-1 text-[11px] font-bold text-teal-100/65">{broadcast.member} 다시보기</div>
+        </div>
+      </div>
+      <span
+        className={`absolute h-0 w-0 -translate-x-1/2 border-x-[8px] border-x-transparent ${position.placeAbove ? '-bottom-2 border-t-[8px] border-t-[#173b43]' : '-top-2 border-b-[8px] border-b-[#173b43]'}`}
+        style={{ left: position.arrowLeft }}
+      />
+    </div>,
+    document.body,
+  );
+}
+
 function MultiDayBroadcastCard({ segment }) {
   const duration = segment.broadcast.durationText || formatDurationText(segment.broadcast.durationSeconds);
   const rangeText = getBroadcastTimeRangeText(segment.broadcast) || `${segment.startDay}일 ~ ${segment.endDay}일`;
   const [previewActive, setPreviewActive] = useState(false);
+  const anchorRef = useRef(null);
 
   return (
     <a
+      ref={anchorRef}
       href={segment.broadcast.url}
       target="_blank"
       rel="noreferrer"
@@ -194,12 +264,7 @@ function MultiDayBroadcastCard({ segment }) {
       }}
       title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
     >
-      {segment.broadcast.thumbnailUrl ? (
-        <div className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ${previewActive ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true">
-          {previewActive ? <img src={segment.broadcast.thumbnailUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : null}
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,13,0.78),rgba(2,8,13,0.36),rgba(2,8,13,0.72))]" />
-        </div>
-      ) : null}
+      <FloatingVodPreview broadcast={segment.broadcast} anchorRef={anchorRef} active={previewActive} />
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
       <div className="relative z-10 flex min-w-0 items-center justify-between gap-2">
         <span className="min-w-0 truncate rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black text-teal-50/90 sm:text-[11px]">{rangeText}</span>
@@ -216,8 +281,10 @@ function MultiDayBroadcastCard({ segment }) {
 function BroadcastPill({ broadcast, rangeText = '' }) {
   const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
   const [previewActive, setPreviewActive] = useState(false);
+  const anchorRef = useRef(null);
   return (
     <a
+      ref={anchorRef}
       href={broadcast.url}
       target="_blank"
       rel="noreferrer"
@@ -227,12 +294,7 @@ function BroadcastPill({ broadcast, rangeText = '' }) {
       onBlur={() => setPreviewActive(false)}
       className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
     >
-      {broadcast.thumbnailUrl ? (
-        <div className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ${previewActive ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true">
-          {previewActive ? <img src={broadcast.thumbnailUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : null}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,8,13,0.40),rgba(2,8,13,0.78))]" />
-        </div>
-      ) : null}
+      <FloatingVodPreview broadcast={broadcast} anchorRef={anchorRef} active={previewActive} />
       <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">{duration}</span>
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
       <div className="relative z-10 line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
