@@ -300,7 +300,42 @@ function BroadcastPill({ broadcast, rangeText = '' }) {
       <div className="relative z-10 line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         {broadcast.title}
       </div>
-      <div className="relati÷~-¢G§²ÚîÆ­yÐ/>
+      <div className="relative z-10 mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
+        <span className="h-1.5 w-1.5 rounded-full bg-teal-200/60 shadow-[0_0_8px_rgba(94,234,212,0.5)]" />
+        <span>{broadcast.member}</span>
+        {rangeText ? <span className="rounded-full bg-teal-300/10 px-2 py-0.5 text-teal-100/75">{rangeText}</span> : null}
+      </div>
+    </a>
+  );
+}
+
+function RankCard({ stat, rank }) {
+  return (
+    <div className="group relative overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_18%_0%,rgba(45,212,191,0.16),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.060),rgba(255,255,255,0.020))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.055)] transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(0,0,0,0.34),0_0_36px_rgba(45,212,191,0.08),inset_0_1px_0_rgba(255,255,255,0.08)]">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-teal-200/[0.035] transition group-hover:bg-teal-200/[0.07]" />
+      <div className="relative flex items-center gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-teal-200/12 bg-black/24 text-[15px] font-black text-teal-100">{rank}</div>
+        <img src={stat.memberImage} alt="" className="h-16 w-16 shrink-0 rounded-2xl border border-teal-200/12 bg-slate-900 object-cover shadow-[0_0_20px_rgba(45,212,191,0.12)]" loading="lazy" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[19px] font-black text-white">{stat.member}</div>
+          <div className="mt-1 text-[13px] font-bold text-white/50">{stat.broadcastCount}ê°œ ë‹¤ì‹œë³´ê¸°</div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-[24px] font-black tracking-[-0.04em] text-teal-50">{formatDurationText(stat.totalSeconds)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemberFilterButton({ stat, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 pr-4 text-[14px] font-black transition sm:text-[16px] ${active ? 'border-[#2fbfb2]/32 bg-teal-300/14 text-white shadow-[0_0_24px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.045)]' : 'border-[#253f4c]/80 bg-slate-950/28 text-white/74 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:-translate-y-0.5 hover:border-[#2fbfb2]/28 hover:bg-teal-300/[0.07] hover:text-white hover:shadow-[0_0_20px_rgba(45,212,191,0.10),inset_0_1px_0_rgba(255,255,255,0.035)]'}`}
+    >
+      <img src={stat.memberImage} alt="" className="h-8 w-8 rounded-full bg-slate-900 object-cover shadow-[0_0_14px_rgba(255,255,255,0.06)]" loading="lazy" />
       <span>{stat.member}</span>
       <span className="rounded-full bg-black/22 px-2 py-1 text-[11px] text-white/56 sm:text-[12px]">{formatDurationText(stat.totalSeconds)}</span>
     </button>
