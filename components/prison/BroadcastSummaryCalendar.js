@@ -174,12 +174,17 @@ function buildWeekSegments(weekCells, parsedMonth, allBroadcasts) {
 function MultiDayBroadcastCard({ segment }) {
   const duration = segment.broadcast.durationText || formatDurationText(segment.broadcast.durationSeconds);
   const rangeText = getBroadcastTimeRangeText(segment.broadcast) || `${segment.startDay}일 ~ ${segment.endDay}일`;
+  const [previewActive, setPreviewActive] = useState(false);
 
   return (
     <a
       href={segment.broadcast.url}
       target="_blank"
       rel="noreferrer"
+      onMouseEnter={() => setPreviewActive(true)}
+      onMouseLeave={() => setPreviewActive(false)}
+      onFocus={() => setPreviewActive(true)}
+      onBlur={() => setPreviewActive(false)}
       className={`group relative z-20 block h-[78px] overflow-hidden border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3 py-2.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_16px_30px_rgba(0,0,0,0.28)] ${segment.isStart ? 'rounded-l-[18px]' : 'rounded-l-sm border-l-0'} ${segment.isEnd ? 'rounded-r-[18px]' : 'rounded-r-sm border-r-0'}`}
       style={{
         gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
@@ -189,12 +194,18 @@ function MultiDayBroadcastCard({ segment }) {
       }}
       title={`${segment.broadcast.title} · ${duration} · ${segment.startDay}~${segment.endDay}일`}
     >
+      {segment.broadcast.thumbnailUrl ? (
+        <div className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ${previewActive ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true">
+          {previewActive ? <img src={segment.broadcast.thumbnailUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : null}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,8,13,0.78),rgba(2,8,13,0.36),rgba(2,8,13,0.72))]" />
+        </div>
+      ) : null}
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
-      <div className="relative flex min-w-0 items-center justify-between gap-2">
+      <div className="relative z-10 flex min-w-0 items-center justify-between gap-2">
         <span className="min-w-0 truncate rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black text-teal-50/90 sm:text-[11px]">{rangeText}</span>
         <span className="shrink-0 text-[11px] font-black text-teal-50 sm:text-[12px]">{duration}</span>
       </div>
-      <div className="relative mt-1.5 flex min-w-0 items-center gap-2">
+      <div className="relative z-10 mt-1.5 flex min-w-0 items-center gap-2">
         <span className="min-w-0 flex-1 truncate text-[13px] font-black tracking-[-0.025em] text-white sm:text-[15px]">{segment.broadcast.title}</span>
         <span className="shrink-0 text-[10px] font-black text-white/38">↗</span>
       </div>
@@ -204,19 +215,30 @@ function MultiDayBroadcastCard({ segment }) {
 
 function BroadcastPill({ broadcast, rangeText = '' }) {
   const duration = broadcast.durationText || formatDurationText(broadcast.durationSeconds);
+  const [previewActive, setPreviewActive] = useState(false);
   return (
     <a
       href={broadcast.url}
       target="_blank"
       rel="noreferrer"
+      onMouseEnter={() => setPreviewActive(true)}
+      onMouseLeave={() => setPreviewActive(false)}
+      onFocus={() => setPreviewActive(true)}
+      onBlur={() => setPreviewActive(false)}
       className="group relative block min-h-[96px] overflow-hidden rounded-[18px] border border-teal-200/[0.12] bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.10),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.070),rgba(255,255,255,0.028))] px-3.5 pb-3.5 pt-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-teal-200/28 hover:bg-teal-300/[0.08]"
     >
+      {broadcast.thumbnailUrl ? (
+        <div className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ${previewActive ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true">
+          {previewActive ? <img src={broadcast.thumbnailUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : null}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,8,13,0.40),rgba(2,8,13,0.78))]" />
+        </div>
+      ) : null}
       <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-black/32 px-2.5 py-1 text-[11px] font-black leading-none text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:text-[12px]">{duration}</span>
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-teal-200/[0.04] transition group-hover:bg-teal-200/[0.08]" />
-      <div className="relative line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+      <div className="relative z-10 line-clamp-3 text-[15px] font-black leading-[1.35] tracking-[-0.04em] text-white sm:text-[17px]" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         {broadcast.title}
       </div>
-      <div className="relative mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
+      <div className="relative z-10 mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-black text-white/40 sm:text-[12px]">
         <span className="h-1.5 w-1.5 rounded-full bg-teal-200/60 shadow-[0_0_8px_rgba(94,234,212,0.5)]" />
         <span>{broadcast.member}</span>
         {rangeText ? <span className="rounded-full bg-teal-300/10 px-2 py-0.5 text-teal-100/75">{rangeText}</span> : null}

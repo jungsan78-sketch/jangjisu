@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v14-ended-at-span';
+const CACHE_VERSION = 'v15-hover-thumbnail';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
 const PER_PAGE = 60;
@@ -265,6 +265,45 @@ function extractDurationFromText(text) {
   return 0;
 }
 
+function normalizeThumbnailUrl(value, depth = 0) {
+  if (!value || depth > 4) return '';
+  if (typeof value === 'string') {
+    const url = value.trim().replace(/\\\//g, '/').replace(/&amp;/g, '&');
+    const normalized = url.startsWith('//') ? `https:${url}` : url;
+    if (!/^https?:\/\//i.test(normalized) || /\/LOGO\//i.test(normalized)) return '';
+    return normalized;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const url = normalizeThumbnailUrl(item, depth + 1);
+      if (url) return url;
+    }
+    return '';
+  }
+  if (typeof value === 'object') {
+    const preferredKeys = ['url', 'src', 'imageUrl', 'image_url', 'thumbnailUrl', 'thumbnail_url', 'thumbUrl', 'thumb_url', 'path'];
+    for (const key of preferredKeys) {
+      const url = normalizeThumbnailUrl(value[key], depth + 1);
+      if (url) return url;
+    }
+  }
+  return '';
+}
+
+function extractThumbnailUrl(item) {
+  const directKeys = [
+    'thumbnailUrl', 'thumbnail_url', 'thumbnail', 'thumbUrl', 'thumb_url', 'thumb',
+    'previewImage', 'preview_image', 'previewImg', 'preview_img', 'snapshot',
+    'vodImage', 'vod_image', 'vodThumb', 'vod_thumb', 'imageUrl', 'image_url', 'image',
+  ];
+  for (const key of directKeys) {
+    const url = normalizeThumbnailUrl(item?.[key]);
+    if (url) return url;
+  }
+  const nested = findFirstByKey(item, /(thumbnail|thumb|preview.?image|preview.?img|snapshot|vod.?image|vod.?thumb|image.?url|img.?url)/i);
+  return normalizeThumbnailUrl(nested);
+}
+
 function parseVodItem(item, member, monthInfo) {
   const endedAtValue = pickFirst(item, [
     'reg_date', 'regDate', 'reg_datetime', 'regDatetime', 'created_at', 'createdAt',
@@ -285,6 +324,7 @@ function parseVodItem(item, member, monthInfo) {
   const originalTitle = normalizeTitle(pickFirst(item, ['title', 'subject', 'title_name', 'titleName', 'vod_title', 'vodTitle', 'contents', 'content']) || findFirstByKey(item, /(title|subject|contents)$/i)) || '다시보기';
   const title = cleanDisplayTitle(originalTitle);
   const bjId = getMemberId(member);
+  const thumbnailUrl = extractThumbnailUrl(item);
 
   return {
     id: `${bjId}:${titleNo}`,
@@ -298,6 +338,7 @@ function parseVodItem(item, member, monthInfo) {
     originalTitle,
     durationSeconds,
     durationText: formatDuration(durationSeconds),
+    thumbnailUrl,
     url: `https://vod.sooplive.com/player/${titleNo}`,
   };
 }
