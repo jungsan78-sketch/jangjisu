@@ -28,7 +28,7 @@ export default function Home() {
       if (placeholder) placeholder.remove();
 
       const scheduleSection = document.getElementById('schedule');
-      const mainNotice = Array.from(document.querySelectorAll('section#notice')).find((section) => section.textContent?.includes('공지사항'));
+      const mainNotice = document.querySelector('section[data-main-notice="true"]');
       if (scheduleSection && mainNotice && scheduleSection.nextElementSibling !== mainNotice) {
         scheduleSection.insertAdjacentElement('afterend', mainNotice);
       }
