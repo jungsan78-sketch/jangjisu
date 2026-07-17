@@ -12,7 +12,6 @@ function injectStyle() {
   }
   style.textContent = `
     main { width: 100% !important; }
-    #notice, a[href="#notice"] { display: none !important; }
     #schedule button { transform: none !important; min-height: 40px; min-width: 96px; position: relative; z-index: 2; }
     #schedule button:hover { transform: none !important; }
     #schedule .grid.grid-cols-7.gap-3 { animation: none !important; }
@@ -121,11 +120,6 @@ function injectStyle() {
   `;
 }
 
-function hideNotice() {
-  document.getElementById('notice')?.style.setProperty('display', 'none', 'important');
-  document.querySelectorAll('a[href="#notice"]').forEach((anchor) => anchor.style.setProperty('display', 'none', 'important'));
-}
-
 function getSelectedScheduleText(schedule) {
   const selected = [...schedule.querySelectorAll('button')].find((button) => {
     const className = String(button.className || '');
@@ -230,7 +224,6 @@ function renderPausedMembers() {
 
 function paint() {
   injectStyle();
-  hideNotice();
   stabilizeSchedule();
   renderPausedMembers();
   stabilizeSchedule();
