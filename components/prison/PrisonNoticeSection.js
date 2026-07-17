@@ -47,7 +47,7 @@ export default function PrisonNoticeSection() {
   }, [notices]);
 
   return (
-    <section id="notice" className="mt-6 bg-transparent px-4 py-8 text-white sm:mt-8 sm:px-5 lg:px-7 lg:py-10">
+    <section id="notice" className="sou-prison-notice-section mt-6 bg-transparent px-4 py-8 text-white sm:mt-8 sm:px-5 lg:px-7 lg:py-10">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <h3 className="text-[30px] font-black tracking-[-0.045em] text-white sm:text-[38px]">최신 공지사항</h3>

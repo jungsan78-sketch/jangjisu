@@ -153,6 +153,11 @@ button {
     gap: 16px !important;
   }
 
+  .sou-prison-main .sou-member-live-section > section.sou-prison-notice-section > div.grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+  }
+
   .sou-prison-main .sou-member-live-section > div.grid {
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     column-gap: 24px !important;
