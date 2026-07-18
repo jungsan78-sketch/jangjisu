@@ -10,6 +10,6 @@ export default async function handler(req, res) {
   return res.status(200).json({
     ...payload,
     notices,
-    source: payload.ok ? 'soop_chapi_board_jangjisu' : payload.source,
+    source: payload.ok ? 'soop_home_and_chapi_board_jangjisu' : payload.source,
   });
 }

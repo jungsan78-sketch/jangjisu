@@ -12,7 +12,7 @@ export default function MainJangJisuNoticeSection() {
     let mounted = true;
     const loadNotices = async () => {
       try {
-        const res = await fetch('/api/jangjisu-notices');
+        const res = await fetch('/api/jangjisu-notices?v=3');
         const json = await res.json();
         if (mounted) setNotices(Array.isArray(json.notices) ? json.notices : []);
       } catch {
