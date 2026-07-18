@@ -1,9 +1,9 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePayload, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../lib/youtube-data';
 
-const SHORTS_HALL_KEY = 'youtube:shorts-hall:v1';
+const SHORTS_HALL_KEY = 'youtube:shorts-hall:v2';
 const TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-shorts-hall-api-20260428-2';
+const RUNTIME_MARKER = 'test2-shorts-hall-api-20260718-3';
 
 async function getCacheBinding() {
   try {

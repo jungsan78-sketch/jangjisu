@@ -33,8 +33,6 @@ function getPostTimeValue(post) {
 
 function getFixedRank(nickname) {
   if (nickname === '장지수') return 1;
-  if (nickname === '린링') return 2;
-  if (getPrisonMemberBadges(nickname).includes('shortsKing')) return 3;
   return 99;
 }
 

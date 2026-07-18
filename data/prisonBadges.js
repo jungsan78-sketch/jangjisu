@@ -1,7 +1,5 @@
 export const PRISON_MEMBER_BADGES = {
   장지수: ['warden'],
-  린링: ['captain'],
-  포포: ['shortsKing'],
 };
 
 export const PRISON_BADGE_META = {

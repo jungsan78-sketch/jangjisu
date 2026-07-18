@@ -52,8 +52,6 @@ function sortMembers(members, statuses) {
     }
     if (a.nickname === '장지수') return -1;
     if (b.nickname === '장지수') return 1;
-    if (a.nickname === '린링') return -1;
-    if (b.nickname === '린링') return 1;
     return 0;
   });
 }
@@ -124,7 +122,7 @@ export function PrisonMemberLiveGridContent() {
     let mounted = true;
     async function loadLive() {
       try {
-        const res = await fetch('/api/live-status');
+        const res = await fetch('/api/live-status?members=20260718');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setLivePayload(json || null);
@@ -145,7 +143,7 @@ export function PrisonMemberLiveGridContent() {
     let mounted = true;
     async function loadPosts() {
       try {
-        const res = await fetch('/api/soop-station-posts');
+        const res = await fetch('/api/soop-station-posts?members=20260718');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setPostsPayload(json || null);

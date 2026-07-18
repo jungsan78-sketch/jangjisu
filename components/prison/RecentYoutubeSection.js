@@ -34,7 +34,7 @@ export default function RecentYoutubeSection() {
     let mounted = true;
     const load = async () => {
       try {
-        const res = await fetch('/api/prison-youtube-cached');
+        const res = await fetch('/api/prison-youtube-cached?members=20260718');
         const json = await res.json();
         if (mounted) {
           const nextData = { videos: json.videos || [], shorts: json.shorts || [], loaded: true, missingKey: Boolean(json.missingKey) };

@@ -2,12 +2,12 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePayload, getRuntimeEnvValue, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../../lib/youtube-data';
 
 const MAIN_KEY = 'youtube:main:v1';
-const PRISON_KEY = 'youtube:prison:v1';
-const SHORTS_HALL_KEY = 'youtube:shorts-hall:v1';
+const PRISON_KEY = 'youtube:prison:v2';
+const SHORTS_HALL_KEY = 'youtube:shorts-hall:v2';
 const MAIN_TTL_SECONDS = 60 * 60 * 6;
 const PRISON_TTL_SECONDS = 60 * 60 * 6;
 const SHORTS_HALL_TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260428-1';
+const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260718-2';
 
 async function getCacheBinding() {
   try {

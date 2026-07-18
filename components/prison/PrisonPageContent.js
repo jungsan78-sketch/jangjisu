@@ -30,7 +30,7 @@ function formatViewerCount(value) {
 }
 
 function RoleMiniBadge({ nickname }) {
-  const type = nickname === '장지수' ? 'warden' : nickname === '린링' ? 'captain' : '';
+  const type = nickname === '장지수' ? 'warden' : '';
   if (!type) return null;
   const label = type === 'warden' ? '수장' : '반장';
   const className = type === 'warden'
@@ -112,7 +112,7 @@ function LiveMemberList() {
     let mounted = true;
     async function loadLive() {
       try {
-        const res = await fetch('/api/live-status');
+        const res = await fetch('/api/live-status?members=20260718');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setPayload(json || null);

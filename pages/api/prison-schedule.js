@@ -7,20 +7,6 @@ const SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM/edit',
     mode: 'sheetNameCandidates',
   },
-  {
-    key: '유오늘',
-    sheetId: '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo',
-    gid: '399310385',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=399310385#gid=399310385',
-    mode: 'fixedGid',
-  },
-  {
-    key: '구월이',
-    sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
-    gid: '1645820954',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1645820954#gid=1645820954',
-    mode: 'fixedGid',
-  },
 ];
 
 const buildSheetCandidates = (baseDate = new Date()) => {
