@@ -87,8 +87,7 @@ function LivePreviewCard({ preview }) {
           <div className="flex min-w-0 items-center gap-2">
             <img src={member.image} alt="" className="h-8 w-8 rounded-full object-cover shadow-[0_0_14px_rgba(255,255,255,0.12)]" loading="lazy" />
             <span
-              className="truncate text-[15px] font-extrabold tracking-normal text-white"
-              style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+              className="sou-prison-member-name truncate text-[15px] font-[750] tracking-[-0.01em] text-white"
             >
               {member.nickname}
             </span>
@@ -175,8 +174,7 @@ function LiveMemberList() {
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center gap-1.5">
                   <span
-                    className="truncate text-[16px] font-extrabold leading-5 tracking-normal text-white"
-                    style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+                    className="sou-prison-member-name truncate text-[16px] font-[750] leading-5 tracking-[-0.01em] text-white"
                   >
                     {member.nickname}
                   </span>

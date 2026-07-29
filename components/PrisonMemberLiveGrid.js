@@ -96,8 +96,7 @@ function MemberCard({ member, status }) {
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <h4
-              className="truncate text-[17px] font-extrabold tracking-normal text-white"
-              style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+              className="sou-prison-member-name truncate text-[17px] font-[750] tracking-[-0.01em] text-white"
             >
               {member.nickname}
             </h4>
