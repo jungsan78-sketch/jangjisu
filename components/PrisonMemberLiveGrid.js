@@ -122,7 +122,7 @@ export function PrisonMemberLiveGridContent() {
     let mounted = true;
     async function loadLive() {
       try {
-        const res = await fetch('/api/live-status?members=20260718');
+        const res = await fetch('/api/live-status?members=20260729');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setLivePayload(json || null);
@@ -143,7 +143,7 @@ export function PrisonMemberLiveGridContent() {
     let mounted = true;
     async function loadPosts() {
       try {
-        const res = await fetch('/api/soop-station-posts?members=20260718');
+        const res = await fetch('/api/soop-station-posts?members=20260729');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setPostsPayload(json || null);

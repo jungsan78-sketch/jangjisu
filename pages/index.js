@@ -9,15 +9,6 @@ export default function Home() {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
 
   useEffect(() => {
-    const moveUtilityMenu = () => {
-      const links = Array.from(document.querySelectorAll('a[href="/utility"]'));
-      const utilityLink = links.find((link) => link.textContent?.includes('유틸리티'));
-      const fanCafeLink = Array.from(document.querySelectorAll('a')).find((link) => link.textContent?.includes('팬카페'));
-      if (utilityLink && fanCafeLink && fanCafeLink.parentElement === utilityLink.parentElement) {
-        fanCafeLink.insertAdjacentElement('afterend', utilityLink);
-      }
-    };
-
     const removeDreamServerModeLink = () => {
       document.querySelectorAll('a[href="/jisu-dream"], .sou-jisu-dream-mode-link').forEach((link) => link.remove());
     };
@@ -68,7 +59,6 @@ export default function Home() {
     };
 
     const finalizeLayout = () => {
-      moveUtilityMenu();
       removeDreamServerModeLink();
       placeMainNoticeAfterSchedule();
       prioritizeYoutubeTabs();
@@ -78,7 +68,6 @@ export default function Home() {
     document.addEventListener('click', handleModeDirectNavigation, true);
     finalizeLayout();
 
-    const utilityTimer = setTimeout(moveUtilityMenu, 300);
     const dreamCleanupTimer = setTimeout(removeDreamServerModeLink, 300);
     const noticeTimer = setTimeout(placeMainNoticeAfterSchedule, 300);
     const readyTimer = setTimeout(() => {
@@ -98,7 +87,6 @@ export default function Home() {
 
     return () => {
       document.removeEventListener('click', handleModeDirectNavigation, true);
-      clearTimeout(utilityTimer);
       clearTimeout(dreamCleanupTimer);
       clearTimeout(noticeTimer);
       clearTimeout(readyTimer);

@@ -53,6 +53,7 @@ function shareYoutubeState(scope, payload) {
 }
 
 function NavChip({ href, label, tone = 'neutral', external = false, icon = '', onClick = null, className = '' }) {
+  if (href === '/utility') return null;
   const toneClass = tone === 'green' ? 'border-[#03C75A]/30 bg-[#03C75A]/15 text-[#8df0b6] hover:bg-[#03C75A]/22' : tone === 'blue' ? 'border-[#3b82f6]/30 bg-[#3b82f6]/15 text-[#b8d8ff] hover:bg-[#3b82f6]/22' : tone === 'red' ? 'border-[#ff4e45]/30 bg-[#ff4e45]/15 text-[#ffb2ae] hover:bg-[#ff4e45]/22' : tone === 'prison' ? 'border-amber-200/26 bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(148,163,184,0.08))] text-amber-100 hover:bg-amber-300/16 hover:shadow-[0_0_30px_rgba(245,158,11,0.16)]' : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10';
   return (
     <a href={href} onClick={onClick || undefined} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.04] hover:shadow-[0_0_24px_rgba(255,255,255,0.08)] ${toneClass} ${className}`}>

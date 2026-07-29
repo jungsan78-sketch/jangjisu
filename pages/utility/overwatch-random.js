@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 
-const STORAGE_KEY = 'sou:overwatch-random:v7';
+const STORAGE_KEY = 'sou:overwatch-random:v8';
 
 const POSITION_META = {
   tank: { label: '탱커', icon: '🛡️', ring: 'border-sky-300/30', badge: 'border-sky-300/35 bg-sky-300/12 text-sky-100' },
@@ -28,6 +28,18 @@ const TEAM_ACCENTS = [
 const KNOWN_MEMBER_PROFILES = [
   { nickname: '장지수', profileImage: 'https://stimg.sooplive.com/LOGO/ia/iamquaddurup/iamquaddurup.jpg' },
   { nickname: '냥냥두둥', profileImage: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg' },
+  { nickname: '시몽', profileImage: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg' },
+  { nickname: '후룽카카', profileImage: 'https://stimg.sooplive.com/LOGO/ka/kakazzang/kakazzang.jpg' },
+  { nickname: '포포', profileImage: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg' },
+  { nickname: '구월이', profileImage: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg' },
+  { nickname: '린링', profileImage: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg' },
+  { nickname: '유오늘', profileImage: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg' },
+  { nickname: '하빵', profileImage: 'https://stimg.sooplive.com/LOGO/ha/habbang2/habbang2.jpg' },
+  { nickname: '히루룽', profileImage: 'https://stimg.sooplive.com/LOGO/he/hey092130/hey092130.jpg' },
+  { nickname: '고춘자', profileImage: 'https://stimg.sooplive.com/LOGO/li/lilgochun/lilgochun.jpg' },
+  { nickname: '비비안', profileImage: 'https://stimg.sooplive.com/LOGO/8b/8bibian8/8bibian8.jpg' },
+  { nickname: '김메이', profileImage: 'https://stimg.sooplive.com/LOGO/am/amanemay/amanemay.jpg' },
+  { nickname: '이치유', profileImage: 'https://stimg.sooplive.com/LOGO/ho/honoe1330/honoe1330.jpg' },
 ];
 
 const MAP_POOL = ['부산', '리장 타워', '일리오스', '왕의 길', '할리우드', '눔바니', '66번 국도', '감시 기지: 지브롤터', '서킷 로얄', '파라이소'];

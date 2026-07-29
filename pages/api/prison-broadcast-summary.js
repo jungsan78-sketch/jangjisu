@@ -3,7 +3,7 @@ import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
 
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v16-current-members';
+const CACHE_VERSION = 'v17-members-20260729';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
 const PER_PAGE = 60;

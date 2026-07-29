@@ -1,7 +1,7 @@
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { buildFallbackStatuses, fetchLiveStatusPayload } from '../../lib/soop/liveStatus';
 
-export const SOOP_LIVE_RESPONSE_CACHE_KEY = 'soop:live-status:response:v5';
+export const SOOP_LIVE_RESPONSE_CACHE_KEY = 'soop:live-status:response:v6';
 export const SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS = 300;
 
 export async function getLiveStatusResponsePayload() {

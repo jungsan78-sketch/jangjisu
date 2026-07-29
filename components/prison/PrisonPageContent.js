@@ -112,7 +112,7 @@ function LiveMemberList() {
     let mounted = true;
     async function loadLive() {
       try {
-        const res = await fetch('/api/live-status?members=20260718');
+        const res = await fetch('/api/live-status?members=20260729');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setPayload(json || null);

@@ -11,6 +11,18 @@ const WARDEN = {
 
 const PRISON_MEMBERS = [
   { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong', youtube: 'https://www.youtube.com/channel/UCCAaGF_vfM6QygNRCp4x1dw', cafe: 'https://cafe.naver.com/meowdoodong' },
+  { nickname: '시몽', image: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', station: 'https://www.sooplive.com/station/ximong' },
+  { nickname: '후룽카카', image: 'https://stimg.sooplive.com/LOGO/ka/kakazzang/kakazzang.jpg', station: 'https://www.sooplive.com/station/kakazzang', youtube: 'https://www.youtube.com/channel/UCdwwfTtOfIaZ8zpLdIi6x4g', cafe: 'https://cafe.naver.com/zzangkaka' },
+  { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122', youtube: 'https://www.youtube.com/@%EB%B2%84%ED%8A%9C%EB%B2%84%ED%8F%AC%ED%8F%AC' },
+  { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol' },
+  { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212', youtube: 'https://www.youtube.com/@LinLing_', cafe: 'https://cafe.naver.com/linling' },
+  { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul' },
+  { nickname: '하빵', image: 'https://stimg.sooplive.com/LOGO/ha/habbang2/habbang2.jpg', station: 'https://www.sooplive.com/station/habbang2' },
+  { nickname: '히루룽', image: 'https://stimg.sooplive.com/LOGO/he/hey092130/hey092130.jpg', station: 'https://www.sooplive.com/station/hey092130' },
+  { nickname: '고춘자', image: 'https://stimg.sooplive.com/LOGO/li/lilgochun/lilgochun.jpg', station: 'https://www.sooplive.com/station/lilgochun' },
+  { nickname: '비비안', image: 'https://stimg.sooplive.com/LOGO/8b/8bibian8/8bibian8.jpg', station: 'https://www.sooplive.com/station/8bibian8' },
+  { nickname: '김메이', image: 'https://stimg.sooplive.com/LOGO/am/amanemay/amanemay.jpg', station: 'https://www.sooplive.com/station/amanemay' },
+  { nickname: '이치유', image: 'https://stimg.sooplive.com/LOGO/ho/honoe1330/honoe1330.jpg', station: 'https://www.sooplive.com/station/honoe1330' },
 ];
 const SCHEDULE_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
 
