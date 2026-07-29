@@ -95,7 +95,12 @@ function MemberCard({ member, status }) {
         <img src={member.image} alt={`${member.nickname} 프로필`} className="h-11 w-11 shrink-0 rounded-full bg-slate-900 object-cover shadow-[0_10px_24px_rgba(0,0,0,0.28),0_0_16px_rgba(103,232,249,0.10)]" loading="lazy" />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h4 className="truncate text-[16px] font-black tracking-[-0.04em] text-white">{member.nickname}</h4>
+            <h4
+              className="truncate text-[17px] font-extrabold tracking-normal text-white"
+              style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+            >
+              {member.nickname}
+            </h4>
             <MemberBadges nickname={member.nickname} />
           </div>
           <p className="mt-1 line-clamp-2 text-[15px] font-extrabold leading-6 text-white/86">{title}</p>

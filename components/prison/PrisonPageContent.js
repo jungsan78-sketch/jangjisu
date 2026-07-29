@@ -86,7 +86,12 @@ function LivePreviewCard({ preview }) {
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <img src={member.image} alt="" className="h-8 w-8 rounded-full object-cover shadow-[0_0_14px_rgba(255,255,255,0.12)]" loading="lazy" />
-            <span className="truncate text-sm font-black text-white">{member.nickname}</span>
+            <span
+              className="truncate text-[15px] font-extrabold tracking-normal text-white"
+              style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+            >
+              {member.nickname}
+            </span>
             <RoleMiniBadge nickname={member.nickname} />
           </div>
           <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-rose-950/70 px-2.5 py-1 text-xs font-black text-rose-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
@@ -169,7 +174,12 @@ function LiveMemberList() {
               <img src={member.image} alt={`${member.nickname} 프로필`} className="h-10 w-10 shrink-0 rounded-full bg-slate-900 object-cover shadow-[0_0_18px_rgba(56,189,248,0.14)]" loading="lazy" />
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center gap-1.5">
-                  <span className="truncate text-[15px] font-black leading-5 tracking-[-0.03em] text-white">{member.nickname}</span>
+                  <span
+                    className="truncate text-[16px] font-extrabold leading-5 tracking-normal text-white"
+                    style={{ fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif' }}
+                  >
+                    {member.nickname}
+                  </span>
                   <RoleMiniBadge nickname={member.nickname} />
                 </div>
               </div>
