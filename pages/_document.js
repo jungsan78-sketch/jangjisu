@@ -22,7 +22,7 @@ class MyDocument extends Document {
             dangerouslySetInnerHTML={{
               __html: `
                 html.sou-main-prepaint main > section:first-child,
-                html.sou-prison-prepaint main > section:first-child,
+html.sou-prison-prepaint main > section:first-child:not([data-sou-prison-prepaint-visible="true"]),
                 section[aria-label="장지수용소 대문"],
                 #members:not(.sou-member-live-section):not([data-sou-react-live-grid="true"]) {
                   display: none !important;

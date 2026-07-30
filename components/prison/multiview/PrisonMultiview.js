@@ -122,7 +122,7 @@ export default function PrisonMultiview() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-64px)] w-full">
+    <section data-sou-prison-prepaint-visible="true" className="min-h-[calc(100vh-64px)] w-full">
       <div className="mb-4 flex flex-col gap-4 rounded-[26px] bg-white/[0.035] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.24)] sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-3">
