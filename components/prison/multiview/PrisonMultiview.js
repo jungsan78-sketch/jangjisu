@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_PRISON_MEMBERS } from '../../../data/prisonMembers';
-import SoopChatPanel from './SoopChatPanel';
 import SoopEmbedTile from './SoopEmbedTile';
 
 const STORAGE_KEY = 'sou-prison-multiview-members-v1';
@@ -53,7 +52,6 @@ export default function PrisonMultiview() {
   const [loadState, setLoadState] = useState('loading');
   const [selectedNames, setSelectedNames] = useState([]);
   const [layout, setLayout] = useState('auto');
-  const [sidebarMode, setSidebarMode] = useState('streams');
   const [chatName, setChatName] = useState('');
   const [notice, setNotice] = useState('');
   const playerAreaRef = useRef(null);
@@ -112,7 +110,6 @@ export default function PrisonMultiview() {
   useEffect(() => {
     if (!selectedNames.length) {
       setChatName('');
-      setSidebarMode('streams');
       return;
     }
     if (!selectedNames.includes(chatName)) setChatName(selectedNames[0]);
@@ -141,9 +138,19 @@ export default function PrisonMultiview() {
     setSelectedNames((current) => current.filter((name) => name !== nickname));
   }
 
-  function selectChat(member) {
+  function openChat(member) {
+    const liveUrl = statuses[member.nickname]?.liveUrl || member.station;
+    const chatWindow = window.open(
+      liveUrl,
+      'sou_prison_multiview_chat',
+      'popup=yes,width=520,height=860,resizable=yes,scrollbars=yes',
+    );
+    if (!chatWindow) {
+      setNotice('브라우저가 채팅 창을 차단했습니다. 팝업을 허용한 뒤 다시 눌러주세요.');
+      return;
+    }
     setChatName(member.nickname);
-    setSidebarMode('chat');
+    chatWindow.focus?.();
     setNotice('');
   }
 
@@ -177,10 +184,10 @@ export default function PrisonMultiview() {
           <button
             type="button"
             disabled={!selectedMembers.length}
-            onClick={() => setSidebarMode('chat')}
+            onClick={() => chatMember && openChat(chatMember)}
             className={`rounded-2xl px-4 py-2.5 text-xs font-black transition ${selectedMembers.length ? 'bg-sky-300/12 text-sky-50 hover:bg-sky-300/20' : 'cursor-not-allowed bg-white/[0.035] text-white/20'}`}
           >
-            ▢ 채팅
+            ▢ 채팅 창
           </button>
           <button type="button" onClick={openFullscreen} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/80 transition hover:bg-white/12 hover:text-white">⛶ 전체화면</button>
           <button type="button" onClick={() => setSelectedNames([])} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/65 transition hover:bg-rose-500/14 hover:text-rose-100">선택 초기화</button>
@@ -199,8 +206,8 @@ export default function PrisonMultiview() {
                   member={member}
                   status={statuses[member.nickname]}
                   featured={index === 0 && selectedMembers.length >= 3 && (layout === 'focus' || (layout === 'auto' && selectedMembers.length === 3))}
-                  chatSelected={sidebarMode === 'chat' && chatMember?.nickname === member.nickname}
-                  onSelectChat={() => selectChat(member)}
+                  chatSelected={chatName === member.nickname}
+                  onSelectChat={() => openChat(member)}
                   onRemove={() => removeMember(member.nickname)}
                 />
               ))}
@@ -217,24 +224,13 @@ export default function PrisonMultiview() {
         <aside className="min-h-0 rounded-[26px] bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.24)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-white">{sidebarMode === 'chat' ? '채팅' : '스트림 추가'}</h2>
-              <p className="mt-1 text-[11px] font-bold text-white/40">{sidebarMode === 'chat' ? '선택한 방송 1개의 채팅을 표시합니다.' : `${selectedNames.length}/${MAX_STREAMS} 선택`}</p>
+              <h2 className="text-lg font-black text-white">스트림 추가</h2>
+              <p className="mt-1 text-[11px] font-bold text-white/40">{selectedNames.length}/{MAX_STREAMS} 선택</p>
             </div>
-            <div className="flex rounded-xl bg-black/25 p-1">
-              <button type="button" onClick={() => setSidebarMode('streams')} className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black transition ${sidebarMode === 'streams' ? 'bg-white text-slate-950' : 'text-white/40'}`}>멤버</button>
-              <button type="button" disabled={!selectedMembers.length} onClick={() => setSidebarMode('chat')} className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black transition ${sidebarMode === 'chat' ? 'bg-sky-300 text-slate-950' : selectedMembers.length ? 'text-white/40' : 'cursor-not-allowed text-white/15'}`}>채팅</button>
-            </div>
+            <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[10px] font-black text-white/48">5분 갱신</span>
           </div>
 
-          {sidebarMode === 'chat' ? (
-            <div className="mt-4">
-              <SoopChatPanel member={chatMember} status={statuses[chatMember?.nickname]} members={selectedMembers} onSelect={selectChat} />
-            </div>
-          ) : (
           <div className="mt-4 max-h-[610px] space-y-1.5 overflow-y-auto pr-1 scrollbar-hide">
-            <div className="mb-3 flex justify-end">
-              <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[10px] font-black text-white/48">5분 갱신</span>
-            </div>
             {members.map((member) => {
               const status = statuses[member.nickname] || {};
               const isLive = Boolean(status.isLive);
@@ -261,11 +257,10 @@ export default function PrisonMultiview() {
               );
             })}
           </div>
-          )}
         </aside>
       </div>
 
-      <p className="mt-4 text-center text-[11px] font-bold leading-5 text-white/30">각 방송의 재생과 음량은 SOOP 플레이어에서 직접 조절해주세요. 모바일에서는 기기 성능과 데이터 사용량을 고려해 2개 이하 시청을 권장합니다.</p>
+      <p className="mt-4 text-center text-[11px] font-bold leading-5 text-white/30">채팅 버튼은 공식 SOOP 방송 창 하나를 재사용합니다. 모바일에서는 기기 성능과 데이터 사용량을 고려해 2개 이하 시청을 권장합니다.</p>
     </section>
   );
 }

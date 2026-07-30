@@ -20,7 +20,7 @@ export default function SoopEmbedTile({ member, status, featured = false, chatSe
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onSelectChat} className={`rounded-full px-2.5 py-1.5 text-[10px] font-black backdrop-blur transition sm:text-[11px] ${chatSelected ? 'bg-sky-300 text-slate-950' : 'bg-white/10 text-white/80 hover:bg-white/18'}`}>채팅</button>
+          <button type="button" onClick={onSelectChat} className={`rounded-full px-2.5 py-1.5 text-[10px] font-black backdrop-blur transition sm:text-[11px] ${chatSelected ? 'bg-sky-300 text-slate-950' : 'bg-white/10 text-white/80 hover:bg-white/18'}`}>채팅 창</button>
           <a href={liveUrl} target="_blank" rel="noreferrer" className="rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-black text-white/80 backdrop-blur transition hover:bg-white/18 sm:text-[11px]">SOOP 열기</a>
           <button type="button" onClick={onRemove} aria-label={`${member.nickname} 멀티뷰에서 제거`} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-black text-white/80 backdrop-blur transition hover:bg-rose-500/75 hover:text-white">×</button>
         </div>
