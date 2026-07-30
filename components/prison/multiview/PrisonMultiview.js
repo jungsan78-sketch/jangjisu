@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_PRISON_MEMBERS } from '../../../data/prisonMembers';
+import SoopChatPanel from './SoopChatPanel';
 import SoopEmbedTile from './SoopEmbedTile';
 
 const STORAGE_KEY = 'sou-prison-multiview-members-v1';
@@ -34,11 +35,11 @@ function sortMembers(members, statuses) {
 
 function getGridClass(layout, count) {
   if (layout === 'stack') return 'grid-cols-1';
-  if (layout === 'grid') return 'grid-cols-1 lg:grid-cols-2';
-  if (layout === 'focus') return 'grid-cols-1 lg:grid-cols-2 lg:grid-rows-2';
+  if (layout === 'grid') return 'grid-cols-1 lg:grid-cols-2 lg:grid-rows-2';
+  if (layout === 'focus') return count >= 3 ? 'grid-cols-1 lg:grid-cols-2 lg:grid-rows-2' : 'grid-cols-1 lg:grid-cols-2';
   if (count <= 1) return 'grid-cols-1';
   if (count === 2) return 'grid-cols-1 lg:grid-cols-2';
-  return 'grid-cols-1 lg:grid-cols-2';
+  return 'grid-cols-1 lg:grid-cols-2 lg:grid-rows-2';
 }
 
 function formatViewers(value) {
@@ -49,9 +50,11 @@ function formatViewers(value) {
 
 export default function PrisonMultiview() {
   const [statuses, setStatuses] = useState({});
-  const [loaded, setLoaded] = useState(false);
+  const [loadState, setLoadState] = useState('loading');
   const [selectedNames, setSelectedNames] = useState([]);
   const [layout, setLayout] = useState('auto');
+  const [sidebarMode, setSidebarMode] = useState('streams');
+  const [chatName, setChatName] = useState('');
   const [notice, setNotice] = useState('');
   const playerAreaRef = useRef(null);
 
@@ -72,12 +75,13 @@ export default function PrisonMultiview() {
     async function loadLive() {
       try {
         const response = await fetch('/api/live-status?members=20260729');
-        const payload = response.ok ? await response.json() : null;
+        if (!response.ok) throw new Error(`live status ${response.status}`);
+        const payload = await response.json();
         if (!mounted) return;
         setStatuses(payload?.statuses || {});
-        setLoaded(true);
+        setLoadState('ready');
       } catch {
-        if (mounted) setLoaded(true);
+        if (mounted) setLoadState('error');
       }
     }
     loadLive();
@@ -94,6 +98,25 @@ export default function PrisonMultiview() {
     [selectedNames],
   );
   const liveCount = members.filter((member) => statuses[member.nickname]?.isLive).length;
+  const chatMember = selectedMembers.find((member) => member.nickname === chatName) || selectedMembers[0] || null;
+
+  useEffect(() => {
+    if (loadState !== 'ready') return;
+    setSelectedNames((current) => current.filter((name) => {
+      const status = statuses[name];
+      const unknown = String(status?.liveState || '').includes('unknown');
+      return !status || status.isLive || unknown;
+    }));
+  }, [loadState, statuses]);
+
+  useEffect(() => {
+    if (!selectedNames.length) {
+      setChatName('');
+      setSidebarMode('streams');
+      return;
+    }
+    if (!selectedNames.includes(chatName)) setChatName(selectedNames[0]);
+  }, [chatName, selectedNames]);
 
   function addMember(member) {
     if (!statuses[member.nickname]?.isLive) {
@@ -106,11 +129,22 @@ export default function PrisonMultiview() {
       return;
     }
     setSelectedNames((current) => [...current, member.nickname]);
+    if (!chatName) setChatName(member.nickname);
+    if (selectedNames.length >= 2 && typeof window !== 'undefined' && window.innerWidth < 768) {
+      setNotice('모바일에서 3개 이상 재생하면 기기 발열과 데이터 사용량이 커질 수 있습니다.');
+      return;
+    }
     setNotice('');
   }
 
   function removeMember(nickname) {
     setSelectedNames((current) => current.filter((name) => name !== nickname));
+  }
+
+  function selectChat(member) {
+    setChatName(member.nickname);
+    setSidebarMode('chat');
+    setNotice('');
   }
 
   async function openFullscreen() {
@@ -140,6 +174,14 @@ export default function PrisonMultiview() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            disabled={!selectedMembers.length}
+            onClick={() => setSidebarMode('chat')}
+            className={`rounded-2xl px-4 py-2.5 text-xs font-black transition ${selectedMembers.length ? 'bg-sky-300/12 text-sky-50 hover:bg-sky-300/20' : 'cursor-not-allowed bg-white/[0.035] text-white/20'}`}
+          >
+            ▢ 채팅
+          </button>
           <button type="button" onClick={openFullscreen} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/80 transition hover:bg-white/12 hover:text-white">⛶ 전체화면</button>
           <button type="button" onClick={() => setSelectedNames([])} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/65 transition hover:bg-rose-500/14 hover:text-rose-100">선택 초기화</button>
         </div>
@@ -156,7 +198,9 @@ export default function PrisonMultiview() {
                   key={member.nickname}
                   member={member}
                   status={statuses[member.nickname]}
-                  featured={layout === 'focus' && index === 0}
+                  featured={index === 0 && selectedMembers.length >= 3 && (layout === 'focus' || (layout === 'auto' && selectedMembers.length === 3))}
+                  chatSelected={sidebarMode === 'chat' && chatMember?.nickname === member.nickname}
+                  onSelectChat={() => selectChat(member)}
                   onRemove={() => removeMember(member.nickname)}
                 />
               ))}
@@ -173,13 +217,24 @@ export default function PrisonMultiview() {
         <aside className="min-h-0 rounded-[26px] bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.24)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-white">스트림 추가</h2>
-              <p className="mt-1 text-[11px] font-bold text-white/40">{selectedNames.length}/{MAX_STREAMS} 선택</p>
+              <h2 className="text-lg font-black text-white">{sidebarMode === 'chat' ? '채팅' : '스트림 추가'}</h2>
+              <p className="mt-1 text-[11px] font-bold text-white/40">{sidebarMode === 'chat' ? '선택한 방송 1개의 채팅을 표시합니다.' : `${selectedNames.length}/${MAX_STREAMS} 선택`}</p>
             </div>
-            <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[10px] font-black text-white/48">5분 갱신</span>
+            <div className="flex rounded-xl bg-black/25 p-1">
+              <button type="button" onClick={() => setSidebarMode('streams')} className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black transition ${sidebarMode === 'streams' ? 'bg-white text-slate-950' : 'text-white/40'}`}>멤버</button>
+              <button type="button" disabled={!selectedMembers.length} onClick={() => setSidebarMode('chat')} className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black transition ${sidebarMode === 'chat' ? 'bg-sky-300 text-slate-950' : selectedMembers.length ? 'text-white/40' : 'cursor-not-allowed text-white/15'}`}>채팅</button>
+            </div>
           </div>
 
+          {sidebarMode === 'chat' ? (
+            <div className="mt-4">
+              <SoopChatPanel member={chatMember} status={statuses[chatMember?.nickname]} members={selectedMembers} onSelect={selectChat} />
+            </div>
+          ) : (
           <div className="mt-4 max-h-[610px] space-y-1.5 overflow-y-auto pr-1 scrollbar-hide">
+            <div className="mb-3 flex justify-end">
+              <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[10px] font-black text-white/48">5분 갱신</span>
+            </div>
             {members.map((member) => {
               const status = statuses[member.nickname] || {};
               const isLive = Boolean(status.isLive);
@@ -199,13 +254,14 @@ export default function PrisonMultiview() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-black text-white/88">{member.nickname}</span>
-                    <span className="mt-0.5 block truncate text-[11px] font-bold text-white/38">{isLive ? `${viewers ? `${viewers}명 · ` : ''}${status.title || '방송 중'}` : loaded ? '오프라인' : '상태 확인 중'}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-bold text-white/38">{isLive ? `${viewers ? `${viewers}명 · ` : ''}${status.title || '방송 중'}` : loadState === 'error' || String(status.liveState || '').includes('unknown') ? '상태 확인 불가' : loadState === 'ready' ? '오프라인' : '상태 확인 중'}</span>
                   </span>
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-lg font-bold ${selected ? 'bg-sky-300/15 text-sky-100' : isLive ? 'bg-white/[0.065] text-white/65' : 'bg-white/[0.035] text-white/25'}`}>{selected ? '✓' : '+'}</span>
                 </button>
               );
             })}
           </div>
+          )}
         </aside>
       </div>
 
