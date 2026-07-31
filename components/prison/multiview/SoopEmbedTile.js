@@ -26,6 +26,10 @@ export default function SoopEmbedTile({ member, status, featured = false, chatSe
         </div>
       </div>
 
+      <div className="pointer-events-none absolute left-3 top-[68px] z-10 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-black text-white/72 shadow-lg backdrop-blur sm:left-4 sm:text-[11px]">
+        ⚙ 원본화질은 플레이어 설정에서 선택
+      </div>
+
       {embedUrl ? (
         <iframe
           key={`${stationId}-${reloadKey}`}
