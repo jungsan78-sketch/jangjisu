@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_PRISON_MEMBERS } from '../../../data/prisonMembers';
 import MultiviewStreamPicker from './MultiviewStreamPicker';
-import SoopChatPanel from './SoopChatPanel';
 import SoopEmbedTile from './SoopEmbedTile';
 
 const STORAGE_KEY = 'sou-prison-multiview-members-v2';
@@ -46,7 +45,6 @@ export default function PrisonMultiview() {
   const [statuses, setStatuses] = useState({});
   const [loadState, setLoadState] = useState('loading');
   const [selectedNames, setSelectedNames] = useState([]);
-  const [chatName, setChatName] = useState('');
   const [layout, setLayout] = useState('auto');
   const [notice, setNotice] = useState('');
   const playerAreaRef = useRef(null);
@@ -97,10 +95,6 @@ export default function PrisonMultiview() {
     }));
   }, [loadState, statuses]);
 
-  useEffect(() => {
-    setChatName((current) => selectedNames.includes(current) ? current : selectedNames[0] || '');
-  }, [selectedNames]);
-
   function addMember(member) {
     if (!statuses[member.nickname]?.isLive) {
       setNotice('현재 방송 중인 멤버만 멀티뷰에 추가할 수 있습니다.');
@@ -147,7 +141,7 @@ export default function PrisonMultiview() {
 
       {notice ? <div className="mb-4 rounded-2xl bg-amber-300/10 px-4 py-3 text-sm font-bold text-amber-50">{notice}</div> : null}
 
-      <div className="grid min-h-[680px] gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="min-h-[680px]">
         <div ref={playerAreaRef} className="min-h-[560px] rounded-[26px] bg-[#090c12] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.30)] sm:p-3">
           {selectedMembers.length ? (
             <div className={`grid h-full min-h-[540px] gap-2 sm:gap-3 ${getGridClass(layout, selectedMembers.length)}`}>
@@ -162,7 +156,6 @@ export default function PrisonMultiview() {
           )}
         </div>
 
-        <SoopChatPanel selectedMembers={selectedMembers} statuses={statuses} chatName={chatName} onSelect={setChatName} />
       </div>
       <p className="mt-4 text-center text-[11px] font-bold leading-5 text-white/30">모바일에서는 2개 이하 시청을 권장합니다.</p>
     </section>

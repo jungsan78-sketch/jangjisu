@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 function formatViewers(value) {
   const number = Number(value || 0);
   if (!Number.isFinite(number) || number <= 0) return '';
@@ -5,13 +7,38 @@ function formatViewers(value) {
 }
 
 export default function MultiviewStreamPicker({ members, statuses, selectedNames, maxStreams, loadState, onAdd }) {
+  const scrollerRef = useRef(null);
+  const [scrollState, setScrollState] = useState({ left: false, right: true });
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return undefined;
+    const update = () => setScrollState({ left: scroller.scrollLeft > 4, right: scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 4 });
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    observer?.observe(scroller);
+    return () => {
+      scroller.removeEventListener('scroll', update);
+      observer?.disconnect();
+    };
+  }, [members.length]);
+
+  function move(direction) {
+    scrollerRef.current?.scrollBy({ left: direction * Math.max(280, scrollerRef.current.clientWidth * 0.7), behavior: 'smooth' });
+  }
+
   return (
     <div className="min-w-0 rounded-[20px] bg-black/20 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="mb-2 flex items-center justify-between gap-3 px-1">
         <div className="text-[11px] font-black text-white/72">스트림 추가 <span className="ml-1 text-white/35">{selectedNames.length}/{maxStreams}</span></div>
-        <span className="text-[10px] font-bold text-white/30">5분 갱신</span>
+        <div className="flex items-center gap-1.5">
+          <span className="mr-1 text-[10px] font-bold text-white/30">5분 갱신</span>
+          <button type="button" disabled={!scrollState.left} onClick={() => move(-1)} aria-label="이전 스트림 보기" className="flex h-6 w-7 items-center justify-center rounded-lg bg-white/[0.065] text-sm font-black text-white/70 transition hover:bg-white/12 disabled:cursor-default disabled:opacity-20">‹</button>
+          <button type="button" disabled={!scrollState.right} onClick={() => move(1)} aria-label="다음 스트림 보기" className="flex h-6 w-7 items-center justify-center rounded-lg bg-white/[0.065] text-sm font-black text-white/70 transition hover:bg-white/12 disabled:cursor-default disabled:opacity-20">›</button>
+        </div>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scrollerRef} className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {members.map((member) => {
           const status = statuses[member.nickname] || {};
           const isLive = Boolean(status.isLive);
