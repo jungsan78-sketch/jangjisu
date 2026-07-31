@@ -1,8 +1,6 @@
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
-import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
-import { getKstMonthInfo } from '../../lib/scheduleMonth';
-
-const CACHE_TTL_SECONDS = 60 * 60;
+import { readBroadcastSummaryCache, writeBroadcastSummaryCache } from '../../lib/prisonBroadcastSummaryCache';
+import { getReplayMonthStorageTtl, isReplayMonthCacheFresh, resolveReplayMonth } from '../../lib/replayMonthWindow';
 const CACHE_VERSION = 'v17-members-20260729';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
@@ -523,21 +521,31 @@ async function buildPayload(monthInfo) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
-  const monthInfo = getKstMonthInfo();
-  const key = cacheKey(monthInfo);
-  const cached = await getCachedJson(key);
-  const now = Date.now();
+  const nowDate = new Date();
+  const monthInfo = resolveReplayMonth(req.query?.month, nowDate);
+  if (!monthInfo) {
+    return res.status(400).json({
+      ok: false,
+      message: '이번 달과 저번 달 다시보기만 볼 수 있습니다.',
+      cache: 'invalid-month',
+    });
+  }
 
-  if (cached?.payload && cached.cachedAt && now - cached.cachedAt < CACHE_TTL_SECONDS * 1000) {
-    return res.status(200).json({ ...cached.payload, cache: 'hit' });
+  const key = cacheKey(monthInfo);
+  const cached = await readBroadcastSummaryCache(key);
+  const now = nowDate.getTime();
+
+  if (isReplayMonthCacheFresh(cached.record, monthInfo, nowDate)) {
+    return res.status(200).json({ ...cached.record.payload, monthKind: monthInfo.kind, cache: 'hit', cacheStorage: cached.storage });
   }
 
   try {
     const payload = await buildPayload(monthInfo);
-    await setCachedJson(key, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
-    return res.status(200).json({ ...payload, cache: cached?.payload ? 'refresh' : 'miss' });
+    const storageTtl = getReplayMonthStorageTtl(monthInfo, nowDate);
+    const storage = await writeBroadcastSummaryCache(cached, key, { payload, cachedAt: now }, storageTtl);
+    return res.status(200).json({ ...payload, monthKind: monthInfo.kind, cache: cached.record?.payload ? 'refresh' : 'miss', cacheStorage: storage });
   } catch {
-    if (cached?.payload) return res.status(200).json({ ...cached.payload, cache: 'stale' });
-    return res.status(200).json({ ok: false, sourceType: 'review', monthLabel: monthInfo.monthLabel, items: [], memberStats: buildMemberStats([]), totalCount: 0, message: 'SOOP 다시보기 기록을 불러오지 못했습니다.', cache: 'unavailable' });
+    if (cached.record?.payload) return res.status(200).json({ ...cached.record.payload, monthKind: monthInfo.kind, cache: 'stale', cacheStorage: cached.storage });
+    return res.status(200).json({ ok: false, sourceType: 'review', monthLabel: monthInfo.monthLabel, monthKind: monthInfo.kind, items: [], memberStats: buildMemberStats([]), totalCount: 0, message: 'SOOP 다시보기 기록을 불러오지 못했습니다.', cache: 'unavailable', cacheStorage: cached.storage });
   }
 }

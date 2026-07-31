@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { getReplayMonthWindow } from '../../lib/replayMonthWindow';
+import BroadcastSummaryMonthTabs from './BroadcastSummaryMonthTabs';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -374,32 +376,55 @@ function ReplayCalendarLoading() {
 }
 
 export default function BroadcastSummaryCalendar() {
-  const [payload, setPayload] = useState(null);
-  const [loaded, setLoaded] = useState(false);
+  const [monthOptions, setMonthOptions] = useState(() => getReplayMonthWindow());
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() => getReplayMonthWindow()[0].monthKey);
+  const [payloads, setPayloads] = useState({});
+  const [resolvedMonths, setResolvedMonths] = useState({});
+  const [loadingMonthKey, setLoadingMonthKey] = useState('');
   const [selectedMember, setSelectedMember] = useState('장지수');
   const [expandedDays, setExpandedDays] = useState({});
+  const selectedMonth = monthOptions.find((month) => month.monthKey === selectedMonthKey) || monthOptions[0];
+  const payload = payloads[selectedMonthKey] || null;
+  const loaded = Boolean(resolvedMonths[selectedMonthKey]);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
+      setLoadingMonthKey(selectedMonthKey);
       try {
-        const summaryRes = await fetch(`/api/prison-broadcast-summary?t=${Date.now()}`, { cache: 'no-store' });
+        const summaryRes = await fetch(`/api/prison-broadcast-summary?month=${encodeURIComponent(selectedMonthKey)}&t=${Date.now()}`, { cache: 'no-store' });
         const json = summaryRes.ok ? await summaryRes.json() : null;
         if (mounted) {
-          setPayload(json || null);
+          setPayloads((previous) => ({ ...previous, [selectedMonthKey]: json || null }));
         }
       } catch {
-        if (mounted) setPayload(null);
+        if (mounted) setPayloads((previous) => ({ ...previous, [selectedMonthKey]: null }));
       } finally {
-        if (mounted) setLoaded(true);
+        if (mounted) {
+          setResolvedMonths((previous) => ({ ...previous, [selectedMonthKey]: true }));
+          setLoadingMonthKey('');
+        }
       }
     }
     load();
-    const timer = setInterval(load, 60 * 60 * 1000);
+    const timer = selectedMonth?.kind === 'current' ? setInterval(load, 60 * 60 * 1000) : null;
     return () => {
       mounted = false;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
     };
+  }, [selectedMonthKey, selectedMonth?.kind]);
+
+  useEffect(() => {
+    let activeCurrentMonthKey = monthOptions[0]?.monthKey;
+    const checkMonthRollover = () => {
+      const nextOptions = getReplayMonthWindow();
+      if (activeCurrentMonthKey === nextOptions[0]?.monthKey) return;
+      activeCurrentMonthKey = nextOptions[0]?.monthKey;
+      setMonthOptions(nextOptions);
+      setSelectedMonthKey(nextOptions[0].monthKey);
+    };
+    const timer = setInterval(checkMonthRollover, 60 * 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const monthLabel = payload?.monthLabel || getCurrentKstMonthLabel();
@@ -422,6 +447,7 @@ export default function BroadcastSummaryCalendar() {
   const mobileCells = useMemo(() => cells.filter((cell) => cell?.broadcasts?.length), [cells]);
   const totalCount = Number(payload?.totalCount || 0);
   const ranking = memberStats.filter((stat) => Number(stat.totalSeconds || 0) > 0).sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
+  const selectedPeriodText = selectedMonth?.kind === 'previous' ? '저번 달' : '이번 달';
 
   useEffect(() => {
     if (!memberStats.length) return;
@@ -437,17 +463,20 @@ export default function BroadcastSummaryCalendar() {
   return (
     <section id="broadcast-summary" className="mx-auto w-full max-w-none rounded-[28px] bg-white/[0.030] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:rounded-[32px] sm:p-5 lg:p-7">
       <div className="w-full rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.13),transparent_28%),linear-gradient(180deg,rgba(4,10,22,0.98),rgba(3,9,20,0.98))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.26),0_0_36px_rgba(45,212,191,0.05)] sm:rounded-[30px] sm:p-5 lg:p-8">
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <BroadcastSummaryMonthTabs months={monthOptions} selectedMonthKey={selectedMonthKey} onSelect={setSelectedMonthKey} loadingMonthKey={loadingMonthKey} />
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-[12px] font-black text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">1시간마다 갱신</span>
             {loaded ? <span className="rounded-full bg-teal-300/10 px-3 py-1.5 text-[12px] font-black text-teal-100/80">{totalCount}개 다시보기</span> : null}
             <div className="text-[12px] font-black tracking-[0.28em] text-white/35 sm:text-sm sm:tracking-[0.45em]">{parsedMonth?.year || ''}</div>
+          </div>
         </div>
 
         <div className="mb-8">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <div className="text-[25px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 다시보기 시간 순위` : '다시보기 시간 순위'}</div>
-              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">이번 달 다시보기 영상시간 합산 기준입니다.</div>
+              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">{selectedPeriodText} 다시보기 영상시간 합산 기준입니다.</div>
             </div>
           </div>
           {ranking.length ? (
@@ -455,7 +484,7 @@ export default function BroadcastSummaryCalendar() {
               {ranking.slice(0, 3).map((stat, index) => <RankCard key={stat.member} stat={stat} rank={`${index + 1}위`} />)}
             </div>
           ) : (
-            <div className="rounded-[22px] bg-[#05101d] p-5 text-[15px] font-bold text-white/54 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">아직 이번 달 다시보기 시간이 집계되지 않았습니다.</div>
+            <div className="rounded-[22px] bg-[#05101d] p-5 text-[15px] font-bold text-white/54 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">아직 {selectedPeriodText} 다시보기 시간이 집계되지 않았습니다.</div>
           )}
         </div>
 
@@ -470,7 +499,7 @@ export default function BroadcastSummaryCalendar() {
         <div className="mb-4 text-[24px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 ${activeMember} 다시보기 방송시간 / 방송제목 통계` : '다시보기 방송시간 / 방송제목 통계'}</div>
 
         {!payload?.ok ? (
-          <div className="rounded-[22px] bg-[#05101d] p-6 text-[15px] font-bold leading-7 text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{payload?.message || '이번 달 다시보기 기록을 아직 불러오지 못했습니다.'}</div>
+          <div className="rounded-[22px] bg-[#05101d] p-6 text-[15px] font-bold leading-7 text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{payload?.message || `${selectedPeriodText} 다시보기 기록을 아직 불러오지 못했습니다.`}</div>
         ) : (
           <>
             <div className="space-y-3 md:hidden">
@@ -484,7 +513,7 @@ export default function BroadcastSummaryCalendar() {
                     return <BroadcastPill key={broadcast.id} broadcast={broadcast} rangeText={rangeText} />;
                   })}</div>
                 </div>
-              )) : <div className="rounded-[22px] bg-[#05101d] p-6 text-sm font-bold text-white/55">이번 달 다시보기가 없습니다.</div>}
+              )) : <div className="rounded-[22px] bg-[#05101d] p-6 text-sm font-bold text-white/55">{selectedPeriodText} 다시보기가 없습니다.</div>}
             </div>
             <div className="hidden w-full rounded-[24px] bg-[#05101d] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_42px_rgba(0,0,0,0.18)] sm:rounded-[30px] sm:p-5 md:block">
             <div className="mb-3 grid grid-cols-7 gap-1.5 text-center text-[13px] font-black text-white/62 sm:mb-4 sm:gap-3 sm:text-[16px]">
