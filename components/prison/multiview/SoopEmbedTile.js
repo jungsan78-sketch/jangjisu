@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 function getStationId(member, status) {
   if (status?.stationId) return String(status.stationId);
   const matched = String(member?.station || '').match(/\/station\/([^/?#]+)/i);
@@ -5,8 +7,9 @@ function getStationId(member, status) {
 }
 
 export default function SoopEmbedTile({ member, status, featured = false, chatSelected = false, reloadKey = 0, onSelectChat, onRemove }) {
+  const [useSimplePlayer, setUseSimplePlayer] = useState(false);
   const stationId = getStationId(member, status);
-  const embedUrl = stationId ? `https://play.sooplive.com/${encodeURIComponent(stationId)}/embed` : '';
+  const playerUrl = stationId ? `https://play.sooplive.com/${encodeURIComponent(stationId)}${useSimplePlayer ? '/embed' : ''}` : '';
   const liveUrl = status?.liveUrl || member?.station || '#';
 
   return (
@@ -20,20 +23,17 @@ export default function SoopEmbedTile({ member, status, featured = false, chatSe
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <button type="button" onClick={() => setUseSimplePlayer((current) => !current)} title={useSimplePlayer ? '화질 선택이 가능한 일반 플레이어로 전환' : '재생 오류 시 간편 플레이어로 전환'} className="rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-black text-white/80 backdrop-blur transition hover:bg-white/18 sm:text-[11px]">{useSimplePlayer ? '화질 설정' : '간편 재생'}</button>
           <button type="button" onClick={onSelectChat} className={`rounded-full px-2.5 py-1.5 text-[10px] font-black backdrop-blur transition sm:text-[11px] ${chatSelected ? 'bg-sky-300 text-slate-950' : 'bg-white/10 text-white/80 hover:bg-white/18'}`}>채팅 창</button>
           <a href={liveUrl} target="_blank" rel="noreferrer" className="rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-black text-white/80 backdrop-blur transition hover:bg-white/18 sm:text-[11px]">SOOP 열기</a>
           <button type="button" onClick={onRemove} aria-label={`${member.nickname} 멀티뷰에서 제거`} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm font-black text-white/80 backdrop-blur transition hover:bg-rose-500/75 hover:text-white">×</button>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute left-3 top-[68px] z-10 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-black text-white/72 shadow-lg backdrop-blur sm:left-4 sm:text-[11px]">
-        ⚙ 원본화질은 플레이어 설정에서 선택
-      </div>
-
-      {embedUrl ? (
+      {playerUrl ? (
         <iframe
-          key={`${stationId}-${reloadKey}`}
-          src={embedUrl}
+          key={`${stationId}-${useSimplePlayer ? 'embed' : 'player'}-${reloadKey}`}
+          src={playerUrl}
           title={`${member.nickname} SOOP 라이브`}
           className="h-full min-h-[260px] w-full border-0 bg-black sm:min-h-[360px]"
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture; local-network-access; camera; microphone; display-capture; web-share"
