@@ -1,4 +1,4 @@
-import { fetchRowsByGid, normalizeScheduleText } from '../../lib/scheduleSheet';
+import { fetchRowsByGid, isIgnoredCalendarText, normalizeScheduleText } from '../../lib/scheduleSheet';
 import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { getKstMonthInfo } from '../../lib/scheduleMonth';
@@ -6,7 +6,7 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KNOWN_MONTH_GIDS = {
   '2026-04': '315851366',
@@ -101,7 +101,7 @@ function parseCurrentMonthRows(rows, targetYear, targetMonth) {
       detailRows.forEach((detailRow) => {
         for (let column = columnIndex; column < nextNumericColumn; column += 1) {
           const text = normalizeScheduleText(detailRow[column] || '');
-          if (text) detailTexts.push(text);
+          if (text && !isIgnoredCalendarText(text)) detailTexts.push(text);
         }
       });
 
@@ -221,3 +221,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
