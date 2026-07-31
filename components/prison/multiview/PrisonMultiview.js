@@ -51,10 +51,7 @@ export default function PrisonMultiview() {
   const [loadState, setLoadState] = useState('loading');
   const [selectedNames, setSelectedNames] = useState([]);
   const [layout, setLayout] = useState('auto');
-  const [chatName, setChatName] = useState('');
   const [notice, setNotice] = useState('');
-  const [showPermissionHelp, setShowPermissionHelp] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   const playerAreaRef = useRef(null);
 
   useEffect(() => {
@@ -94,7 +91,6 @@ export default function PrisonMultiview() {
   const members = useMemo(() => sortMembers(ALL_PRISON_MEMBERS, statuses), [statuses]);
   const selectedMembers = useMemo(() => selectedNames.map((name) => ALL_PRISON_MEMBERS.find((member) => member.nickname === name)).filter(Boolean), [selectedNames]);
   const liveCount = members.filter((member) => statuses[member.nickname]?.isLive).length;
-  const chatMember = selectedMembers.find((member) => member.nickname === chatName) || selectedMembers[0] || null;
 
   useEffect(() => {
     if (loadState !== 'ready') return;
@@ -103,11 +99,6 @@ export default function PrisonMultiview() {
       return !status || status.isLive || String(status.liveState || '').includes('unknown');
     }));
   }, [loadState, statuses]);
-
-  useEffect(() => {
-    if (!selectedNames.length) setChatName('');
-    else if (!selectedNames.includes(chatName)) setChatName(selectedNames[0]);
-  }, [chatName, selectedNames]);
 
   function addMember(member) {
     if (!statuses[member.nickname]?.isLive) {
@@ -120,20 +111,7 @@ export default function PrisonMultiview() {
       return;
     }
     setSelectedNames((current) => [...current, member.nickname]);
-    if (!chatName) setChatName(member.nickname);
     setNotice(selectedNames.length >= 2 && window.innerWidth < 768 ? '모바일에서 3개 이상 재생하면 기기 발열과 데이터 사용량이 커질 수 있습니다.' : '');
-  }
-
-  function openChat(member) {
-    const liveUrl = statuses[member.nickname]?.liveUrl || member.station;
-    const chatWindow = window.open(liveUrl, 'sou_prison_multiview_chat', 'popup=yes,width=520,height=860,resizable=yes,scrollbars=yes');
-    if (!chatWindow) {
-      setNotice('브라우저가 채팅 창을 차단했습니다. 팝업을 허용한 뒤 다시 눌러주세요.');
-      return;
-    }
-    setChatName(member.nickname);
-    chatWindow.focus?.();
-    setNotice('');
   }
 
   async function openFullscreen() {
@@ -142,11 +120,6 @@ export default function PrisonMultiview() {
     } catch {
       setNotice('브라우저에서 전체화면을 허용하지 않았습니다.');
     }
-  }
-
-  function reloadPlayers() {
-    setReloadKey((current) => current + 1);
-    setNotice('플레이어를 다시 불러왔습니다. 일반 플레이어의 설정에서 원하는 화질을 선택해주세요.');
   }
 
   return (
@@ -164,24 +137,9 @@ export default function PrisonMultiview() {
           <div className="flex rounded-2xl bg-black/30 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)]">
             {LAYOUTS.map((item) => <button key={item.key} type="button" title={item.label} onClick={() => setLayout(item.key)} className={`flex h-9 min-w-9 items-center justify-center rounded-xl px-2 text-sm font-black transition ${layout === item.key ? 'bg-white text-slate-950 shadow-lg' : 'text-white/55 hover:bg-white/8 hover:text-white'}`}>{item.icon}</button>)}
           </div>
-          <button type="button" disabled={!selectedMembers.length} onClick={() => chatMember && openChat(chatMember)} className={`rounded-2xl px-4 py-2.5 text-xs font-black transition ${selectedMembers.length ? 'bg-sky-300/12 text-sky-50 hover:bg-sky-300/20' : 'cursor-not-allowed bg-white/[0.035] text-white/20'}`}>▢ 채팅 창</button>
           <button type="button" onClick={openFullscreen} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/80 transition hover:bg-white/12 hover:text-white">⛶ 전체화면</button>
           <button type="button" onClick={() => setSelectedNames([])} className="rounded-2xl bg-white/[0.065] px-4 py-2.5 text-xs font-black text-white/65 transition hover:bg-rose-500/14 hover:text-rose-100">선택 초기화</button>
         </div>
-      </div>
-
-      <div className="mb-4 rounded-[22px] bg-sky-400/[0.085] p-4 shadow-[inset_0_1px_0_rgba(125,211,252,0.10)]">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-sm font-black text-sky-50">화질 설정 안내</div>
-            <p className="mt-1 text-xs font-bold leading-5 text-sky-50/60">화질 메뉴가 있는 일반 SOOP 플레이어로 재생합니다. 재생 문제가 생기면 카드의 간편 재생을 이용해주세요.</p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <button type="button" onClick={() => setShowPermissionHelp((value) => !value)} className="rounded-xl bg-white/[0.075] px-3 py-2 text-xs font-black text-white/75 hover:bg-white/12">{showPermissionHelp ? '안내 닫기' : '권한 해결 방법'}</button>
-            <button type="button" disabled={!selectedMembers.length} onClick={reloadPlayers} className="rounded-xl bg-sky-300/15 px-3 py-2 text-xs font-black text-sky-50 disabled:cursor-not-allowed disabled:opacity-35">플레이어 다시 불러오기</button>
-          </div>
-        </div>
-        {showPermissionHelp ? <div className="mt-3 rounded-2xl bg-black/20 px-4 py-3 text-xs font-bold leading-6 text-white/60"><span className="text-white">① 일반 플레이어 설정에서 원하는 화질 선택</span><br />② 브라우저의 로컬 네트워크 액세스 요청이 나타나면 허용<br />③ 고화질 스트리머가 필요한 경우 설치·실행 상태 확인<br />④ 일반 플레이어가 표시되지 않으면 카드의 간편 재생 선택<br /><span className="mt-1 block text-white/42">간편 재생은 SOOP 임베드 플레이어라 화질 선택 메뉴가 표시되지 않습니다.</span></div> : null}
       </div>
 
       {notice ? <div className="mb-4 rounded-2xl bg-amber-300/10 px-4 py-3 text-sm font-bold text-amber-50">{notice}</div> : null}
@@ -190,7 +148,7 @@ export default function PrisonMultiview() {
         <div ref={playerAreaRef} className="min-h-[560px] rounded-[26px] bg-[#090c12] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.30)] sm:p-3">
           {selectedMembers.length ? (
             <div className={`grid h-full min-h-[540px] gap-2 sm:gap-3 ${getGridClass(layout, selectedMembers.length)}`}>
-              {selectedMembers.map((member, index) => <SoopEmbedTile key={member.nickname} member={member} status={statuses[member.nickname]} featured={index === 0 && selectedMembers.length >= 3 && (layout === 'focus' || (layout === 'auto' && selectedMembers.length === 3))} chatSelected={chatName === member.nickname} reloadKey={reloadKey} onSelectChat={() => openChat(member)} onRemove={() => setSelectedNames((current) => current.filter((name) => name !== member.nickname))} />)}
+              {selectedMembers.map((member, index) => <SoopEmbedTile key={member.nickname} member={member} status={statuses[member.nickname]} featured={index === 0 && selectedMembers.length >= 3 && (layout === 'focus' || (layout === 'auto' && selectedMembers.length === 3))} onRemove={() => setSelectedNames((current) => current.filter((name) => name !== member.nickname))} />)}
             </div>
           ) : (
             <div className="flex min-h-[540px] flex-col items-center justify-center rounded-[22px] bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.08),transparent_42%),#0b0e14] px-6 text-center">
@@ -218,7 +176,7 @@ export default function PrisonMultiview() {
           </div>
         </aside>
       </div>
-      <p className="mt-4 text-center text-[11px] font-bold leading-5 text-white/30">채팅 버튼은 공식 SOOP 방송 창 하나를 재사용합니다. 모바일에서는 2개 이하 시청을 권장합니다.</p>
+      <p className="mt-4 text-center text-[11px] font-bold leading-5 text-white/30">모바일에서는 2개 이하 시청을 권장합니다.</p>
     </section>
   );
 }
