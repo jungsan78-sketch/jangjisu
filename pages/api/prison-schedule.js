@@ -2,10 +2,27 @@ const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const SOURCES = [
   {
+    id: 'jangjisu',
     key: '장지수',
     sheetId: '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM',
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM/edit',
     mode: 'sheetNameCandidates',
+  },
+  {
+    id: 'guweol',
+    key: '구월이',
+    sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
+    gid: '739202309',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=739202309#gid=739202309',
+    mode: 'fixedGid',
+  },
+  {
+    id: 'linling',
+    key: '린링',
+    sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
+    gid: '1838232194',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1838232194#gid=1838232194',
+    mode: 'fixedGid',
   },
 ];
 
@@ -115,6 +132,8 @@ const normalizeScheduleText = (value) => {
   return placeholderOnly ? normalized : '';
 };
 
+const isDecorationOnly = (value) => /^[\p{Extended_Pictographic}\u200d\ufe0f\s]+$/u.test(String(value || ''));
+
 const parseScheduleRows = (rows, targetYear, targetMonth) => {
   const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
   const itemsMap = new Map();
@@ -124,11 +143,10 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
     const row = rows[rowIndex];
     if (!isDateRow(row)) continue;
 
+    const numericCells = row.map((cell, columnIndex) => ({ text: String(cell || '').trim(), columnIndex })).filter(({ text }) => /^\d{1,2}$/.test(text));
     const activeDays = [];
-    row.forEach((cell, columnIndex) => {
-      const trimmed = String(cell || '').trim();
-      if (!/^\d{1,2}$/.test(trimmed)) return;
-      const day = Number(trimmed);
+    numericCells.forEach(({ text, columnIndex }) => {
+      const day = Number(text);
       if (day < 1 || day > daysInMonth) return;
       if (lastIncludedDay === 0) {
         if (day <= 7) {
@@ -152,17 +170,30 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
       nextRowIndex += 1;
     }
 
+    const columnSteps = numericCells
+      .slice(1)
+      .map((cell, index) => cell.columnIndex - numericCells[index].columnIndex)
+      .filter((step) => step > 0);
+    const fallbackColumnStep = columnSteps.length ? Math.min(...columnSteps) : 1;
+
     activeDays.forEach(({ day, columnIndex }) => {
-      const detailTexts = detailRows
-        .map((detailRow) => normalizeScheduleText(detailRow[columnIndex] || ''))
-        .filter(Boolean);
+      const nextNumericColumn = numericCells.find((cell) => cell.columnIndex > columnIndex)?.columnIndex
+        ?? Math.min(row.length, columnIndex + fallbackColumnStep);
+      const detailTexts = [];
+      detailRows.forEach((detailRow) => {
+        for (let column = columnIndex; column < nextNumericColumn; column += 1) {
+          const text = normalizeScheduleText(detailRow[column] || '');
+          if (text && !isDecorationOnly(text)) detailTexts.push(text);
+        }
+      });
+      const uniqueTexts = Array.from(new Set(detailTexts));
       const dateObject = new Date(targetYear, targetMonth - 1, day);
       itemsMap.set(day, {
         dayNumber: day,
         day: DAY_LABELS[dateObject.getDay()],
         date: `${targetMonth}월 ${day}일`,
-        title: detailTexts.join(' / '),
-        empty: detailTexts.length === 0,
+        title: uniqueTexts.join(' / '),
+        empty: uniqueTexts.length === 0,
       });
     });
   }
@@ -204,7 +235,7 @@ const fetchFixedGidSchedule = async (source, baseDate = new Date()) => {
   ];
   const { rows, fetchedUrl } = await fetchRowsFromUrls(urls);
   const items = parseScheduleRows(rows, year, month);
-  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl };
+  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: source.sourceUrl };
 };
 
 const fetchSourceSchedule = async (source) => {
@@ -227,9 +258,15 @@ const fetchSourceSchedule = async (source) => {
 };
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
 
-  const results = await Promise.allSettled(SOURCES.map(fetchSourceSchedule));
+  const requestedKey = String(req.query.key || '').trim();
+  const activeSources = requestedKey ? SOURCES.filter((source) => source.id === requestedKey) : SOURCES;
+  if (!activeSources.length) {
+    return res.status(404).json({ ok: false, message: '일정 소스를 찾지 못했습니다.' });
+  }
+
+  const results = await Promise.allSettled(activeSources.map(fetchSourceSchedule));
   const schedules = results
     .filter((result) => result.status === 'fulfilled' && result.value.ok)
     .map((result) => result.value);
@@ -247,8 +284,9 @@ export default async function handler(req, res) {
     members: schedules.map((schedule) => schedule.member),
     schedules,
     items,
+    sourceUrl: schedules[0]?.sourceUrl || activeSources[0]?.sourceUrl || '',
     sourceStatus: results.map((result, index) => ({
-      member: SOURCES[index].key,
+      member: activeSources[index].key,
       ok: result.status === 'fulfilled' ? result.value.ok : false,
     })),
     fetchedAt: new Date().toISOString(),

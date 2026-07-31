@@ -70,6 +70,10 @@ function hasScheduleItems(entry) {
   return (entry?.items || []).some((item) => !item.empty && String(item.title || '').trim());
 }
 
+function withCacheBust(endpoint) {
+  return `${endpoint}${endpoint.includes('?') ? '&' : '?'}t=${Date.now()}`;
+}
+
 function FilterButton({ label, image, active, linked, onClick }) {
   const stateClass = active
     ? 'border-amber-200/28 bg-amber-300/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_22px_rgba(245,158,11,0.20)]'
@@ -95,7 +99,10 @@ export default function CalendarPreview() {
     let mounted = true;
 
     async function load() {
-      const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(`${source.endpoint}?t=${Date.now()}`, { cache: 'no-store' }).then((res) => res.json())));
+      const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(withCacheBust(source.endpoint), { cache: 'no-store' }).then((res) => {
+        if (!res.ok) throw new Error(`schedule ${res.status}`);
+        return res.json();
+      })));
       if (!mounted) return;
       const nextState = {};
       PRISON_SCHEDULE_SOURCES.forEach((source, index) => {
@@ -150,7 +157,13 @@ export default function CalendarPreview() {
     if (!parsedMonth) return [];
     return scheduleEntries.flatMap((entry) => (entry.items || [])
       .filter((item) => !item.empty && String(item.title || '').trim())
-      .map((item) => ({ day: item.dayNumber, member: entry.member, title: item.title, year: parsedMonth.year, month: parsedMonth.month })));
+      .map((item) => ({
+        day: item.dayNumber,
+        member: entry.member,
+        title: item.title,
+        year: Number(item.year || parsedMonth.year),
+        month: Number(item.month || parsedMonth.month),
+      })));
   }, [scheduleEntries, parsedMonth]);
 
   const selectedSource = scheduleEntries.find((entry) => entry.member === selectedMember);
@@ -185,7 +198,13 @@ export default function CalendarPreview() {
     });
     return map;
   }, [visibleSchedules]);
-  const memberCalendarCells = useMemo(() => buildCalendarCells(monthLabel, selectedSource?.items || []), [monthLabel, selectedSource]);
+  const memberCalendarCells = useMemo(() => buildCalendarCells(
+    monthLabel,
+    (selectedSource?.items || []).filter((item) => (
+      (!item.year || Number(item.year) === parsedMonth.year)
+      && (!item.month || Number(item.month) === parsedMonth.month)
+    )),
+  ), [monthLabel, parsedMonth.month, parsedMonth.year, selectedSource]);
   const today = getCurrentKstDate();
 
   if (!isLoaded || !parsedMonth) return <div id="schedule" aria-hidden="true" style={{ display: 'none' }} />;
