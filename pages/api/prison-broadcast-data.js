@@ -9,7 +9,7 @@ import {
 } from '../../lib/prisonBroadcastDataSources';
 import { getReplayMonthStorageTtl, getReplayMonthWindow, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CURRENT_CACHE_MS = 30 * 60 * 1000;
 const VERIFY_CACHE_MS = 30 * 60 * 1000;
 
@@ -68,6 +68,7 @@ async function collectPoonggoMonth(monthInfo, previousPayload) {
       monthlyDonations: Number(summary?.donations ?? previous?.monthlyDonations ?? 0),
       monthlyPeakViewers: Number(summary?.peakViewers ?? previous?.monthlyPeakViewers ?? 0),
       monthlyCumulativeViewers: Number(summary?.cumulativeViewers ?? previous?.monthlyCumulativeViewers ?? 0),
+      monthlyBroadcastMinutes: Number(summary?.broadcastMinutes ?? previous?.monthlyBroadcastMinutes ?? 0),
       days: days.map((day) => {
         const dateKey = formatDateKey(monthInfo.year, monthInfo.month, day);
         return previousDays.get(dateKey) || reconcileBroadcastDay({ day, dateKey, sources: {} });
@@ -92,6 +93,7 @@ function withRankings(payload) {
     donations: Number(member.monthlyDonations || 0),
     peakViewers: Number(member.monthlyPeakViewers || 0),
     cumulativeViewers: Number(member.monthlyCumulativeViewers || 0),
+    broadcastMinutes: Number(member.monthlyBroadcastMinutes || 0),
     monthlyReady: Boolean(member.monthlyReady),
     cumulativeReady: Boolean(member.monthlyReady),
   }));
@@ -101,6 +103,7 @@ function withRankings(payload) {
       donations: [...rankings].sort((a, b) => b.donations - a.donations || b.peakViewers - a.peakViewers),
       peakViewers: [...rankings].sort((a, b) => b.peakViewers - a.peakViewers || b.donations - a.donations),
       cumulativeViewers: [...rankings].sort((a, b) => Number(b.cumulativeReady) - Number(a.cumulativeReady) || b.cumulativeViewers - a.cumulativeViewers || b.peakViewers - a.peakViewers),
+      broadcastMinutes: [...rankings].sort((a, b) => Number(b.monthlyReady) - Number(a.monthlyReady) || b.broadcastMinutes - a.broadcastMinutes || b.peakViewers - a.peakViewers),
     },
     availableMonths: getReplayMonthWindow().map((month) => ({
       monthKey: month.monthKey,
@@ -124,6 +127,7 @@ function publicPayload(payload) {
       monthlyDonations: Number(member.monthlyDonations || 0),
       monthlyPeakViewers: Number(member.monthlyPeakViewers || 0),
       monthlyCumulativeViewers: Number(member.monthlyCumulativeViewers || 0),
+      monthlyBroadcastMinutes: Number(member.monthlyBroadcastMinutes || 0),
       days: (member.days || []).map((day) => ({
         day: day.day,
         dateKey: day.dateKey,
@@ -192,6 +196,7 @@ async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
       monthlyDonations: monthlyResult?.donations ?? member.monthlyDonations ?? 0,
       monthlyPeakViewers: monthlyResult?.peakViewers ?? member.monthlyPeakViewers ?? 0,
       monthlyCumulativeViewers: monthlyResult?.cumulativeViewers ?? member.monthlyCumulativeViewers ?? 0,
+      monthlyBroadcastMinutes: monthlyResult?.broadcastMinutes ?? member.monthlyBroadcastMinutes ?? 0,
       days: member.days.map((day) => {
         const poonggo = resultMap.get(day.dateKey);
         if (!poonggo) return day;
