@@ -1,6 +1,6 @@
 import { getRuntimeEnvValue } from '../../../lib/youtube-data';
 import { getReplayMonthWindow, resolveReplayMonth } from '../../../lib/replayMonthWindow';
-import { BROADCAST_DATA_MEMBERS, refreshBroadcastDataCumulative } from '../prison-broadcast-data';
+import { BROADCAST_DATA_MEMBERS, refreshBroadcastDataMember } from '../prison-broadcast-data';
 
 async function isAuthorized(req) {
   const secret = await getRuntimeEnvValue('CRON_SECRET');
@@ -11,11 +11,10 @@ async function isAuthorized(req) {
 }
 
 function scheduledTarget() {
-  const refreshSlot = Math.floor(Date.now() / (6 * 60 * 60 * 1000));
-  const months = getReplayMonthWindow();
+  const refreshSlot = Math.floor(Date.now() / (60 * 60 * 1000));
   return {
     member: BROADCAST_DATA_MEMBERS[refreshSlot % BROADCAST_DATA_MEMBERS.length],
-    month: months[Math.floor(refreshSlot / BROADCAST_DATA_MEMBERS.length) % months.length],
+    month: getReplayMonthWindow().find((month) => month.kind === 'current'),
   };
 }
 
@@ -29,7 +28,7 @@ export default async function handler(req, res) {
   const force = String(req.query?.force || '') === '1';
 
   try {
-    const result = await refreshBroadcastDataCumulative(month, member.id, force);
+    const result = await refreshBroadcastDataMember(month, member.id, force);
     return res.status(200).json({
       ok: true,
       monthKey: month.monthKey,
