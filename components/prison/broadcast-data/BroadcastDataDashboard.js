@@ -78,26 +78,24 @@ export default function BroadcastDataDashboard() {
   return (
     <div id="broadcast-data" className="mx-auto w-full max-w-none rounded-[30px] bg-white/[0.025] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:p-5 lg:p-7">
       <header className="rounded-[26px] border border-white/[0.07] bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.11),transparent_35%),#07111f] p-5 sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">방송 데이터 달력</h1>
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-white/50">별풍선과 최고 시청자 기록을 날짜별로 한눈에 확인할 수 있습니다.</p>
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-              <span className="text-rose-300">!</span> 데이터는 불확실할 수 있습니다.
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <h1 className="mr-1 text-3xl font-black tracking-tight text-white sm:text-4xl">방송 데이터 달력</h1>
           <div className="flex flex-wrap gap-2">
             {(payload?.availableMonths || []).map((month) => (
               <button
                 type="button"
                 key={month.monthKey}
                 onClick={() => setMonthKey(month.monthKey)}
-                className={`rounded-full px-4 py-2.5 text-sm font-black transition ${monthKey === month.monthKey ? 'bg-white text-[#07111f]' : 'bg-white/[0.06] text-white/55 hover:bg-white/[0.1] hover:text-white'}`}
+                className={`min-w-[112px] rounded-2xl border px-5 py-3 text-base font-black transition sm:min-w-[128px] ${monthKey === month.monthKey ? 'border-cyan-100/55 bg-cyan-300 text-[#06111a] shadow-[0_10px_30px_rgba(103,232,249,0.2)]' : 'border-white/10 bg-white/[0.06] text-white/65 hover:border-white/20 hover:bg-white/[0.1] hover:text-white'}`}
               >
                 {month.buttonLabel}
               </button>
             ))}
           </div>
+        </div>
+        <p className="mt-4 max-w-2xl text-sm font-bold leading-6 text-white/50">별풍선과 최고 시청자 기록을 날짜별로 한눈에 확인할 수 있습니다.</p>
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <span className="text-rose-300">!</span> 데이터는 불확실할 수 있습니다.
         </div>
       </header>
 
@@ -110,15 +108,6 @@ export default function BroadcastDataDashboard() {
       ) : (
         <>
           <div className="mt-5"><BroadcastDataRanking rankings={payload?.rankings} mode={rankingMode} onModeChange={setRankingMode} selectedMemberId={selectedMemberId} onSelectMember={selectMember} /></div>
-          <section className="mt-5 rounded-[26px] border border-white/[0.07] bg-[#07111f] p-4 sm:p-5">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {(payload?.members || []).map((member) => (
-                <button type="button" key={member.id} onClick={() => selectMember(member.id)} className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-black transition ${selectedMemberId === member.id ? 'border-cyan-200/35 bg-cyan-300/12 text-cyan-50' : 'border-white/[0.07] bg-white/[0.035] text-white/55 hover:text-white'}`}>
-                  <img src={member.image} alt="" className="h-7 w-7 rounded-full object-cover" />{member.nickname}
-                </button>
-              ))}
-            </div>
-          </section>
           <div className="mt-5"><BroadcastDataCalendar monthKey={monthKey} member={selectedMember} verifying={verifying} /></div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] font-bold text-white/30">
             <span>방송 데이터는 주기적으로 자동 갱신됩니다.</span>
