@@ -98,7 +98,7 @@ function PrisonWideLayoutOverride() {
           margin-right: 0 !important;
         }
 
-        .sou-prison-main .sou-member-live-section > div.grid {
+        .sou-prison-main .sou-member-live-grid {
           grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
           column-gap: 24px !important;
           row-gap: 52px !important;
@@ -106,7 +106,7 @@ function PrisonWideLayoutOverride() {
       }
 
       @media (min-width: 2300px) {
-        .sou-prison-main .sou-member-live-section > div.grid {
+        .sou-prison-main .sou-member-live-grid {
           grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
           column-gap: 24px !important;
         }
