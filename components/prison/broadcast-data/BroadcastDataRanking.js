@@ -49,7 +49,6 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
                   {numberFormat.format(value)}{donationMode ? '개' : '명'}
                 </span>
               </span>
-              {member.reviewDays > 0 ? <span title="출처 간 시청자 차이 검토 필요" className="text-xs text-amber-300">!</span> : null}
             </button>
           );
         })}
