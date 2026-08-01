@@ -12,11 +12,13 @@ function calendarCells(monthKey, days) {
   ];
 }
 
-function Metric({ label, value, suffix, tone }) {
+function Metric({ label, value, suffix, tone, pending = false }) {
   return (
     <div className="rounded-xl bg-black/20 px-3 py-2.5">
       <div className="text-[10px] font-black tracking-[0.08em] text-white/35">{label}</div>
-      <div className={`mt-1 text-sm font-black ${tone}`}>{numberFormat.format(value || 0)}{suffix}</div>
+      <div className={`mt-1 text-sm font-black ${pending ? 'animate-pulse text-white/45' : tone}`}>
+        {pending ? '확인 중' : `${numberFormat.format(value || 0)}${suffix}`}
+      </div>
     </div>
   );
 }
@@ -59,7 +61,7 @@ export default function BroadcastDataCalendar({ monthKey, member, verifying }) {
               {active ? (
                 <div className="mt-3 grid gap-2">
                   <Metric label="별풍선" value={data.donations} suffix="개" tone="text-cyan-200" />
-                  <Metric label="최고 시청자" value={data.peakViewers} suffix="명" tone="text-violet-200" />
+                  <Metric label="최고 시청자" value={data.peakViewers} suffix="명" tone="text-violet-200" pending={verifying && !data.peakViewers} />
                 </div>
               ) : <div className="mt-7 text-center text-[11px] font-bold text-white/20">기록 없음</div>}
             </article>
