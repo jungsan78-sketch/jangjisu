@@ -32,6 +32,7 @@ export default function BroadcastDataDashboard() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setVerifying(true);
     setPayload(null);
     setError('');
     fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}`, { cache: 'no-store' })
@@ -40,7 +41,7 @@ export default function BroadcastDataDashboard() {
         if (!response.ok || !json.ok) throw new Error(json.message || '방송 데이터를 불러오지 못했습니다.');
         if (!cancelled) setPayload(json);
       })
-      .catch((fetchError) => { if (!cancelled) setError(fetchError.message); })
+      .catch((fetchError) => { if (!cancelled) { setError(fetchError.message); setVerifying(false); } })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [monthKey]);
@@ -68,14 +69,22 @@ export default function BroadcastDataDashboard() {
     [payload, selectedMemberId],
   );
 
+  const selectMember = (id) => {
+    if (id === selectedMemberId) return;
+    setVerifying(true);
+    setSelectedMemberId(id);
+  };
+
   return (
     <div id="broadcast-data" className="mx-auto w-full max-w-none rounded-[30px] bg-white/[0.025] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_24px_70px_rgba(0,0,0,0.22)] sm:p-5 lg:p-7">
       <header className="rounded-[26px] border border-white/[0.07] bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.11),transparent_35%),#07111f] p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <p className="text-xs font-black tracking-[0.18em] text-cyan-200/60">BROADCAST DATA</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">방송 데이터 달력</h1>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">방송 데이터 달력</h1>
             <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-white/50">별풍선과 최고 시청자 기록을 날짜별로 한눈에 확인할 수 있습니다.</p>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <span className="text-rose-300">!</span> 데이터는 불확실할 수 있습니다.
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {(payload?.availableMonths || []).map((month) => (
@@ -100,12 +109,11 @@ export default function BroadcastDataDashboard() {
         <div className="mt-5 rounded-[26px] border border-rose-300/15 bg-rose-300/[0.06] px-5 py-12 text-center text-sm font-black text-rose-100">{error}</div>
       ) : (
         <>
-          <div className="mt-5"><BroadcastDataRanking rankings={payload?.rankings} mode={rankingMode} onModeChange={setRankingMode} selectedMemberId={selectedMemberId} onSelectMember={setSelectedMemberId} /></div>
+          <div className="mt-5"><BroadcastDataRanking rankings={payload?.rankings} mode={rankingMode} onModeChange={setRankingMode} selectedMemberId={selectedMemberId} onSelectMember={selectMember} /></div>
           <section className="mt-5 rounded-[26px] border border-white/[0.07] bg-[#07111f] p-4 sm:p-5">
-            <div className="mb-3 text-xs font-black tracking-[0.12em] text-white/35">MEMBER SELECT</div>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {(payload?.members || []).map((member) => (
-                <button type="button" key={member.id} onClick={() => setSelectedMemberId(member.id)} className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-black transition ${selectedMemberId === member.id ? 'border-cyan-200/35 bg-cyan-300/12 text-cyan-50' : 'border-white/[0.07] bg-white/[0.035] text-white/55 hover:text-white'}`}>
+                <button type="button" key={member.id} onClick={() => selectMember(member.id)} className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-black transition ${selectedMemberId === member.id ? 'border-cyan-200/35 bg-cyan-300/12 text-cyan-50' : 'border-white/[0.07] bg-white/[0.035] text-white/55 hover:text-white'}`}>
                   <img src={member.image} alt="" className="h-7 w-7 rounded-full object-cover" />{member.nickname}
                 </button>
               ))}
