@@ -4,6 +4,21 @@ function formatCellHeading(date) {
   return `${date.getDate()}일`;
 }
 
+function MemberIdentity({ item, off }) {
+  const content = (
+    <>
+      <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.08] text-[10px] font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] ${off ? 'text-rose-100' : 'text-cyan-100'}`}>
+        {String(item.member || '?').slice(0, 1)}
+        {item.memberImage ? <img src={item.memberImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = 'none'; }} /> : null}
+      </span>
+      <span className={`min-w-0 truncate text-[16px] font-black ${off ? 'text-rose-100' : 'text-cyan-100'}`}>{item.member}</span>
+    </>
+  );
+
+  if (!item.memberStation) return <div className="flex items-center gap-2">{content}</div>;
+  return <a href={item.memberStation} target="_blank" rel="noreferrer" aria-label={`${item.member} SOOP 방송국 열기`} className="group/member inline-flex max-w-full items-center gap-2 rounded-full pr-2 transition hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/50">{content}<span aria-hidden="true" className="text-[10px] font-black text-white/22 transition group-hover/member:text-white/55">↗</span></a>;
+}
+
 export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -31,13 +46,7 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
                     const off = String(item.title || '').includes('휴방');
                     return (
                       <div key={`${item.member}-${item.title}-${index}`} className={`rounded-[18px] px-3 py-3 ${off ? 'bg-[linear-gradient(180deg,rgba(251,146,60,0.08),rgba(120,53,15,0.05))] shadow-[inset_0_0_0_1px_rgba(251,146,60,0.10)]' : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.01))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'}`}>
-                        <div className="flex items-center gap-2">
-                          <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.08] text-[10px] font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] ${off ? 'text-rose-100' : 'text-cyan-100'}`}>
-                            {String(item.member || '?').slice(0, 1)}
-                            {item.memberImage ? <img src={item.memberImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = 'none'; }} /> : null}
-                          </span>
-                          <div className={`min-w-0 truncate text-[16px] font-black ${off ? 'text-rose-100' : 'text-cyan-100'}`}>{item.member}</div>
-                        </div>
+                        <MemberIdentity item={item} off={off} />
                         <div className={`mt-2 border-t border-white/5 pt-2 text-[15px] font-semibold leading-6 break-keep ${off ? 'text-rose-50' : 'text-white/92'}`}>{item.title}</div>
                       </div>
                     );
