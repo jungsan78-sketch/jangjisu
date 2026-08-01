@@ -8,8 +8,7 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
     <section className="rounded-[26px] border border-white/[0.07] bg-[#07111f] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.22)] sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-black tracking-[0.16em] text-cyan-200/60">MONTHLY RANKING</p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-white">이번 달 방송 순위</h2>
+          <h2 className="text-2xl font-black tracking-tight text-white">이번 달 방송 순위</h2>
           <p className="mt-2 text-sm font-bold text-white/45">멤버를 누르면 아래 달력이 해당 멤버 기준으로 바뀝니다.</p>
         </div>
         <div className="flex rounded-2xl border border-white/8 bg-black/25 p-1">
