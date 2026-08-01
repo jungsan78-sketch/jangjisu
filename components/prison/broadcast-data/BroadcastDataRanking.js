@@ -14,17 +14,17 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
         <div className="flex rounded-2xl border border-white/8 bg-black/25 p-1">
           <button
             type="button"
-            onClick={() => onModeChange('donations')}
-            className={`rounded-xl px-4 py-2.5 text-sm font-black transition ${donationMode ? 'bg-cyan-300 text-[#06111a] shadow-[0_8px_24px_rgba(103,232,249,0.18)]' : 'text-white/55 hover:text-white'}`}
-          >
-            별풍선 순위
-          </button>
-          <button
-            type="button"
             onClick={() => onModeChange('peakViewers')}
             className={`rounded-xl px-4 py-2.5 text-sm font-black transition ${!donationMode ? 'bg-violet-300 text-[#0b0814] shadow-[0_8px_24px_rgba(196,181,253,0.18)]' : 'text-white/55 hover:text-white'}`}
           >
             최고 시청자 순위
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange('donations')}
+            className={`rounded-xl px-4 py-2.5 text-sm font-black transition ${donationMode ? 'bg-cyan-300 text-[#06111a] shadow-[0_8px_24px_rgba(103,232,249,0.18)]' : 'text-white/55 hover:text-white'}`}
+          >
+            별풍선 순위
           </button>
         </div>
       </div>
