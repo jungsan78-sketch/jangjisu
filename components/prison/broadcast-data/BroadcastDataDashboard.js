@@ -23,7 +23,7 @@ export default function BroadcastDataDashboard() {
   const [monthKey, setMonthKey] = useState(initialMonthKey);
   const [payload, setPayload] = useState(null);
   const [selectedMemberId, setSelectedMemberId] = useState('iamquaddurup');
-  const [rankingMode, setRankingMode] = useState('donations');
+  const [rankingMode, setRankingMode] = useState('peakViewers');
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
