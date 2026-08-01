@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CalendarPreview from './CalendarPreview';
+import PrisonQuickNav from './PrisonQuickNav';
 import RecentYoutubeSection from './RecentYoutubeSection';
 import { PrisonMemberLiveGridContent } from '../PrisonMemberLiveGrid';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
@@ -278,6 +279,10 @@ export function PrisonPageChrome({ children, wide = false }) {
             width: 100% !important;
             max-width: none !important;
           }
+          .sou-prison-main > .sou-prison-quick-nav {
+            width: fit-content !important;
+            max-width: none !important;
+          }
           .sou-prison-main.sou-prison-main-wide > *,
           .sou-prison-main.sou-prison-main-wide #broadcast-summary {
             width: 100% !important;
@@ -318,6 +323,7 @@ export function PrisonPageChrome({ children, wide = false }) {
 export default function PrisonPageContent() {
   return (
     <PrisonPageChrome>
+      <PrisonQuickNav />
       <section className="overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
         <div className="relative overflow-hidden">
           <img src="/jangjisu-prison-hero.png" alt="장지수용소" className="block h-auto w-full object-contain" />
@@ -334,3 +340,4 @@ export default function PrisonPageContent() {
     </PrisonPageChrome>
   );
 }
+
