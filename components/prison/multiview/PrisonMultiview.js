@@ -118,7 +118,7 @@ export default function PrisonMultiview() {
   }
 
   return (
-    <section data-sou-prison-prepaint-visible="true" className="min-h-[calc(100vh-64px)] w-full">
+    <section data-sou-prison-prepaint-visible="true" className="flex min-h-[calc(100dvh-64px)] w-full flex-col">
       <div className="mb-4 grid gap-4 rounded-[26px] bg-white/[0.035] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_20px_50px_rgba(0,0,0,0.24)] sm:px-6 xl:grid-cols-[260px_minmax(360px,1fr)_auto] xl:items-center">
         <div className="shrink-0">
           <div className="flex items-center gap-3">
@@ -141,10 +141,10 @@ export default function PrisonMultiview() {
 
       {notice ? <div className="mb-4 rounded-2xl bg-amber-300/10 px-4 py-3 text-sm font-bold text-amber-50">{notice}</div> : null}
 
-      <div className="min-h-[680px]">
-        <div ref={playerAreaRef} className="min-h-[560px] rounded-[26px] bg-[#090c12] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.30)] sm:p-3">
+      <div className="flex min-h-[560px] flex-1">
+        <div ref={playerAreaRef} className="min-h-[560px] w-full flex-1 rounded-[26px] bg-[#090c12] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.30)] sm:p-3">
           {selectedMembers.length ? (
-            <div className={`grid h-full min-h-[540px] gap-2 sm:gap-3 ${getGridClass(layout, selectedMembers.length)}`}>
+            <div className={`grid h-full min-h-[540px] auto-rows-fr gap-2 sm:gap-3 ${getGridClass(layout, selectedMembers.length)}`}>
               {selectedMembers.map((member, index) => <SoopEmbedTile key={member.nickname} member={member} status={statuses[member.nickname]} featured={index === 0 && selectedMembers.length >= 3 && (layout === 'focus' || (layout === 'auto' && selectedMembers.length === 3))} onRemove={() => setSelectedNames((current) => current.filter((name) => name !== member.nickname))} />)}
             </div>
           ) : (
