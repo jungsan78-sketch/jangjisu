@@ -24,6 +24,14 @@ const SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1838232194#gid=1838232194',
     mode: 'fixedGid',
   },
+  {
+    id: 'youoneul',
+    key: '유오늘',
+    sheetId: '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo',
+    gid: '996600110',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=996600110#gid=996600110',
+    mode: 'fixedGid',
+  },
 ];
 
 const buildSheetCandidates = (baseDate = new Date()) => {
