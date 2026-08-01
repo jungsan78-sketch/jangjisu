@@ -36,7 +36,6 @@ export default function BroadcastDataCalendar({ monthKey, member, verifying }) {
           </a>
           <div className="min-w-0">
             <h2 className="truncate text-xl font-black text-white">{member.nickname} 방송 데이터</h2>
-            <p className="mt-1 text-xs font-bold text-white/40">별풍선과 하루 최고 시청자를 날짜별로 정리합니다.</p>
           </div>
         </div>
         <div className={`rounded-full px-3 py-2 text-xs font-black ${verifying ? 'bg-cyan-300/10 text-cyan-100' : 'bg-emerald-300/10 text-emerald-100'}`}>
