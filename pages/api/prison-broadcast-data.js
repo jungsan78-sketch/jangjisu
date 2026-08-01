@@ -3,14 +3,13 @@ import { readBroadcastDataCache, writeBroadcastDataCache } from '../../lib/priso
 import {
   fetchPoonggoDay,
   fetchPoonggoMonth,
-  fetchPoongTodayDay,
   formatDateKey,
   mapWithConcurrency,
   reconcileBroadcastDay,
 } from '../../lib/prisonBroadcastDataSources';
 import { getReplayMonthStorageTtl, getReplayMonthWindow, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CURRENT_CACHE_MS = 30 * 60 * 1000;
 const VERIFY_CACHE_MS = 30 * 60 * 1000;
 
@@ -43,41 +42,35 @@ function daysToCollect(monthInfo, now = new Date()) {
   return Array.from({ length: Math.min(daysInMonth, kst.getUTCDate()) }, (_, index) => index + 1);
 }
 
-function previousPoonggo(previousPayload, id, dateKey) {
-  const member = previousPayload?.members?.find((item) => item.id === id);
-  return member?.days?.find((day) => day.dateKey === dateKey)?.sources?.poonggo || null;
-}
-
 function previousMember(previousPayload, id) {
   return previousPayload?.members?.find((item) => item.id === id) || null;
 }
 
-async function collectPoongTodayMonth(monthInfo, previousPayload) {
-  const ids = BROADCAST_DATA_MEMBERS.map((member) => member.id);
+async function collectPoonggoMonth(monthInfo, previousPayload) {
   const days = daysToCollect(monthInfo);
-  const responses = await mapWithConcurrency(days, 6, (day) => fetchPoongTodayDay({
-    year: monthInfo.year,
-    month: monthInfo.month,
-    day,
-    memberIds: ids,
+  const summaries = await mapWithConcurrency(BROADCAST_DATA_MEMBERS, 4, (member) => fetchPoonggoMonth({
+    memberId: member.id,
+    monthKey: monthInfo.monthKey,
   }));
-  const successful = responses.filter(Boolean).length;
-  if (!successful) throw new Error('날짜별 데이터를 불러오지 못했습니다.');
+  if (!summaries.some(Boolean) && !previousPayload?.members?.length) {
+    throw new Error('월간 데이터를 불러오지 못했습니다.');
+  }
 
-  const members = BROADCAST_DATA_MEMBERS.map((member) => {
+  const refreshedAt = Date.now();
+  const monthlyAtByMember = { ...previousPayload?.monthlyAtByMember };
+  const members = BROADCAST_DATA_MEMBERS.map((member, memberIndex) => {
     const previous = previousMember(previousPayload, member.id);
+    const summary = summaries[memberIndex];
+    if (summary) monthlyAtByMember[member.id] = refreshedAt;
+    const previousDays = new Map((previous?.days || []).map((day) => [day.dateKey, day]));
     return {
       ...member,
-      monthlyCumulativeViewers: Number(previous?.monthlyCumulativeViewers || 0),
-      days: days.map((day, index) => {
+      monthlyDonations: Number(summary?.donations ?? previous?.monthlyDonations ?? 0),
+      monthlyPeakViewers: Number(summary?.peakViewers ?? previous?.monthlyPeakViewers ?? 0),
+      monthlyCumulativeViewers: Number(summary?.cumulativeViewers ?? previous?.monthlyCumulativeViewers ?? 0),
+      days: days.map((day) => {
         const dateKey = formatDateKey(monthInfo.year, monthInfo.month, day);
-        const poongToday = responses[index]?.values?.[member.id] || { donations: 0, peakViewers: 0, donationEvents: 0 };
-        const poonggo = previousPoonggo(previousPayload, member.id, dateKey);
-        return reconcileBroadcastDay({
-          day,
-          dateKey,
-          sources: { poongToday, ...(poonggo ? { poonggo } : {}) },
-        });
+        return previousDays.get(dateKey) || reconcileBroadcastDay({ day, dateKey, sources: {} });
       }),
     };
   });
@@ -87,8 +80,7 @@ async function collectPoongTodayMonth(monthInfo, previousPayload) {
     monthLabel: monthInfo.monthLabel,
     members,
     verifiedAtByMember: previousPayload?.verifiedAtByMember || {},
-    cumulativeAtByMember: previousPayload?.cumulativeAtByMember || {},
-    sourceStatus: { poongToday: 'ok', poonggo: previousPayload?.sourceStatus?.poonggo || 'on-demand' },
+    monthlyAtByMember,
   };
 }
 
@@ -97,10 +89,11 @@ function withRankings(payload) {
     id: member.id,
     nickname: member.nickname,
     image: member.image,
-    donations: member.days.reduce((sum, day) => sum + Number(day.donations || 0), 0),
-    peakViewers: member.days.reduce((max, day) => Math.max(max, Number(day.peakViewers || 0)), 0),
+    donations: Number(member.monthlyDonations || 0),
+    peakViewers: Number(member.monthlyPeakViewers || 0),
     cumulativeViewers: Number(member.monthlyCumulativeViewers || 0),
-    cumulativeReady: Boolean(member.cumulativeReady),
+    monthlyReady: Boolean(member.monthlyReady),
+    cumulativeReady: Boolean(member.monthlyReady),
   }));
   return {
     ...payload,
@@ -126,7 +119,10 @@ function publicPayload(payload) {
       id: member.id,
       nickname: member.nickname,
       image: member.image,
-      cumulativeReady: Boolean(payload.cumulativeAtByMember?.[member.id]),
+      monthlyReady: Boolean(payload.monthlyAtByMember?.[member.id]),
+      cumulativeReady: Boolean(payload.monthlyAtByMember?.[member.id]),
+      monthlyDonations: Number(member.monthlyDonations || 0),
+      monthlyPeakViewers: Number(member.monthlyPeakViewers || 0),
       monthlyCumulativeViewers: Number(member.monthlyCumulativeViewers || 0),
       days: (member.days || []).map((day) => ({
         day: day.day,
@@ -148,7 +144,7 @@ async function loadMonth(monthInfo) {
   }
 
   try {
-    const payload = await collectPoongTodayMonth(monthInfo, cache.record?.payload);
+    const payload = await collectPoonggoMonth(monthInfo, cache.record?.payload);
     const record = { cachedAt: Date.now(), payload };
     const storage = await writeBroadcastDataCache(cache, key, record, getReplayMonthStorageTtl(monthInfo));
     return { cache, key, record, storage, stale: false };
@@ -165,8 +161,8 @@ function verificationFresh(payload, id, monthInfo) {
   return Date.now() - verifiedAt < VERIFY_CACHE_MS;
 }
 
-function cumulativeFresh(payload, id, monthInfo) {
-  const cumulativeAt = Number(payload?.cumulativeAtByMember?.[id] || 0);
+function monthlyFresh(payload, id, monthInfo) {
+  const cumulativeAt = Number(payload?.monthlyAtByMember?.[id] || 0);
   if (!cumulativeAt) return false;
   if (monthInfo.kind === 'previous') return true;
   return Date.now() - cumulativeAt < VERIFY_CACHE_MS;
@@ -175,8 +171,8 @@ function cumulativeFresh(payload, id, monthInfo) {
 async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
   const payload = monthState.record.payload;
   const verifyDaily = force || !verificationFresh(payload, id, monthInfo);
-  const verifyCumulative = force || !cumulativeFresh(payload, id, monthInfo);
-  if (!verifyDaily && !verifyCumulative) return monthState;
+  const verifyMonthly = force || !monthlyFresh(payload, id, monthInfo);
+  if (!verifyDaily && !verifyMonthly) return monthState;
   const target = payload.members.find((member) => member.id === id);
   if (!target) return monthState;
 
@@ -184,7 +180,7 @@ async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
   const results = verifyDaily
     ? await mapWithConcurrency(targetDays, 6, (day) => fetchPoonggoDay({ memberId: id, dateKey: day.dateKey }))
     : targetDays.map(() => null);
-  const monthlyResult = verifyCumulative
+  const monthlyResult = verifyMonthly
     ? await fetchPoonggoMonth({ memberId: id, monthKey: monthInfo.monthKey }).catch(() => null)
     : null;
   const resultMap = new Map(targetDays.map((day, index) => [day.dateKey, results[index]]));
@@ -193,7 +189,9 @@ async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
     if (member.id !== id) return member;
     return {
       ...member,
-      monthlyCumulativeViewers: monthlyResult?.cumulativeViewers || member.monthlyCumulativeViewers || 0,
+      monthlyDonations: monthlyResult?.donations ?? member.monthlyDonations ?? 0,
+      monthlyPeakViewers: monthlyResult?.peakViewers ?? member.monthlyPeakViewers ?? 0,
+      monthlyCumulativeViewers: monthlyResult?.cumulativeViewers ?? member.monthlyCumulativeViewers ?? 0,
       days: member.days.map((day) => {
         const poonggo = resultMap.get(day.dateKey);
         if (!poonggo) return day;
@@ -213,10 +211,9 @@ async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
     verifiedAtByMember: verifyDaily && successfulResults === targetDays.length
       ? { ...payload.verifiedAtByMember, [id]: Date.now() }
       : { ...payload.verifiedAtByMember },
-    cumulativeAtByMember: monthlyResult
-      ? { ...payload.cumulativeAtByMember, [id]: Date.now() }
-      : { ...payload.cumulativeAtByMember },
-    sourceStatus: { ...payload.sourceStatus, poonggo: results.some(Boolean) ? 'ok' : 'unavailable' },
+    monthlyAtByMember: monthlyResult
+      ? { ...payload.monthlyAtByMember, [id]: Date.now() }
+      : { ...payload.monthlyAtByMember },
   };
   const record = { cachedAt: monthState.record.cachedAt, verifiedAt: Date.now(), payload: nextPayload };
   const storage = await writeBroadcastDataCache(monthState.cache, monthState.key, record, getReplayMonthStorageTtl(monthInfo));
@@ -232,25 +229,6 @@ export async function refreshBroadcastDataMember(monthInfo, id, force = true) {
     cachedAt: monthState.record.cachedAt,
     ready: Boolean(monthState.record.payload?.verifiedAtByMember?.[id]),
   };
-}
-
-export async function refreshBroadcastDataCumulative(monthInfo, id, force = false) {
-  const monthState = await loadMonth(monthInfo);
-  const payload = monthState.record.payload;
-  if (!force && cumulativeFresh(payload, id, monthInfo)) {
-    return { storage: monthState.storage, stale: monthState.stale, ready: true };
-  }
-  const summary = await fetchPoonggoMonth({ memberId: id, monthKey: monthInfo.monthKey });
-  const nextPayload = {
-    ...payload,
-    members: payload.members.map((member) => member.id === id
-      ? { ...member, monthlyCumulativeViewers: summary.cumulativeViewers }
-      : member),
-    cumulativeAtByMember: { ...payload.cumulativeAtByMember, [id]: Date.now() },
-  };
-  const record = { ...monthState.record, payload: nextPayload, cumulativeRefreshedAt: Date.now() };
-  const storage = await writeBroadcastDataCache(monthState.cache, monthState.key, record, getReplayMonthStorageTtl(monthInfo));
-  return { storage, stale: monthState.stale, ready: true };
 }
 
 export default async function handler(req, res) {
