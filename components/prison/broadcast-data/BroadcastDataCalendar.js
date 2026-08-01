@@ -38,7 +38,7 @@ export default function BroadcastDataCalendar({ monthKey, member, verifying }) {
           </div>
         </div>
         <div className={`rounded-full px-3 py-2 text-xs font-black ${verifying ? 'bg-cyan-300/10 text-cyan-100' : 'bg-emerald-300/10 text-emerald-100'}`}>
-          {verifying ? '풍고 교차검증 중' : '데이터 확인 완료'}
+          {verifying ? '데이터 확인 중' : '업데이트 완료'}
         </div>
       </div>
 
@@ -55,13 +55,11 @@ export default function BroadcastDataCalendar({ monthKey, member, verifying }) {
             <article key={cell.day} className={`relative min-h-[112px] overflow-hidden rounded-2xl border p-2 text-left sm:min-h-[148px] sm:p-3 ${active ? 'border-white/[0.09] bg-white/[0.045]' : 'border-white/[0.035] bg-black/10'}`}>
               <div className="flex items-center justify-between gap-1">
                 <span className="text-sm font-black text-white/80">{cell.day}</span>
-                {data?.verified ? <span title="풍투데이·풍고 교차검증" className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]" /> : null}
               </div>
               {active ? (
                 <div className="mt-3 grid gap-2">
                   <Metric label="별풍선" value={data.donations} suffix="개" tone="text-cyan-200" />
                   <Metric label="최고 시청자" value={data.peakViewers} suffix="명" tone="text-violet-200" />
-                  {data.needsReview ? <div className="text-[10px] font-black leading-4 text-amber-300">출처 차이 {numberFormat.format(data.viewerDifference)}명 · 높은 값 적용</div> : null}
                 </div>
               ) : <div className="mt-7 text-center text-[11px] font-bold text-white/20">기록 없음</div>}
             </article>
