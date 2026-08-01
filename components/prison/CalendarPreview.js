@@ -5,6 +5,7 @@ import WeeklyAllScheduleView from './WeeklyAllScheduleView';
 
 const SCHEDULE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const MEMBER_IMAGE_MAP = new Map(SCHEDULE_MEMBERS.map((member) => [member.nickname, member.image || '']));
 
 function parseMonthFromLabel(label) {
   const matched = String(label || '').match(/(\d{4})년\s*(\d{1,2})월/);
@@ -160,6 +161,7 @@ export default function CalendarPreview() {
       .map((item) => ({
         day: item.dayNumber,
         member: entry.member,
+        memberImage: MEMBER_IMAGE_MAP.get(entry.member) || '',
         title: item.title,
         year: Number(item.year || parsedMonth.year),
         month: Number(item.month || parsedMonth.month),
@@ -259,3 +261,4 @@ export default function CalendarPreview() {
     </section>
   );
 }
+

@@ -31,7 +31,13 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
                     const off = String(item.title || '').includes('휴방');
                     return (
                       <div key={`${item.member}-${item.title}-${index}`} className={`rounded-[18px] px-3 py-3 ${off ? 'bg-[linear-gradient(180deg,rgba(251,146,60,0.08),rgba(120,53,15,0.05))] shadow-[inset_0_0_0_1px_rgba(251,146,60,0.10)]' : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.01))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'}`}>
-                        <div className={`text-[16px] font-black ${off ? 'text-rose-100' : 'text-cyan-100'}`}>{item.member}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.08] text-[10px] font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] ${off ? 'text-rose-100' : 'text-cyan-100'}`}>
+                            {String(item.member || '?').slice(0, 1)}
+                            {item.memberImage ? <img src={item.memberImage} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = 'none'; }} /> : null}
+                          </span>
+                          <div className={`min-w-0 truncate text-[16px] font-black ${off ? 'text-rose-100' : 'text-cyan-100'}`}>{item.member}</div>
+                        </div>
                         <div className={`mt-2 border-t border-white/5 pt-2 text-[15px] font-semibold leading-6 break-keep ${off ? 'text-rose-50' : 'text-white/92'}`}>{item.title}</div>
                       </div>
                     );
@@ -45,3 +51,4 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
     </div>
   );
 }
+
