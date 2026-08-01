@@ -10,10 +10,10 @@ export default function BroadcastSummaryMonthTabs({ months, selectedMonthKey, on
             type="button"
             onClick={() => onSelect(month.monthKey)}
             aria-pressed={active}
-            className={`rounded-full border px-4 py-2 text-[13px] font-black transition-all duration-200 sm:text-[14px] ${
+            className={`min-w-[112px] rounded-2xl border px-5 py-3 text-base font-black transition-all duration-200 sm:min-w-[128px] ${
               active
-                ? 'border-teal-200/45 bg-teal-300/18 text-teal-50 shadow-[0_0_20px_rgba(45,212,191,0.10)]'
-                : 'border-white/10 bg-white/[0.045] text-white/58 hover:border-teal-200/25 hover:bg-teal-300/[0.08] hover:text-white/85'
+                ? 'border-cyan-100/55 bg-cyan-300 text-[#06111a] shadow-[0_10px_30px_rgba(103,232,249,0.2)]'
+                : 'border-white/10 bg-white/[0.06] text-white/65 hover:border-white/20 hover:bg-white/[0.1] hover:text-white'
             }`}
           >
             {month.buttonLabel}{loading ? ' · 불러오는 중' : ''}
