@@ -53,7 +53,7 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-black text-white">{member.nickname}</span>
                 <span className={`mt-1 block truncate text-xs font-black ${donationMode ? 'text-cyan-200' : cumulativeMode ? 'text-emerald-200' : 'text-violet-200'}`}>
-                  {cumulativeMode && !member.cumulativeReady ? '집계 중' : `${numberFormat.format(value)}${donationMode ? '개' : '명'}`}
+                  {!member.monthlyReady ? '집계 중' : `${numberFormat.format(value)}${donationMode ? '개' : '명'}`}
                 </span>
               </span>
             </button>
