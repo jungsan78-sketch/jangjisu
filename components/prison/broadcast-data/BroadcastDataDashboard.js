@@ -7,6 +7,18 @@ function initialMonthKey() {
   return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+async function readApiJson(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('방송 데이터 준비가 지연되고 있습니다. 잠시 후 다시 확인해주세요.');
+  }
+  try {
+    return await response.json();
+  } catch {
+    throw new Error('방송 데이터를 읽지 못했습니다. 잠시 후 다시 확인해주세요.');
+  }
+}
+
 export default function BroadcastDataDashboard() {
   const [monthKey, setMonthKey] = useState(initialMonthKey);
   const [payload, setPayload] = useState(null);
@@ -23,7 +35,7 @@ export default function BroadcastDataDashboard() {
     setPayload(null);
     setError('');
     fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}`, { cache: 'no-store' })
-      .then((response) => response.json().then((json) => ({ response, json })))
+      .then((response) => readApiJson(response).then((json) => ({ response, json })))
       .then(({ response, json }) => {
         if (!response.ok || !json.ok) throw new Error(json.message || '방송 데이터를 불러오지 못했습니다.');
         if (!cancelled) setPayload(json);
@@ -41,9 +53,9 @@ export default function BroadcastDataDashboard() {
     let cancelled = false;
     setVerifying(true);
     fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}&member=${encodeURIComponent(selectedMemberId)}&verify=1`, { cache: 'no-store' })
-      .then((response) => response.json().then((json) => ({ response, json })))
+      .then((response) => readApiJson(response).then((json) => ({ response, json })))
       .then(({ response, json }) => {
-        if (!response.ok || !json.ok) throw new Error(json.message || '교차검증에 실패했습니다.');
+        if (!response.ok || !json.ok) throw new Error(json.message || '데이터 확인에 실패했습니다.');
         if (!cancelled) setPayload(json);
       })
       .catch(() => {})
@@ -63,7 +75,7 @@ export default function BroadcastDataDashboard() {
           <div>
             <p className="text-xs font-black tracking-[0.18em] text-cyan-200/60">BROADCAST DATA</p>
             <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">방송 데이터 달력</h1>
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-white/50">풍투데이와 풍고의 수치를 대조하고, 차이가 1,000명 미만이면 더 높은 최고 시청자 수를 표시합니다.</p>
+            <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-white/50">별풍선과 최고 시청자 기록을 날짜별로 한눈에 확인할 수 있습니다.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {(payload?.availableMonths || []).map((month) => (
@@ -101,7 +113,7 @@ export default function BroadcastDataDashboard() {
           </section>
           <div className="mt-5"><BroadcastDataCalendar monthKey={monthKey} member={selectedMember} verifying={verifying} /></div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] font-bold text-white/30">
-            <span>기본 데이터 30분 캐시 · 선택 멤버 풍고 교차검증 · 장애 시 이전 캐시 사용</span>
+            <span>방송 데이터는 주기적으로 자동 갱신됩니다.</span>
             <span>{payload?.stale ? '이전 캐시 표시 중' : `마지막 갱신 ${payload?.cachedAt ? new Date(payload.cachedAt).toLocaleString('ko-KR') : '-'}`}</span>
           </div>
         </>
