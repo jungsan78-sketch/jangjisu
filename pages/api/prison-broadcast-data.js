@@ -57,7 +57,7 @@ async function collectPoongTodayMonth(monthInfo, previousPayload) {
     memberIds: ids,
   }));
   const successful = responses.filter(Boolean).length;
-  if (!successful) throw new Error('풍투데이 날짜별 데이터를 불러오지 못했습니다.');
+  if (!successful) throw new Error('날짜별 데이터를 불러오지 못했습니다.');
 
   const members = MEMBERS.map((member) => ({
     ...member,
@@ -89,8 +89,6 @@ function withRankings(payload) {
     image: member.image,
     donations: member.days.reduce((sum, day) => sum + Number(day.donations || 0), 0),
     peakViewers: member.days.reduce((max, day) => Math.max(max, Number(day.peakViewers || 0)), 0),
-    verifiedDays: member.days.filter((day) => day.verified).length,
-    reviewDays: member.days.filter((day) => day.needsReview).length,
   }));
   return {
     ...payload,
@@ -103,6 +101,25 @@ function withRankings(payload) {
       monthLabel: month.monthLabel,
       buttonLabel: month.buttonLabel,
       kind: month.kind,
+    })),
+  };
+}
+
+function publicPayload(payload) {
+  return {
+    monthKey: payload.monthKey,
+    monthLabel: payload.monthLabel,
+    members: (payload.members || []).map((member) => ({
+      id: member.id,
+      nickname: member.nickname,
+      image: member.image,
+      days: (member.days || []).map((day) => ({
+        day: day.day,
+        dateKey: day.dateKey,
+        donations: day.donations,
+        peakViewers: day.peakViewers,
+        donationEvents: day.donationEvents,
+      })),
     })),
   };
 }
@@ -188,9 +205,9 @@ export default async function handler(req, res) {
       stale: monthState.stale,
       storage: monthState.storage,
       cachedAt: monthState.record.cachedAt,
-      ...withRankings(monthState.record.payload),
+      ...withRankings(publicPayload(monthState.record.payload)),
     });
-  } catch (error) {
-    return res.status(502).json({ ok: false, message: error?.message || '방송 데이터를 불러오지 못했습니다.' });
+  } catch {
+    return res.status(502).json({ ok: false, message: '방송 데이터를 불러오지 못했습니다. 잠시 후 다시 확인해주세요.' });
   }
 }
