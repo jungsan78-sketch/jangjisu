@@ -476,7 +476,7 @@ export default function BroadcastSummaryCalendar() {
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <div className="text-[25px] font-black text-white sm:text-[32px]">{parsedMonth ? `${parsedMonth.month}월 다시보기 시간 순위` : '다시보기 시간 순위'}</div>
-              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">{selectedPeriodText} 다시보기 영상시간 합산 기준입니다.</div>
+              <div className="mt-1 text-[13px] font-bold text-white/48 sm:text-[15px]">{`${selectedPeriodText} 다시보기 영상 시간 합산 기준입니다.`}</div>
             </div>
           </div>
           {ranking.length ? (
