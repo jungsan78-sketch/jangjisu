@@ -6,9 +6,11 @@ import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
 
 const CACHE_KEY = 'soop:station-posts:payload:v5';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+const CACHE_FRESH_MS = 30 * 60 * 1000;
 const RUNTIME_MARKER = 'test2-soop-posts-page-20260729-5';
 const WARDEN_STATION_ID = 'iamquaddurup';
 const TARGET_STATION_IDS = new Set(ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean));
+let refreshPromise = null;
 
 function getKnownStationIds() {
   return ALL_PRISON_MEMBERS.map((member) => extractStationId(member.station)).filter(Boolean);
@@ -188,17 +190,43 @@ function attachRuntimeMarker(payload) {
   };
 }
 
+function isCachedPayloadFresh(payload) {
+  const fetchedAt = new Date(payload?.fetchedAt || '').getTime();
+  return Boolean(payload?.posts && Number.isFinite(fetchedAt) && Date.now() - fetchedAt < CACHE_FRESH_MS);
+}
+
+async function refreshStationPosts(cache, cacheAvailable, cachedPayload, debug) {
+  const livePayload = await fetchStationPostsPayload({ debug });
+  const { payload: syncedLivePayload, syncDebug } = await syncWardenPostFromMainNotices(livePayload);
+  const payload = attachRuntimeMarker(cacheAvailable ? mergeWithCachedPosts(syncedLivePayload, cachedPayload) : syncedLivePayload);
+  const writeOk = await writeCachedPayload(cache, payload);
+  return { payload, syncDebug, writeOk };
+}
+
 export default async function handler(req, res) {
   const debug = String(req.query?.debug || '') === '1';
   const cache = getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
   const cachedPayload = await readCachedPayload(cache);
 
+  if (!debug && isCachedPayloadFresh(cachedPayload)) {
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=3600');
+    res.status(200).json({
+      ...cachedPayload,
+      source: cachedPayload.source || 'soop_station_posts',
+      cache: 'hit',
+    });
+    return;
+  }
+
   try {
-    const livePayload = await fetchStationPostsPayload({ debug });
-    const { payload: syncedLivePayload, syncDebug } = await syncWardenPostFromMainNotices(livePayload);
-    const payload = attachRuntimeMarker(cacheAvailable ? mergeWithCachedPosts(syncedLivePayload, cachedPayload) : syncedLivePayload);
-    const writeOk = await writeCachedPayload(cache, payload);
+    let refresh = refreshPromise;
+    if (!refresh || debug) {
+      refresh = refreshStationPosts(cache, cacheAvailable, cachedPayload, debug);
+      if (!debug) refreshPromise = refresh;
+    }
+    const { payload, syncDebug, writeOk } = await refresh;
+    if (!debug && refreshPromise === refresh) refreshPromise = null;
 
     if (payload.debug) {
       payload.debug.wardenMainNoticeSync = payload.debug.wardenMainNoticeSync || syncDebug;
@@ -215,6 +243,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=1800, stale-while-revalidate=3600');
     res.status(200).json(payload);
   } catch (error) {
+    if (!debug) refreshPromise = null;
     if (cachedPayload?.posts) {
       res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=300, stale-while-revalidate=1800');
       res.status(200).json({
@@ -248,3 +277,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
