@@ -2,6 +2,7 @@
   "name": "jangjisu-fan-site-pro",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "bun@1.2.15",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
