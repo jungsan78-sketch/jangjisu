@@ -1,3 +1,6 @@
+import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
+import { getKstMonthInfo } from '../../lib/scheduleMonth';
+
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const SOURCES = [
@@ -12,17 +15,17 @@ const SOURCES = [
     id: 'guweol',
     key: '구월이',
     sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
-    gid: '739202309',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=739202309#gid=739202309',
-    mode: 'fixedGid',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit',
+    mode: 'monthlySheet',
+    monthPattern: 'month',
   },
   {
     id: 'linling',
     key: '린링',
     sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
-    gid: '1838232194',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1838232194#gid=1838232194',
-    mode: 'fixedGid',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit',
+    mode: 'monthlySheet',
+    monthPattern: 'month-schedule',
   },
   {
     id: 'youoneul',
@@ -127,7 +130,17 @@ const fetchRowsFromUrls = async (urls) => {
   throw lastError || new Error('시트 데이터를 불러오지 못했습니다.');
 };
 
-const isDateRow = (row) => row.filter((cell) => /^\d{1,2}$/.test(String(cell).trim())).length >= 5;
+const isDateRow = (row, previousDay = 0) => {
+  const days = row
+    .map((cell) => String(cell || '').trim())
+    .filter((cell) => /^\d{1,2}$/.test(cell))
+    .map(Number)
+    .filter((day) => day >= 1 && day <= 31);
+
+  if (days.length >= 5) return true;
+  if (days.length === 0 || !days.every((day, index) => index === 0 || day > days[index - 1])) return false;
+  return previousDay > 0 ? days[0] > previousDay : days[0] <= 7;
+};
 
 const normalizeScheduleText = (value) => {
   const normalized = String(value || '')
@@ -149,7 +162,7 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
     const row = rows[rowIndex];
-    if (!isDateRow(row)) continue;
+    if (!isDateRow(row, lastIncludedDay)) continue;
 
     const numericCells = row.map((cell, columnIndex) => ({ text: String(cell || '').trim(), columnIndex })).filter(({ text }) => /^\d{1,2}$/.test(text));
     const activeDays = [];
@@ -173,7 +186,7 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
 
     let nextRowIndex = rowIndex + 1;
     const detailRows = [];
-    while (nextRowIndex < rows.length && !isDateRow(rows[nextRowIndex])) {
+    while (nextRowIndex < rows.length && !isDateRow(rows[nextRowIndex], lastIncludedDay)) {
       detailRows.push(rows[nextRowIndex]);
       nextRowIndex += 1;
     }
@@ -246,7 +259,25 @@ const fetchFixedGidSchedule = async (source, baseDate = new Date()) => {
   return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: source.sourceUrl };
 };
 
+const fetchMonthlySchedule = async (source, currentMonth = getKstMonthInfo()) => {
+  const result = await fetchMonthlySheet(source.sheetId, currentMonth, source.monthPattern);
+  const items = parseScheduleRows(result.rows, currentMonth.year, currentMonth.month);
+  return {
+    monthLabel: currentMonth.monthLabel,
+    sheetName: result.sheetName,
+    items,
+    fetchedUrl: result.fetchedUrl,
+    sourceUrl: result.sourceUrl || source.sourceUrl,
+    gid: result.gid || '',
+  };
+};
+
 const fetchSourceSchedule = async (source) => {
+  if (source.mode === 'monthlySheet') {
+    const result = await fetchMonthlySchedule(source);
+    return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
+  }
+
   if (source.mode === 'fixedGid') {
     const result = await fetchFixedGidSchedule(source);
     return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
