@@ -12,6 +12,8 @@ import { getReplayMonthStorageTtl, getReplayMonthWindow, resolveReplayMonth } fr
 const CACHE_VERSION = 'v4';
 const CURRENT_CACHE_MS = 30 * 60 * 1000;
 const VERIFY_CACHE_MS = 30 * 60 * 1000;
+const monthLoadPromises = new Map();
+const memberVerifyPromises = new Map();
 
 function memberId(member) {
   return String(member.station || '').split('/').filter(Boolean).pop() || '';
@@ -140,7 +142,7 @@ function publicPayload(payload) {
   };
 }
 
-async function loadMonth(monthInfo) {
+async function loadMonthUncoalesced(monthInfo) {
   const key = cacheKey(monthInfo);
   const cache = await readBroadcastDataCache(key);
   if (isFresh(cache.record, monthInfo)) {
@@ -158,6 +160,18 @@ async function loadMonth(monthInfo) {
   }
 }
 
+async function loadMonth(monthInfo) {
+  const key = cacheKey(monthInfo);
+  if (monthLoadPromises.has(key)) return monthLoadPromises.get(key);
+  const promise = loadMonthUncoalesced(monthInfo);
+  monthLoadPromises.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    if (monthLoadPromises.get(key) === promise) monthLoadPromises.delete(key);
+  }
+}
+
 function verificationFresh(payload, id, monthInfo) {
   const verifiedAt = Number(payload?.verifiedAtByMember?.[id] || 0);
   if (!verifiedAt) return false;
@@ -172,7 +186,7 @@ function monthlyFresh(payload, id, monthInfo) {
   return Date.now() - cumulativeAt < VERIFY_CACHE_MS;
 }
 
-async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
+async function verifyMemberMonthUncoalesced(monthState, monthInfo, id, force = false) {
   const payload = monthState.record.payload;
   const verifyDaily = force || !verificationFresh(payload, id, monthInfo);
   const verifyMonthly = force || !monthlyFresh(payload, id, monthInfo);
@@ -225,6 +239,18 @@ async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
   return { ...monthState, record, storage, stale: monthState.stale };
 }
 
+async function verifyMemberMonth(monthState, monthInfo, id, force = false) {
+  const key = `${monthInfo.monthKey}:${id}`;
+  if (memberVerifyPromises.has(key)) return memberVerifyPromises.get(key);
+  const promise = verifyMemberMonthUncoalesced(monthState, monthInfo, id, force);
+  memberVerifyPromises.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    if (memberVerifyPromises.get(key) === promise) memberVerifyPromises.delete(key);
+  }
+}
+
 export async function refreshBroadcastDataMember(monthInfo, id, force = true) {
   let monthState = await loadMonth(monthInfo);
   monthState = await verifyMemberMonth(monthState, monthInfo, id, force);
@@ -261,3 +287,4 @@ export default async function handler(req, res) {
     return res.status(502).json({ ok: false, message: '방송 데이터를 불러오지 못했습니다. 잠시 후 다시 확인해주세요.' });
   }
 }
+
