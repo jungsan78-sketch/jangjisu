@@ -1,6 +1,7 @@
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 import { readBroadcastSummaryCache, writeBroadcastSummaryCache } from '../../lib/prisonBroadcastSummaryCache';
 import { getReplayMonthStorageTtl, isReplayMonthCacheFresh, resolveReplayMonth } from '../../lib/replayMonthWindow';
+
 const CACHE_VERSION = 'v17-members-20260729';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
@@ -15,6 +16,7 @@ const REQUEST_HEADERS = {
   referer: 'https://www.sooplive.com/',
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',
 };
+const refreshPromises = new Map();
 
 function getMemberId(member) {
   return String(member.station || '').split('/').filter(Boolean).pop() || '';
@@ -519,8 +521,25 @@ async function buildPayload(monthInfo) {
   };
 }
 
+async function refreshPayload(key, monthInfo, cached, nowDate) {
+  if (refreshPromises.has(key)) return refreshPromises.get(key);
+  const refreshPromise = (async () => {
+    const payload = await buildPayload(monthInfo);
+    const cachedAt = Date.now();
+    const storageTtl = getReplayMonthStorageTtl(monthInfo, nowDate);
+    const storage = await writeBroadcastSummaryCache(cached, key, { payload, cachedAt }, storageTtl);
+    return { payload, storage };
+  })();
+  refreshPromises.set(key, refreshPromise);
+  try {
+    return await refreshPromise;
+  } finally {
+    if (refreshPromises.get(key) === refreshPromise) refreshPromises.delete(key);
+  }
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
   const nowDate = new Date();
   const monthInfo = resolveReplayMonth(req.query?.month, nowDate);
   if (!monthInfo) {
@@ -540,12 +559,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = await buildPayload(monthInfo);
-    const storageTtl = getReplayMonthStorageTtl(monthInfo, nowDate);
-    const storage = await writeBroadcastSummaryCache(cached, key, { payload, cachedAt: now }, storageTtl);
+    const { payload, storage } = await refreshPayload(key, monthInfo, cached, nowDate);
     return res.status(200).json({ ...payload, monthKind: monthInfo.kind, cache: cached.record?.payload ? 'refresh' : 'miss', cacheStorage: storage });
   } catch {
     if (cached.record?.payload) return res.status(200).json({ ...cached.record.payload, monthKind: monthInfo.kind, cache: 'stale', cacheStorage: cached.storage });
     return res.status(200).json({ ok: false, sourceType: 'review', monthLabel: monthInfo.monthLabel, monthKind: monthInfo.kind, items: [], memberStats: buildMemberStats([]), totalCount: 0, message: 'SOOP 다시보기 기록을 불러오지 못했습니다.', cache: 'unavailable', cacheStorage: cached.storage });
   }
 }
+
