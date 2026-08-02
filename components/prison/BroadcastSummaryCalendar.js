@@ -392,7 +392,7 @@ export default function BroadcastSummaryCalendar() {
     async function load() {
       setLoadingMonthKey(selectedMonthKey);
       try {
-        const summaryRes = await fetch(`/api/prison-broadcast-summary?month=${encodeURIComponent(selectedMonthKey)}&t=${Date.now()}`, { cache: 'no-store' });
+        const summaryRes = await fetch(`/api/prison-broadcast-summary?month=${encodeURIComponent(selectedMonthKey)}`);
         const json = summaryRes.ok ? await summaryRes.json() : null;
         if (mounted) {
           setPayloads((previous) => ({ ...previous, [selectedMonthKey]: json || null }));
@@ -579,3 +579,4 @@ export default function BroadcastSummaryCalendar() {
     </section>
   );
 }
+
