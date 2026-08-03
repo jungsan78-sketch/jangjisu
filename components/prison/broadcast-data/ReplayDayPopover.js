@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-
 function formatDuration(seconds) {
   const totalMinutes = Math.max(0, Math.floor(Number(seconds || 0) / 60));
   const hours = Math.floor(totalMinutes / 60);
@@ -10,13 +8,6 @@ function formatDuration(seconds) {
   if (hours && minutes) return `${hours}시간 ${minutes}분`;
   if (hours) return `${hours}시간`;
   return `${minutes}분`;
-}
-
-function formatStartedAt(value) {
-  const date = new Date(value || '');
-  if (Number.isNaN(date.getTime())) return '';
-  const shifted = new Date(date.getTime() + KST_OFFSET_MS);
-  return `${shifted.getUTCDate()}일 ${String(shifted.getUTCHours()).padStart(2, '0')}시`;
 }
 
 export default function ReplayDayPopover({ replays = [] }) {
@@ -59,8 +50,8 @@ export default function ReplayDayPopover({ replays = [] }) {
       if (!anchor) return;
       const rect = anchor.getBoundingClientRect();
       const viewportPadding = 12;
-      const width = Math.min(360, window.innerWidth - viewportPadding * 2);
-      const estimatedHeight = Math.min(440, 118 + sortedReplays.length * 92);
+      const width = Math.min(460, window.innerWidth - viewportPadding * 2);
+      const estimatedHeight = Math.min(520, 122 + sortedReplays.length * 112);
       const left = Math.min(
         window.innerWidth - width - viewportPadding,
         Math.max(viewportPadding, rect.left + rect.width / 2 - width / 2),
@@ -91,10 +82,15 @@ export default function ReplayDayPopover({ replays = [] }) {
 
   return (
     <>
+      <span className="min-w-0 flex-1 truncate rounded-lg bg-teal-300/[0.08] px-2 py-1 text-[10px] font-black text-teal-100/80">
+        {firstReplay.title}
+        {sortedReplays.length > 1 ? ` 외 ${sortedReplays.length - 1}개` : ''}
+      </span>
       <button
         ref={anchorRef}
         type="button"
         aria-expanded={active}
+        aria-label={`${firstReplay.title}${sortedReplays.length > 1 ? ` 외 ${sortedReplays.length - 1}개` : ''} 다시보기 목록 열기`}
         onMouseEnter={openPreview}
         onMouseLeave={scheduleClose}
         onFocus={openPreview}
@@ -102,12 +98,8 @@ export default function ReplayDayPopover({ replays = [] }) {
           pinnedRef.current = !active || !pinnedRef.current;
           setActive(!active || pinnedRef.current);
         }}
-        className="min-w-0 flex-1 truncate rounded-lg bg-teal-300/[0.08] px-2 py-1 text-left text-[10px] font-black text-teal-100/80 transition hover:bg-teal-300/[0.14] hover:text-teal-50"
-        title={firstReplay.title}
-      >
-        {firstReplay.title}
-        {sortedReplays.length > 1 ? ` 외 ${sortedReplays.length - 1}개` : ''}
-      </button>
+        className={`absolute inset-0 z-20 cursor-pointer rounded-2xl bg-transparent transition duration-200 hover:bg-teal-300/[0.035] hover:shadow-[inset_0_0_0_1px_rgba(94,234,212,0.20),0_12px_30px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:shadow-[inset_0_0_0_2px_rgba(165,243,252,0.58)] ${active ? 'bg-teal-300/[0.025] shadow-[inset_0_0_0_1px_rgba(94,234,212,0.25)]' : ''}`}
+      />
 
       {active && position && typeof document !== 'undefined' ? createPortal(
         <div
@@ -116,7 +108,7 @@ export default function ReplayDayPopover({ replays = [] }) {
           onMouseEnter={clearCloseTimer}
           onMouseLeave={scheduleClose}
           className="fixed z-[400] overflow-hidden rounded-[20px] border border-teal-200/20 bg-[#07131f]/98 shadow-[0_26px_80px_rgba(0,0,0,0.65),0_0_34px_rgba(45,212,191,0.10)] backdrop-blur-xl"
-          style={{ left: position.left, top: position.top, width: position.width, maxHeight: 'min(440px, calc(100vh - 24px))' }}
+          style={{ left: position.left, top: position.top, width: position.width, maxHeight: 'min(520px, calc(100vh - 24px))' }}
         >
           <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
             <div>
@@ -125,24 +117,22 @@ export default function ReplayDayPopover({ replays = [] }) {
             </div>
             <button type="button" onClick={closePreview} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-sm font-black text-white/55 hover:bg-white/[0.12] hover:text-white" aria-label="다시보기 목록 닫기">×</button>
           </div>
-          <div className="max-h-[340px] space-y-2 overflow-y-auto p-3">
+          <div className="max-h-[410px] space-y-2.5 overflow-y-auto p-3">
             {sortedReplays.map((replay) => (
               <a
                 key={replay.id || replay.url}
                 href={replay.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.035] p-2.5 transition hover:border-teal-200/20 hover:bg-teal-300/[0.07]"
+                className="group flex gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.035] p-2.5 transition hover:border-teal-200/20 hover:bg-teal-300/[0.07]"
               >
-                <div className="h-[68px] w-[112px] shrink-0 overflow-hidden rounded-xl bg-black/30">
+                <div className="h-[74px] w-[132px] shrink-0 overflow-hidden rounded-xl bg-black/30 sm:h-[95px] sm:w-[168px]">
                   {replay.thumbnailUrl ? <img src={replay.thumbnailUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" /> : null}
                 </div>
                 <div className="min-w-0 flex-1 py-0.5">
-                  <div className="line-clamp-2 text-[13px] font-black leading-5 text-white">{replay.title}</div>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5 text-[10px] font-bold text-white/40">
-                    <span>{formatStartedAt(replay.startedAt)}</span>
-                    <span>·</span>
-                    <span>{replay.durationText || formatDuration(replay.durationSeconds)}</span>
+                  <div className="line-clamp-2 text-[13px] font-black leading-5 text-white sm:text-[14px] sm:leading-[1.45]">{replay.title}</div>
+                  <div className="mt-2 text-[11px] font-black text-teal-100/55">
+                    {replay.durationText || formatDuration(replay.durationSeconds)}
                   </div>
                 </div>
               </a>
