@@ -2,7 +2,7 @@ import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 import { readBroadcastSummaryCache, writeBroadcastSummaryCache } from '../../lib/prisonBroadcastSummaryCache';
 import { getReplayMonthStorageTtl, isReplayMonthCacheFresh, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
-const CACHE_VERSION = 'v17-members-20260729';
+const CACHE_VERSION = 'v18-member-start-date';
 const MEMBER_LIMIT = 16;
 const PAGE_LIMIT = 3;
 const PER_PAGE = 60;
@@ -26,8 +26,8 @@ function pad(value) {
   return String(value).padStart(2, '0');
 }
 
-function cacheKey(monthInfo) {
-  return `prison:broadcast-summary:${monthInfo.year}-${pad(monthInfo.month)}:${CACHE_VERSION}`;
+function cacheKey(monthInfo, requestedMemberId) {
+  return `prison:member-replays:${monthInfo.year}-${pad(monthInfo.month)}:${requestedMemberId}:${CACHE_VERSION}`;
 }
 
 function toDate(value) {
@@ -65,6 +65,14 @@ function isSameKstMonth(date, monthInfo) {
   if (!date) return false;
   const parts = getKstParts(date);
   return parts.year === monthInfo.year && parts.month === monthInfo.month;
+}
+
+function isReplayCandidateDate(date, monthInfo) {
+  if (!date) return false;
+  const monthStart = Date.UTC(monthInfo.year, monthInfo.month - 1, 1) - 9 * 60 * 60 * 1000;
+  const nextMonthGrace = Date.UTC(monthInfo.year, monthInfo.month, 15) - 9 * 60 * 60 * 1000;
+  const value = date.getTime();
+  return value >= monthStart && value < nextMonthGrace;
 }
 
 function formatKstDateKey(date) {
@@ -311,7 +319,7 @@ function parseVodItem(item, member, monthInfo) {
     'broad_start_date', 'broadStartDate', 'broad_start_time', 'broadStartTime', 'write_date', 'writeDate',
   ]) || findFirstByKey(item, /(reg.?date|created.?at|start.?date|start.?time|broad.?start|write.?date)$/i);
   const endedAt = toDate(endedAtValue);
-  if (!isSameKstMonth(endedAt, monthInfo)) return null;
+  if (!isReplayCandidateDate(endedAt, monthInfo)) return null;
 
   const titleNo = String(pickFirst(item, ['title_no', 'titleNo', 'n_title_no', 'nTitleNo', 'vod_no', 'vodNo', 'id', 'seq']) || findFirstByKey(item, /(title.?no|vod.?no|nTitleNo|seq)$/i));
   if (!titleNo) return null;
@@ -340,6 +348,20 @@ function parseVodItem(item, member, monthInfo) {
     durationText: formatDuration(durationSeconds),
     thumbnailUrl,
     url: `https://vod.sooplive.com/player/${titleNo}`,
+  };
+}
+
+function assignBroadcastStart(vod, monthInfo) {
+  const endedAt = toDate(vod.endedAt || vod.startedAt);
+  if (!endedAt) return null;
+  const durationSeconds = Math.max(0, Number(vod.durationSeconds || 0));
+  const startedAt = durationSeconds ? new Date(endedAt.getTime() - durationSeconds * 1000) : endedAt;
+  if (!isSameKstMonth(startedAt, monthInfo)) return null;
+  return {
+    ...vod,
+    startedAt: startedAt.toISOString(),
+    dateKey: formatKstDateKey(startedAt),
+    startDateEstimated: !durationSeconds,
   };
 }
 
@@ -493,21 +515,28 @@ function buildMemberStats(vods) {
   });
 }
 
-async function buildPayload(monthInfo) {
-  const members = ALL_PRISON_MEMBERS.slice(0, MEMBER_LIMIT);
+async function buildPayload(monthInfo, requestedMemberId) {
+  const members = ALL_PRISON_MEMBERS
+    .filter((member) => getMemberId(member) === requestedMemberId)
+    .slice(0, MEMBER_LIMIT);
   const settled = await Promise.allSettled(members.map((member) => fetchMemberVods(member, monthInfo)));
   const outcomes = settled.map((result) => (result.status === 'fulfilled' ? result.value : { success: false, vods: [] }));
   const successfulMembers = outcomes.filter((outcome) => outcome.success).length;
   if (!successfulMembers) throw new Error('all SOOP member requests failed');
   const listVods = dedupeVods(outcomes.flatMap((outcome) => outcome.vods || []));
-  const detailTargets = listVods.filter((vod) => !vod.durationSeconds).slice(0, DETAIL_LIMIT);
+  const detailTargets = [...listVods]
+    .sort((a, b) => String(b.endedAt || '').localeCompare(String(a.endedAt || '')))
+    .filter((vod) => !vod.durationSeconds)
+    .slice(0, DETAIL_LIMIT);
   const detailed = [];
   for (let index = 0; index < detailTargets.length; index += DETAIL_CONCURRENCY) {
     const chunk = detailTargets.slice(index, index + DETAIL_CONCURRENCY);
     detailed.push(...await Promise.allSettled(chunk.map(fetchVodDetail)));
   }
   const detailedMap = new Map(detailed.filter((result) => result.status === 'fulfilled').map((result) => [result.value.id, result.value]));
-  const vods = fillEstimatedDurations(listVods.map((vod) => detailedMap.get(vod.id) || vod));
+  const vods = fillEstimatedDurations(listVods.map((vod) => detailedMap.get(vod.id) || vod))
+    .map((vod) => assignBroadcastStart(vod, monthInfo))
+    .filter(Boolean);
 
   return {
     ok: true,
@@ -521,10 +550,10 @@ async function buildPayload(monthInfo) {
   };
 }
 
-async function refreshPayload(key, monthInfo, cached, nowDate) {
+async function refreshPayload(key, monthInfo, requestedMemberId, cached, nowDate) {
   if (refreshPromises.has(key)) return refreshPromises.get(key);
   const refreshPromise = (async () => {
-    const payload = await buildPayload(monthInfo);
+    const payload = await buildPayload(monthInfo, requestedMemberId);
     const cachedAt = Date.now();
     const storageTtl = getReplayMonthStorageTtl(monthInfo, nowDate);
     const storage = await writeBroadcastSummaryCache(cached, key, { payload, cachedAt }, storageTtl);
@@ -550,7 +579,13 @@ export default async function handler(req, res) {
     });
   }
 
-  const key = cacheKey(monthInfo);
+  const requestedMemberId = String(req.query?.member || '').trim();
+  const requestedMember = ALL_PRISON_MEMBERS.find((member) => getMemberId(member) === requestedMemberId);
+  if (!requestedMember) {
+    return res.status(400).json({ ok: false, message: '다시보기를 확인할 멤버를 찾지 못했습니다.' });
+  }
+
+  const key = cacheKey(monthInfo, requestedMemberId);
   const cached = await readBroadcastSummaryCache(key);
   const now = nowDate.getTime();
 
@@ -559,7 +594,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { payload, storage } = await refreshPayload(key, monthInfo, cached, nowDate);
+    const { payload, storage } = await refreshPayload(key, monthInfo, requestedMemberId, cached, nowDate);
     return res.status(200).json({ ...payload, monthKind: monthInfo.kind, cache: cached.record?.payload ? 'refresh' : 'miss', cacheStorage: storage });
   } catch {
     if (cached.record?.payload) return res.status(200).json({ ...cached.record.payload, monthKind: monthInfo.kind, cache: 'stale', cacheStorage: cached.storage });
