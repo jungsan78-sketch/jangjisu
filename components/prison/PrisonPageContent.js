@@ -212,8 +212,7 @@ export function PrisonSidebar() {
           <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" icon="🏛️" tone="gold" compact />
           <SidebarNavItem href="/" label="SOU 아카이브" icon="🔵" compact />
         </div>
-        <SidebarNavItem href="/jangjisu-prison/broadcast-summary" label="다시보기 달력" icon="▤" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터" icon="▥" tone="teal" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 달력" icon="▥" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
         <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" icon="▣" />
@@ -238,8 +237,7 @@ export function MobilePrisonNav() {
       items={[
         { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
         { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
-        { href: '/jangjisu-prison/broadcast-summary', label: '다시보기 달력', icon: '▤', tone: 'teal' },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터', icon: '▥', tone: 'teal' },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 달력', icon: '▥', tone: 'teal' },
         { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
         { href: FAN_CAFE_URL, label: '팬카페', icon: 'N', tone: 'green', external: true },
         { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
@@ -289,8 +287,7 @@ export function PrisonPageChrome({ children, wide = false }) {
             width: fit-content !important;
             max-width: none !important;
           }
-          .sou-prison-main.sou-prison-main-wide > *,
-          .sou-prison-main.sou-prison-main-wide #broadcast-summary {
+          .sou-prison-main.sou-prison-main-wide > * {
             width: 100% !important;
             max-width: none !important;
             margin-left: 0 !important;
