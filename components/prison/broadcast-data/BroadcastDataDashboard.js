@@ -22,6 +22,8 @@ async function readApiJson(response) {
 export default function BroadcastDataDashboard() {
   const [monthKey, setMonthKey] = useState(initialMonthKey);
   const [payload, setPayload] = useState(null);
+  const [replayPayload, setReplayPayload] = useState(null);
+  const [replayLoading, setReplayLoading] = useState(true);
   const [selectedMemberId, setSelectedMemberId] = useState('iamquaddurup');
   const [rankingMode, setRankingMode] = useState('peakViewers');
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,22 @@ export default function BroadcastDataDashboard() {
       .finally(() => { if (!cancelled) setVerifying(false); });
     return () => { cancelled = true; };
   }, [monthKey, payload?.monthKey, selectedMemberId]);
+
+  useEffect(() => {
+    if (!selectedMemberId) return undefined;
+    let cancelled = false;
+    setReplayLoading(true);
+    setReplayPayload(null);
+    fetch(`/api/prison-broadcast-summary?month=${encodeURIComponent(monthKey)}&member=${encodeURIComponent(selectedMemberId)}`)
+      .then((response) => readApiJson(response).then((json) => ({ response, json })))
+      .then(({ response, json }) => {
+        if (!response.ok || !json.ok) throw new Error(json.message || '다시보기를 불러오지 못했습니다.');
+        if (!cancelled) setReplayPayload(json);
+      })
+      .catch(() => { if (!cancelled) setReplayPayload({ items: [] }); })
+      .finally(() => { if (!cancelled) setReplayLoading(false); });
+    return () => { cancelled = true; };
+  }, [monthKey, selectedMemberId]);
 
   const selectedMember = useMemo(
     () => payload?.members?.find((member) => member.id === selectedMemberId) || payload?.members?.[0] || null,
@@ -108,7 +126,15 @@ export default function BroadcastDataDashboard() {
       ) : (
         <>
           <div className="mt-5"><BroadcastDataRanking rankings={payload?.rankings} mode={rankingMode} onModeChange={setRankingMode} selectedMemberId={selectedMemberId} onSelectMember={selectMember} /></div>
-          <div className="mt-5"><BroadcastDataCalendar monthKey={monthKey} member={selectedMember} verifying={verifying} /></div>
+          <div className="mt-5">
+            <BroadcastDataCalendar
+              monthKey={monthKey}
+              member={selectedMember}
+              verifying={verifying}
+              replayPayload={replayPayload}
+              replayLoading={replayLoading}
+            />
+          </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] font-bold text-white/30">
             <span>방송 데이터는 주기적으로 자동 갱신됩니다.</span>
             <span>{payload?.stale ? '이전 캐시 표시 중' : `마지막 갱신 ${payload?.cachedAt ? new Date(payload.cachedAt).toLocaleString('ko-KR') : '-'}`}</span>
