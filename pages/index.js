@@ -4,6 +4,7 @@ import JangJisuFanSite from '../components/JangJisuFanSite';
 import MainJangJisuNoticeSection from '../components/MainJangJisuNoticeSection';
 import SiteFooter from '../components/SiteFooter';
 import SOUCinematicHero from '../components/SOUCinematicHero';
+import MobileAppDrawer from '../components/navigation/MobileAppDrawer';
 
 export default function Home() {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -103,6 +104,21 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className={`sou-archive-ready-shell transition-opacity duration-200 ${isLayoutReady ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+        <MobileAppDrawer
+          brand="SOU 아카이브"
+          subtitle="JANGJISOU FAN ARCHIVE"
+          logoSrc="/site-icon.png"
+          logoAlt="SOU"
+          homeHref="#"
+          breakpoint="lg"
+          items={[
+            { href: '#schedule', label: '방송 일정', icon: '📅', tone: 'blue' },
+            { href: '#notice', label: '최신 공지사항', icon: '!', tone: 'blue' },
+            { href: '#youtube', label: 'YOUTUBE', icon: '▶', tone: 'red' },
+            { href: 'https://cafe.naver.com/quaddurupfancafe', label: '팬카페', icon: 'N', tone: 'green', external: true },
+            { href: '/jangjisu-prison', label: '장지수용소', icon: '🏛️', tone: 'gold' },
+          ]}
+        />
         <div className="jangjisu-left-nav-mode">
           <JangJisuFanSite />
         </div>
@@ -116,6 +132,27 @@ export default function Home() {
       <style jsx global>{`
         body { background: #05070c; }
         .jangjisu-left-nav-mode footer { display: none !important; }
+        @media (max-width: 1023px) {
+          .jangjisu-left-nav-mode > div > header,
+          .jangjisu-left-nav-mode header {
+            display: none !important;
+          }
+          .jangjisu-left-nav-mode main {
+            padding: 12px !important;
+          }
+          .jangjisu-left-nav-mode main > section {
+            border-radius: 24px !important;
+          }
+          .jangjisu-left-nav-mode #schedule,
+          .jangjisu-left-nav-mode #notice,
+          .jangjisu-left-nav-mode #youtube {
+            margin-top: 18px !important;
+            padding: 14px !important;
+          }
+          .jangjisu-left-nav-mode #youtube [class*="grid-cols-2"] {
+            gap: 12px !important;
+          }
+        }
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
             padding-left: 258px !important;
@@ -375,3 +412,4 @@ export default function Home() {
     </>
   );
 }
+
