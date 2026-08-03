@@ -1,3 +1,5 @@
+import MobileAppDrawer from '../navigation/MobileAppDrawer';
+
 const LOGO_SRC = '/prison-logo.webp';
 const LOGO_FALLBACK_SRC = '/prison-logo.svg';
 const FAN_CAFE_URL = 'https://cafe.naver.com/quaddurupfancafe';
@@ -48,19 +50,25 @@ export function PrisonSharedSidebar() {
 
 export function PrisonSharedMobileNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/88 px-4 py-3 backdrop-blur-xl xl:hidden">
-      <div className="flex items-center justify-between gap-3">
-        <a href="/jangjisu-prison#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
-          <SidebarLogo compact />
-        </a>
-        <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
-      </div>
-      <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="/jangjisu-prison" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏆 수용소 메인</a>
-        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">이번 달 다시보기 달력</a>
-        <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
-      </nav>
-    </header>
+    <MobileAppDrawer
+      brand="장지수용소"
+      subtitle="SOU PRISON"
+      logoSrc={LOGO_SRC}
+      logoFallbackSrc={LOGO_FALLBACK_SRC}
+      logoAlt="장지수용소"
+      logoWide
+      homeHref="/jangjisu-prison"
+      breakpoint="xl"
+      items={[
+        { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
+        { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
+        { href: '/jangjisu-prison/broadcast-summary', label: '다시보기 달력', icon: '▤', tone: 'teal' },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터', icon: '▥', tone: 'teal' },
+        { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
+        { href: FAN_CAFE_URL, label: '팬카페', icon: 'N', tone: 'green', external: true },
+        { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
+      ]}
+    />
   );
 }
 
@@ -84,3 +92,4 @@ export default function PrisonSharedNav() {
     </>
   );
 }
+
