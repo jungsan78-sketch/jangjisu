@@ -50,8 +50,8 @@ export default function ReplayDayPopover({ replays = [] }) {
       if (!anchor) return;
       const rect = anchor.getBoundingClientRect();
       const viewportPadding = 12;
-      const width = Math.min(680, window.innerWidth - viewportPadding * 2);
-      const estimatedHeight = Math.min(window.innerHeight - viewportPadding * 2, 122 + sortedReplays.length * 420);
+      const width = Math.min(560, window.innerWidth - viewportPadding * 2);
+      const estimatedHeight = Math.min(window.innerHeight - viewportPadding * 2, 122 + sortedReplays.length * 162);
       const left = Math.min(
         window.innerWidth - width - viewportPadding,
         Math.max(viewportPadding, rect.left + rect.width / 2 - width / 2),
@@ -117,21 +117,21 @@ export default function ReplayDayPopover({ replays = [] }) {
             </div>
             <button type="button" onClick={closePreview} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-sm font-black text-white/55 hover:bg-white/[0.12] hover:text-white" aria-label="다시보기 목록 닫기">×</button>
           </div>
-          <div className="max-h-[calc(100vh-96px)] space-y-3 overflow-y-auto p-3 sm:p-4">
+          <div className="max-h-[calc(100vh-96px)] space-y-2.5 overflow-y-auto p-3">
             {sortedReplays.map((replay) => (
               <a
                 key={replay.id || replay.url}
                 href={replay.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group block overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.035] transition hover:border-teal-200/25 hover:bg-teal-300/[0.07] hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
+                className="group flex flex-col overflow-hidden rounded-[20px] border border-white/[0.07] bg-white/[0.035] transition hover:border-teal-200/25 hover:bg-teal-300/[0.07] hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)] sm:flex-row"
               >
-                <div className="aspect-video w-full overflow-hidden bg-black/35">
+                <div className="aspect-video w-full shrink-0 overflow-hidden bg-black/35 sm:h-[135px] sm:w-[240px] sm:aspect-auto">
                   {replay.thumbnailUrl ? <img src={replay.thumbnailUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" /> : null}
                 </div>
-                <div className="px-4 py-3.5 sm:px-5 sm:py-4">
-                  <div className="line-clamp-2 text-[15px] font-black leading-[1.45] text-white sm:text-[18px]">{replay.title}</div>
-                  <div className="mt-2 text-xs font-black text-teal-100/60 sm:text-sm">
+                <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3.5">
+                  <div className="line-clamp-3 text-[15px] font-black leading-[1.45] text-white sm:text-[16px]">{replay.title}</div>
+                  <div className="mt-2 text-xs font-black text-teal-100/60 sm:text-[13px]">
                     {replay.durationText || formatDuration(replay.durationSeconds)}
                   </div>
                 </div>
