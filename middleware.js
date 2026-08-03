@@ -10,6 +10,12 @@ export function middleware(request) {
     return NextResponse.redirect(url, 308);
   }
 
+  if (pathname === '/jangjisu-prison/broadcast-summary') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/jangjisu-prison/broadcast-data';
+    return NextResponse.redirect(url, 308);
+  }
+
   if (!bypass && pathname === '/api/youtube') {
     const url = request.nextUrl.clone();
     url.pathname = '/api/youtube-cached';
@@ -26,5 +32,6 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/jangjisu-prison', '/api/youtube', '/api/prison-youtube'],
+  matcher: ['/jangjisu-prison', '/jangjisu-prison/broadcast-summary', '/api/youtube', '/api/prison-youtube'],
 };
+
