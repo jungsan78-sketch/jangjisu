@@ -136,6 +136,7 @@ function publicPayload(payload) {
         donations: day.donations,
         peakViewers: day.peakViewers,
         cumulativeViewers: day.cumulativeViewers,
+        broadcastMinutes: day.broadcastMinutes,
         donationEvents: day.donationEvents,
       })),
     })),
@@ -218,7 +219,12 @@ async function verifyMemberMonthUncoalesced(monthState, monthInfo, id, force = f
           ...day,
           sources: {
             ...day.sources,
-            poonggo: { donations: poonggo.donations, peakViewers: poonggo.peakViewers, cumulativeViewers: poonggo.cumulativeViewers },
+            poonggo: {
+              donations: poonggo.donations,
+              peakViewers: poonggo.peakViewers,
+              cumulativeViewers: poonggo.cumulativeViewers,
+              broadcastMinutes: poonggo.broadcastMinutes,
+            },
           },
         });
       }),
