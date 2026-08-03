@@ -8,7 +8,7 @@ export default function PrisonBroadcastDataPage() {
     <>
       <Head>
         <title>방송 데이터 달력 | 장지수용소</title>
-        <meta name="description" content="장지수용소 멤버들의 별풍선과 최고 시청자 방송 데이터를 달력으로 보는 페이지" />
+        <meta name="description" content="장지수용소 멤버들의 별풍선, 최고 시청자, 방송시간과 다시보기를 날짜별로 보는 방송 데이터 달력" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <PrisonPageChrome wide>
@@ -20,3 +20,4 @@ export default function PrisonBroadcastDataPage() {
     </>
   );
 }
+
