@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
+import MobileAppDrawer from '../../components/navigation/MobileAppDrawer';
 
 const CATEGORY_LABELS = {
   soop: '숲 종겜 크루',
@@ -278,8 +279,27 @@ export default function JangjisuPrisonCrewsPage() {
     <Head><title>종겜 크루 목록 | 장지수용소 팬메이드</title><meta name="description" content="장지수용소 종겜 크루 목록" /></Head>
     <div className="min-h-screen bg-[#05070c] text-white">
       <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" /><div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/72 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 lg:px-8"><a href="/jangjisu-prison" className="flex h-20 w-44 items-center justify-center overflow-visible rounded-[24px] border border-white/10 bg-white/[0.025] shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.04] hover:border-white/25"><img src="/prison-logo.webp" alt="장지수용소" className="h-24 w-48 max-w-none object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.28)]" /></a><div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div><nav className="flex flex-wrap items-center justify-end gap-3"><NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton><NavButton href="/">SOU 메인</NavButton></nav></div></header>
-      <main className="relative mx-auto max-w-7xl px-5 py-8 lg:px-8">
+      <MobileAppDrawer
+        brand="장지수용소"
+        subtitle="종겜 크루 목록"
+        logoSrc="/prison-logo.webp"
+        logoFallbackSrc="/prison-logo.svg"
+        logoAlt="장지수용소"
+        logoWide
+        homeHref="/jangjisu-prison"
+        breakpoint="xl"
+        items={[
+          { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
+          { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
+          { href: '/jangjisu-prison/broadcast-summary', label: '다시보기 달력', icon: '▤', tone: 'teal' },
+          { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터', icon: '▥', tone: 'teal' },
+          { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
+          { href: 'https://cafe.naver.com/quaddurupfancafe', label: '팬카페', icon: 'N', tone: 'green', external: true },
+          { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
+        ]}
+      />
+      <header className="sticky top-0 z-40 hidden border-b border-white/10 bg-black/72 backdrop-blur-xl xl:block"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 lg:px-8"><a href="/jangjisu-prison" className="flex h-20 w-44 items-center justify-center overflow-visible rounded-[24px] border border-white/10 bg-white/[0.025] shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.04] hover:border-white/25"><img src="/prison-logo.webp" alt="장지수용소" className="h-24 w-48 max-w-none object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.28)]" /></a><div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div><nav className="flex flex-wrap items-center justify-end gap-3"><NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton><NavButton href="/">SOU 메인</NavButton></nav></div></header>
+      <main className="relative mx-auto max-w-7xl px-3 py-4 sm:px-5 sm:py-8 lg:px-8">
         <div className="mb-4 flex justify-end"><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_12px_24px_rgba(0,0,0,0.16)]">{updatedAtText ? `${updatedAtText} 갱신` : '갱신 확인중'}</div></div>
         <section className="mb-7 grid gap-4 lg:grid-cols-2"><StatPill {...categoryStats.soop} /><StatPill {...categoryStats.gamcom} /></section>
         <section className="mb-7 rounded-[28px] bg-black/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_18px_42px_rgba(0,0,0,0.20)]">
@@ -294,3 +314,4 @@ export default function JangjisuPrisonCrewsPage() {
     </div>
   </>;
 }
+
