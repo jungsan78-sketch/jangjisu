@@ -1,4 +1,5 @@
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
+import { applyPrisonBroadcastDataOverrides } from '../../data/prisonBroadcastDataOverrides';
 import { readBroadcastDataCache, writeBroadcastDataCache } from '../../lib/prisonBroadcastDataCache';
 import {
   fetchPoonggoDay,
@@ -287,7 +288,7 @@ export default async function handler(req, res) {
       stale: monthState.stale,
       storage: monthState.storage,
       cachedAt: monthState.record.cachedAt,
-      ...withRankings(publicPayload(monthState.record.payload)),
+      ...withRankings(applyPrisonBroadcastDataOverrides(publicPayload(monthState.record.payload))),
     });
   } catch {
     return res.status(502).json({ ok: false, message: '방송 데이터를 불러오지 못했습니다. 잠시 후 다시 확인해주세요.' });
