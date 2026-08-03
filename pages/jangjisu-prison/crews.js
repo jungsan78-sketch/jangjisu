@@ -291,8 +291,7 @@ export default function JangjisuPrisonCrewsPage() {
         items={[
           { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
           { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
-          { href: '/jangjisu-prison/broadcast-summary', label: '다시보기 달력', icon: '▤', tone: 'teal' },
-          { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터', icon: '▥', tone: 'teal' },
+          { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 달력', icon: '▥', tone: 'teal' },
           { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
           { href: 'https://cafe.naver.com/quaddurupfancafe', label: '팬카페', icon: 'N', tone: 'green', external: true },
           { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
