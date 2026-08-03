@@ -5,6 +5,7 @@ import PrisonQuickNav from './PrisonQuickNav';
 import RecentYoutubeSection from './RecentYoutubeSection';
 import { PrisonMemberLiveGridContent } from '../PrisonMemberLiveGrid';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
+import MobileAppDrawer from '../navigation/MobileAppDrawer';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LOGO_SRC = '/prison-logo.webp';
@@ -225,22 +226,25 @@ export function PrisonSidebar() {
 
 export function MobilePrisonNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05070c]/88 px-4 py-3 backdrop-blur-xl xl:hidden">
-      <div className="flex items-center justify-between gap-3">
-        <a href="/jangjisu-prison#top" className="flex h-14 w-[168px] items-center justify-start overflow-hidden rounded-2xl bg-white/[0.035] px-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_30px_rgba(0,0,0,0.18)]">
-          <SidebarLogo compact />
-        </a>
-        <a href={FAN_CAFE_URL} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-300/8 px-3 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">팬카페</a>
-      </div>
-      <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        <a href="/jangjisu-prison" className="shrink-0 rounded-full bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🏛️ 수용소 메인</a>
-        <a href="/" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">🔵 SOU 아카이브</a>
-        <a href="/jangjisu-prison/broadcast-summary" className="shrink-0 rounded-full bg-teal-300/10 px-4 py-2 text-xs font-black text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">다시보기 달력</a>
-        <a href="/jangjisu-prison/broadcast-data" className="shrink-0 rounded-full bg-cyan-300/10 px-4 py-2 text-xs font-black text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">방송 데이터</a>
-        <a href="/jangjisu-prison/crews" className="shrink-0 rounded-full bg-emerald-400/8 px-4 py-2 text-xs font-black text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">종겜 크루</a>
-        <a href="/jangjisu-prison/multiview" className="shrink-0 rounded-full bg-sky-400/8 px-4 py-2 text-xs font-black text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">▣ 멀티뷰</a>
-      </nav>
-    </header>
+    <MobileAppDrawer
+      brand="장지수용소"
+      subtitle="SOU PRISON"
+      logoSrc={LOGO_SRC}
+      logoFallbackSrc={LOGO_FALLBACK_SRC}
+      logoAlt="장지수용소"
+      logoWide
+      homeHref="/jangjisu-prison"
+      breakpoint="xl"
+      items={[
+        { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
+        { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
+        { href: '/jangjisu-prison/broadcast-summary', label: '다시보기 달력', icon: '▤', tone: 'teal' },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터', icon: '▥', tone: 'teal' },
+        { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
+        { href: FAN_CAFE_URL, label: '팬카페', icon: 'N', tone: 'green', external: true },
+        { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
+      ]}
+    />
   );
 }
 
@@ -312,7 +316,7 @@ export function PrisonPageChrome({ children, wide = false }) {
           <PrisonSidebar />
           <div className="sou-prison-content min-w-0 max-w-none">
             <MobilePrisonNav />
-            <main className={`sou-prison-main relative w-full max-w-none px-4 py-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 ${wide ? 'sou-prison-main-wide overflow-x-visible' : 'overflow-x-hidden'}`}>
+            <main className={`sou-prison-main relative w-full max-w-none px-3 py-3 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 ${wide ? 'sou-prison-main-wide overflow-x-visible' : 'overflow-x-hidden'}`}>
               {children}
             </main>
           </div>
@@ -342,3 +346,4 @@ export default function PrisonPageContent() {
     </PrisonPageChrome>
   );
 }
+
