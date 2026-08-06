@@ -18,7 +18,7 @@ export default function PrisonNoticeSection() {
     let mounted = true;
     const loadNotices = async () => {
       try {
-        const res = await fetch('/api/prison-notices?v=5');
+        const res = await fetch('/api/prison-notices?v=6');
         const json = await res.json();
         if (mounted) setNotices(Array.isArray(json.notices) ? json.notices : []);
       } catch {
