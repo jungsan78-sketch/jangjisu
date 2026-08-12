@@ -136,7 +136,15 @@ const fetchRowsFromUrls = async (urls) => {
   throw lastError || new Error('시트 데이터를 불러오지 못했습니다.');
 };
 
-const isDateRow = (row) => row.filter((cell) => /^\d{1,2}$/.test(String(cell).trim())).length >= 5;
+const isDateRow = (row) => {
+  const populatedCells = row
+    .map((cell) => String(cell || '').trim())
+    .filter(Boolean);
+  if (!populatedCells.length || !populatedCells.every((cell) => /^\d{1,2}$/.test(cell))) return false;
+
+  const days = populatedCells.map(Number);
+  return days.every((day, index) => day >= 1 && day <= 31 && (index === 0 || day > days[index - 1]));
+};
 
 const normalizeScheduleText = (value) => {
   const normalized = String(value || '')

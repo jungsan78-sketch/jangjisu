@@ -27,7 +27,7 @@ export const PRISON_SCHEDULE_SOURCES = [
   {
     key: 'doodong',
     member: '냥냥두둥',
-    endpoint: '/api/prison-schedule?key=doodong',
+    endpoint: '/api/prison-schedule?key=doodong&v=2',
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs/edit?gid=1650576825#gid=1650576825',
   },
   { key: 'vivian', member: '비비안', endpoint: '/api/prison-manual-schedule?key=vivian', sourceUrl: '' },
