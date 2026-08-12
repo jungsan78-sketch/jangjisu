@@ -1,3 +1,4 @@
+
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function makeItem(year, month, dayNumber, title) {
@@ -31,6 +32,13 @@ export const PRISON_MANUAL_SCHEDULES = {
       makeItem(2026, 8, 7, '09:00 반캠 공부 방송 / 뚜몬서버'),
       makeItem(2026, 8, 8, '휴방'),
       makeItem(2026, 8, 9, '15:00 장지수 월드컵 / 펀딩 공겜 공략'),
+      makeItem(2026, 8, 10, '밀린 방셀 / 펀딩 정산 / 방송 세팅 / 시스템 개편'),
+      makeItem(2026, 8, 11, '09:00 봉준님 버추얼 강의 / 컨텐츠 짜기 / 인타임서버'),
+      makeItem(2026, 8, 12, '09:00 하데스 공부 입문 영상 / 인타임서버'),
+      makeItem(2026, 8, 13, '09:00 펀딩 공략 12시간 노방종 룰렛(하데스콘, 월드컵)'),
+      makeItem(2026, 8, 14, '09:00 수용소 점심빱'),
+      makeItem(2026, 8, 15, '17:00 뉴걸 사심 노래대회'),
+      makeItem(2026, 8, 16, 'coming soon'),
     ],
   },
   amanemay: {
@@ -83,4 +91,3 @@ export const PRISON_MANUAL_SCHEDULES = {
     ],
   },
 };
-
