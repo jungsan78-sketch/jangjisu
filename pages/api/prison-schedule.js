@@ -1,4 +1,3 @@
-
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const SOURCES = [
@@ -13,16 +12,16 @@ const SOURCES = [
     id: 'guweol',
     key: '구월이',
     sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
-    gid: '739202309',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=739202309#gid=739202309',
+    gid: '1765161556',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1765161556#gid=1765161556',
     mode: 'fixedGid',
   },
   {
     id: 'linling',
     key: '린링',
     sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
-    gid: '1838232194',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1838232194#gid=1838232194',
+    gid: '730341520',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=730341520#gid=730341520',
     mode: 'fixedGid',
   },
   {
@@ -136,14 +135,32 @@ const fetchRowsFromUrls = async (urls) => {
   throw lastError || new Error('시트 데이터를 불러오지 못했습니다.');
 };
 
-const isDateRow = (row) => {
-  const populatedCells = row
-    .map((cell) => String(cell || '').trim())
-    .filter(Boolean);
-  if (!populatedCells.length || !populatedCells.every((cell) => /^\d{1,2}$/.test(cell))) return false;
+const extractCalendarDay = (value) => {
+  const match = String(value || '').trim().match(/^(\d{1,2})(?:\s|$)/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  return day >= 1 && day <= 31 ? day : null;
+};
 
-  const days = populatedCells.map(Number);
-  return days.every((day, index) => day >= 1 && day <= 31 && (index === 0 || day > days[index - 1]));
+const getDateCells = (row) => row
+  .map((cell, columnIndex) => ({ day: extractCalendarDay(cell), columnIndex }))
+  .filter(({ day }) => day != null);
+
+const isDateRow = (row) => {
+  const dateCells = getDateCells(row);
+  if (!dateCells.length) return false;
+
+  let wrappedToNextMonth = false;
+  return dateCells.every(({ day }, index) => {
+    if (index === 0) return true;
+    const previousDay = dateCells[index - 1].day;
+    if (day > previousDay) return true;
+    if (!wrappedToNextMonth && previousDay >= 28 && day <= 7) {
+      wrappedToNextMonth = true;
+      return true;
+    }
+    return false;
+  });
 };
 
 const normalizeScheduleText = (value) => {
@@ -168,10 +185,9 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
     const row = rows[rowIndex];
     if (!isDateRow(row)) continue;
 
-    const numericCells = row.map((cell, columnIndex) => ({ text: String(cell || '').trim(), columnIndex })).filter(({ text }) => /^\d{1,2}$/.test(text));
+    const dateCells = getDateCells(row);
     const activeDays = [];
-    numericCells.forEach(({ text, columnIndex }) => {
-      const day = Number(text);
+    dateCells.forEach(({ day, columnIndex }) => {
       if (day < 1 || day > daysInMonth) return;
       if (lastIncludedDay === 0) {
         if (day <= 7) {
@@ -195,14 +211,14 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
       nextRowIndex += 1;
     }
 
-    const columnSteps = numericCells
+    const columnSteps = dateCells
       .slice(1)
-      .map((cell, index) => cell.columnIndex - numericCells[index].columnIndex)
+      .map((cell, index) => cell.columnIndex - dateCells[index].columnIndex)
       .filter((step) => step > 0);
     const fallbackColumnStep = columnSteps.length ? Math.min(...columnSteps) : 1;
 
     activeDays.forEach(({ day, columnIndex }) => {
-      const nextNumericColumn = numericCells.find((cell) => cell.columnIndex > columnIndex)?.columnIndex
+      const nextNumericColumn = dateCells.find((cell) => cell.columnIndex > columnIndex)?.columnIndex
         ?? Math.min(row.length, columnIndex + fallbackColumnStep);
       const detailTexts = [];
       detailRows.forEach((detailRow) => {
@@ -317,3 +333,4 @@ export default async function handler(req, res) {
     fetchedAt: new Date().toISOString(),
   });
 }
+

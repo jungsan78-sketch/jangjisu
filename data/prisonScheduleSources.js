@@ -1,4 +1,3 @@
-
 export const PRISON_SCHEDULE_SOURCES = [
   {
     key: 'jangjisu',
@@ -9,19 +8,19 @@ export const PRISON_SCHEDULE_SOURCES = [
   {
     key: 'guweol',
     member: '구월이',
-    endpoint: '/api/prison-schedule?key=guweol',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=739202309#gid=739202309',
+    endpoint: '/api/prison-schedule?key=guweol&v=3',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1765161556#gid=1765161556',
   },
   {
     key: 'linling',
     member: '린링',
-    endpoint: '/api/prison-schedule?key=linling',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1838232194#gid=1838232194',
+    endpoint: '/api/prison-schedule?key=linling&v=3',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=730341520#gid=730341520',
   },
   {
     key: 'youoneul',
     member: '유오늘',
-    endpoint: '/api/prison-schedule?key=youoneul',
+    endpoint: '/api/prison-schedule?key=youoneul&v=3',
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=996600110#gid=996600110',
   },
   {
@@ -35,3 +34,4 @@ export const PRISON_SCHEDULE_SOURCES = [
   { key: 'honoe1330', member: '이치유', endpoint: '/api/prison-manual-schedule?key=honoe1330', sourceUrl: '' },
   { key: 'ximong', member: '시몽', endpoint: '/api/prison-manual-schedule?key=ximong', sourceUrl: '' },
 ];
+
