@@ -10,7 +10,7 @@ import {
 } from '../../lib/prisonBroadcastDataSources';
 import { getReplayMonthStorageTtl, getReplayMonthWindow, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CURRENT_CACHE_MS = 30 * 60 * 1000;
 const VERIFY_CACHE_MS = 30 * 60 * 1000;
 const monthLoadPromises = new Map();
