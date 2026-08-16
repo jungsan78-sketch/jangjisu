@@ -33,6 +33,14 @@ const SOURCES = [
     mode: 'fixedGid',
   },
   {
+    id: 'honoe1330',
+    key: '이치유',
+    sheetId: '1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH',
+    gid: '1452473631',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1452473631#gid=1452473631',
+    mode: 'fixedGid',
+  },
+  {
     id: 'doodong',
     key: '냥냥두둥',
     sheetId: '1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs',
@@ -176,6 +184,11 @@ const normalizeScheduleText = (value) => {
 
 const isDecorationOnly = (value) => /^[\p{Extended_Pictographic}\u200d\ufe0f\s]+$/u.test(String(value || ''));
 
+const isWeekdayHeaderRow = (row) => {
+  const weekdayCount = row.filter((cell) => DAY_LABELS.includes(String(cell || '').trim())).length;
+  return weekdayCount >= 5;
+};
+
 const parseScheduleRows = (rows, targetYear, targetMonth) => {
   const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
   const itemsMap = new Map();
@@ -207,7 +220,7 @@ const parseScheduleRows = (rows, targetYear, targetMonth) => {
     let nextRowIndex = rowIndex + 1;
     const detailRows = [];
     while (nextRowIndex < rows.length && !isDateRow(rows[nextRowIndex])) {
-      detailRows.push(rows[nextRowIndex]);
+      if (!isWeekdayHeaderRow(rows[nextRowIndex])) detailRows.push(rows[nextRowIndex]);
       nextRowIndex += 1;
     }
 
