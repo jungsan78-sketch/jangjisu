@@ -6,13 +6,15 @@ import { getKstMonthInfo } from '../../lib/scheduleMonth';
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const CACHE_TTL_SECONDS = 60 * 60;
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const KNOWN_MONTH_GIDS = {
   '2026-04': '315851366',
   '2026-05': '215076926',
   '2026-06': '1486425307',
   '2026-07': '1207442777',
+  '2026-08': '206260325',
+  '2026-09': '76965100',
 };
 
 function getMonthKey(monthInfo) {
