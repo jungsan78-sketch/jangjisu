@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_PRISON_MEMBERS } from '../../../data/prisonMembers';
 import MultiviewStreamPicker from './MultiviewStreamPicker';
 import SoopEmbedTile from './SoopEmbedTile';
+import { startVisibleInterval } from '../../../lib/visibleInterval';
 
 const STORAGE_KEY = 'sou-prison-multiview-members-v2';
 const MAX_STREAMS = 4;
@@ -76,10 +77,10 @@ export default function PrisonMultiview() {
       }
     }
     loadLive();
-    const timer = window.setInterval(loadLive, REFRESH_INTERVAL_MS);
+    const stopPolling = startVisibleInterval(loadLive, REFRESH_INTERVAL_MS);
     return () => {
       mounted = false;
-      window.clearInterval(timer);
+      stopPolling();
     };
   }, []);
 
@@ -161,3 +162,4 @@ export default function PrisonMultiview() {
     </section>
   );
 }
+

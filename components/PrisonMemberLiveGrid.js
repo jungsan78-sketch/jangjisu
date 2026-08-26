@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { startVisibleInterval } from '../lib/visibleInterval';
 import { createPortal } from 'react-dom';
 import { ALL_PRISON_MEMBERS } from '../data/prisonMembers';
 import ShortsHallOfFame from './prison/ShortsHallOfFame';
@@ -139,8 +140,8 @@ export function PrisonMemberLiveGridContent() {
       }
     }
     loadLive();
-    const timer = setInterval(loadLive, LIVE_REFRESH_INTERVAL_MS);
-    return () => { mounted = false; clearInterval(timer); };
+    const stopPolling = startVisibleInterval(loadLive, LIVE_REFRESH_INTERVAL_MS);
+    return () => { mounted = false; stopPolling(); };
   }, []);
 
   useEffect(() => {
@@ -160,8 +161,8 @@ export function PrisonMemberLiveGridContent() {
       }
     }
     loadPosts();
-    const timer = setInterval(loadPosts, POSTS_REFRESH_INTERVAL_MS);
-    return () => { mounted = false; clearInterval(timer); };
+    const stopPolling = startVisibleInterval(loadPosts, POSTS_REFRESH_INTERVAL_MS);
+    return () => { mounted = false; stopPolling(); };
   }, []);
 
   const statuses = livePayload?.statuses || {};

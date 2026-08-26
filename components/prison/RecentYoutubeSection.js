@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatRelativeTime, hasRecentUpload, SectionTitle, shareYoutubeState } from './prisonShared';
+import { startVisibleInterval } from '../../lib/visibleInterval';
 
 const YOUTUBE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -46,8 +47,8 @@ export default function RecentYoutubeSection() {
       }
     };
     load();
-    const timer = setInterval(load, YOUTUBE_REFRESH_INTERVAL_MS);
-    return () => { mounted = false; clearInterval(timer); };
+    const stopPolling = startVisibleInterval(load, YOUTUBE_REFRESH_INTERVAL_MS);
+    return () => { mounted = false; stopPolling(); };
   }, []);
   const hasNewVideos = hasRecentUpload(data.videos);
   const hasNewShorts = hasRecentUpload(data.shorts);

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PRISON_MEMBERS, WARDEN } from '../../data/prisonMembers';
 import LatestNoticeGrid from '../notices/LatestNoticeGrid';
+import { startVisibleInterval } from '../../lib/visibleInterval';
 
 const NOTICE_REFRESH_MS = 30 * 60 * 1000;
 const MEMBER_ORDER = PRISON_MEMBERS.map((member) => member.nickname);
@@ -29,10 +30,10 @@ export default function PrisonNoticeSection() {
     };
 
     loadNotices();
-    const timer = setInterval(loadNotices, NOTICE_REFRESH_MS);
+    const stopPolling = startVisibleInterval(loadNotices, NOTICE_REFRESH_MS);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      stopPolling();
     };
   }, []);
 
@@ -62,3 +63,4 @@ export default function PrisonNoticeSection() {
     </section>
   );
 }
+

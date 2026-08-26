@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PRISON_SCHEDULE_SOURCES } from '../../data/prisonScheduleSources';
 import { SCHEDULE_MEMBERS } from '../../data/prisonMembers';
 import WeeklyAllScheduleView from './WeeklyAllScheduleView';
+import { startVisibleInterval } from '../../lib/visibleInterval';
 
 const SCHEDULE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -122,10 +123,10 @@ export default function CalendarPreview() {
     }
 
     load();
-    const timer = setInterval(load, SCHEDULE_REFRESH_INTERVAL_MS);
+    const stopPolling = startVisibleInterval(load, SCHEDULE_REFRESH_INTERVAL_MS);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      stopPolling();
     };
   }, []);
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { startVisibleInterval } from '../../lib/visibleInterval';
 import { createPortal } from 'react-dom';
 import CalendarPreview from './CalendarPreview';
 import PrisonQuickNav from './PrisonQuickNav';
@@ -130,10 +131,10 @@ function LiveMemberList() {
     }
 
     loadLive();
-    const timer = setInterval(loadLive, LIVE_REFRESH_INTERVAL_MS);
+    const stopPolling = startVisibleInterval(loadLive, LIVE_REFRESH_INTERVAL_MS);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      stopPolling();
     };
   }, []);
 

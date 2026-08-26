@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { startVisibleInterval } from '../lib/visibleInterval';
 import LatestNoticeGrid from './notices/LatestNoticeGrid';
 
 const NOTICE_REFRESH_MS = 30 * 60 * 1000;
@@ -23,10 +24,10 @@ export default function MainJangJisuNoticeSection() {
     };
 
     loadNotices();
-    const timer = setInterval(loadNotices, NOTICE_REFRESH_MS);
+    const stopPolling = startVisibleInterval(loadNotices, NOTICE_REFRESH_MS);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      stopPolling();
     };
   }, []);
 
@@ -47,3 +48,4 @@ export default function MainJangJisuNoticeSection() {
     </section>
   );
 }
+

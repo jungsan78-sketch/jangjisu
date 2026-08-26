@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatRelativeTime } from './prisonShared';
 import { MemberBadges } from './MemberBadges';
+import { startVisibleInterval } from '../../lib/visibleInterval';
 
 const SHORTS_HALL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -123,10 +124,10 @@ export default function ShortsHallOfFame() {
     }
 
     load();
-    const timer = setInterval(load, SHORTS_HALL_REFRESH_INTERVAL_MS);
+    const stopPolling = startVisibleInterval(load, SHORTS_HALL_REFRESH_INTERVAL_MS);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      stopPolling();
     };
   }, []);
 
