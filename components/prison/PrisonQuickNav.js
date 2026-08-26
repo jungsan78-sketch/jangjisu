@@ -13,9 +13,19 @@ export default function PrisonQuickNav() {
 
   useEffect(() => {
     let frame = 0;
+    const initialHashId = window.location.hash.replace(/^#/, '');
+    const hasKnownInitialHash = QUICK_LINKS.some((item) => item.id === initialHashId);
+    let initialHashHandled = !hasKnownInitialHash;
     const updateActiveSection = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        if (!initialHashHandled) {
+          const initialTarget = document.getElementById(initialHashId);
+          if (initialTarget) {
+            initialHashHandled = true;
+            initialTarget.scrollIntoView({ block: 'start' });
+          }
+        }
         const sections = QUICK_LINKS
           .map((item) => document.getElementById(item.id))
           .filter(Boolean);
@@ -32,12 +42,19 @@ export default function PrisonQuickNav() {
     updateActiveSection();
     const delayedUpdate = window.setTimeout(updateActiveSection, 800);
     const settledUpdate = window.setTimeout(updateActiveSection, 2400);
+    const layoutRoot = document.querySelector('main') || document.body;
+    const layoutObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateActiveSection) : null;
+    layoutObserver?.observe(layoutRoot);
+    const contentObserver = typeof MutationObserver !== 'undefined' ? new MutationObserver(updateActiveSection) : null;
+    contentObserver?.observe(layoutRoot, { childList: true, subtree: true });
     window.addEventListener('scroll', updateActiveSection, { passive: true });
     window.addEventListener('resize', updateActiveSection);
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(delayedUpdate);
       window.clearTimeout(settledUpdate);
+      layoutObserver?.disconnect();
+      contentObserver?.disconnect();
       window.removeEventListener('scroll', updateActiveSection);
       window.removeEventListener('resize', updateActiveSection);
     };
@@ -63,7 +80,7 @@ export default function PrisonQuickNav() {
               href={`#${item.id}`}
               onClick={(event) => moveToSection(event, item.id)}
               aria-current={active ? 'location' : undefined}
-              className={`mb-1 flex h-11 w-full items-center gap-3 rounded-[15px] px-2.5 text-[12px] font-black transition duration-300 last:mb-0 ${active ? 'bg-cyan-300 text-[#04101b] shadow-[0_0_22px_rgba(103,232,249,0.34)]' : 'bg-white/[0.045] text-white/68 hover:bg-white/10 hover:text-white'}`}
+              className={`mb-1 flex h-11 w-full items-center gap-3 rounded-[15px] px-2.5 text-[12px] font-bold transition duration-300 last:mb-0 ${active ? 'bg-cyan-300 text-[#04101b] shadow-[0_0_22px_rgba(103,232,249,0.34)]' : 'bg-white/[0.045] text-white/68 hover:bg-white/10 hover:text-white'}`}
             >
               <span aria-hidden="true" className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] text-[12px] ${active ? 'bg-[#04101b]/10' : 'bg-white/[0.055]'}`}>{item.icon}</span>
               <span className="whitespace-nowrap">{item.label}</span>

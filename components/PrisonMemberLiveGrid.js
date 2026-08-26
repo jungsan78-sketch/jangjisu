@@ -57,11 +57,12 @@ function sortMembers(members, statuses) {
   });
 }
 
-function PlatformLink({ href, type, label }) {
+function PlatformLink({ href, type, label, compact = false }) {
   const disabled = !href;
   const srcMap = { soop: '/soop-logo.svg', youtube: '/youtube-logo.svg', cafe: '/naver-cafe-logo.svg' };
-  const className = `inline-flex h-10 w-11 items-center justify-center rounded-2xl bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_12px_22px_rgba(0,0,0,0.18)] transition ${disabled ? 'pointer-events-none grayscale opacity-30' : 'hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_15px_28px_rgba(0,0,0,0.24)]'}`;
-  const icon = <img src={srcMap[type]} alt={label} className="max-h-7 max-w-8 object-contain" />;
+  const sizeClass = compact ? 'h-8 w-9 rounded-xl' : 'h-10 w-11 rounded-2xl';
+  const className = `inline-flex ${sizeClass} items-center justify-center bg-white/[0.055] shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_12px_22px_rgba(0,0,0,0.18)] transition ${disabled ? 'pointer-events-none grayscale opacity-25' : 'hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_15px_28px_rgba(0,0,0,0.24)]'}`;
+  const icon = <img src={srcMap[type]} alt={label} className={compact ? 'max-h-5 max-w-6 object-contain' : 'max-h-7 max-w-8 object-contain'} />;
   if (disabled) return <span className={className} title={`${label} 준비중`}>{icon}</span>;
   return <a href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>{icon}</a>;
 }
@@ -103,10 +104,34 @@ function MemberCard({ member, status }) {
             </h4>
             <MemberBadges nickname={member.nickname} />
           </div>
-          <p className="mt-1 line-clamp-2 text-[15px] font-extrabold leading-6 text-white/86">{title}</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">{tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-black text-white/54 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{tag}</span>)}</div>
+          <p className="mt-1 line-clamp-2 text-[15px] font-semibold leading-6 text-white/82">{title}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">{tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-bold text-white/52 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">{tag}</span>)}</div>
           <div className="mt-3 flex gap-2"><PlatformLink href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} /><PlatformLink href={member.youtube} type="youtube" label={`${member.nickname} YouTube`} /><PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} /></div>
         </div>
+      </div>
+    </article>
+  );
+}
+
+function OfflineMemberCard({ member, status }) {
+  const isUnknown = String(status?.liveState || '').includes('unknown');
+  return (
+    <article className="flex min-w-0 items-center gap-3 rounded-[18px] bg-white/[0.035] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_28px_rgba(0,0,0,0.14)] transition hover:bg-white/[0.055]">
+      <a href={member.station} target="_blank" rel="noreferrer" className="relative shrink-0">
+        <img src={member.image} alt={`${member.nickname} 프로필`} className="h-12 w-12 rounded-full bg-slate-900 object-cover opacity-80 shadow-[0_8px_20px_rgba(0,0,0,0.24)]" loading="lazy" />
+        <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0b1422] ${isUnknown ? 'bg-amber-300' : 'bg-slate-500'}`} />
+      </a>
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h4 className="sou-prison-member-name truncate text-[15px] font-[700] tracking-[-0.01em] text-white/88">{member.nickname}</h4>
+          <MemberBadges nickname={member.nickname} />
+        </div>
+        <div className="mt-1 text-[12px] font-medium text-white/42">{isUnknown ? '방송 상태 확인 중' : '방송 종료'}</div>
+      </div>
+      <div className="flex shrink-0 gap-1.5">
+        <PlatformLink compact href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} />
+        <PlatformLink compact href={member.youtube} type="youtube" label={`${member.nickname} YouTube`} />
+        <PlatformLink compact href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} />
       </div>
     </article>
   );
@@ -169,10 +194,12 @@ export function PrisonMemberLiveGridContent() {
   const posts = postsPayload?.posts || {};
   const hasResolvedData = Boolean(livePayload?.statuses || postsPayload?.posts);
   const sortedMembers = useMemo(() => sortMembers(ALL_PRISON_MEMBERS, statuses), [statuses]);
-  const liveCount = sortedMembers.filter((member) => statuses[member.nickname]?.isLive).length;
+  const liveMembers = sortedMembers.filter((member) => statuses[member.nickname]?.isLive);
+  const offlineMembers = sortedMembers.filter((member) => !statuses[member.nickname]?.isLive);
+  const liveCount = liveMembers.length;
   const fetchedAt = formatFetchedAt(livePayload?.fetchedAt);
 
-  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none"><ShortsHallOfFame /><PrisonNoticeSection /><div id="member-live" className="scroll-mt-6"><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">수용소 멤버 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <div className="sou-member-live-grid grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{sortedMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div> : <LiveGridSkeleton failed={loaded && loadFailed} />}</div></section>;
+  return <section data-sou-react-live-grid="true" className="sou-member-live-section mt-6 w-full max-w-none"><ShortsHallOfFame /><PrisonNoticeSection /><div id="member-live" className="scroll-mt-6"><div className="mb-6 flex w-full max-w-none flex-col justify-between gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-end"><div><h3 className="text-[24px] font-black tracking-[-0.04em] text-white sm:text-[28px]">수용소 멤버 LIVE</h3></div><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-bold text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">{hasResolvedData ? `ON ${liveCount}명 · ${fetchedAt || '방금'} 갱신` : '라이브/게시글 불러오는 중'}</div></div>{hasResolvedData ? <><div className="sou-member-live-grid grid w-full max-w-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{liveMembers.map((member) => <MemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div>{liveMembers.length === 0 ? <div className="rounded-[22px] bg-white/[0.03] px-5 py-8 text-center text-sm font-medium text-white/48">현재 방송 중인 멤버가 없습니다.</div> : null}<div className="mt-10 border-t border-white/[0.07] pt-6"><div className="mb-4 flex items-center justify-between gap-3"><h4 className="text-[16px] font-bold text-white/72">방송 종료</h4><span className="text-[11px] font-medium text-white/34">{offlineMembers.length}명</span></div><div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">{offlineMembers.map((member) => <OfflineMemberCard key={member.nickname} member={member} status={statuses[member.nickname]} />)}</div></div></> : <LiveGridSkeleton failed={loaded && loadFailed} />}</div></section>;
 }
 
 export default function PrisonMemberLiveGrid() {
