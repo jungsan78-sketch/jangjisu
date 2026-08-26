@@ -35,6 +35,20 @@ async function setJsonCache(cache, key, value, ttlSeconds) {
   }
 }
 
+async function getJsonCache(cache, key) {
+  if (!isKvNamespace(cache)) return null;
+  try {
+    const value = await cache.get(key, 'json');
+    return value && typeof value === 'object' ? value : null;
+  } catch {}
+  try {
+    const raw = await cache.get(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function isAuthorized(req) {
   const secret = await getRuntimeEnvValue('CRON_SECRET');
   if (!secret) return true;
@@ -67,17 +81,19 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   }
 
-  let mainPayload = null;
-  let prisonPayload = null;
+  let [mainPayload, prisonPayload] = await Promise.all([
+    getJsonCache(cache, MAIN_KEY),
+    getJsonCache(cache, PRISON_KEY),
+  ]);
 
   try {
     const main = await fetchMainYoutubePayload({ debug: false });
-    mainPayload = main;
     result.main.videos = main.videos?.length || 0;
     result.main.shorts = main.shorts?.length || 0;
     result.main.full = main.full?.length || 0;
     result.main.error = main.error || '';
     if (isMainYoutubeUsable(main)) {
+      mainPayload = main;
       result.main.ok = await setJsonCache(cache, MAIN_KEY, { ...main, cachedAt: result.refreshedAt }, MAIN_TTL_SECONDS);
     } else {
       result.main.skipped = 'empty-or-unavailable';
@@ -88,11 +104,11 @@ export default async function handler(req, res) {
 
   try {
     const prison = await fetchPrisonYoutubePayload({ debug: false });
-    prisonPayload = prison;
     result.prison.videos = prison.videos?.length || 0;
     result.prison.shorts = prison.shorts?.length || 0;
     result.prison.error = prison.error || '';
     if (isPrisonYoutubeUsable(prison)) {
+      prisonPayload = prison;
       result.prison.ok = await setJsonCache(cache, PRISON_KEY, { ...prison, cachedAt: result.refreshedAt }, PRISON_TTL_SECONDS);
     } else {
       result.prison.skipped = 'empty-or-unavailable';

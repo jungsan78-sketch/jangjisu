@@ -1,6 +1,8 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePayload, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../lib/youtube-data';
 
+const MAIN_YOUTUBE_KEY = 'youtube:main:v1';
+const PRISON_YOUTUBE_KEY = 'youtube:prison:v4';
 const SHORTS_HALL_KEY = 'youtube:shorts-hall:v4';
 const TTL_SECONDS = 60 * 60 * 6;
 const RUNTIME_MARKER = 'test2-shorts-hall-api-20260826-5';
@@ -21,24 +23,24 @@ function isKvNamespace(cache) {
   return cache && typeof cache.get === 'function' && typeof cache.put === 'function';
 }
 
-async function readCachedPayload(cache) {
+async function readCachedPayload(cache, key = SHORTS_HALL_KEY) {
   if (!isKvNamespace(cache)) return null;
   try {
-    const value = await cache.get(SHORTS_HALL_KEY, 'json');
+    const value = await cache.get(key, 'json');
     return value && typeof value === 'object' ? value : null;
   } catch {}
   try {
-    const raw = await cache.get(SHORTS_HALL_KEY);
+    const raw = await cache.get(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-async function writeCachedPayload(cache, payload) {
-  if (!isKvNamespace(cache) || !payload?.ok) return false;
+async function writeCachedPayload(cache, payload, key = SHORTS_HALL_KEY, isUsable = (value) => Boolean(value?.ok)) {
+  if (!isKvNamespace(cache) || !isUsable(payload)) return false;
   try {
-    await cache.put(SHORTS_HALL_KEY, JSON.stringify({ ...payload, cachedAt: new Date().toISOString() }), { expirationTtl: TTL_SECONDS });
+    await cache.put(key, JSON.stringify({ ...payload, cachedAt: new Date().toISOString() }), { expirationTtl: TTL_SECONDS });
     return true;
   } catch {
     return false;
@@ -93,19 +95,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [main, prison] = await Promise.all([
-      fetchMainYoutubePayload({ debug: false }),
-      fetchPrisonYoutubePayload({ debug: false }),
+    let [main, prison] = await Promise.all([
+      readCachedPayload(cache, MAIN_YOUTUBE_KEY),
+      readCachedPayload(cache, PRISON_YOUTUBE_KEY),
     ]);
 
+    const mainFromCache = isMainYoutubeUsable(main);
+    const prisonFromCache = isPrisonYoutubeUsable(prison);
+
+    // 한 Worker 요청에서 장지수와 모든 멤버 채널을 동시에 다시 조회하면
+    // Cloudflare subrequest 제한을 넘을 수 있으므로, 부족한 소스 하나만 보충한다.
+    if (!mainFromCache && prisonFromCache) {
+      main = await fetchMainYoutubePayload({ debug: false });
+      await writeCachedPayload(cache, main, MAIN_YOUTUBE_KEY, isMainYoutubeUsable);
+    } else if (mainFromCache && !prisonFromCache) {
+      prison = await fetchPrisonYoutubePayload({ debug: false });
+      await writeCachedPayload(cache, prison, PRISON_YOUTUBE_KEY, isPrisonYoutubeUsable);
+    } else if (!mainFromCache && !prisonFromCache) {
+      main = await fetchMainYoutubePayload({ debug: false });
+      await writeCachedPayload(cache, main, MAIN_YOUTUBE_KEY, isMainYoutubeUsable);
+    }
+
     const payload = buildShortsHallOfFame(main, prison);
-    const writeOk = await writeCachedPayload(cache, payload);
+    const sourcesComplete = isMainYoutubeUsable(main) && isPrisonYoutubeUsable(prison);
+    const writeOk = sourcesComplete ? await writeCachedPayload(cache, payload) : false;
 
     if (payload.ok) {
+      if (!sourcesComplete) res.setHeader('Cache-Control', 'no-store');
       return res.status(200).json({
         ...payload,
         cached: false,
-        cacheSource: 'live-youtube-api',
+        cacheSource: sourcesComplete ? 'youtube-source-cache' : 'partial-youtube-source-cache',
         debug: debug || refresh ? {
           runtimeMarker: RUNTIME_MARKER,
           mode: 'refresh_live_youtube_api_call',
@@ -115,6 +135,7 @@ export default async function handler(req, res) {
             prisonShorts: prison?.shorts?.length || 0,
             mainUsable: isMainYoutubeUsable(main),
             prisonUsable: isPrisonYoutubeUsable(prison),
+            sourcesComplete,
           },
         } : undefined,
       });

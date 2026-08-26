@@ -118,8 +118,6 @@ export default function ShortsHallOfFame() {
   }, []);
 
   const slots = payload?.slots || {};
-  const hasAny = Boolean(slots.memberTop1 || slots.jangjisu || slots.memberTop2);
-  if (payload.loaded && !hasAny) return null;
 
   return (
     <section id="shorts-hall" className="relative mb-14 scroll-mt-6 w-full max-w-none overflow-hidden rounded-[34px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12">
