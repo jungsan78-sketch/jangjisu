@@ -78,7 +78,7 @@ function MemberCard({ member, status }) {
   const tags = Array.isArray(member.tags) ? member.tags : [];
 
   return (
-    <article className="sou-member-live-card group relative min-w-0">
+    <div className="sou-member-live-card group relative min-w-0">
       <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block aspect-video overflow-hidden rounded-[24px] bg-black shadow-[0_18px_38px_rgba(0,0,0,0.28)]">
         {isLive && mediaImage ? (
           <>
@@ -109,7 +109,7 @@ function MemberCard({ member, status }) {
           <div className="mt-3 flex gap-2"><PlatformLink href={member.station} type="soop" label={`${member.nickname} SOOP 방송국`} /><PlatformLink href={member.youtube} type="youtube" label={`${member.nickname} YouTube`} /><PlatformLink href={member.cafe} type="cafe" label={`${member.nickname} 팬카페`} /></div>
         </div>
       </div>
-    </article>
+    </div>
   );
 }
 
