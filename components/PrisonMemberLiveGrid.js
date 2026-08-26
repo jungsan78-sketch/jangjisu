@@ -78,7 +78,7 @@ function MemberCard({ member, status }) {
   const tags = Array.isArray(member.tags) ? member.tags : [];
 
   return (
-    <article className="group relative min-w-0">
+    <article className="sou-member-live-card group relative min-w-0">
       <a href={mediaHref || member.station} target="_blank" rel="noreferrer" className="relative block aspect-video overflow-hidden rounded-[24px] bg-black shadow-[0_18px_38px_rgba(0,0,0,0.28)]">
         {isLive && mediaImage ? (
           <>
