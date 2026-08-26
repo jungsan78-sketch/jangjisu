@@ -15,13 +15,14 @@ export const PRISON_MEMBERS = [
   { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol', tags: ['#섹시', '#큐티', '#도시락'] },
   { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212', youtube: 'https://www.youtube.com/@LinLing_', cafe: 'https://cafe.naver.com/linling', tags: ['#집순이', '#리액션', '#하이텐션'] },
   { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul', tags: ['#늘보', '#작명왕', '#거대별'] },
-  { nickname: '하빵', image: 'https://stimg.sooplive.com/LOGO/ha/habbang2/habbang2.jpg', station: 'https://www.sooplive.com/station/habbang2', tags: [] },
-  { nickname: '히루룽', image: 'https://stimg.sooplive.com/LOGO/he/hey092130/hey092130.jpg', station: 'https://www.sooplive.com/station/hey092130', tags: [] },
-  { nickname: '고춘자', image: 'https://stimg.sooplive.com/LOGO/li/lilgochun/lilgochun.jpg', station: 'https://www.sooplive.com/station/lilgochun', tags: [] },
+  { nickname: '하빵', image: 'https://stimg.sooplive.com/LOGO/ha/habbang2/habbang2.jpg', station: 'https://www.sooplive.com/station/habbang2', youtube: 'https://www.youtube.com/@%ED%95%98%EB%B9%B5-s4k', cafe: 'https://cafe.naver.com/lovehabbang', tags: [] },
+  { nickname: '히루룽', image: 'https://stimg.sooplive.com/LOGO/he/hey092130/hey092130.jpg', station: 'https://www.sooplive.com/station/hey092130', cafe: 'https://cafe.naver.com/hiruroong', tags: [] },
+  { nickname: '고춘자', image: 'https://stimg.sooplive.com/LOGO/li/lilgochun/lilgochun.jpg', station: 'https://www.sooplive.com/station/lilgochun', cafe: 'https://cafe.naver.com/gochunja', tags: [] },
   { nickname: '비비안', image: 'https://stimg.sooplive.com/LOGO/8b/8bibian8/8bibian8.jpg', station: 'https://www.sooplive.com/station/8bibian8', tags: [] },
-  { nickname: '김메이', image: 'https://stimg.sooplive.com/LOGO/am/amanemay/amanemay.jpg', station: 'https://www.sooplive.com/station/amanemay', tags: [] },
-  { nickname: '이치유', image: 'https://stimg.sooplive.com/LOGO/ho/honoe1330/honoe1330.jpg', station: 'https://www.sooplive.com/station/honoe1330', tags: [] },
+  { nickname: '김메이', image: 'https://stimg.sooplive.com/LOGO/am/amanemay/amanemay.jpg', station: 'https://www.sooplive.com/station/amanemay', youtube: 'https://www.youtube.com/@amanemay3000', cafe: 'https://cafe.naver.com/amanemay3000', tags: [] },
+  { nickname: '이치유', image: 'https://stimg.sooplive.com/LOGO/ho/honoe1330/honoe1330.jpg', station: 'https://www.sooplive.com/station/honoe1330', youtube: 'https://www.youtube.com/@leechiyu_12', tags: [] },
 ];
 
 export const ALL_PRISON_MEMBERS = [WARDEN, ...PRISON_MEMBERS];
 export const SCHEDULE_MEMBERS = ALL_PRISON_MEMBERS;
+

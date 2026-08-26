@@ -1,9 +1,9 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { fetchPrisonYoutubePayload, isPrisonYoutubeUsable } from '../../lib/youtube-data';
 
-const CACHE_KEY = 'youtube:prison:v3';
+const CACHE_KEY = 'youtube:prison:v4';
 const TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260729-3';
+const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260826-4';
 
 async function getCacheBinding() {
   try {
@@ -111,3 +111,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
