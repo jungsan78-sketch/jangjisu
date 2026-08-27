@@ -37,6 +37,6 @@ export const PRISON_SCHEDULE_SOURCES = [
     endpoint: '/api/prison-schedule?key=honoe1330&v=1',
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1452473631#gid=1452473631',
   },
-  { key: 'ximong', member: '시몽', endpoint: '/api/prison-manual-schedule?key=ximong&v=1', sourceUrl: '' },
+  { key: 'ximong', member: '시몽', endpoint: '/api/prison-manual-schedule?key=ximong&v=2', sourceUrl: '' },
 ];
 
