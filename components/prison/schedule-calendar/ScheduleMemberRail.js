@@ -4,7 +4,7 @@ function MemberButton({ entry, active, onClick }) {
     <button type="button" data-active={active ? 'true' : 'false'} onClick={onClick} className={`sou-calendar-member-button flex shrink-0 items-center gap-2 rounded-[15px] border px-2.5 py-1.5 text-left transition ${active ? 'border-cyan-200/25 bg-cyan-300/12 text-white shadow-[inset_0_0_0_1px_rgba(103,232,249,0.12),0_8px_20px_rgba(0,0,0,0.12)]' : 'border-white/[0.06] bg-white/[0.035] text-white/68 hover:bg-white/[0.065] hover:text-white'}`}>
       {entry.image ? <img src={entry.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-[0_8px_18px_rgba(0,0,0,0.18)]" loading="lazy" referrerPolicy="no-referrer" /> : <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.065] text-xs font-black">{entry.member.slice(0, 1)}</span>}
       <span className="whitespace-nowrap text-[13px] font-black">{entry.member}</span>
-      <span className={`h-2 w-2 shrink-0 rounded-full ${entry.failed ? 'bg-amber-300' : hasItems ? 'bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.72)]' : 'bg-slate-600'}`} />
+      <span className={`h-2 w-2 shrink-0 rounded-full ${entry.failed ? 'bg-amber-300' : !entry.loaded ? 'bg-cyan-200/35' : hasItems ? 'bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.72)]' : 'bg-slate-600'}`} />
     </button>
   );
 }
