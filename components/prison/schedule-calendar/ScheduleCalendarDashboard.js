@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react';
 import ScheduleMemberBar from './ScheduleMemberRail';
 import ScheduleMonthGrid from './ScheduleMonthGrid';
 import useScheduleCalendarData from './useScheduleCalendarData';
+import { getRecentKstMonths } from '../../../lib/prisonScheduleCalendar';
 
 export default function ScheduleCalendarDashboard() {
+  const monthOptions = useMemo(() => getRecentKstMonths(3), []);
   const [selected, setSelected] = useState('jangjisu');
-  const { currentMonth, entries, events, loaded, failedCount } = useScheduleCalendarData();
+  const [selectedMonth, setSelectedMonth] = useState(() => monthOptions[monthOptions.length - 1]);
+  const { currentMonth, entries, events, loaded, failedCount } = useScheduleCalendarData(selected, selectedMonth);
   const selectedEntry = entries.find((entry) => entry.key === selected);
   const visibleEvents = useMemo(() => events.filter((event) => event.memberKey === selected), [events, selected]);
 
@@ -14,7 +17,12 @@ export default function ScheduleCalendarDashboard() {
       <header className="sou-calendar-toolbar mb-3 flex flex-wrap items-center justify-between gap-2 rounded-[18px] bg-[linear-gradient(180deg,#081525,#06101d)] px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_30px_rgba(0,0,0,0.18)] sm:px-4">
         <div className="flex items-center gap-2.5">
           <h1 className="text-[18px] font-black tracking-[-0.035em] text-white sm:text-[21px]">일정 캘린더</h1>
-          <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-[12px] font-black text-white/82">{currentMonth.year}년 {currentMonth.month}월</span>
+          <div className="flex flex-wrap items-center gap-1.5" aria-label="일정 월 선택">
+            {monthOptions.map((month) => {
+              const active = month.monthKey === selectedMonth.monthKey;
+              return <button key={month.monthKey} type="button" aria-pressed={active} onClick={() => setSelectedMonth(month)} className={`rounded-full px-3.5 py-2 text-[12px] font-black transition ${active ? 'bg-cyan-300 text-[#06101d] shadow-[0_8px_20px_rgba(103,232,249,0.18)]' : 'bg-white/[0.06] text-white/68 hover:bg-white/10 hover:text-white'}`}>{month.month}월</button>;
+            })}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {failedCount > 0 ? <span className="rounded-full bg-amber-300/8 px-3 py-1.5 text-[10px] font-bold text-amber-100/72">일부 일정 확인 중</span> : null}
