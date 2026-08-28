@@ -218,7 +218,7 @@ function CrewCard({ crew }) {
   const leader = crew.leader || crew.members[0];
   const normalMembers = crew.members.filter((member, index) => index !== 0);
 
-  return <section className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_22px_58px_rgba(0,0,0,0.34),0_0_44px_rgba(103,232,249,0.035)] transition duration-300 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.075),0_28px_74px_rgba(0,0,0,0.42),0_0_52px_rgba(103,232,249,0.065)]">
+  return <section className="sou-crew-card relative overflow-hidden rounded-[32px] bg-[linear-gradient(180deg,rgba(14,18,27,0.98),rgba(6,8,13,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_22px_58px_rgba(0,0,0,0.34),0_0_44px_rgba(103,232,249,0.035)] transition duration-300 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.075),0_28px_74px_rgba(0,0,0,0.42),0_0_52px_rgba(103,232,249,0.065)]">
     <div className={`pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b ${glow}`} />
     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-3"><h2 className="text-[30px] font-black tracking-tight text-white">{crew.name}</h2><span className="rounded-full bg-amber-200/10 px-3 py-1 text-xs font-black text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">수장 {displayNickname(leader?.nickname || '-')}</span><span className="rounded-full bg-white/[0.055] px-3 py-1 text-xs font-black text-white/52 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]">{crew.categoryLabel || CATEGORY_LABELS[crew.category] || '종겜 크루'}</span></div>
@@ -277,7 +277,7 @@ export default function JangjisuPrisonCrewsPage() {
 
   return <>
     <Head><title>종겜 크루 목록 | 장지수용소 팬메이드</title><meta name="description" content="장지수용소 종겜 크루 목록" /></Head>
-    <div className="min-h-screen bg-[#05070c] text-white">
+    <div className="sou-prison-page min-h-screen bg-[#05070c] text-white">
       <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" /><div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
       <MobileAppDrawer
         brand="장지수용소"
