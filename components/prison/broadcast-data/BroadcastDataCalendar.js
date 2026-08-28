@@ -35,7 +35,7 @@ function replayMinutes(replays) {
 
 function Metric({ label, value, suffix, tone, displayValue, pending = false }) {
   return (
-    <div className="rounded-xl bg-black/20 px-2.5 py-2">
+    <div className="sou-data-metric rounded-xl bg-black/20 px-2.5 py-2">
       <div className="text-[9px] font-black tracking-[0.06em] text-white/35 sm:text-[10px]">{label}</div>
       <div className={`mt-1 truncate text-xs font-black sm:text-sm ${pending ? 'animate-pulse text-white/45' : tone}`}>
         {pending ? '확인 중' : (displayValue || `${numberFormat.format(value || 0)}${suffix}`)}
@@ -79,7 +79,7 @@ export default function BroadcastDataCalendar({ monthKey, member, verifying, rep
             const dailyBroadcastMinutes = Number(data?.broadcastMinutes || 0) || replayMinutes(replays);
             const active = Boolean(data && (data.donations || data.peakViewers || dailyBroadcastMinutes)) || replays.length > 0;
             return (
-              <article key={cell.day} className={`relative min-h-[176px] rounded-2xl border p-2 text-left sm:p-3 ${active ? 'border-white/[0.09] bg-white/[0.045]' : 'border-white/[0.035] bg-black/10'}`}>
+              <article key={cell.day} className={`sou-data-day relative min-h-[176px] rounded-2xl border p-2 text-left sm:p-3 ${active ? 'border-white/[0.09] bg-white/[0.045]' : 'border-white/[0.035] bg-black/10'}`}>
                 <div className="flex min-w-0 items-center gap-1.5">
                   <span className="shrink-0 text-sm font-black text-white/80">{cell.day}일</span>
                   <ReplayDayPopover replays={replays} />
