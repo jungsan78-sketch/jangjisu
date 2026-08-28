@@ -91,7 +91,7 @@ export default function MobileAppDrawer({
           role="dialog"
           aria-modal="true"
           aria-label={`${brand} 전체 메뉴`}
-          className={`absolute inset-y-0 right-0 flex w-[min(86vw,360px)] flex-col border-l border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_32%),#07101c] shadow-[-28px_0_90px_rgba(0,0,0,0.48)] transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`sou-mobile-drawer-panel absolute inset-y-0 right-0 flex w-[min(86vw,360px)] flex-col border-l border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_32%),#07101c] shadow-[-28px_0_90px_rgba(0,0,0,0.48)] transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ paddingTop: 'max(16px, env(safe-area-inset-top))', paddingBottom: 'max(18px, env(safe-area-inset-bottom))' }}
         >
           <div className="flex items-center justify-between gap-3 px-5 pb-5">
