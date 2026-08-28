@@ -216,6 +216,7 @@ export function PrisonSidebar() {
         <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 달력" icon="▥" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
+        <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" icon="📅" tone="teal" />
         <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" icon="▣" />
       </nav>
 
@@ -241,6 +242,7 @@ export function MobilePrisonNav() {
         { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 달력', icon: '▥', tone: 'teal' },
         { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
         { href: FAN_CAFE_URL, label: '팬카페', icon: 'N', tone: 'green', external: true },
+        { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', icon: '📅', tone: 'teal' },
         { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
       ]}
     />
