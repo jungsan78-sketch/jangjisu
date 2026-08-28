@@ -10,7 +10,7 @@ export default function SoopEmbedTile({ member, status, featured = false, onRemo
   const liveUrl = status?.liveUrl || member?.station || '#';
 
   return (
-    <article className={`group relative min-h-0 overflow-hidden rounded-[22px] bg-black shadow-[0_20px_55px_rgba(0,0,0,0.36)] ring-1 ring-white/[0.04] transition ${featured ? 'lg:row-span-2' : ''}`}>
+    <article className={`sou-theme-preserve-dark group relative min-h-0 overflow-hidden rounded-[22px] bg-black shadow-[0_20px_55px_rgba(0,0,0,0.36)] ring-1 ring-white/[0.04] transition ${featured ? 'lg:row-span-2' : ''}`}>
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-3 bg-gradient-to-b from-black/82 via-black/48 to-transparent px-3 pb-8 pt-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <img src={member.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/20" />
@@ -43,3 +43,4 @@ export default function SoopEmbedTile({ member, status, featured = false, onRemo
     </article>
   );
 }
+
