@@ -3,8 +3,16 @@ import { PRISON_SCHEDULE_SOURCES } from '../../data/prisonScheduleSources';
 import { SCHEDULE_MEMBERS } from '../../data/prisonMembers';
 import WeeklyAllScheduleView from './WeeklyAllScheduleView';
 import { startVisibleInterval } from '../../lib/visibleInterval';
+import { splitScheduleTitle } from '../../lib/prisonScheduleCalendar';
 
 const SCHEDULE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
+const SCHEDULE_SEGMENT_TONES = [
+  'border-cyan-200/15 bg-cyan-300/[0.09]',
+  'border-amber-200/15 bg-amber-300/[0.09]',
+  'border-violet-200/15 bg-violet-300/[0.09]',
+  'border-rose-200/15 bg-rose-300/[0.09]',
+  'border-emerald-200/15 bg-emerald-300/[0.09]',
+];
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MEMBER_PROFILE_MAP = new Map(SCHEDULE_MEMBERS.map((member) => [member.nickname, {
   image: member.image || '',
@@ -95,6 +103,22 @@ function FilterButton({ label, image, active, linked, onClick }) {
   );
 }
 
+function CompactScheduleSegments({ title, offDay = false }) {
+  const segments = splitScheduleTitle(title);
+  return (
+    <div className="space-y-1.5">
+      {segments.map((segment, index) => (
+        <div key={`${segment.time}-${segment.title}-${index}`} className={`sou-prison-schedule-segment rounded-xl border px-2 py-1.5 ${offDay ? 'border-orange-200/15 bg-orange-300/[0.075]' : SCHEDULE_SEGMENT_TONES[index % SCHEDULE_SEGMENT_TONES.length]}`}>
+          <div className={segment.time ? 'flex items-start gap-1.5' : 'block'}>
+            {segment.time ? <span className="sou-prison-schedule-time inline-flex min-h-5 shrink-0 items-center rounded-full bg-black/15 px-1.5 text-[9px] font-black tabular-nums text-cyan-100 sm:text-[10px]">{segment.time}</span> : null}
+            <span className={`min-w-0 break-keep text-[10px] font-extrabold leading-4 sm:text-[13px] sm:leading-5 ${offDay ? 'text-rose-100' : 'text-white/92'}`}>{segment.title}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CalendarPreview() {
   const [selectedMember, setSelectedMember] = useState('전체보기');
   const [centerDate, setCenterDate] = useState(() => startOfDay(getCurrentKstDate()));
@@ -168,6 +192,7 @@ export default function CalendarPreview() {
         memberImage: MEMBER_PROFILE_MAP.get(entry.member)?.image || '',
         memberStation: MEMBER_PROFILE_MAP.get(entry.member)?.station || '',
         title: item.title,
+        segments: splitScheduleTitle(item.title),
         year: Number(item.year || parsedMonth.year),
         month: Number(item.month || parsedMonth.month),
       })));
@@ -254,7 +279,7 @@ export default function CalendarPreview() {
                       <div className={`text-[12px] font-black sm:text-[17px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
                       {isToday ? <span className="rounded-full bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 shadow-[0_0_12px_rgba(103,232,249,0.16)] sm:px-2 sm:text-[10px]">TODAY</span> : hasItem ? <span className={`mt-1 h-2 w-2 rounded-full sm:mt-1.5 sm:h-2.5 sm:w-2.5 ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
                     </div>
-                    {hasItem ? <div className={`relative mt-2 line-clamp-3 text-[9px] font-black leading-4 break-keep sm:mt-4 sm:text-[13px] sm:leading-6 ${offDay ? 'text-rose-100' : 'text-white/92'}`}>{cell.title}</div> : null}
+                    {hasItem ? <div className="relative mt-2 sm:mt-3"><CompactScheduleSegments title={cell.title} offDay={offDay} /></div> : null}
                   </div>
                 );
               })}
@@ -266,4 +291,3 @@ export default function CalendarPreview() {
     </section>
   );
 }
-
