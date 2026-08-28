@@ -18,23 +18,22 @@ export default function ScheduleEvent({ event, showMember = true, compact = fals
   const segments = event.segments?.length ? event.segments : [{ time: '', title: event.title }];
   const off = segments.every((segment) => String(segment.title).includes('휴방'));
   return (
-    <div className={`overflow-hidden rounded-[12px] ${off ? 'bg-white/[0.045] text-white/48 shadow-[inset_3px_0_0_rgba(148,163,184,0.45)]' : getEventTone(event.colorIndex)}`}>
+    <div className={`sou-calendar-event overflow-hidden rounded-[14px] ${off ? 'bg-white/[0.045] text-white/48 shadow-[inset_4px_0_0_rgba(148,163,184,0.45)]' : getEventTone(event.colorIndex)}`}>
       {showMember ? (
         <div className="flex items-center gap-1.5 border-b border-white/[0.065] px-2.5 py-1.5">
           {event.memberImage ? <img src={event.memberImage} alt="" className="h-5 w-5 rounded-full object-cover" loading="lazy" referrerPolicy="no-referrer" /> : null}
-          <span className="truncate text-[10px] font-black text-white/62">{event.member}</span>
+          <span className="truncate text-[12px] font-black text-white/62">{event.member}</span>
         </div>
       ) : null}
       <div className={compact ? 'space-y-1 px-2 py-1.5' : 'space-y-1.5 px-2.5 py-2'}>
         {segments.map((segment, index) => (
-          <div key={`${segment.time}-${segment.title}-${index}`} className="grid grid-cols-[38px_minmax(0,1fr)] items-start gap-1.5">
-            <span className="pt-px text-[9px] font-black tabular-nums text-white/52">{segment.time}</span>
-            <span className={`${compact ? 'text-[10px] leading-4' : 'text-[11px] leading-[1.45]'} min-w-0 break-keep font-bold`}>{segment.title}</span>
+          <div key={`${segment.time}-${segment.title}-${index}`} className={segment.time ? 'grid grid-cols-[48px_minmax(0,1fr)] items-start gap-2' : 'block'}>
+            {segment.time ? <span className="inline-flex min-h-6 items-center justify-center rounded-full bg-black/10 px-1.5 text-[12px] font-black tabular-nums text-white/64">{segment.time}</span> : null}
+            <span className={`${compact ? 'text-[14px] leading-[1.52]' : 'text-[15px] leading-[1.58]'} min-w-0 break-keep font-extrabold tracking-[-0.018em]`}>{segment.title}</span>
           </div>
         ))}
       </div>
     </div>
   );
 }
-
 
