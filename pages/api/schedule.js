@@ -1,7 +1,7 @@
 import { fetchRowsByGid, isIgnoredCalendarText, normalizeScheduleText } from '../../lib/scheduleSheet';
 import { fetchMonthlySheet } from '../../lib/monthlySheetResolver';
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
-import { getKstMonthInfo } from '../../lib/scheduleMonth';
+import { getAllowedScheduleMonth } from '../../lib/scheduleMonth';
 
 const SHEET_ID = '1b1-p5I4CGEdLwI7XxyyAMDtEjmR9lEzOtoL-vAwo5PM';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
@@ -182,8 +182,12 @@ async function buildFreshScheduleResponse(currentMonth) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
-  const currentMonth = getKstMonthInfo();
-  const cacheKey = makeCacheKey(currentMonth);
+  const selectedMonth = getAllowedScheduleMonth(req.query, 2);
+  if (!selectedMonth) {
+    return res.status(400).json({ ok: false, message: '이번 달과 이전 두 달 일정만 확인할 수 있습니다.' });
+  }
+
+  const cacheKey = makeCacheKey(selectedMonth);
   const cached = await getCachedJson(cacheKey);
   const now = Date.now();
 
@@ -197,7 +201,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const payload = await buildFreshScheduleResponse(currentMonth);
+    const payload = await buildFreshScheduleResponse(selectedMonth);
     await setCachedJson(cacheKey, { payload, cachedAt: now }, CACHE_TTL_SECONDS);
 
     return res.status(200).json({
@@ -217,10 +221,9 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      ...emptyCurrentMonthPayload(currentMonth, getKnownMonthSourceUrl(currentMonth) || SHEET_URL),
+      ...emptyCurrentMonthPayload(selectedMonth, getKnownMonthSourceUrl(selectedMonth) || SHEET_URL),
       cache: 'unavailable',
       cacheKey,
     });
   }
 }
-
