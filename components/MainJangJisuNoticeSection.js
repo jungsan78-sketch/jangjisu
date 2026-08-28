@@ -32,7 +32,7 @@ export default function MainJangJisuNoticeSection() {
   }, []);
 
   return (
-    <section id="notice" data-main-notice="true" className="relative mx-auto mt-8 max-w-7xl bg-transparent px-6 py-8 text-white shadow-none lg:px-8 lg:py-10">
+    <section id="notice" data-main-notice="true" className="relative mx-auto mt-8 w-full max-w-none bg-transparent px-0 py-8 text-white shadow-none lg:py-10">
       <div className="mb-7 flex items-end justify-between gap-4">
         <div>
           <h3 className="text-[32px] font-black tracking-[-0.045em] text-white sm:text-[40px]">최신 공지사항</h3>
@@ -48,4 +48,3 @@ export default function MainJangJisuNoticeSection() {
     </section>
   );
 }
-
