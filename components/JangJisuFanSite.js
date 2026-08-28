@@ -69,7 +69,7 @@ function NavChip({ href, label, tone = 'neutral', external = false, icon = '', o
 function VideoCard({ video, vertical = false }) {
   return (
     <a href={video.url} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#0c1018] transition hover:-translate-y-1 hover:border-white/20">
-      <div className={`relative overflow-hidden bg-[#121826] ${vertical ? 'aspect-[9/14]' : 'aspect-video'}`}>
+      <div className={`sou-theme-preserve-dark relative overflow-hidden bg-[#121826] ${vertical ? 'aspect-[9/14]' : 'aspect-video'}`}>
         {video.thumbnail ? <img src={video.thumbnail} alt={video.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]" /> : <div className="flex h-full w-full items-center justify-center text-4xl">▶</div>}
         <div className="absolute left-3 top-3 flex items-center gap-2"><span className="rounded-full bg-[#ff4e45] px-3 py-1 text-[11px] font-bold text-white">▶ YouTube</span></div>
         {video.durationText ? <div className="absolute bottom-3 right-3 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white backdrop-blur">{video.durationText}</div> : null}
