@@ -1,4 +1,11 @@
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const SCHEDULE_SEGMENT_TONES = [
+  'border-cyan-200/15 bg-cyan-300/[0.09]',
+  'border-amber-200/15 bg-amber-300/[0.09]',
+  'border-violet-200/15 bg-violet-300/[0.09]',
+  'border-rose-200/15 bg-rose-300/[0.09]',
+  'border-emerald-200/15 bg-emerald-300/[0.09]',
+];
 
 function formatCellHeading(date) {
   return `${date.getDate()}일`;
@@ -17,6 +24,22 @@ function MemberIdentity({ item, off }) {
 
   if (!item.memberStation) return <div className="flex items-center gap-2">{content}</div>;
   return <a href={item.memberStation} target="_blank" rel="noreferrer" aria-label={`${item.member} SOOP 방송국 열기`} className="group/member inline-flex max-w-full items-center gap-2 rounded-full pr-2 transition hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/50">{content}<span aria-hidden="true" className="text-[10px] font-black text-white/22 transition group-hover/member:text-white/55">↗</span></a>;
+}
+
+function ScheduleLineList({ item, off }) {
+  const segments = item.segments?.length ? item.segments : [{ time: '', title: item.title }];
+  return (
+    <div className="mt-2 space-y-1.5 border-t border-white/5 pt-2">
+      {segments.map((segment, index) => (
+        <div key={`${segment.time}-${segment.title}-${index}`} className={`sou-prison-schedule-segment rounded-xl border px-2.5 py-2 ${off ? 'border-orange-200/15 bg-orange-300/[0.075]' : SCHEDULE_SEGMENT_TONES[index % SCHEDULE_SEGMENT_TONES.length]}`}>
+          <div className={segment.time ? 'flex items-start gap-2' : 'block'}>
+            {segment.time ? <span className="sou-prison-schedule-time inline-flex min-h-5 shrink-0 items-center rounded-full bg-black/15 px-2 text-[10px] font-black tabular-nums text-cyan-100">{segment.time}</span> : null}
+            <span className={`min-w-0 break-keep text-[14px] font-semibold leading-6 ${off ? 'text-rose-50' : 'text-white/92'}`}>{segment.title}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
@@ -47,7 +70,7 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
                     return (
                       <div key={`${item.member}-${item.title}-${index}`} className={`rounded-[18px] px-3 py-3 ${off ? 'bg-[linear-gradient(180deg,rgba(251,146,60,0.08),rgba(120,53,15,0.05))] shadow-[inset_0_0_0_1px_rgba(251,146,60,0.10)]' : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.01))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'}`}>
                         <MemberIdentity item={item} off={off} />
-                        <div className={`mt-2 border-t border-white/5 pt-2 text-[15px] font-semibold leading-6 break-keep ${off ? 'text-rose-50' : 'text-white/92'}`}>{item.title}</div>
+                        <ScheduleLineList item={item} off={off} />
                       </div>
                     );
                   })}
@@ -60,4 +83,3 @@ export default function WeeklyAllScheduleView({ dates, groupedSchedules }) {
     </div>
   );
 }
-
