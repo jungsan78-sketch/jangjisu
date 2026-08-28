@@ -25,18 +25,18 @@ export default function ScheduleMonthGrid({ year, month, events }) {
 
   return (
     <>
-      <div className="sou-calendar-grid hidden overflow-hidden rounded-[24px] bg-[#06101d] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_64px_rgba(0,0,0,0.24)] lg:block">
+      <div className="sou-calendar-grid hidden w-full max-w-none overflow-hidden rounded-[24px] bg-[#06101d] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_64px_rgba(0,0,0,0.24)] lg:block">
         <div className="grid grid-cols-7 border-b border-white/[0.07] bg-white/[0.025]">
           {WEEKDAYS.map((weekday, index) => <div key={weekday} className={`px-3 py-3.5 text-center text-[15px] font-black ${index === 0 ? 'text-rose-400' : index === 6 ? 'text-sky-500' : 'text-white/52'}`}>{weekday}</div>)}
         </div>
         <div className="grid grid-cols-7">
           {cells.map((day, index) => {
-            if (!day) return <div key={`empty-${index}`} className="min-h-[170px] border-b border-r border-white/[0.045] bg-white/[0.012]" />;
+            if (!day) return <div key={`empty-${index}`} className="min-h-[145px] border-b border-r border-white/[0.045] bg-white/[0.012]" />;
             const dayEvents = grouped.get(day) || [];
             const weekday = index % 7;
             const isToday = isCurrentMonth && today.getDate() === day;
             return (
-              <section key={dateKey(year, month, day)} className={`sou-calendar-day min-h-[190px] border-b border-r border-white/[0.055] p-3 transition ${isToday ? 'bg-cyan-300/[0.055] shadow-[inset_0_0_0_1px_rgba(103,232,249,0.12)]' : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.004))]'}`}>
+              <section key={dateKey(year, month, day)} className={`sou-calendar-day min-h-[150px] border-b border-r border-white/[0.055] p-3 transition ${isToday ? 'bg-cyan-300/[0.055] shadow-[inset_0_0_0_1px_rgba(103,232,249,0.12)]' : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.004))]'}`}>
                 <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
                   <span className={`text-[17px] font-black ${weekday === 0 ? 'text-rose-400' : weekday === 6 ? 'text-sky-500' : 'text-white/86'}`}>{day}</span>
                   {isToday ? <span className="rounded-full bg-cyan-300/12 px-2 py-0.5 text-[8px] font-black tracking-[0.14em] text-cyan-100">TODAY</span> : null}
@@ -61,4 +61,3 @@ export default function ScheduleMonthGrid({ year, month, events }) {
     </>
   );
 }
-
