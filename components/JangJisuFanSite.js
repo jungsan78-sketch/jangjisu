@@ -4,11 +4,11 @@ import { splitScheduleTitle } from '../lib/prisonScheduleCalendar';
 
 const SCHEDULE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const SCHEDULE_SEGMENT_TONES = [
-  'border-cyan-200/15 bg-cyan-300/[0.09]',
-  'border-amber-200/15 bg-amber-300/[0.09]',
-  'border-violet-200/15 bg-violet-300/[0.09]',
-  'border-rose-200/15 bg-rose-300/[0.09]',
-  'border-emerald-200/15 bg-emerald-300/[0.09]',
+  'border-sky-200/25 bg-sky-300/[0.22]',
+  'border-amber-200/25 bg-amber-300/[0.22]',
+  'border-violet-200/25 bg-violet-300/[0.22]',
+  'border-rose-200/25 bg-rose-300/[0.22]',
+  'border-emerald-200/25 bg-emerald-300/[0.22]',
 ];
 
 function SectionTitle({ eyebrow, title, actionHref, actionLabel, logo }) {
@@ -130,10 +130,10 @@ function ScheduleSegments({ title, compact = false, offDay = false }) {
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
       {segments.map((segment, index) => (
-        <div key={`${segment.time}-${segment.title}-${index}`} className={`sou-fan-schedule-segment rounded-xl border px-2.5 py-2 ${offDay ? 'border-orange-200/15 bg-orange-300/[0.075]' : SCHEDULE_SEGMENT_TONES[index % SCHEDULE_SEGMENT_TONES.length]}`}>
-          <div className={segment.time ? 'flex items-start gap-2' : 'block'}>
-            {segment.time ? <span className="sou-fan-schedule-time inline-flex min-h-5 shrink-0 items-center rounded-full bg-black/15 px-2 text-[10px] font-extrabold tabular-nums text-cyan-100">{segment.time}</span> : null}
-            <span className={`${compact ? 'text-[12px] leading-5' : 'text-[15px] leading-6'} min-w-0 break-keep font-semibold text-white/92`}>{segment.title}</span>
+        <div key={`${segment.time}-${segment.title}-${index}`} className={segment.time ? 'grid grid-cols-[42px_minmax(0,1fr)] items-start gap-1.5' : 'block'}>
+          {segment.time ? <span className="sou-fan-schedule-time inline-flex min-h-7 items-center text-[10px] font-extrabold tabular-nums text-white/62">{segment.time}</span> : null}
+          <div className={`sou-fan-schedule-segment min-w-0 rounded-[10px] border px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ${offDay ? 'border-orange-200/20 bg-orange-300/[0.12]' : SCHEDULE_SEGMENT_TONES[index % SCHEDULE_SEGMENT_TONES.length]}`}>
+            <span className={`${compact ? 'text-[12px] leading-5' : 'text-[15px] leading-6'} block min-w-0 break-keep font-extrabold text-white`}>{segment.title}</span>
           </div>
         </div>
       ))}
