@@ -1,3 +1,5 @@
+import { getAllowedScheduleMonth } from '../../lib/scheduleMonth';
+
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const SOURCES = [
@@ -12,7 +14,7 @@ const SOURCES = [
     id: 'guweol',
     key: '구월이',
     sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
-    gid: '1765161556',
+    gids: { '2026-07': '739202309', '2026-08': '1765161556' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1765161556#gid=1765161556',
     mode: 'fixedGid',
   },
@@ -20,7 +22,7 @@ const SOURCES = [
     id: 'linling',
     key: '린링',
     sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
-    gid: '730341520',
+    gids: { '2026-07': '1838232194', '2026-08': '730341520' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=730341520#gid=730341520',
     mode: 'fixedGid',
   },
@@ -28,7 +30,7 @@ const SOURCES = [
     id: 'youoneul',
     key: '유오늘',
     sheetId: '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo',
-    gid: '996600110',
+    gids: { '2026-07': '1665931711', '2026-08': '996600110' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=996600110#gid=996600110',
     mode: 'fixedGid',
   },
@@ -36,7 +38,7 @@ const SOURCES = [
     id: 'honoe1330',
     key: '이치유',
     sheetId: '1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH',
-    gid: '1452473631',
+    gids: { '2026-08': '1452473631' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1452473631#gid=1452473631',
     mode: 'fixedGid',
   },
@@ -44,23 +46,26 @@ const SOURCES = [
     id: 'doodong',
     key: '냥냥두둥',
     sheetId: '1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs',
-    gid: '1650576825',
+    gids: { '2026-08': '1650576825' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs/edit?gid=1650576825#gid=1650576825',
     mode: 'fixedGid',
   },
 ];
 
-const buildSheetCandidates = (baseDate = new Date()) => {
-  const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+const monthKey = (monthInfo) => `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
 
-  return [
-    {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1,
-      sheetName: `${String(date.getFullYear()).slice(2)}년 ${date.getMonth() + 1}월`,
-      monthLabel: `${date.getFullYear()}년 ${date.getMonth() + 1}월`,
-    },
-  ];
+const buildSheetCandidates = (monthInfo) => [
+  `${String(monthInfo.year).slice(2)}년 ${monthInfo.month}월`,
+  `${monthInfo.year}년 ${monthInfo.month}월`,
+  `${monthInfo.month}월`,
+  `${monthInfo.month}월 일정표`,
+].map((sheetName) => ({ ...monthInfo, sheetName }));
+
+const getSourceGid = (source, monthInfo) => source.gids?.[monthKey(monthInfo)] || '';
+
+const getSourceUrl = (source, monthInfo) => {
+  const gid = getSourceGid(source, monthInfo);
+  return gid ? `https://docs.google.com/spreadsheets/d/${source.sheetId}/edit?gid=${gid}#gid=${gid}` : source.sourceUrl;
 };
 
 const csvToRows = (text) => {
@@ -279,26 +284,27 @@ const fetchCandidateSchedule = async (source, candidate) => {
   return { monthLabel: candidate.monthLabel, sheetName: candidate.sheetName, items, fetchedUrl };
 };
 
-const fetchFixedGidSchedule = async (source, baseDate = new Date()) => {
-  const year = baseDate.getFullYear();
-  const month = baseDate.getMonth() + 1;
+const fetchFixedGidSchedule = async (source, monthInfo) => {
+  const { year, month } = monthInfo;
+  const gid = getSourceGid(source, monthInfo);
+  if (!gid) throw new Error('선택한 달의 고정 시트 정보를 찾지 못했습니다.');
   const urls = [
-    `https://docs.google.com/spreadsheets/d/${source.sheetId}/export?format=csv&gid=${source.gid}`,
-    `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:csv&gid=${source.gid}`,
-    `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:json&gid=${source.gid}`,
+    `https://docs.google.com/spreadsheets/d/${source.sheetId}/export?format=csv&gid=${gid}`,
+    `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`,
+    `https://docs.google.com/spreadsheets/d/${source.sheetId}/gviz/tq?tqx=out:json&gid=${gid}`,
   ];
   const { rows, fetchedUrl } = await fetchRowsFromUrls(urls);
   const items = parseScheduleRows(rows, year, month);
-  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: source.sourceUrl };
+  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: getSourceUrl(source, monthInfo) };
 };
 
-const fetchSourceSchedule = async (source) => {
-  if (source.mode === 'fixedGid') {
-    const result = await fetchFixedGidSchedule(source);
+const fetchSourceSchedule = async (source, monthInfo) => {
+  if (source.mode === 'fixedGid' && getSourceGid(source, monthInfo)) {
+    const result = await fetchFixedGidSchedule(source, monthInfo);
     return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
   }
 
-  const candidates = buildSheetCandidates();
+  const candidates = buildSheetCandidates(monthInfo);
   for (const candidate of candidates) {
     try {
       const result = await fetchCandidateSchedule(source, candidate);
@@ -314,18 +320,23 @@ const fetchSourceSchedule = async (source) => {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
 
+  const selectedMonth = getAllowedScheduleMonth(req.query, 2);
+  if (!selectedMonth) {
+    return res.status(400).json({ ok: false, message: '이번 달과 이전 두 달 일정만 확인할 수 있습니다.' });
+  }
+
   const requestedKey = String(req.query.key || '').trim();
   const activeSources = requestedKey ? SOURCES.filter((source) => source.id === requestedKey) : SOURCES;
   if (!activeSources.length) {
     return res.status(404).json({ ok: false, message: '일정 소스를 찾지 못했습니다.' });
   }
 
-  const results = await Promise.allSettled(activeSources.map(fetchSourceSchedule));
+  const results = await Promise.allSettled(activeSources.map((source) => fetchSourceSchedule(source, selectedMonth)));
   const schedules = results
     .filter((result) => result.status === 'fulfilled' && result.value.ok)
     .map((result) => result.value);
 
-  const monthLabel = schedules[0]?.monthLabel || `${new Date().getFullYear()}년 ${new Date().getMonth() + 1}월`;
+  const monthLabel = schedules[0]?.monthLabel || selectedMonth.monthLabel;
   const items = schedules.flatMap((schedule) =>
     (schedule.items || [])
       .filter((item) => !item.empty && String(item.title || '').trim())
@@ -338,7 +349,7 @@ export default async function handler(req, res) {
     members: schedules.map((schedule) => schedule.member),
     schedules,
     items,
-    sourceUrl: schedules[0]?.sourceUrl || activeSources[0]?.sourceUrl || '',
+    sourceUrl: schedules[0]?.sourceUrl || getSourceUrl(activeSources[0], selectedMonth) || '',
     sourceStatus: results.map((result, index) => ({
       member: activeSources[index].key,
       ok: result.status === 'fulfilled' ? result.value.ok : false,
@@ -346,4 +357,3 @@ export default async function handler(req, res) {
     fetchedAt: new Date().toISOString(),
   });
 }
-
