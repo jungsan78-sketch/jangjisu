@@ -389,7 +389,7 @@ export default function Home() {
 
           .jangjisu-left-nav-mode main {
             width: 100% !important;
-            max-width: 80rem !important;
+            max-width: none !important;
             margin-left: auto !important;
             margin-right: auto !important;
           }
@@ -412,4 +412,3 @@ export default function Home() {
     </>
   );
 }
-
