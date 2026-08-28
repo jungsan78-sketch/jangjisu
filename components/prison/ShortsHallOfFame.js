@@ -134,7 +134,7 @@ export default function ShortsHallOfFame() {
   const slots = payload?.slots || {};
 
   return (
-    <section id="shorts-hall" className="relative mb-14 scroll-mt-6 w-full max-w-none overflow-hidden rounded-[34px] border border-white/[0.07] bg-[linear-gradient(145deg,rgba(3,7,18,0.96),rgba(9,17,35,0.97)_48%,rgba(3,7,18,0.98))] px-4 py-10 shadow-[0_34px_90px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.04)] sm:px-8 sm:py-12 lg:px-12">
+    <section id="shorts-hall" className="sou-theme-preserve-dark relative mb-14 scroll-mt-6 w-full max-w-none overflow-hidden rounded-[34px] border border-white/[0.07] bg-[linear-gradient(145deg,rgba(3,7,18,0.96),rgba(9,17,35,0.97)_48%,rgba(3,7,18,0.98))] px-4 py-10 shadow-[0_34px_90px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.04)] sm:px-8 sm:py-12 lg:px-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_4%,rgba(103,232,249,0.17),transparent_25%),radial-gradient(circle_at_18%_44%,rgba(251,191,36,0.18),transparent_28%),radial-gradient(circle_at_82%_44%,rgba(226,232,240,0.15),transparent_27%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(110deg,transparent_10%,rgba(255,255,255,0.04)_30%,transparent_47%,rgba(103,232,249,0.045)_65%,transparent_84%)]" />
       <div className="pointer-events-none absolute -left-32 top-8 h-[520px] w-48 origin-top rotate-[18deg] bg-gradient-to-b from-amber-100/[0.09] via-amber-200/[0.025] to-transparent blur-2xl" />
