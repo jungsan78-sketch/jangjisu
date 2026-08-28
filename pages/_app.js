@@ -1,11 +1,13 @@
 import '../styles/globals.css';
 import '../styles/sidebar-logo.css';
 import '../styles/theme-soft-background.css';
+import '../styles/site-theme.css';
 import Head from 'next/head';
 import { Analytics } from '@vercel/analytics/next';
 import PrisonLiveStatusHydrator from '../components/PrisonLiveStatusHydrator';
 import CalendarYoutubeUiHydrator from '../components/CalendarYoutubeUiHydrator';
 import PrisonMemberLiveGrid from '../components/PrisonMemberLiveGrid';
+import SiteThemeToggle from '../components/SiteThemeToggle';
 
 const SCHEDULE_POLLING_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -77,6 +79,7 @@ export default function App({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/site-icon.png" />
       </Head>
       <Component {...pageProps} />
+      <SiteThemeToggle />
       <PrisonWideLayoutOverride />
       <PrisonLiveStatusHydrator />
       <CalendarYoutubeUiHydrator />
