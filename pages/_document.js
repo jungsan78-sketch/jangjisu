@@ -18,23 +18,6 @@ class MyDocument extends Document {
     return (
       <Html className={prepaintClassName}>
         <Head>
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                (function () {
-                  try {
-                    var saved = localStorage.getItem('sou-site-theme-v1');
-                    var theme = saved === 'dark' ? 'dark' : 'light';
-                    document.documentElement.dataset.souTheme = theme;
-                    document.documentElement.style.colorScheme = theme;
-                  } catch (_) {
-                    document.documentElement.dataset.souTheme = 'light';
-                    document.documentElement.style.colorScheme = 'light';
-                  }
-                })();
-              `,
-            }}
-          />
           <style
             dangerouslySetInnerHTML={{
               __html: `
@@ -89,4 +72,3 @@ class MyDocument extends Document {
 }
 
 export default MyDocument;
-
