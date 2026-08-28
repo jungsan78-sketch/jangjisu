@@ -69,7 +69,7 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
               type="button"
               key={member.id}
               onClick={() => onSelectMember(member.id)}
-              className={`group flex min-w-0 items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-cyan-200/35 bg-cyan-300/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]' : 'border-white/[0.06] bg-white/[0.035] hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06]'}`}
+              className={`sou-data-rank group flex min-w-0 items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${selected ? 'border-cyan-200/35 bg-cyan-300/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]' : 'border-white/[0.06] bg-white/[0.035] hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06]'}`}
             >
               <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-black ${index < 3 ? 'bg-amber-300/15 text-amber-100' : 'bg-white/[0.05] text-white/45'}`}>{index + 1}</span>
               <img src={member.image} alt="" className="h-10 w-10 shrink-0 rounded-full border border-white/15 object-cover" />
@@ -90,3 +90,4 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
     </section>
   );
 }
+
