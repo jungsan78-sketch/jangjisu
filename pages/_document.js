@@ -42,7 +42,7 @@ class MyDocument extends Document {
                 }
                 html.sou-prison-prepaint header > div,
                 html.sou-prison-prepaint main {
-                  max-width: 1200px !important;
+                  max-width: none !important;
                 }
                 html.sou-main-prepaint main,
                 html.sou-prison-prepaint main {
