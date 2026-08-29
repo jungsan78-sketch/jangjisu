@@ -83,10 +83,6 @@ function hasScheduleItems(entry) {
   return (entry?.items || []).some((item) => !item.empty && String(item.title || '').trim());
 }
 
-function withCacheBust(endpoint) {
-  return `${endpoint}${endpoint.includes('?') ? '&' : '?'}t=${Date.now()}`;
-}
-
 function FilterButton({ label, image, active, linked, onClick }) {
   const stateClass = active
     ? 'border-amber-200/28 bg-amber-300/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_22px_rgba(245,158,11,0.20)]'
@@ -128,22 +124,29 @@ export default function CalendarPreview() {
     let mounted = true;
 
     async function load() {
-      const results = await Promise.allSettled(PRISON_SCHEDULE_SOURCES.map((source) => fetch(withCacheBust(source.endpoint), { cache: 'no-store' }).then((res) => {
-        if (!res.ok) throw new Error(`schedule ${res.status}`);
-        return res.json();
-      })));
-      if (!mounted) return;
-      const nextState = {};
-      PRISON_SCHEDULE_SOURCES.forEach((source, index) => {
-        const result = results[index];
-        nextState[source.key] = {
-          monthLabel: result.status === 'fulfilled' ? result.value.monthLabel || '' : '',
-          items: result.status === 'fulfilled' && Array.isArray(result.value.items) ? result.value.items : [],
-          sourceUrl: result.status === 'fulfilled' ? result.value.sourceUrl || source.sourceUrl || '' : source.sourceUrl || '',
+      try {
+        const response = await fetch('/api/prison-schedule');
+        if (!response.ok) throw new Error(`schedule ${response.status}`);
+        const payload = await response.json();
+        if (!payload.ok || !Array.isArray(payload.schedules)) throw new Error('schedule unavailable');
+        if (!mounted) return;
+        const scheduleMap = new Map(payload.schedules.map((schedule) => [schedule.member, schedule]));
+        setScheduleState(Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => {
+          const schedule = scheduleMap.get(source.member) || {};
+          return [source.key, {
+            monthLabel: schedule.monthLabel || payload.monthLabel || '',
+            items: Array.isArray(schedule.items) ? schedule.items : [],
+            sourceUrl: schedule.sourceUrl || source.sourceUrl || '',
+            loaded: true,
+          }];
+        })));
+      } catch {
+        if (!mounted) return;
+        setScheduleState((previous) => Object.fromEntries(PRISON_SCHEDULE_SOURCES.map((source) => [source.key, {
+          ...(previous[source.key] || {}),
           loaded: true,
-        };
-      });
-      setScheduleState(nextState);
+        }])));
+      }
     }
 
     load();
@@ -291,3 +294,4 @@ export default function CalendarPreview() {
     </section>
   );
 }
+
