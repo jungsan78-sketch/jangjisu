@@ -70,8 +70,8 @@ export default function PrisonQuickNav() {
   }
 
   return (
-    <nav aria-label="수용소 섹션 바로가기" className="sou-prison-quick-nav sticky top-3 z-40 hidden w-full xl:block">
-      <div className="grid w-full grid-cols-5 gap-2 rounded-[22px] bg-[#07101c]/92 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_48px_rgba(0,0,0,0.38),0_0_24px_rgba(56,189,248,0.07)] backdrop-blur-xl">
+    <nav aria-label="수용소 섹션 바로가기" className="sou-prison-quick-nav relative hidden h-[60px] w-full xl:block">
+      <div className="fixed left-[302px] right-7 top-3 z-40 grid grid-cols-5 gap-2 rounded-[22px] bg-[#07101c]/92 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_48px_rgba(0,0,0,0.38),0_0_24px_rgba(56,189,248,0.07)] backdrop-blur-xl">
         {QUICK_LINKS.map((item) => {
           const active = activeId === item.id;
           return (
