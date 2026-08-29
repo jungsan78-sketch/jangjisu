@@ -1,3 +1,5 @@
+import { readSnapshotCache, writeSnapshotCache } from '../../lib/cloudflareSnapshotCache';
+
 const SHEET_SOURCES = [
   {
     id: '1-mACl-yykHphsqiSUNPkoC1GHydOYmWX-xHqdRz7DVM',
@@ -15,6 +17,9 @@ const SHEET_SOURCES = [
 
 const CREW_SHEET_CACHE_SECONDS = 24 * 60 * 60;
 const CREW_SHEET_STALE_SECONDS = 12 * 60 * 60;
+const CREW_SHEET_STORAGE_SECONDS = 100 * 24 * 60 * 60;
+const CREW_SHEET_CACHE_KEY = 'prison:crew-sheet:v2';
+let crewRefreshPromise = null;
 
 const MANUAL_STATION_OVERRIDES = {
   부르: 'https://www.sooplive.com/station/bureu2002',
@@ -87,14 +92,57 @@ async function fetchText(url) { const res = await fetch(url, { headers: { 'User-
 async function fetchSheetCrews(source) { const urls = [`https://docs.google.com/spreadsheets/d/${source.id}/htmlview?gid=${source.gid}&single=true&widget=false&headers=false`, `https://docs.google.com/spreadsheets/d/${source.id}/gviz/tq?tqx=out:html&gid=${source.gid}`]; const parsed = []; const linkMaps = []; for (const url of urls) { try { const html = await fetchText(url); const crews = parseCrewsFromHtml(html); const linkMap = extractLinkMapFromHtml(html); parsed.push({ crews, stationLinks: countStationLinks(crews), memberCount: countMembers(crews), url }); linkMaps.push(linkMap); } catch {} } if (!parsed.length) return { crews: [], stationLinks: 0, memberCount: 0, url: '' }; const mergedLinks = mergeLinkMaps(linkMaps); parsed.sort((a, b) => b.crews.length - a.crews.length || b.memberCount - a.memberCount || b.stationLinks - a.stationLinks); return { ...parsed[0], crews: enrichCrewLinks(parsed[0].crews, mergedLinks, source) }; }
 function makeCategoryStats(crews = []) { return SHEET_SOURCES.reduce((acc, source) => { const filtered = crews.filter((crew) => crew.category === source.category); acc[source.category] = { label: source.categoryLabel, crewCount: filtered.length, memberCount: countMembers(filtered) }; return acc; }, {}); }
 
-export default async function handler(req, res) {
-  res.setHeader('Cache-Control', `public, s-maxage=${CREW_SHEET_CACHE_SECONDS}, stale-while-revalidate=${CREW_SHEET_STALE_SECONDS}`);
+async function collectCrewPayload() {
+  const results = await Promise.allSettled(SHEET_SOURCES.map(fetchSheetCrews));
+  const chunks = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+  const crews = chunks.flatMap((chunk) => chunk.crews || []);
+  if (!crews.length) throw new Error('종겜 크루 원본을 불러오지 못했습니다.');
+  return {
+    crews,
+    categories: SHEET_SOURCES.map(({ category, categoryLabel }) => ({ key: category, label: categoryLabel })),
+    categoryStats: makeCategoryStats(crews),
+    source: 'google-sheet-html',
+    linkCount: countStationLinks(crews),
+    sourceStatus: results.map((result, index) => ({
+      category: SHEET_SOURCES[index].category,
+      ok: result.status === 'fulfilled' && result.value.crews.length > 0,
+      crewCount: result.status === 'fulfilled' ? result.value.crews.length : 0,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+async function refreshCrewSnapshot(cache) {
+  if (crewRefreshPromise) return crewRefreshPromise;
+  crewRefreshPromise = (async () => {
+    const payload = await collectCrewPayload();
+    const record = { payload, cachedAt: Date.now() };
+    const storage = await writeSnapshotCache(cache, CREW_SHEET_CACHE_KEY, record, CREW_SHEET_STORAGE_SECONDS);
+    return { record, storage };
+  })();
   try {
-    const results = await Promise.allSettled(SHEET_SOURCES.map(fetchSheetCrews));
-    const chunks = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
-    const crews = chunks.flatMap((chunk) => chunk.crews || []);
-    return res.status(200).json({ crews, categories: SHEET_SOURCES.map(({ category, categoryLabel }) => ({ key: category, label: categoryLabel })), categoryStats: makeCategoryStats(crews), source: crews.length ? 'google-sheet-html' : 'empty', linkCount: countStationLinks(crews), sourceStatus: results.map((result, index) => ({ category: SHEET_SOURCES[index].category, ok: result.status === 'fulfilled', crewCount: result.status === 'fulfilled' ? result.value.crews.length : 0 })), updatedAt: new Date().toISOString() });
-  } catch (error) {
-    return res.status(200).json({ crews: [], categories: [], categoryStats: {}, source: 'fallback', error: true, message: error?.message || 'unknown' });
+    return await crewRefreshPromise;
+  } finally {
+    crewRefreshPromise = null;
   }
 }
+
+export default async function handler(req, res) {
+  res.setHeader('Cache-Control', `public, s-maxage=300, stale-while-revalidate=${CREW_SHEET_STALE_SECONDS}`);
+  const cache = await readSnapshotCache(CREW_SHEET_CACHE_KEY);
+  const cachedAt = Number(cache.record?.cachedAt || 0);
+  if (cache.record?.payload && cachedAt && Date.now() - cachedAt < CREW_SHEET_CACHE_SECONDS * 1000) {
+    return res.status(200).json({ ...cache.record.payload, cache: 'hit', cacheStorage: cache.storage, cachedAt: new Date(cachedAt).toISOString() });
+  }
+
+  try {
+    const result = await refreshCrewSnapshot(cache);
+    return res.status(200).json({ ...result.record.payload, cache: cache.record?.payload ? 'refresh' : 'miss', cacheStorage: result.storage, cachedAt: new Date(result.record.cachedAt).toISOString() });
+  } catch (error) {
+    if (cache.record?.payload) {
+      return res.status(200).json({ ...cache.record.payload, cache: 'stale', cacheStorage: cache.storage, cachedAt: new Date(cache.record.cachedAt).toISOString() });
+    }
+    return res.status(200).json({ crews: [], categories: [], categoryStats: {}, source: 'fallback', cache: 'unavailable', cacheStorage: cache.storage, error: true, message: error?.message || 'unknown' });
+  }
+}
+
