@@ -37,7 +37,9 @@ class MyDocument extends Document {
                   visibility: visible !important;
                 }
                 html.sou-main-prepaint header > div,
-                html.sou-main-prepaint main,
+                html.sou-main-prepaint main {
+                  max-width: none !important;
+                }
                 html.sou-prison-prepaint header > div,
                 html.sou-prison-prepaint main {
                   max-width: 1200px !important;
