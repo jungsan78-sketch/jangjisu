@@ -29,12 +29,12 @@ function PrisonWideLayoutOverride() {
         }
 
         .sou-prison-main {
-          width: calc(100vw - 270px) !important;
+          width: 100% !important;
           max-width: none !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-          padding-left: 0 !important;
-          padding-right: 0 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          padding-left: 28px !important;
+          padding-right: 28px !important;
           overflow-x: visible !important;
         }
 
