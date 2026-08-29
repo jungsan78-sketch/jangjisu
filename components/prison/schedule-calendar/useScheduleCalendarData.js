@@ -68,7 +68,7 @@ export default function useScheduleCalendarData(selectedKey, selectedMonth) {
     memberStation: entry.station,
     colorIndex: entry.colorIndex,
     title: String(item.title || ''),
-    segments: splitScheduleTitle(item.title),
+    segments: splitScheduleTitle(item.title, { jangjisu: entry.key === 'jangjisu' }),
   })).filter((event) => Number.isInteger(event.day) && event.day > 0)), [entries]);
 
   return {
