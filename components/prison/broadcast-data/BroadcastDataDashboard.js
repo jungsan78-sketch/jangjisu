@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BroadcastDataCalendar from './BroadcastDataCalendar';
 import BroadcastDataRanking from './BroadcastDataRanking';
 
@@ -29,7 +29,6 @@ export default function BroadcastDataDashboard() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
-  const verifiedRequests = useRef(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -44,27 +43,9 @@ export default function BroadcastDataDashboard() {
         if (!cancelled) setPayload(json);
       })
       .catch((fetchError) => { if (!cancelled) { setError(fetchError.message); setVerifying(false); } })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setVerifying(false); } });
     return () => { cancelled = true; };
   }, [monthKey]);
-
-  useEffect(() => {
-    if (payload?.monthKey !== monthKey || !payload?.members?.length || !selectedMemberId) return undefined;
-    const requestKey = `${monthKey}:${selectedMemberId}`;
-    if (verifiedRequests.current.has(requestKey)) return undefined;
-    verifiedRequests.current.add(requestKey);
-    let cancelled = false;
-    setVerifying(true);
-    fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}&member=${encodeURIComponent(selectedMemberId)}&verify=1`, { cache: 'no-store' })
-      .then((response) => readApiJson(response).then((json) => ({ response, json })))
-      .then(({ response, json }) => {
-        if (!response.ok || !json.ok) throw new Error(json.message || '데이터 확인에 실패했습니다.');
-        if (!cancelled) setPayload(json);
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setVerifying(false); });
-    return () => { cancelled = true; };
-  }, [monthKey, payload?.monthKey, selectedMemberId]);
 
   useEffect(() => {
     if (!selectedMemberId) return undefined;
@@ -89,7 +70,6 @@ export default function BroadcastDataDashboard() {
 
   const selectMember = (id) => {
     if (id === selectedMemberId) return;
-    setVerifying(true);
     setSelectedMemberId(id);
   };
 
