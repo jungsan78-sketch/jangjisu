@@ -156,6 +156,13 @@ export default function Home() {
         @media (min-width: 1024px) {
           .jangjisu-left-nav-mode {
             padding-left: 258px !important;
+            width: 100% !important;
+            max-width: none !important;
+          }
+
+          .jangjisu-left-nav-mode > div {
+            width: 100% !important;
+            max-width: none !important;
           }
 
           .jangjisu-left-nav-mode header {
@@ -390,8 +397,17 @@ export default function Home() {
           .jangjisu-left-nav-mode main {
             width: 100% !important;
             max-width: none !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
+            margin: 0 !important;
+            padding-left: 28px !important;
+            padding-right: 28px !important;
+          }
+
+          .jangjisu-left-nav-mode #sou-cinematic-hero-host,
+          .jangjisu-left-nav-mode main > section {
+            width: 100% !important;
+            max-width: none !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
           }
 
           .jangjisu-left-nav-mode main > section:not(:first-of-type),
