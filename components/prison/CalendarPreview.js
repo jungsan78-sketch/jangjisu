@@ -103,8 +103,8 @@ function FilterButton({ label, image, active, linked, onClick }) {
   );
 }
 
-function CompactScheduleSegments({ title, offDay = false }) {
-  const segments = splitScheduleTitle(title);
+function CompactScheduleSegments({ title, offDay = false, jangjisu = false }) {
+  const segments = splitScheduleTitle(title, { jangjisu });
   return (
     <div className="space-y-1.5">
       {segments.map((segment, index) => (
@@ -192,7 +192,7 @@ export default function CalendarPreview() {
         memberImage: MEMBER_PROFILE_MAP.get(entry.member)?.image || '',
         memberStation: MEMBER_PROFILE_MAP.get(entry.member)?.station || '',
         title: item.title,
-        segments: splitScheduleTitle(item.title),
+        segments: splitScheduleTitle(item.title, { jangjisu: entry.key === 'jangjisu' }),
         year: Number(item.year || parsedMonth.year),
         month: Number(item.month || parsedMonth.month),
       })));
@@ -279,7 +279,7 @@ export default function CalendarPreview() {
                       <div className={`text-[12px] font-black sm:text-[17px] ${weekdayIndex === 0 ? 'text-[#ff8e8e]' : weekdayIndex === 6 ? 'text-[#89b4ff]' : 'text-white/95'}`}>{day}</div>
                       {isToday ? <span className="rounded-full bg-cyan-300/12 px-1.5 py-0.5 text-[8px] font-black tracking-[0.12em] text-cyan-100 shadow-[0_0_12px_rgba(103,232,249,0.16)] sm:px-2 sm:text-[10px]">TODAY</span> : hasItem ? <span className={`mt-1 h-2 w-2 rounded-full sm:mt-1.5 sm:h-2.5 sm:w-2.5 ${offDay ? 'bg-orange-300 shadow-[0_0_12px_rgba(253,186,116,0.55)]' : 'bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]'}`} /> : null}
                     </div>
-                    {hasItem ? <div className="relative mt-2 sm:mt-3"><CompactScheduleSegments title={cell.title} offDay={offDay} /></div> : null}
+                    {hasItem ? <div className="relative mt-2 sm:mt-3"><CompactScheduleSegments title={cell.title} offDay={offDay} jangjisu={selectedSource?.key === 'jangjisu'} /></div> : null}
                   </div>
                 );
               })}
