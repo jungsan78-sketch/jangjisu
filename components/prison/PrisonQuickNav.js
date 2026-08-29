@@ -70,8 +70,8 @@ export default function PrisonQuickNav() {
   }
 
   return (
-    <nav aria-label="수용소 섹션 바로가기" className="sou-prison-quick-nav fixed left-[288px] top-1/2 z-40 hidden w-fit -translate-y-1/2 flex-col items-start gap-2 min-[1800px]:flex">
-      <div className="w-[176px] rounded-[22px] bg-[#07101c]/92 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_48px_rgba(0,0,0,0.38),0_0_24px_rgba(56,189,248,0.07)] backdrop-blur-xl">
+    <nav aria-label="수용소 섹션 바로가기" className="sou-prison-quick-nav sticky top-3 z-40 hidden w-full xl:block">
+      <div className="grid w-full grid-cols-5 gap-2 rounded-[22px] bg-[#07101c]/92 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_48px_rgba(0,0,0,0.38),0_0_24px_rgba(56,189,248,0.07)] backdrop-blur-xl">
         {QUICK_LINKS.map((item) => {
           const active = activeId === item.id;
           return (
@@ -80,7 +80,7 @@ export default function PrisonQuickNav() {
               href={`#${item.id}`}
               onClick={(event) => moveToSection(event, item.id)}
               aria-current={active ? 'location' : undefined}
-              className={`mb-1 flex h-11 w-full items-center gap-3 rounded-[15px] px-2.5 text-[12px] font-bold transition duration-300 last:mb-0 ${active ? 'bg-cyan-300 text-[#04101b] shadow-[0_0_22px_rgba(103,232,249,0.34)]' : 'bg-white/[0.045] text-white/68 hover:bg-white/10 hover:text-white'}`}
+              className={`flex h-11 w-full items-center justify-center gap-2 rounded-[15px] px-2.5 text-[12px] font-bold transition duration-300 ${active ? 'bg-cyan-300 text-[#04101b] shadow-[0_0_22px_rgba(103,232,249,0.34)]' : 'bg-white/[0.045] text-white/68 hover:bg-white/10 hover:text-white'}`}
             >
               <span aria-hidden="true" className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] text-[12px] ${active ? 'bg-[#04101b]/10' : 'bg-white/[0.055]'}`}>{item.icon}</span>
               <span className="whitespace-nowrap">{item.label}</span>
@@ -91,4 +91,3 @@ export default function PrisonQuickNav() {
     </nav>
   );
 }
-
