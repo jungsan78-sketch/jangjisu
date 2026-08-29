@@ -125,7 +125,7 @@ function isOffDay(item) {
 }
 
 function ScheduleSegments({ title, compact = false, offDay = false }) {
-  const segments = splitScheduleTitle(title);
+  const segments = splitScheduleTitle(title, { jangjisu: true });
   if (!segments.length) return null;
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
