@@ -1,6 +1,13 @@
 import { getAllowedScheduleMonth } from '../../lib/scheduleMonth';
+import { PRISON_MANUAL_SCHEDULES } from '../../data/prisonManualSchedules';
+import { readSnapshotCache, writeSnapshotCache } from '../../lib/cloudflareSnapshotCache';
+import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSource';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const SNAPSHOT_VERSION = 'v1';
+const SNAPSHOT_FRESH_MS = 60 * 60 * 1000;
+const SNAPSHOT_STORAGE_SECONDS = 100 * 24 * 60 * 60;
+const snapshotRefreshPromises = new Map();
 
 const SOURCES = [
   {
@@ -299,6 +306,11 @@ const fetchFixedGidSchedule = async (source, monthInfo) => {
 };
 
 const fetchSourceSchedule = async (source, monthInfo) => {
+  if (source.id === 'jangjisu') {
+    const result = await buildFreshJangjisuScheduleResponse(monthInfo);
+    return { ...result, member: source.key };
+  }
+
   if (source.mode === 'fixedGid' && getSourceGid(source, monthInfo)) {
     const result = await fetchFixedGidSchedule(source, monthInfo);
     return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
@@ -317,8 +329,110 @@ const fetchSourceSchedule = async (source, monthInfo) => {
   return { ok: false, member: source.key, monthLabel: '', sheetName: '', items: [], fetchedUrl: '' };
 };
 
+const getSnapshotKey = (monthInfo) => `prison:schedules:${monthKey(monthInfo)}:${SNAPSHOT_VERSION}`;
+
+const REMOTE_MEMBER_NAMES = new Set(SOURCES.map((source) => source.key));
+
+const buildManualSchedules = (monthInfo) => Object.values(PRISON_MANUAL_SCHEDULES).filter((schedule) => !REMOTE_MEMBER_NAMES.has(schedule.member)).map((schedule) => ({
+  ok: true,
+  member: schedule.member,
+  monthLabel: monthInfo.monthLabel,
+  sheetName: '',
+  sourceUrl: '',
+  fetchedUrl: '',
+  items: (schedule.items || []).filter((item) => Number(item.year) === monthInfo.year && Number(item.month) === monthInfo.month),
+}));
+
+const flattenScheduleItems = (schedules) => schedules.flatMap((schedule) =>
+  (schedule.items || [])
+    .filter((item) => !item.empty && String(item.title || '').trim())
+    .map((item) => ({ ...item, member: schedule.member })),
+);
+
+const buildSnapshotPayload = (monthInfo, schedules, sourceStatus) => ({
+  ok: schedules.some((schedule) => (schedule.items || []).some((item) => !item.empty && String(item.title || '').trim())),
+  monthLabel: monthInfo.monthLabel,
+  members: schedules.map((schedule) => schedule.member),
+  schedules,
+  items: flattenScheduleItems(schedules),
+  sourceUrl: '',
+  sourceStatus,
+  fetchedAt: new Date().toISOString(),
+});
+
+async function collectScheduleSnapshot(monthInfo, previousPayload) {
+  const results = await Promise.allSettled(SOURCES.map((source) => fetchSourceSchedule(source, monthInfo)));
+  const previousByMember = new Map((previousPayload?.schedules || []).map((schedule) => [schedule.member, schedule]));
+  const remoteSchedules = SOURCES.map((source, index) => {
+    const result = results[index];
+    if (result.status === 'fulfilled' && result.value.ok) return result.value;
+    return previousByMember.get(source.key) || null;
+  }).filter(Boolean);
+  const manualSchedules = buildManualSchedules(monthInfo);
+  const schedules = [...remoteSchedules, ...manualSchedules];
+  const remoteSuccessCount = results.filter((result) => result.status === 'fulfilled' && result.value.ok).length;
+
+  if (remoteSuccessCount === 0 && previousPayload?.schedules?.length) {
+    return { payload: previousPayload, refreshed: false };
+  }
+  if (remoteSuccessCount === 0) throw new Error('일정 원본을 불러오지 못했습니다.');
+
+  return {
+    payload: buildSnapshotPayload(monthInfo, schedules, [
+      ...SOURCES.map((source, index) => ({
+        member: source.key,
+        ok: results[index].status === 'fulfilled' && results[index].value.ok,
+        stale: !(results[index].status === 'fulfilled' && results[index].value.ok) && previousByMember.has(source.key),
+      })),
+      ...manualSchedules.map((schedule) => ({ member: schedule.member, ok: true, manual: true })),
+    ]),
+    refreshed: true,
+  };
+}
+
+async function refreshScheduleSnapshot(cache, key, monthInfo) {
+  if (snapshotRefreshPromises.has(key)) return snapshotRefreshPromises.get(key);
+  const promise = (async () => {
+    const result = await collectScheduleSnapshot(monthInfo, cache.record?.payload);
+    if (!result.refreshed) return { record: cache.record, storage: cache.storage, stale: true };
+    const record = { payload: result.payload, cachedAt: Date.now() };
+    const storage = await writeSnapshotCache(cache, key, record, SNAPSHOT_STORAGE_SECONDS);
+    return { record, storage, stale: false };
+  })();
+  snapshotRefreshPromises.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    if (snapshotRefreshPromises.get(key) === promise) snapshotRefreshPromises.delete(key);
+  }
+}
+
+async function serveScheduleSnapshot(res, monthInfo) {
+  const key = getSnapshotKey(monthInfo);
+  const cache = await readSnapshotCache(key);
+  const cachedAt = Number(cache.record?.cachedAt || 0);
+  if (cache.record?.payload && cachedAt && Date.now() - cachedAt < SNAPSHOT_FRESH_MS) {
+    return res.status(200).json({ ...cache.record.payload, cache: 'hit', cacheStorage: cache.storage, cachedAt: new Date(cachedAt).toISOString() });
+  }
+
+  try {
+    const result = await refreshScheduleSnapshot(cache, key, monthInfo);
+    return res.status(200).json({
+      ...result.record.payload,
+      cache: result.stale ? 'stale' : cache.record?.payload ? 'refresh' : 'miss',
+      cacheStorage: result.storage,
+      cachedAt: new Date(result.record.cachedAt).toISOString(),
+    });
+  } catch {
+    if (cache.record?.payload) {
+      return res.status(200).json({ ...cache.record.payload, cache: 'stale', cacheStorage: cache.storage, cachedAt: new Date(cache.record.cachedAt).toISOString() });
+    }
+    return res.status(200).json({ ok: false, monthLabel: monthInfo.monthLabel, members: [], schedules: [], items: [], cache: 'unavailable', cacheStorage: cache.storage });
+  }
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
 
   const selectedMonth = getAllowedScheduleMonth(req.query, 2);
   if (!selectedMonth) {
@@ -326,6 +440,8 @@ export default async function handler(req, res) {
   }
 
   const requestedKey = String(req.query.key || '').trim();
+  if (!requestedKey) return serveScheduleSnapshot(res, selectedMonth);
+
   const activeSources = requestedKey ? SOURCES.filter((source) => source.id === requestedKey) : SOURCES;
   if (!activeSources.length) {
     return res.status(404).json({ ok: false, message: '일정 소스를 찾지 못했습니다.' });
@@ -357,3 +473,4 @@ export default async function handler(req, res) {
     fetchedAt: new Date().toISOString(),
   });
 }
+
