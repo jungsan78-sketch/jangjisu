@@ -45,8 +45,8 @@ export default function SOUCinematicHero() {
   if (!host) return null;
 
   return createPortal(
-    <section className="relative mb-8 overflow-hidden rounded-[34px] border border-white/[0.07] bg-[#02050a] shadow-[0_30px_100px_rgba(0,0,0,0.50),inset_0_1px_0_rgba(255,255,255,0.025)]">
-      <div className="relative aspect-video min-h-[280px] overflow-hidden bg-black sm:min-h-[420px] lg:min-h-[560px]">
+    <section className="relative mb-8 w-full max-w-none overflow-hidden rounded-[34px] border border-white/[0.07] bg-[#02050a] shadow-[0_30px_100px_rgba(0,0,0,0.50),inset_0_1px_0_rgba(255,255,255,0.025)]">
+      <div className="relative min-h-[280px] w-full overflow-hidden bg-black sm:min-h-[420px] lg:h-[min(72vh,780px)] lg:min-h-[560px]">
         <video
           className="absolute inset-0 block h-full w-full object-cover"
           src="/sou-archive-cinematic.mp4"
