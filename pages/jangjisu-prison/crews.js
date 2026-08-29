@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
-import MobileAppDrawer from '../../components/navigation/MobileAppDrawer';
+import { PrisonPageChrome } from '../../components/prison/PrisonPageContent';
 
 const CATEGORY_LABELS = {
   soop: '숲 종겜 크루',
@@ -180,10 +180,6 @@ function formatUpdatedAt(value) {
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function NavButton({ href, children }) {
-  return <a href={href} className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.035))] px-4 py-2 text-sm font-bold text-white/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:bg-white/10 hover:text-white">{children}</a>;
-}
-
 function FilterButton({ active, onClick, children, strong = false }) {
   return <button onClick={onClick} className={`rounded-full px-4 py-2 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_22px_rgba(0,0,0,0.18)] transition ${active ? 'bg-[linear-gradient(180deg,rgba(245,158,11,0.22),rgba(255,255,255,0.055))] text-amber-50 shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]' : strong ? 'bg-cyan-300/8 text-cyan-50/78 hover:bg-cyan-300/12 hover:text-white' : 'bg-white/[0.045] text-white/64 hover:bg-white/[0.075] hover:text-white'}`}>{children}</button>;
 }
@@ -277,29 +273,8 @@ export default function JangjisuPrisonCrewsPage() {
 
   return <>
     <Head><title>종겜 크루 목록 | 장지수용소 팬메이드</title><meta name="description" content="장지수용소 종겜 크루 목록" /></Head>
-    <div className="sou-prison-page min-h-screen bg-[#05070c] text-white">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-24 left-[-80px] h-80 w-80 rounded-full bg-slate-500/10 blur-3xl" /><div className="absolute top-16 right-[-70px] h-80 w-80 rounded-full bg-amber-500/8 blur-3xl" /><div className="absolute bottom-0 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-full bg-blue-500/8 blur-3xl" /></div>
-      <MobileAppDrawer
-        brand="장지수용소"
-        subtitle="종겜 크루 목록"
-        logoSrc="/prison-logo.webp"
-        logoFallbackSrc="/prison-logo.svg"
-        logoAlt="장지수용소"
-        logoWide
-        homeHref="/jangjisu-prison"
-        breakpoint="xl"
-        items={[
-          { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
-          { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
-          { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 달력', icon: '▥', tone: 'teal' },
-          { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
-          { href: 'https://cafe.naver.com/quaddurupfancafe', label: '팬카페', icon: 'N', tone: 'green', external: true },
-          { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', icon: '📅', tone: 'teal' },
-          { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
-        ]}
-      />
-      <header className="sticky top-0 z-40 hidden border-b border-white/10 bg-black/72 backdrop-blur-xl xl:block"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 lg:px-8"><a href="/jangjisu-prison" className="flex h-20 w-44 items-center justify-center overflow-visible rounded-[24px] border border-white/10 bg-white/[0.025] shadow-[0_0_30px_rgba(59,130,246,0.12)] transition hover:scale-[1.04] hover:border-white/25"><img src="/prison-logo.webp" alt="장지수용소" className="h-24 w-48 max-w-none object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.28)]" /></a><div className="flex-1 px-4 text-center text-[28px] font-black tracking-tight text-white">종겜 크루 목록</div><nav className="flex flex-wrap items-center justify-end gap-3"><NavButton href="/jangjisu-prison">↩ 장지수용소 홈</NavButton><NavButton href="/">SOU 메인</NavButton></nav></div></header>
-      <main className="relative mx-auto max-w-7xl px-3 py-4 sm:px-5 sm:py-8 lg:px-8">
+    <PrisonPageChrome wide>
+      <div className="w-full max-w-none">
         <div className="mb-4 flex justify-end"><div className="rounded-full bg-white/[0.055] px-4 py-2 text-xs font-black text-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_12px_24px_rgba(0,0,0,0.16)]">{updatedAtText ? `${updatedAtText} 갱신` : '갱신 확인중'}</div></div>
         <section className="mb-7 grid gap-4 lg:grid-cols-2"><StatPill {...categoryStats.soop} /><StatPill {...categoryStats.gamcom} /></section>
         <section className="mb-7 rounded-[28px] bg-black/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_18px_42px_rgba(0,0,0,0.20)]">
@@ -310,8 +285,7 @@ export default function JangjisuPrisonCrewsPage() {
           </div>
         </section>
         <section className="grid gap-6">{visibleCrews.map((crew) => <CrewCard key={`${crew.category}-${crew.name}`} crew={crew} />)}</section>
-      </main>
-    </div>
+      </div>
+    </PrisonPageChrome>
   </>;
 }
-
