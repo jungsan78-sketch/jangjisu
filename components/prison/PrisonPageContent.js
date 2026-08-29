@@ -287,7 +287,7 @@ export function PrisonPageChrome({ children, wide = false }) {
             max-width: none !important;
           }
           .sou-prison-main > .sou-prison-quick-nav {
-            width: fit-content !important;
+            width: 100% !important;
             max-width: none !important;
           }
           .sou-prison-main.sou-prison-main-wide > * {
