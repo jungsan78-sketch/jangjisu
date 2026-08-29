@@ -262,20 +262,20 @@ export function PrisonPageChrome({ children, wide = false }) {
             max-width: calc(100vw - 274px) !important;
           }
           .sou-prison-main {
-            width: min(calc(100vw - 314px), 2400px) !important;
-            max-width: min(calc(100vw - 314px), 2400px) !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-          }
-          .sou-prison-main.sou-prison-main-wide {
-            width: calc(100vw - 274px) !important;
-            max-width: calc(100vw - 274px) !important;
+            width: 100% !important;
+            max-width: none !important;
             margin-left: 0 !important;
             margin-right: 0 !important;
-            padding-left: 16px !important;
-            padding-right: 16px !important;
+            padding-left: 28px !important;
+            padding-right: 28px !important;
+          }
+          .sou-prison-main.sou-prison-main-wide {
+            width: 100% !important;
+            max-width: none !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 28px !important;
+            padding-right: 28px !important;
             overflow-x: visible !important;
           }
           .sou-prison-main > *,
@@ -346,4 +346,3 @@ export default function PrisonPageContent() {
     </PrisonPageChrome>
   );
 }
-
