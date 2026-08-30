@@ -51,8 +51,8 @@ export function PrisonSharedSidebar() {
           <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" tone="gold" activePaths={['/jangjisu-prison', '/jangjisu-prison-v2']} compact />
           <SidebarNavItem href="/" label="SOU 아카이브" tone="gold" compact />
         </div>
-        <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="red" />
+        <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="red" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 분석" tone="red" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
         <div className="grid grid-cols-2 gap-2.5">
           <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="indigo" compact />
@@ -78,8 +78,8 @@ export function PrisonSharedMobileNav() {
       items={[
         { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', emphasis: true, activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
         { href: '/', label: 'SOU 아카이브', tone: 'gold', emphasis: true },
-        { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'teal', span: 2 },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'red', span: 2 },
+        { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'red', span: 2 },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 분석', tone: 'red', span: 2 },
         { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
         { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'indigo', emphasis: true },
         { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'indigo', emphasis: true },
