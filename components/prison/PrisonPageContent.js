@@ -57,21 +57,13 @@ function SidebarLogo({ compact = false }) {
 function SidebarNavItem({ href, label, tone = 'slate', external = false, compact = false, activePaths }) {
   const router = useRouter();
   const isActive = !external && (activePaths || [href]).includes(router.pathname);
-  const toneClass = tone === 'green'
-    ? 'border-emerald-300/20 bg-[linear-gradient(180deg,rgba(16,185,129,0.18),rgba(16,185,129,0.07))] text-emerald-50 hover:border-emerald-200/34 hover:shadow-[0_0_26px_rgba(16,185,129,0.15),inset_0_1px_0_rgba(255,255,255,0.10)]'
-    : tone === 'gold'
-      ? 'border-amber-300/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(245,158,11,0.04))] text-amber-50 hover:border-amber-200/30 hover:shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]'
-      : tone === 'teal'
-        ? 'border-teal-300/17 bg-[linear-gradient(180deg,rgba(45,212,191,0.13),rgba(45,212,191,0.045))] text-teal-50 hover:border-teal-200/30 hover:shadow-[0_0_26px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
-        : tone === 'blue'
-          ? 'border-sky-300/16 bg-[linear-gradient(180deg,rgba(56,189,248,0.12),rgba(56,189,248,0.04))] text-sky-50 hover:border-sky-200/30 hover:shadow-[0_0_26px_rgba(56,189,248,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
-          : tone === 'violet'
-            ? 'border-violet-300/16 bg-[linear-gradient(180deg,rgba(139,92,246,0.13),rgba(139,92,246,0.045))] text-violet-50 hover:border-violet-200/30 hover:shadow-[0_0_26px_rgba(139,92,246,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
-            : 'border-white/9 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] text-slate-50 hover:border-white/18 hover:bg-white/[0.075]';
+  const isGreen = tone === 'green';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex min-h-[52px] items-center justify-center rounded-[17px] border px-3 py-3 text-center font-black tracking-[-0.025em] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_28px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-0.5 ${compact ? 'text-[12px]' : 'text-[14px]'} ${toneClass} ${isActive ? 'ring-1 ring-white/35 shadow-[0_0_24px_rgba(103,232,249,0.14),inset_0_1px_0_rgba(255,255,255,0.14)]' : ''}`}>
-      <span className="leading-5">{label}</span>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group relative flex min-h-[48px] items-center justify-start overflow-hidden py-2.5 text-left font-black tracking-[-0.02em] transition duration-300 hover:translate-x-1 hover:text-white ${compact ? 'px-4 text-[12px]' : 'px-5 text-[15px]'} ${isGreen ? 'text-emerald-100/90' : 'text-sky-50/85'} ${isActive ? 'translate-x-1 text-white' : ''}`}>
+      <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${isGreen ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]' : 'bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.55)]'}`} />
+      <span className="whitespace-nowrap leading-5">{label}</span>
+      <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${isGreen ? 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' : 'from-cyan-300/0 via-cyan-300/45 to-cyan-300/0'} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} />
     </a>
   );
 }

@@ -15,12 +15,8 @@ const TONE_CLASS = {
 };
 
 const GRID_TONE_CLASS = {
-  blue: 'border-sky-300/18 bg-[linear-gradient(180deg,rgba(56,189,248,0.13),rgba(56,189,248,0.055))] text-sky-50',
-  teal: 'border-teal-300/20 bg-[linear-gradient(180deg,rgba(45,212,191,0.14),rgba(45,212,191,0.055))] text-teal-50',
-  green: 'border-emerald-300/24 bg-[linear-gradient(180deg,rgba(16,185,129,0.20),rgba(16,185,129,0.08))] text-emerald-50',
-  gold: 'border-amber-300/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.13),rgba(245,158,11,0.05))] text-amber-50',
-  violet: 'border-violet-300/18 bg-[linear-gradient(180deg,rgba(139,92,246,0.14),rgba(139,92,246,0.055))] text-violet-50',
-  slate: 'border-slate-300/14 bg-[linear-gradient(180deg,rgba(148,163,184,0.11),rgba(148,163,184,0.035))] text-slate-50',
+  green: 'text-emerald-100',
+  cyan: 'text-sky-50',
 };
 
 export default function MobileAppDrawer({
@@ -129,11 +125,13 @@ export default function MobileAppDrawer({
                 }}
                 {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
                 className={isGrid
-                  ? `group flex min-h-[58px] items-center justify-center rounded-[18px] border px-3 py-3 text-center text-[14px] font-black tracking-[-0.02em] shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_12px_28px_rgba(0,0,0,0.18)] transition active:scale-[0.985] ${item.span === 2 ? 'col-span-2' : 'col-span-1'} ${GRID_TONE_CLASS[item.tone] || GRID_TONE_CLASS.slate} ${isActive ? 'ring-1 ring-white/38 shadow-[0_0_24px_rgba(103,232,249,0.15),inset_0_1px_0_rgba(255,255,255,0.14)]' : ''}`
+                  ? `group relative flex min-h-[54px] items-center justify-start overflow-hidden px-5 py-3 text-left text-[14px] font-black tracking-[-0.02em] transition duration-300 active:translate-x-0.5 ${item.span === 2 ? 'col-span-2' : 'col-span-1'} ${item.tone === 'green' ? GRID_TONE_CLASS.green : GRID_TONE_CLASS.cyan}`
                   : 'group flex min-h-[56px] items-center gap-3 rounded-[20px] bg-white/[0.045] px-3.5 py-2.5 text-[15px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_26px_rgba(0,0,0,0.16)] active:scale-[0.985]'}
               >
+                {isGrid ? <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${item.tone === 'green' ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]' : 'bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.55)]'}`} /> : null}
                 {!isGrid && item.icon ? <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-base ${TONE_CLASS[item.tone] || TONE_CLASS.blue}`}>{item.icon}</span> : null}
-                <span className={isGrid ? 'min-w-0 leading-5' : 'min-w-0 flex-1 truncate'}>{item.label}</span>
+                <span className={isGrid ? `min-w-0 leading-5 transition duration-300 group-hover:translate-x-1 group-hover:text-white ${isActive ? 'translate-x-1 text-white' : ''}` : 'min-w-0 flex-1 truncate'}>{item.label}</span>
+                {isGrid ? <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${item.tone === 'green' ? 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' : 'from-cyan-300/0 via-cyan-300/45 to-cyan-300/0'} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} /> : null}
                 {!isGrid ? <span className="text-lg text-white/22 transition group-active:translate-x-0.5">›</span> : null}
               </a>
               );
