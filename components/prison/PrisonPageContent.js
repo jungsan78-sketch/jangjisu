@@ -18,8 +18,9 @@ const NAV_TONES = {
   gold: { text: 'text-amber-100/90', dot: 'bg-amber-300 shadow-[0_0_18px_rgba(252,211,77,0.55)]', line: 'from-amber-300/0 via-amber-300/45 to-amber-300/0' },
   teal: { text: 'text-teal-100/90', dot: 'bg-teal-300 shadow-[0_0_18px_rgba(94,234,212,0.55)]', line: 'from-teal-300/0 via-teal-300/45 to-teal-300/0' },
   violet: { text: 'text-violet-100/90', dot: 'bg-violet-300 shadow-[0_0_18px_rgba(196,181,253,0.55)]', line: 'from-violet-300/0 via-violet-300/45 to-violet-300/0' },
-  green: { text: 'text-emerald-100/90', dot: 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]', line: 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' },
+  green: { text: 'text-[#8df0b6]', dot: 'bg-[#03C75A] shadow-[0_0_18px_rgba(3,199,90,0.58)]', line: 'from-[#03C75A]/0 via-[#03C75A]/50 to-[#03C75A]/0' },
   blue: { text: 'text-sky-100/90', dot: 'bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.55)]', line: 'from-sky-300/0 via-sky-300/45 to-sky-300/0' },
+  indigo: { text: 'text-indigo-100/90', dot: 'bg-indigo-300 shadow-[0_0_18px_rgba(165,180,252,0.55)]', line: 'from-indigo-300/0 via-indigo-300/45 to-indigo-300/0' },
 };
 
 function viewerCount(status) {
@@ -220,11 +221,11 @@ export function PrisonSidebar() {
           <SidebarNavItem href="/" label="SOU 아카이브" tone="gold" compact />
         </div>
         <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="violet" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="blue" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
         <div className="grid grid-cols-2 gap-2.5">
-          <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="blue" compact />
-          <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="blue" compact />
+          <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="indigo" compact />
+          <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="indigo" compact />
         </div>
       </nav>
 
@@ -249,10 +250,10 @@ export function MobilePrisonNav() {
         { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', emphasis: true, activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
         { href: '/', label: 'SOU 아카이브', tone: 'gold', emphasis: true },
         { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'teal', span: 2 },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'violet', span: 2 },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'blue', span: 2 },
         { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
-        { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'blue', emphasis: true },
-        { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'blue', emphasis: true },
+        { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'indigo', emphasis: true },
+        { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'indigo', emphasis: true },
       ]}
     />
   );

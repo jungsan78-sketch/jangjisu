@@ -31,14 +31,19 @@ const GRID_TONES = {
     line: 'from-violet-300/0 via-violet-300/45 to-violet-300/0',
   },
   green: {
-    text: 'text-emerald-100',
-    dot: 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]',
-    line: 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0',
+    text: 'text-[#8df0b6]',
+    dot: 'bg-[#03C75A] shadow-[0_0_18px_rgba(3,199,90,0.58)]',
+    line: 'from-[#03C75A]/0 via-[#03C75A]/50 to-[#03C75A]/0',
   },
   blue: {
     text: 'text-sky-100',
     dot: 'bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.55)]',
     line: 'from-sky-300/0 via-sky-300/45 to-sky-300/0',
+  },
+  indigo: {
+    text: 'text-indigo-100',
+    dot: 'bg-indigo-300 shadow-[0_0_18px_rgba(165,180,252,0.55)]',
+    line: 'from-indigo-300/0 via-indigo-300/45 to-indigo-300/0',
   },
 };
 
