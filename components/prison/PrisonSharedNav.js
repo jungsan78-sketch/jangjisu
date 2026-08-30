@@ -5,6 +5,14 @@ const LOGO_SRC = '/prison-logo.webp';
 const LOGO_FALLBACK_SRC = '/prison-logo.svg';
 const FAN_CAFE_URL = 'https://cafe.naver.com/quaddurupfancafe';
 
+const NAV_TONES = {
+  gold: { text: 'text-amber-100/90', dot: 'bg-amber-300 shadow-[0_0_18px_rgba(252,211,77,0.55)]', line: 'from-amber-300/0 via-amber-300/45 to-amber-300/0' },
+  teal: { text: 'text-teal-100/90', dot: 'bg-teal-300 shadow-[0_0_18px_rgba(94,234,212,0.55)]', line: 'from-teal-300/0 via-teal-300/45 to-teal-300/0' },
+  violet: { text: 'text-violet-100/90', dot: 'bg-violet-300 shadow-[0_0_18px_rgba(196,181,253,0.55)]', line: 'from-violet-300/0 via-violet-300/45 to-violet-300/0' },
+  green: { text: 'text-emerald-100/90', dot: 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]', line: 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' },
+  blue: { text: 'text-sky-100/90', dot: 'bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.55)]', line: 'from-sky-300/0 via-sky-300/45 to-sky-300/0' },
+};
+
 function SidebarLogo({ compact = false }) {
   return (
     <img
@@ -19,13 +27,13 @@ function SidebarLogo({ compact = false }) {
 function SidebarNavItem({ href, label, tone = 'slate', external = false, compact = false, activePaths }) {
   const router = useRouter();
   const isActive = !external && (activePaths || [href]).includes(router.pathname);
-  const isGreen = tone === 'green';
+  const navTone = NAV_TONES[tone] || NAV_TONES.blue;
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group relative flex min-h-[48px] items-center justify-start overflow-hidden py-2.5 text-left font-black tracking-[-0.02em] transition duration-300 hover:translate-x-1 hover:text-white ${compact ? 'px-4 text-[12px]' : 'px-5 text-[15px]'} ${isGreen ? 'text-emerald-100/90' : 'text-sky-50/85'} ${isActive ? 'translate-x-1 text-white' : ''}`}>
-      <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${isGreen ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]' : 'bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.55)]'}`} />
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group relative flex min-h-[48px] items-center justify-start overflow-hidden py-2.5 text-left font-black tracking-[-0.02em] transition duration-300 hover:translate-x-1 hover:text-white ${compact ? 'px-4 text-[14px]' : 'px-5 text-[15px]'} ${navTone.text} ${isActive ? 'translate-x-1 text-white' : ''}`}>
+      <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${navTone.dot}`} />
       <span className="whitespace-nowrap leading-5">{label}</span>
-      <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${isGreen ? 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' : 'from-cyan-300/0 via-cyan-300/45 to-cyan-300/0'} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} />
+      <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${navTone.line} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} />
     </a>
   );
 }
@@ -39,14 +47,14 @@ export function PrisonSharedSidebar() {
       <nav className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2.5">
           <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" tone="gold" activePaths={['/jangjisu-prison', '/jangjisu-prison-v2']} compact />
-          <SidebarNavItem href="/" label="SOU 아카이브" tone="slate" compact />
+          <SidebarNavItem href="/" label="SOU 아카이브" tone="gold" compact />
         </div>
         <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="blue" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="violet" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
         <div className="grid grid-cols-2 gap-2.5">
-          <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="violet" compact />
-          <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="slate" compact />
+          <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="blue" compact />
+          <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="blue" compact />
         </div>
       </nav>
     </aside>
@@ -66,13 +74,13 @@ export function PrisonSharedMobileNav() {
       breakpoint="xl"
       menuLayout="grid"
       items={[
-        { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
-        { href: '/', label: 'SOU 아카이브', tone: 'slate' },
+        { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', emphasis: true, activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
+        { href: '/', label: 'SOU 아카이브', tone: 'gold', emphasis: true },
         { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'teal', span: 2 },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'blue', span: 2 },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'violet', span: 2 },
         { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
-        { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'violet' },
-        { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'slate' },
+        { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'blue', emphasis: true },
+        { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'blue', emphasis: true },
       ]}
     />
   );

@@ -14,9 +14,32 @@ const TONE_CLASS = {
   red: 'bg-rose-300/10 text-rose-50',
 };
 
-const GRID_TONE_CLASS = {
-  green: 'text-emerald-100',
-  cyan: 'text-sky-50',
+const GRID_TONES = {
+  gold: {
+    text: 'text-amber-100',
+    dot: 'bg-amber-300 shadow-[0_0_18px_rgba(252,211,77,0.55)]',
+    line: 'from-amber-300/0 via-amber-300/45 to-amber-300/0',
+  },
+  teal: {
+    text: 'text-teal-100',
+    dot: 'bg-teal-300 shadow-[0_0_18px_rgba(94,234,212,0.55)]',
+    line: 'from-teal-300/0 via-teal-300/45 to-teal-300/0',
+  },
+  violet: {
+    text: 'text-violet-100',
+    dot: 'bg-violet-300 shadow-[0_0_18px_rgba(196,181,253,0.55)]',
+    line: 'from-violet-300/0 via-violet-300/45 to-violet-300/0',
+  },
+  green: {
+    text: 'text-emerald-100',
+    dot: 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]',
+    line: 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0',
+  },
+  blue: {
+    text: 'text-sky-100',
+    dot: 'bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.55)]',
+    line: 'from-sky-300/0 via-sky-300/45 to-sky-300/0',
+  },
 };
 
 export default function MobileAppDrawer({
@@ -115,6 +138,7 @@ export default function MobileAppDrawer({
               const activePaths = item.activePaths || [item.href];
               const isActive = !item.external && activePaths.includes(router.pathname);
               const isGrid = menuLayout === 'grid';
+              const gridTone = GRID_TONES[item.tone] || GRID_TONES.blue;
               return (
               <a
                 key={`${item.href}-${item.label}`}
@@ -125,13 +149,13 @@ export default function MobileAppDrawer({
                 }}
                 {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
                 className={isGrid
-                  ? `group relative flex min-h-[54px] items-center justify-start overflow-hidden px-5 py-3 text-left text-[14px] font-black tracking-[-0.02em] transition duration-300 active:translate-x-0.5 ${item.span === 2 ? 'col-span-2' : 'col-span-1'} ${item.tone === 'green' ? GRID_TONE_CLASS.green : GRID_TONE_CLASS.cyan}`
+                  ? `group relative flex min-h-[54px] items-center justify-start overflow-hidden px-5 py-3 text-left font-black tracking-[-0.02em] transition duration-300 active:translate-x-0.5 ${item.span === 2 ? 'col-span-2' : 'col-span-1'} ${item.emphasis ? 'text-[15px]' : 'text-[14px]'} ${gridTone.text}`
                   : 'group flex min-h-[56px] items-center gap-3 rounded-[20px] bg-white/[0.045] px-3.5 py-2.5 text-[15px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_26px_rgba(0,0,0,0.16)] active:scale-[0.985]'}
               >
-                {isGrid ? <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${item.tone === 'green' ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.58)]' : 'bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.55)]'}`} /> : null}
+                {isGrid ? <span aria-hidden="true" className={`absolute left-1 top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ${isActive ? 'h-6 w-1' : 'h-1.5 w-1.5 group-hover:h-6 group-hover:w-1'} ${gridTone.dot}`} /> : null}
                 {!isGrid && item.icon ? <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-base ${TONE_CLASS[item.tone] || TONE_CLASS.blue}`}>{item.icon}</span> : null}
                 <span className={isGrid ? `min-w-0 leading-5 transition duration-300 group-hover:translate-x-1 group-hover:text-white ${isActive ? 'translate-x-1 text-white' : ''}` : 'min-w-0 flex-1 truncate'}>{item.label}</span>
-                {isGrid ? <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${item.tone === 'green' ? 'from-emerald-300/0 via-emerald-300/45 to-emerald-300/0' : 'from-cyan-300/0 via-cyan-300/45 to-cyan-300/0'} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} /> : null}
+                {isGrid ? <span aria-hidden="true" className={`absolute bottom-1 left-5 right-2 h-px origin-left bg-gradient-to-r transition duration-300 ${gridTone.line} ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-[0.18] opacity-0 group-hover:scale-x-100 group-hover:opacity-100'}`} /> : null}
                 {!isGrid ? <span className="text-lg text-white/22 transition group-active:translate-x-0.5">›</span> : null}
               </a>
               );
