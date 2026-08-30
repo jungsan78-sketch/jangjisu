@@ -45,6 +45,11 @@ const GRID_TONES = {
     dot: 'bg-indigo-300 shadow-[0_0_18px_rgba(165,180,252,0.55)]',
     line: 'from-indigo-300/0 via-indigo-300/45 to-indigo-300/0',
   },
+  red: {
+    text: 'text-rose-100',
+    dot: 'bg-rose-400 shadow-[0_0_18px_rgba(251,113,133,0.58)]',
+    line: 'from-rose-300/0 via-rose-300/50 to-rose-300/0',
+  },
 };
 
 export default function MobileAppDrawer({

@@ -21,6 +21,7 @@ const NAV_TONES = {
   green: { text: 'text-[#8df0b6]', dot: 'bg-[#03C75A] shadow-[0_0_18px_rgba(3,199,90,0.58)]', line: 'from-[#03C75A]/0 via-[#03C75A]/50 to-[#03C75A]/0' },
   blue: { text: 'text-sky-100/90', dot: 'bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.55)]', line: 'from-sky-300/0 via-sky-300/45 to-sky-300/0' },
   indigo: { text: 'text-indigo-100/90', dot: 'bg-indigo-300 shadow-[0_0_18px_rgba(165,180,252,0.55)]', line: 'from-indigo-300/0 via-indigo-300/45 to-indigo-300/0' },
+  red: { text: 'text-rose-100/90', dot: 'bg-rose-400 shadow-[0_0_18px_rgba(251,113,133,0.58)]', line: 'from-rose-300/0 via-rose-300/50 to-rose-300/0' },
 };
 
 function viewerCount(status) {
@@ -221,7 +222,7 @@ export function PrisonSidebar() {
           <SidebarNavItem href="/" label="SOU 아카이브" tone="gold" compact />
         </div>
         <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="blue" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="red" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
         <div className="grid grid-cols-2 gap-2.5">
           <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="indigo" compact />
@@ -250,7 +251,7 @@ export function MobilePrisonNav() {
         { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', emphasis: true, activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
         { href: '/', label: 'SOU 아카이브', tone: 'gold', emphasis: true },
         { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'teal', span: 2 },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'blue', span: 2 },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'red', span: 2 },
         { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
         { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'indigo', emphasis: true },
         { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'indigo', emphasis: true },
