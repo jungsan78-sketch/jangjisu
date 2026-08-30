@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react';
+import { useRouter } from 'next/router';
 
 const BREAKPOINT_CLASS = {
   lg: 'lg:hidden',
@@ -13,6 +14,15 @@ const TONE_CLASS = {
   red: 'bg-rose-300/10 text-rose-50',
 };
 
+const GRID_TONE_CLASS = {
+  blue: 'border-sky-300/18 bg-[linear-gradient(180deg,rgba(56,189,248,0.13),rgba(56,189,248,0.055))] text-sky-50',
+  teal: 'border-teal-300/20 bg-[linear-gradient(180deg,rgba(45,212,191,0.14),rgba(45,212,191,0.055))] text-teal-50',
+  green: 'border-emerald-300/24 bg-[linear-gradient(180deg,rgba(16,185,129,0.20),rgba(16,185,129,0.08))] text-emerald-50',
+  gold: 'border-amber-300/18 bg-[linear-gradient(180deg,rgba(245,158,11,0.13),rgba(245,158,11,0.05))] text-amber-50',
+  violet: 'border-violet-300/18 bg-[linear-gradient(180deg,rgba(139,92,246,0.14),rgba(139,92,246,0.055))] text-violet-50',
+  slate: 'border-slate-300/14 bg-[linear-gradient(180deg,rgba(148,163,184,0.11),rgba(148,163,184,0.035))] text-slate-50',
+};
+
 export default function MobileAppDrawer({
   brand,
   subtitle = '',
@@ -23,7 +33,9 @@ export default function MobileAppDrawer({
   items = [],
   breakpoint = 'lg',
   logoWide = false,
+  menuLayout = 'list',
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const breakpointClass = BREAKPOINT_CLASS[breakpoint] || BREAKPOINT_CLASS.lg;
@@ -102,8 +114,12 @@ export default function MobileAppDrawer({
             <button type="button" onClick={close} aria-label="전체 메뉴 닫기" className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.07] text-2xl font-light text-white active:scale-95">×</button>
           </div>
 
-          <nav className="flex-1 space-y-2 overflow-y-auto px-4 pb-5">
-            {items.map((item) => (
+          <nav className={`flex-1 overflow-y-auto px-4 pb-5 ${menuLayout === 'grid' ? 'grid auto-rows-min grid-cols-2 gap-2.5' : 'space-y-2'}`}>
+            {items.map((item) => {
+              const activePaths = item.activePaths || [item.href];
+              const isActive = !item.external && activePaths.includes(router.pathname);
+              const isGrid = menuLayout === 'grid';
+              return (
               <a
                 key={`${item.href}-${item.label}`}
                 href={item.href}
@@ -112,13 +128,16 @@ export default function MobileAppDrawer({
                   item.onClick?.(event);
                 }}
                 {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                className="group flex min-h-[56px] items-center gap-3 rounded-[20px] bg-white/[0.045] px-3.5 py-2.5 text-[15px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_26px_rgba(0,0,0,0.16)] active:scale-[0.985]"
+                className={isGrid
+                  ? `group flex min-h-[58px] items-center justify-center rounded-[18px] border px-3 py-3 text-center text-[14px] font-black tracking-[-0.02em] shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_12px_28px_rgba(0,0,0,0.18)] transition active:scale-[0.985] ${item.span === 2 ? 'col-span-2' : 'col-span-1'} ${GRID_TONE_CLASS[item.tone] || GRID_TONE_CLASS.slate} ${isActive ? 'ring-1 ring-white/38 shadow-[0_0_24px_rgba(103,232,249,0.15),inset_0_1px_0_rgba(255,255,255,0.14)]' : ''}`
+                  : 'group flex min-h-[56px] items-center gap-3 rounded-[20px] bg-white/[0.045] px-3.5 py-2.5 text-[15px] font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_12px_26px_rgba(0,0,0,0.16)] active:scale-[0.985]'}
               >
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-base ${TONE_CLASS[item.tone] || TONE_CLASS.blue}`}>{item.icon}</span>
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                <span className="text-lg text-white/22 transition group-active:translate-x-0.5">›</span>
+                {!isGrid && item.icon ? <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-base ${TONE_CLASS[item.tone] || TONE_CLASS.blue}`}>{item.icon}</span> : null}
+                <span className={isGrid ? 'min-w-0 leading-5' : 'min-w-0 flex-1 truncate'}>{item.label}</span>
+                {!isGrid ? <span className="text-lg text-white/22 transition group-active:translate-x-0.5">›</span> : null}
               </a>
-            ))}
+              );
+            })}
           </nav>
 
           <div className="mx-4 border-t border-white/8 px-1 pt-4 text-center text-[10px] font-bold tracking-[0.16em] text-white/24">SOU MOBILE</div>

@@ -1,4 +1,5 @@
 import MobileAppDrawer from '../navigation/MobileAppDrawer';
+import { useRouter } from 'next/router';
 
 const LOGO_SRC = '/prison-logo.webp';
 const LOGO_FALLBACK_SRC = '/prison-logo.svg';
@@ -15,19 +16,24 @@ function SidebarLogo({ compact = false }) {
   );
 }
 
-function SidebarNavItem({ href, label, icon, tone = 'blue', external = false }) {
+function SidebarNavItem({ href, label, tone = 'slate', external = false, compact = false, activePaths }) {
+  const router = useRouter();
+  const isActive = !external && (activePaths || [href]).includes(router.pathname);
   const toneClass = tone === 'green'
-    ? 'text-emerald-100 hover:bg-emerald-400/10 hover:shadow-[0_0_26px_rgba(16,185,129,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+    ? 'border-emerald-300/20 bg-[linear-gradient(180deg,rgba(16,185,129,0.18),rgba(16,185,129,0.07))] text-emerald-50 hover:border-emerald-200/34 hover:shadow-[0_0_26px_rgba(16,185,129,0.15),inset_0_1px_0_rgba(255,255,255,0.10)]'
     : tone === 'gold'
-      ? 'text-amber-50 hover:bg-amber-300/10 hover:shadow-[0_0_26px_rgba(245,158,11,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
+      ? 'border-amber-300/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(245,158,11,0.04))] text-amber-50 hover:border-amber-200/30 hover:shadow-[0_0_26px_rgba(245,158,11,0.13),inset_0_1px_0_rgba(255,255,255,0.10)]'
       : tone === 'teal'
-        ? 'text-teal-50 hover:bg-teal-300/10 hover:shadow-[0_0_26px_rgba(45,212,191,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]'
-        : 'text-sky-50 hover:bg-sky-400/10 hover:shadow-[0_0_26px_rgba(56,189,248,0.16),inset_0_1px_0_rgba(255,255,255,0.08)]';
+        ? 'border-teal-300/17 bg-[linear-gradient(180deg,rgba(45,212,191,0.13),rgba(45,212,191,0.045))] text-teal-50 hover:border-teal-200/30 hover:shadow-[0_0_26px_rgba(45,212,191,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
+        : tone === 'blue'
+          ? 'border-sky-300/16 bg-[linear-gradient(180deg,rgba(56,189,248,0.12),rgba(56,189,248,0.04))] text-sky-50 hover:border-sky-200/30 hover:shadow-[0_0_26px_rgba(56,189,248,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
+          : tone === 'violet'
+            ? 'border-violet-300/16 bg-[linear-gradient(180deg,rgba(139,92,246,0.13),rgba(139,92,246,0.045))] text-violet-50 hover:border-violet-200/30 hover:shadow-[0_0_26px_rgba(139,92,246,0.14),inset_0_1px_0_rgba(255,255,255,0.10)]'
+            : 'border-white/9 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] text-slate-50 hover:border-white/18 hover:bg-white/[0.075]';
 
   return (
-    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.052),rgba(255,255,255,0.018))] px-4 py-3 text-sm font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_30px_rgba(0,0,0,0.20)] transition duration-300 hover:-translate-y-0.5 ${toneClass}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/30 text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_rgba(0,0,0,0.18)]">{icon}</span>
-      <span>{label}</span>
+    <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} className={`group flex min-h-[52px] items-center justify-center rounded-[17px] border px-3 py-3 text-center font-black tracking-[-0.025em] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_12px_28px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-0.5 ${compact ? 'text-[12px]' : 'text-[14px]'} ${toneClass} ${isActive ? 'ring-1 ring-white/35 shadow-[0_0_24px_rgba(103,232,249,0.14),inset_0_1px_0_rgba(255,255,255,0.14)]' : ''}`}>
+      <span className="leading-5">{label}</span>
     </a>
   );
 }
@@ -39,11 +45,17 @@ export function PrisonSharedSidebar() {
         <SidebarLogo />
       </a>
       <nav className="space-y-2.5">
-        <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" icon="🏆" tone="gold" />
-        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 달력" icon="▥" tone="teal" />
-        <SidebarNavItem href="/jangjisu-prison/crews" label="종겜 크루 목록" icon="👥" tone="green" />
-        <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" icon="N" tone="green" external />
-        <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" icon="📅" tone="teal" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <SidebarNavItem href="/jangjisu-prison" label="수용소 메인" tone="gold" activePaths={['/jangjisu-prison', '/jangjisu-prison-v2']} compact />
+          <SidebarNavItem href="/" label="SOU 아카이브" tone="slate" compact />
+        </div>
+        <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="teal" />
+        <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 캘린더" tone="blue" />
+        <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
+        <div className="grid grid-cols-2 gap-2.5">
+          <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="violet" compact />
+          <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="slate" compact />
+        </div>
       </nav>
     </aside>
   );
@@ -60,14 +72,15 @@ export function PrisonSharedMobileNav() {
       logoWide
       homeHref="/jangjisu-prison"
       breakpoint="xl"
+      menuLayout="grid"
       items={[
-        { href: '/jangjisu-prison', label: '수용소 메인', icon: '🏛️', tone: 'gold' },
-        { href: '/', label: 'SOU 아카이브', icon: '🔵', tone: 'blue' },
-        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 달력', icon: '▥', tone: 'teal' },
-        { href: '/jangjisu-prison/crews', label: '종겜 크루 목록', icon: '👥', tone: 'green' },
-        { href: FAN_CAFE_URL, label: '팬카페', icon: 'N', tone: 'green', external: true },
-        { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', icon: '📅', tone: 'teal' },
-        { href: '/jangjisu-prison/multiview', label: '멀티뷰', icon: '▣', tone: 'blue' },
+        { href: '/jangjisu-prison', label: '수용소 메인', tone: 'gold', activePaths: ['/jangjisu-prison', '/jangjisu-prison-v2'] },
+        { href: '/', label: 'SOU 아카이브', tone: 'slate' },
+        { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'teal', span: 2 },
+        { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 캘린더', tone: 'blue', span: 2 },
+        { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
+        { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'violet' },
+        { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'slate' },
       ]}
     />
   );
