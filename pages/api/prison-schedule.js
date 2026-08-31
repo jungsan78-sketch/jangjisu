@@ -2,6 +2,7 @@ import { getAllowedScheduleMonth } from '../../lib/scheduleMonth';
 import { PRISON_MANUAL_SCHEDULES } from '../../data/prisonManualSchedules';
 import { readSnapshotCache, writeSnapshotCache } from '../../lib/cloudflareSnapshotCache';
 import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSource';
+import { resolveSheetGid } from '../../lib/monthlySheetResolver';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const SNAPSHOT_VERSION = 'v1';
@@ -21,32 +22,32 @@ const SOURCES = [
     id: 'guweol',
     key: '구월이',
     sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
-    gids: { '2026-07': '739202309', '2026-08': '1765161556' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1765161556#gid=1765161556',
+    gids: { '2026-07': '739202309', '2026-08': '1765161556', '2026-09': '1114482438' },
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1114482438#gid=1114482438',
     mode: 'fixedGid',
   },
   {
     id: 'linling',
     key: '린링',
     sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
-    gids: { '2026-07': '1838232194', '2026-08': '730341520' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=730341520#gid=730341520',
+    gids: { '2026-07': '1838232194', '2026-08': '730341520', '2026-09': '408016242' },
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=408016242#gid=408016242',
     mode: 'fixedGid',
   },
   {
     id: 'youoneul',
     key: '유오늘',
     sheetId: '1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo',
-    gids: { '2026-07': '1665931711', '2026-08': '996600110' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=996600110#gid=996600110',
+    gids: { '2026-07': '1665931711', '2026-08': '996600110', '2026-09': '981003566' },
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=981003566#gid=981003566',
     mode: 'fixedGid',
   },
   {
     id: 'honoe1330',
     key: '이치유',
     sheetId: '1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH',
-    gids: { '2026-08': '1452473631' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1452473631#gid=1452473631',
+    gids: { '2026-08': '1452473631', '2026-09': '1613438892' },
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1613438892#gid=1613438892',
     mode: 'fixedGid',
   },
   {
@@ -70,8 +71,8 @@ const buildSheetCandidates = (monthInfo) => [
 
 const getSourceGid = (source, monthInfo) => source.gids?.[monthKey(monthInfo)] || '';
 
-const getSourceUrl = (source, monthInfo) => {
-  const gid = getSourceGid(source, monthInfo);
+const getSourceUrl = (source, monthInfo, resolvedGid = '') => {
+  const gid = resolvedGid || getSourceGid(source, monthInfo);
   return gid ? `https://docs.google.com/spreadsheets/d/${source.sheetId}/edit?gid=${gid}#gid=${gid}` : source.sourceUrl;
 };
 
@@ -291,9 +292,9 @@ const fetchCandidateSchedule = async (source, candidate) => {
   return { monthLabel: candidate.monthLabel, sheetName: candidate.sheetName, items, fetchedUrl };
 };
 
-const fetchFixedGidSchedule = async (source, monthInfo) => {
+const fetchFixedGidSchedule = async (source, monthInfo, resolvedGid = '') => {
   const { year, month } = monthInfo;
-  const gid = getSourceGid(source, monthInfo);
+  const gid = resolvedGid || getSourceGid(source, monthInfo);
   if (!gid) throw new Error('선택한 달의 고정 시트 정보를 찾지 못했습니다.');
   const urls = [
     `https://docs.google.com/spreadsheets/d/${source.sheetId}/export?format=csv&gid=${gid}`,
@@ -302,7 +303,7 @@ const fetchFixedGidSchedule = async (source, monthInfo) => {
   ];
   const { rows, fetchedUrl } = await fetchRowsFromUrls(urls);
   const items = parseScheduleRows(rows, year, month);
-  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: getSourceUrl(source, monthInfo) };
+  return { monthLabel: `${year}년 ${month}월`, sheetName: '', items, fetchedUrl, sourceUrl: getSourceUrl(source, monthInfo, gid) };
 };
 
 const fetchSourceSchedule = async (source, monthInfo) => {
@@ -311,8 +312,12 @@ const fetchSourceSchedule = async (source, monthInfo) => {
     return { ...result, member: source.key };
   }
 
-  if (source.mode === 'fixedGid' && getSourceGid(source, monthInfo)) {
-    const result = await fetchFixedGidSchedule(source, monthInfo);
+  if (source.mode === 'fixedGid') {
+    const candidates = buildSheetCandidates(monthInfo);
+    const resolvedGid = getSourceGid(source, monthInfo)
+      || await resolveSheetGid(source.sheetId, candidates.map((candidate) => candidate.sheetName));
+    if (!resolvedGid) return { ok: false, member: source.key, monthLabel: '', sheetName: '', items: [], fetchedUrl: '' };
+    const result = await fetchFixedGidSchedule(source, monthInfo, resolvedGid);
     return { ok: result.items.some((item) => !item.empty), member: source.key, ...result };
   }
 
