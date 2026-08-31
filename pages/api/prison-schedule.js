@@ -5,7 +5,7 @@ import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSo
 import { resolveSheetGid } from '../../lib/monthlySheetResolver';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const SNAPSHOT_VERSION = 'v1';
+const SNAPSHOT_VERSION = 'v2';
 const SNAPSHOT_FRESH_MS = 60 * 60 * 1000;
 const SNAPSHOT_STORAGE_SECONDS = 100 * 24 * 60 * 60;
 const snapshotRefreshPromises = new Map();

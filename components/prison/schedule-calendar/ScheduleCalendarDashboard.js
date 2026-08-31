@@ -5,7 +5,7 @@ import useScheduleCalendarData from './useScheduleCalendarData';
 import { getRecentKstMonths } from '../../../lib/prisonScheduleCalendar';
 
 export default function ScheduleCalendarDashboard() {
-  const monthOptions = useMemo(() => getRecentKstMonths(3), []);
+  const monthOptions = useMemo(() => getRecentKstMonths(1), []);
   const [selected, setSelected] = useState('jangjisu');
   const [selectedMonth, setSelectedMonth] = useState(() => monthOptions[monthOptions.length - 1]);
   const { currentMonth, entries, events, loaded, failedCount } = useScheduleCalendarData(selected, selectedMonth);
@@ -38,3 +38,4 @@ export default function ScheduleCalendarDashboard() {
     </div>
   );
 }
+

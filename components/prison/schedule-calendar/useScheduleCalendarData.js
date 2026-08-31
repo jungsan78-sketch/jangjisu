@@ -8,7 +8,7 @@ const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const PROFILE_MAP = new Map(SCHEDULE_MEMBERS.map((member) => [member.nickname, member]));
 
 function monthUrl(monthInfo) {
-  return `/api/prison-schedule?year=${monthInfo.year}&month=${monthInfo.month}`;
+  return `/api/prison-schedule?year=${monthInfo.year}&month=${monthInfo.month}&v=2`;
 }
 
 export default function useScheduleCalendarData(selectedKey, selectedMonth) {
