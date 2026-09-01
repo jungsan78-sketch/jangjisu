@@ -11,6 +11,7 @@ import {
 import { getReplayMonthStorageTtl, getReplayMonthWindow, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
 const CACHE_VERSION = 'v5';
+const VERIFICATION_VERSION = 'v2';
 const CURRENT_CACHE_MS = 30 * 60 * 1000;
 const VERIFY_CACHE_MS = 30 * 60 * 1000;
 const monthLoadPromises = new Map();
@@ -36,6 +37,21 @@ function isFresh(record, monthInfo, now = new Date()) {
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   if (kst.getUTCDate() <= 2) return now.getTime() - Number(record.cachedAt) < 60 * 60 * 1000;
   return true;
+}
+
+function isPreviousMonthFinalizationWindow(monthInfo, now = new Date()) {
+  if (monthInfo.kind !== 'previous') return false;
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.getUTCDate() <= 2;
+}
+
+function hasPositiveBroadcastStats(value) {
+  return ['donations', 'peakViewers', 'cumulativeViewers', 'broadcastMinutes']
+    .some((key) => Number(value?.[key] || 0) > 0);
+}
+
+function shouldPreserveExistingStats(nextValue, existingValue) {
+  return !hasPositiveBroadcastStats(nextValue) && hasPositiveBroadcastStats(existingValue);
 }
 
 function daysToCollect(monthInfo, now = new Date()) {
@@ -84,6 +100,7 @@ async function collectPoonggoMonth(monthInfo, previousPayload) {
     monthLabel: monthInfo.monthLabel,
     members,
     verifiedAtByMember: previousPayload?.verifiedAtByMember || {},
+    verificationVersionByMember: previousPayload?.verificationVersionByMember || {},
     monthlyAtByMember,
   };
 }
@@ -177,14 +194,15 @@ async function loadMonth(monthInfo) {
 function verificationFresh(payload, id, monthInfo) {
   const verifiedAt = Number(payload?.verifiedAtByMember?.[id] || 0);
   if (!verifiedAt) return false;
-  if (monthInfo.kind === 'previous') return true;
+  if (payload?.verificationVersionByMember?.[id] !== VERIFICATION_VERSION) return false;
+  if (monthInfo.kind === 'previous' && !isPreviousMonthFinalizationWindow(monthInfo)) return true;
   return Date.now() - verifiedAt < VERIFY_CACHE_MS;
 }
 
 function monthlyFresh(payload, id, monthInfo) {
   const cumulativeAt = Number(payload?.monthlyAtByMember?.[id] || 0);
   if (!cumulativeAt) return false;
-  if (monthInfo.kind === 'previous') return true;
+  if (monthInfo.kind === 'previous' && !isPreviousMonthFinalizationWindow(monthInfo)) return true;
   return Date.now() - cumulativeAt < VERIFY_CACHE_MS;
 }
 
@@ -207,15 +225,29 @@ async function verifyMemberMonthUncoalesced(monthState, monthInfo, id, force = f
   const successfulResults = results.filter(Boolean).length;
   const members = payload.members.map((member) => {
     if (member.id !== id) return member;
+    const monthlyStats = {
+      donations: monthlyResult?.donations,
+      peakViewers: monthlyResult?.peakViewers,
+      cumulativeViewers: monthlyResult?.cumulativeViewers,
+      broadcastMinutes: monthlyResult?.broadcastMinutes,
+    };
+    const existingMonthlyStats = {
+      donations: member.monthlyDonations,
+      peakViewers: member.monthlyPeakViewers,
+      cumulativeViewers: member.monthlyCumulativeViewers,
+      broadcastMinutes: member.monthlyBroadcastMinutes,
+    };
+    const useMonthlyResult = monthlyResult && !shouldPreserveExistingStats(monthlyStats, existingMonthlyStats);
     return {
       ...member,
-      monthlyDonations: monthlyResult?.donations ?? member.monthlyDonations ?? 0,
-      monthlyPeakViewers: monthlyResult?.peakViewers ?? member.monthlyPeakViewers ?? 0,
-      monthlyCumulativeViewers: monthlyResult?.cumulativeViewers ?? member.monthlyCumulativeViewers ?? 0,
-      monthlyBroadcastMinutes: monthlyResult?.broadcastMinutes ?? member.monthlyBroadcastMinutes ?? 0,
+      monthlyDonations: useMonthlyResult ? monthlyResult.donations : member.monthlyDonations ?? 0,
+      monthlyPeakViewers: useMonthlyResult ? monthlyResult.peakViewers : member.monthlyPeakViewers ?? 0,
+      monthlyCumulativeViewers: useMonthlyResult ? monthlyResult.cumulativeViewers : member.monthlyCumulativeViewers ?? 0,
+      monthlyBroadcastMinutes: useMonthlyResult ? monthlyResult.broadcastMinutes : member.monthlyBroadcastMinutes ?? 0,
       days: member.days.map((day) => {
         const poonggo = resultMap.get(day.dateKey);
         if (!poonggo) return day;
+        if (shouldPreserveExistingStats(poonggo, day)) return day;
         return reconcileBroadcastDay({
           ...day,
           sources: {
@@ -237,6 +269,9 @@ async function verifyMemberMonthUncoalesced(monthState, monthInfo, id, force = f
     verifiedAtByMember: verifyDaily && successfulResults === targetDays.length
       ? { ...payload.verifiedAtByMember, [id]: Date.now() }
       : { ...payload.verifiedAtByMember },
+    verificationVersionByMember: verifyDaily && successfulResults === targetDays.length
+      ? { ...payload.verificationVersionByMember, [id]: VERIFICATION_VERSION }
+      : { ...payload.verificationVersionByMember },
     monthlyAtByMember: monthlyResult
       ? { ...payload.monthlyAtByMember, [id]: Date.now() }
       : { ...payload.monthlyAtByMember },
