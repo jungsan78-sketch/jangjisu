@@ -12,9 +12,13 @@ async function isAuthorized(req) {
 
 function scheduledTarget() {
   const refreshSlot = Math.floor(Date.now() / (60 * 60 * 1000));
+  const monthWindow = getReplayMonthWindow();
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const finalizePreviousMonth = kst.getUTCDate() <= 2 && refreshSlot % 2 === 1;
+  const memberSlot = kst.getUTCDate() <= 2 ? Math.floor(refreshSlot / 2) : refreshSlot;
   return {
-    member: BROADCAST_DATA_MEMBERS[refreshSlot % BROADCAST_DATA_MEMBERS.length],
-    month: getReplayMonthWindow().find((month) => month.kind === 'current'),
+    member: BROADCAST_DATA_MEMBERS[memberSlot % BROADCAST_DATA_MEMBERS.length],
+    month: monthWindow.find((month) => month.kind === (finalizePreviousMonth ? 'previous' : 'current')),
   };
 }
 
@@ -42,3 +46,4 @@ export default async function handler(req, res) {
     return res.status(502).json({ ok: false, error: 'refresh-failed' });
   }
 }
+
