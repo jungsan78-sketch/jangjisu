@@ -36,7 +36,7 @@ export default function BroadcastDataDashboard() {
     setVerifying(true);
     setPayload(null);
     setError('');
-    fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}`)
+    fetch(`/api/prison-broadcast-data?month=${encodeURIComponent(monthKey)}&member=${encodeURIComponent(selectedMemberId)}&verify=1`)
       .then((response) => readApiJson(response).then((json) => ({ response, json })))
       .then(({ response, json }) => {
         if (!response.ok || !json.ok) throw new Error(json.message || '방송 데이터를 불러오지 못했습니다.');
@@ -45,7 +45,7 @@ export default function BroadcastDataDashboard() {
       .catch((fetchError) => { if (!cancelled) { setError(fetchError.message); setVerifying(false); } })
       .finally(() => { if (!cancelled) { setLoading(false); setVerifying(false); } });
     return () => { cancelled = true; };
-  }, [monthKey]);
+  }, [monthKey, selectedMemberId]);
 
   useEffect(() => {
     if (!selectedMemberId) return undefined;
