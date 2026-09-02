@@ -44,20 +44,14 @@ export default function BroadcastCategoryDistribution({ member, payload, loading
   const items = useMemo(() => makeDisplayItems(payload), [payload]);
   const total = items.reduce((sum, item) => sum + Number(item.totalSec || 0), 0);
   const gradient = useMemo(() => makeGradient(items), [items]);
-  const sourceUrl = member?.id ? `https://www.trackify.kr/soop/${encodeURIComponent(member.id)}` : 'https://www.trackify.kr/';
 
   return (
     <section className="rounded-[26px] border border-white/[0.07] bg-[#07111f] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.22)] sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-white">카테고리 분포</h2>
-          <p className="mt-2 text-sm font-bold text-white/45">
-            {member?.nickname || '선택한 멤버'}의 {payload?.monthLabel || '선택한 달'} 방송시간 기준입니다.
-          </p>
-        </div>
-        <a href={sourceUrl} target="_blank" rel="noreferrer" className="text-xs font-black text-cyan-200/55 transition hover:text-cyan-100">
-          데이터 출처 Trackify ↗
-        </a>
+      <div>
+        <h2 className="text-2xl font-black tracking-tight text-white">카테고리 분포</h2>
+        <p className="mt-2 text-sm font-bold text-white/45">
+          {member?.nickname || '선택한 멤버'}의 {payload?.monthLabel || '선택한 달'} 방송시간 기준입니다.
+        </p>
       </div>
 
       {loading ? (
