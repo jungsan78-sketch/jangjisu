@@ -21,6 +21,27 @@ function isKvNamespace(cache) {
   return cache && typeof cache.get === 'function' && typeof cache.put === 'function';
 }
 
+function getLatestUploadByMember(items = []) {
+  const seen = new Set();
+  return [...items]
+    .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    .filter((item) => {
+      if (!item?.member || seen.has(item.member)) return false;
+      seen.add(item.member);
+      return true;
+    });
+}
+
+function getResponsePayload(payload, latestOnly) {
+  if (!latestOnly) return payload;
+  return {
+    ...payload,
+    videos: getLatestUploadByMember(payload?.videos),
+    shorts: getLatestUploadByMember(payload?.shorts),
+    latestPerMember: true,
+  };
+}
+
 async function readCachedPayload(cache) {
   if (!isKvNamespace(cache)) return null;
   try {
@@ -47,6 +68,7 @@ async function writeCachedPayload(cache, payload) {
 
 export default async function handler(req, res) {
   const debug = String(req.query?.debug || '') === '1';
+  const latestOnly = !debug && String(req.query?.view || '') === 'latest';
   res.setHeader('Cache-Control', debug ? 'no-store' : 'public, s-maxage=21600, stale-while-revalidate=21600');
 
   const cache = await getCacheBinding();
@@ -54,7 +76,7 @@ export default async function handler(req, res) {
   const cached = await readCachedPayload(cache);
 
   if (cached && !debug) {
-    return res.status(200).json({ ...cached, cached: true, cacheSource: 'cloudflare-kv' });
+    return res.status(200).json({ ...getResponsePayload(cached, latestOnly), cached: true, cacheSource: 'cloudflare-kv' });
   }
 
   try {
@@ -63,7 +85,7 @@ export default async function handler(req, res) {
 
     if (isPrisonYoutubeUsable(live)) {
       return res.status(200).json({
-        ...live,
+        ...getResponsePayload(live, latestOnly),
         cached: false,
         cacheSource: 'direct-lib-fallback',
         refreshLabel: '6시간마다 갱신',
@@ -77,7 +99,7 @@ export default async function handler(req, res) {
 
     if (cached) {
       return res.status(200).json({
-        ...cached,
+        ...getResponsePayload(cached, latestOnly),
         cached: true,
         cacheSource: 'cloudflare-kv-after-live-empty',
         warning: live?.error || (live?.sourceComplete === false ? 'live prison youtube source incomplete' : 'live prison youtube payload empty'),
@@ -104,7 +126,7 @@ export default async function handler(req, res) {
   } catch (error) {
     if (cached) {
       return res.status(200).json({
-        ...cached,
+        ...getResponsePayload(cached, latestOnly),
         cached: true,
         cacheSource: 'cloudflare-kv-after-live-error',
         warning: error?.message || 'prison youtube live fallback failed',
