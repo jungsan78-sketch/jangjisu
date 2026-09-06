@@ -3,7 +3,7 @@ import { fetchPrisonYoutubePayload, isPrisonYoutubeUsable } from '../../lib/yout
 
 const CACHE_KEY = 'youtube:prison:v4';
 const TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260826-4';
+const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260906-5';
 
 async function getCacheBinding() {
   try {
@@ -68,6 +68,7 @@ export default async function handler(req, res) {
         cacheSource: 'direct-lib-fallback',
         refreshLabel: '6시간마다 갱신',
         debug: debug ? {
+          ...(live.debug || {}),
           runtimeMarker: RUNTIME_MARKER,
           cache: { bindingFound: cacheAvailable, hit: Boolean(cached), writeAttempted: cacheAvailable, writeOk },
         } : undefined,
