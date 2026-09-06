@@ -113,7 +113,7 @@ export default function ShortsHallOfFame() {
     let mounted = true;
     async function load() {
       try {
-        const res = await fetch('/api/shorts-hall-of-fame?members=20260826');
+        const res = await fetch('/api/shorts-hall-of-fame?members=20260906');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
         setPayload({ ...(json || {}), loaded: true });
