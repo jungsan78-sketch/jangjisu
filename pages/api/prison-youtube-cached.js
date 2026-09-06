@@ -3,7 +3,7 @@ import { fetchPrisonYoutubePayload, isPrisonYoutubeUsable } from '../../lib/yout
 
 const CACHE_KEY = 'youtube:prison:v4';
 const TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260906-5';
+const RUNTIME_MARKER = 'test2-prison-youtube-kv-cache-20260906-6';
 
 async function getCacheBinding() {
   try {
