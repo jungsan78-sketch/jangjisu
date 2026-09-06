@@ -5,7 +5,7 @@ import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSo
 import { resolveSheetGid } from '../../lib/monthlySheetResolver';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const SNAPSHOT_VERSION = 'v2';
+const SNAPSHOT_VERSION = 'v3';
 const SNAPSHOT_FRESH_MS = 60 * 60 * 1000;
 const SNAPSHOT_STORAGE_SECONDS = 100 * 24 * 60 * 60;
 const snapshotRefreshPromises = new Map();
@@ -198,8 +198,8 @@ const normalizeScheduleText = (value) => {
 const isDecorationOnly = (value) => /^[\p{Extended_Pictographic}\u200d\ufe0f\s]+$/u.test(String(value || ''));
 
 const isWeekdayHeaderRow = (row) => {
-  const weekdayCount = row.filter((cell) => DAY_LABELS.includes(String(cell || '').trim())).length;
-  return weekdayCount >= 5;
+  const nonEmptyCells = row.map((cell) => String(cell || '').trim()).filter(Boolean);
+  return nonEmptyCells.length >= 2 && nonEmptyCells.every((cell) => DAY_LABELS.includes(cell));
 };
 
 const parseScheduleRows = (rows, targetYear, targetMonth) => {
