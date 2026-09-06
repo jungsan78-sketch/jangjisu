@@ -80,8 +80,17 @@ export default async function handler(req, res) {
         ...cached,
         cached: true,
         cacheSource: 'cloudflare-kv-after-live-empty',
-        warning: live?.error || 'live prison youtube payload empty',
-        debug: debug ? { runtimeMarker: RUNTIME_MARKER, cache: { bindingFound: cacheAvailable, hit: true, writeAttempted: cacheAvailable, writeOk } } : cached.debug,
+        warning: live?.error || (live?.sourceComplete === false ? 'live prison youtube source incomplete' : 'live prison youtube payload empty'),
+        debug: debug ? {
+          ...(live.debug || {}),
+          runtimeMarker: RUNTIME_MARKER,
+          source: {
+            complete: live?.sourceComplete,
+            channelCount: live?.sourceChannelCount || 0,
+            successCount: live?.sourceSuccessCount || 0,
+          },
+          cache: { bindingFound: cacheAvailable, hit: true, writeAttempted: cacheAvailable, writeOk },
+        } : cached.debug,
       });
     }
 
