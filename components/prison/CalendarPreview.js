@@ -125,7 +125,7 @@ export default function CalendarPreview() {
 
     async function load() {
       try {
-        const response = await fetch('/api/prison-schedule');
+        const response = await fetch('/api/prison-schedule?v=3');
         if (!response.ok) throw new Error(`schedule ${response.status}`);
         const payload = await response.json();
         if (!payload.ok || !Array.isArray(payload.schedules)) throw new Error('schedule unavailable');
