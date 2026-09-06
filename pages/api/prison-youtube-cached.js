@@ -21,24 +21,30 @@ function isKvNamespace(cache) {
   return cache && typeof cache.get === 'function' && typeof cache.put === 'function';
 }
 
-function getLatestUploadByMember(items = []) {
-  const seen = new Set();
+function getRecentUploadsByMember(items = [], limit = 5) {
   return [...items]
     .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
-    .filter((item) => {
-      if (!item?.member || seen.has(item.member)) return false;
-      seen.add(item.member);
-      return true;
-    });
+    .reduce((groups, item) => {
+      if (!item?.member) return groups;
+      if (!groups[item.member]) groups[item.member] = [];
+      if (groups[item.member].length < limit) groups[item.member].push(item);
+      return groups;
+    }, {});
 }
 
 function getResponsePayload(payload, latestOnly) {
   if (!latestOnly) return payload;
+  const memberRecent = {
+    videos: getRecentUploadsByMember(payload?.videos),
+    shorts: getRecentUploadsByMember(payload?.shorts),
+  };
   return {
     ...payload,
-    videos: getLatestUploadByMember(payload?.videos),
-    shorts: getLatestUploadByMember(payload?.shorts),
+    videos: Object.values(memberRecent.videos).map((items) => items[0]).filter(Boolean),
+    shorts: Object.values(memberRecent.shorts).map((items) => items[0]).filter(Boolean),
+    memberRecent,
     latestPerMember: true,
+    recentPerMemberLimit: 5,
   };
 }
 
