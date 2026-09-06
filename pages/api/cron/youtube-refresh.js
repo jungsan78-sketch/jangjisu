@@ -7,7 +7,7 @@ const SHORTS_HALL_KEY = 'youtube:shorts-hall:v4';
 const MAIN_TTL_SECONDS = 60 * 60 * 6;
 const PRISON_TTL_SECONDS = 60 * 60 * 6;
 const SHORTS_HALL_TTL_SECONDS = 60 * 60 * 6;
-const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260826-4';
+const RUNTIME_MARKER = 'test2-youtube-cron-kv-20260906-5';
 
 async function getCacheBinding() {
   try {
@@ -106,12 +106,15 @@ export default async function handler(req, res) {
     const prison = await fetchPrisonYoutubePayload({ debug: false });
     result.prison.videos = prison.videos?.length || 0;
     result.prison.shorts = prison.shorts?.length || 0;
+    result.prison.sourceComplete = prison.sourceComplete;
+    result.prison.sourceChannelCount = prison.sourceChannelCount || 0;
+    result.prison.sourceSuccessCount = prison.sourceSuccessCount || 0;
     result.prison.error = prison.error || '';
     if (isPrisonYoutubeUsable(prison)) {
       prisonPayload = prison;
       result.prison.ok = await setJsonCache(cache, PRISON_KEY, { ...prison, cachedAt: result.refreshedAt }, PRISON_TTL_SECONDS);
     } else {
-      result.prison.skipped = 'empty-or-unavailable';
+      result.prison.skipped = prison.sourceComplete === false ? 'incomplete-source' : 'empty-or-unavailable';
     }
   } catch (error) {
     result.prison.error = error?.message || true;
