@@ -25,7 +25,18 @@ function YoutubeTabButton({ label, isActive, onClick, hasNew }) {
 }
 
 function YoutubePanel({ title, items, vertical = false }) {
-  return <div className="animate-[youtubeTabIn_280ms_cubic-bezier(0.22,1,0.36,1)]"><div className="mb-4 flex items-center justify-between gap-3 sm:mb-5"><div className="text-[20px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">{title}</div></div><div className={vertical ? 'grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : 'grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}>{(items || []).map((video) => <VideoCard key={video.id} video={video} vertical={vertical} />)}</div></div>;
+  return <div className="animate-[youtubeTabIn_280ms_cubic-bezier(0.22,1,0.36,1)]"><div className="mb-4 flex flex-wrap items-center gap-2 sm:mb-5 sm:gap-3"><div className="text-[20px] font-extrabold tracking-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.45)] sm:text-[28px]">{title}</div><span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-[10px] font-bold text-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:text-[11px]">멤버당 최근 영상 1개 · 최근 30일 기준</span></div><div className={vertical ? 'grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : 'grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}>{(items || []).map((video) => <VideoCard key={video.id} video={video} vertical={vertical} />)}</div></div>;
+}
+
+function getLatestUploadByMember(items = []) {
+  const seen = new Set();
+  return [...items]
+    .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    .filter((item) => {
+      if (!item?.member || seen.has(item.member)) return false;
+      seen.add(item.member);
+      return true;
+    });
 }
 
 export default function RecentYoutubeSection() {
@@ -52,6 +63,8 @@ export default function RecentYoutubeSection() {
   }, []);
   const hasNewVideos = hasRecentUpload(data.videos);
   const hasNewShorts = hasRecentUpload(data.shorts);
-  return <section id="recent-youtube" className="mt-6 w-full max-w-none rounded-[28px] bg-white/[0.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.22)] sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8"><div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><SectionTitle title="YOUTUBE" logo="▶" /><span className="w-fit rounded-full bg-white/[0.055] px-3 py-1.5 text-[11px] font-black text-white/48 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">6시간마다 갱신</span></div><div className="mb-5 flex flex-wrap gap-2 sm:mb-6 sm:gap-3"><YoutubeTabButton label="쇼츠" isActive={activeTab === 'shorts'} onClick={() => setActiveTab('shorts')} hasNew={hasNewShorts} /><YoutubeTabButton label="영상" isActive={activeTab === 'videos'} onClick={() => setActiveTab('videos')} hasNew={hasNewVideos} /></div>{data.missingKey ? <div className="rounded-[20px] bg-amber-300/8 p-4 text-sm font-bold leading-6 text-amber-50/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-5 sm:leading-7">YouTube API 키가 아직 연결되지 않았습니다.</div> : !data.loaded ? <div className="rounded-[20px] bg-[#0b0f17] p-5 text-sm font-semibold text-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-6">유튜브 영상을 불러오는 중입니다.</div> : activeTab === 'shorts' ? <div key="shorts-panel"><YoutubePanel title="쇼츠" items={data.shorts} vertical /></div> : <div key="videos-panel"><YoutubePanel title="영상" items={data.videos} /></div>}</section>;
+  const latestVideosByMember = getLatestUploadByMember(data.videos);
+  const latestShortsByMember = getLatestUploadByMember(data.shorts);
+  return <section id="recent-youtube" className="mt-6 w-full max-w-none rounded-[28px] bg-white/[0.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_70px_rgba(0,0,0,0.22)] sm:mt-8 sm:rounded-[32px] sm:p-6 lg:p-8"><div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><SectionTitle title="YOUTUBE" logo="▶" /><span className="w-fit rounded-full bg-white/[0.055] px-3 py-1.5 text-[11px] font-black text-white/48 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">6시간마다 갱신</span></div><div className="mb-5 flex flex-wrap gap-2 sm:mb-6 sm:gap-3"><YoutubeTabButton label="쇼츠" isActive={activeTab === 'shorts'} onClick={() => setActiveTab('shorts')} hasNew={hasNewShorts} /><YoutubeTabButton label="영상" isActive={activeTab === 'videos'} onClick={() => setActiveTab('videos')} hasNew={hasNewVideos} /></div>{data.missingKey ? <div className="rounded-[20px] bg-amber-300/8 p-4 text-sm font-bold leading-6 text-amber-50/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-5 sm:leading-7">YouTube API 키가 아직 연결되지 않았습니다.</div> : !data.loaded ? <div className="rounded-[20px] bg-[#0b0f17] p-5 text-sm font-semibold text-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-[24px] sm:p-6">유튜브 영상을 불러오는 중입니다.</div> : activeTab === 'shorts' ? <div key="shorts-panel"><YoutubePanel title="쇼츠" items={latestShortsByMember} vertical /></div> : <div key="videos-panel"><YoutubePanel title="영상" items={latestVideosByMember} /></div>}</section>;
 }
 
