@@ -6,10 +6,10 @@ import StreamerAutocomplete from '../../components/utility/StreamerAutocomplete'
 const STORAGE_KEY = 'sou:overwatch-random:v8';
 
 const POSITION_META = {
-  tank: { label: '탱커', icon: '🛡️', ring: 'border-sky-300/30', badge: 'border-sky-300/35 bg-sky-300/12 text-sky-100' },
-  dps: { label: '딜러', icon: '⚔️', ring: 'border-orange-300/30', badge: 'border-orange-300/35 bg-orange-300/12 text-orange-100' },
-  support: { label: '힐러', icon: '💚', ring: 'border-emerald-300/30', badge: 'border-emerald-300/35 bg-emerald-300/12 text-emerald-100' },
-  random: { label: '랜덤', icon: '❓', ring: 'border-violet-300/30', badge: 'border-violet-300/35 bg-violet-300/12 text-violet-100' },
+  tank: { label: '탱커', icon: '🛡️', badge: 'bg-sky-300/12 text-sky-100 shadow-[inset_0_1px_0_rgba(125,211,252,0.10)]' },
+  dps: { label: '딜러', icon: '⚔️', badge: 'bg-orange-300/12 text-orange-100 shadow-[inset_0_1px_0_rgba(253,186,116,0.10)]' },
+  support: { label: '힐러', icon: '💚', badge: 'bg-emerald-300/12 text-emerald-100 shadow-[inset_0_1px_0_rgba(110,231,183,0.10)]' },
+  random: { label: '랜덤', icon: '❓', badge: 'bg-violet-300/12 text-violet-100 shadow-[inset_0_1px_0_rgba(196,181,253,0.10)]' },
 };
 
 const TEAM_ACCENTS = [
@@ -109,13 +109,13 @@ function PlayerCard({ item, profile, size = 'large', draggable = false, onDragSt
   const cardSize = compact ? 'w-[112px] min-h-[122px] p-2.5' : 'w-[132px] min-h-[146px] p-3';
   const imageSize = compact ? 'h-14 w-14' : 'h-16 w-16';
   return (
-    <button type="button" draggable={draggable && !locked} onDragStart={locked ? undefined : onDragStart} onDragEnd={onDragEnd} onClick={onClick} className={`group relative flex ${cardSize} flex-col items-center justify-start rounded-[22px] ${locked ? 'bg-amber-300/[0.09] ring-1 ring-amber-200/28' : 'bg-[linear-gradient(155deg,#152236,#0c1523)]'} text-center shadow-[inset_0_1px_0_rgba(125,183,219,0.09),0_12px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-1 hover:bg-[#17263c] ${locked ? 'cursor-pointer' : draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}>
-      {onToggleLock ? <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleLock(); }} className={`absolute right-2 top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border px-2 text-[11px] font-black transition ${locked ? 'border-amber-200/45 bg-amber-300/20 text-amber-100' : 'border-white/10 bg-black/35 text-white/50 hover:text-white'}`}>{locked ? '🔒' : '🔓'}</span> : null}
-      {onRemove ? <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(item.name); }} className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-black/35 text-xs text-white/58 opacity-0 transition hover:text-white group-hover:opacity-100">×</span> : null}
-      <div className={`${imageSize} mt-1 overflow-hidden rounded-full border border-white/12 bg-black/22 shadow-[0_8px_18px_rgba(0,0,0,0.28)]`}>{src ? <img src={src} alt={item.name} onError={() => setFailed(true)} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.015)_62%,transparent)]" />}</div>
+    <div role="button" tabIndex={0} draggable={draggable && !locked} onDragStart={locked ? undefined : onDragStart} onDragEnd={onDragEnd} onClick={onClick} onKeyDown={(event) => { if ((event.key === 'Enter' || event.key === ' ') && onClick) onClick(); }} className={`group relative flex ${cardSize} flex-col items-center justify-start rounded-[22px] ${locked ? 'bg-amber-300/[0.09] ring-1 ring-amber-200/28' : 'bg-[linear-gradient(155deg,#152236,#0c1523)]'} text-center shadow-[inset_0_1px_0_rgba(125,183,219,0.09),0_12px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-1 hover:bg-[#17263c] ${locked ? 'cursor-pointer' : draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}>
+      {onToggleLock ? <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleLock(); }} className={`absolute right-2 top-2 z-10 flex h-7 items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-black transition ${locked ? 'bg-amber-300/20 text-amber-100 shadow-[inset_0_1px_0_rgba(253,230,138,0.16),0_6px_16px_rgba(245,158,11,0.10)]' : 'bg-slate-950/72 text-slate-100/62 shadow-[inset_0_1px_0_rgba(203,213,225,0.08),0_6px_16px_rgba(0,0,0,0.18)] hover:bg-slate-700/72 hover:text-white'}`}>{locked ? '🔒 해제' : '🔓 잠금'}</button> : null}
+      {onRemove ? <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(item.name); }} className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/35 text-xs text-white/58 opacity-0 shadow-[inset_0_1px_0_rgba(203,213,225,0.07)] transition hover:text-white group-hover:opacity-100">×</button> : null}
+      <div className={`${imageSize} mt-1 overflow-hidden rounded-full bg-black/22 shadow-[inset_0_1px_0_rgba(125,183,219,0.08),0_8px_18px_rgba(0,0,0,0.28)]`}>{src ? <img src={src} alt={item.name} onError={() => setFailed(true)} className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.015)_62%,transparent)]" />}</div>
       <div className={`${compact ? 'mt-2 text-[15px]' : 'mt-3 text-[17px]'} max-w-full truncate font-black leading-tight text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.28)]`}>{item.name}</div>
-      <div className={`mt-2 rounded-full border px-2.5 py-1 text-[11px] font-black ${locked ? 'border-amber-200/35 bg-amber-300/12 text-amber-100' : meta.badge}`}>{locked ? '잠금' : `${meta.icon} ${meta.label}`}</div>
-    </button>
+      <div className={`mt-2 rounded-full px-2.5 py-1 text-[11px] font-black ${locked ? 'bg-amber-300/14 text-amber-100 shadow-[inset_0_1px_0_rgba(253,230,138,0.12)]' : meta.badge}`}>{locked ? '잠금됨' : `${meta.icon} ${meta.label}`}</div>
+    </div>
   );
 }
 
@@ -126,7 +126,7 @@ function EmptySlot({ role, onDrop, active }) {
     <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop} className={`flex w-[112px] min-h-[122px] flex-col items-center justify-center rounded-[22px] shadow-[inset_0_1px_0_rgba(125,183,219,0.055)] transition ${active ? 'bg-cyan-300/10 ring-1 ring-cyan-200/25' : 'bg-[#080f1a]/72'}`}>
       <div className="h-14 w-14 rounded-full bg-white/[0.035] shadow-[inset_0_1px_0_rgba(125,183,219,0.07)]" />
       <div className="mt-2 text-[11px] font-black text-white/30">{role}</div>
-      <div className={`mt-2 rounded-full border px-2 py-0.5 text-[10px] font-black ${meta.badge}`}>{meta.label}</div>
+      <div className={`mt-2 rounded-full px-2 py-0.5 text-[10px] font-black ${meta.badge}`}>{meta.label}</div>
     </div>
   );
 }
@@ -234,6 +234,8 @@ export default function OverwatchRandomPage() {
         .overwatch-random-shell > .min-h-screen { min-height: 0; background: transparent; }
         .overwatch-random-shell > .min-h-screen > header { display: none; }
         .overwatch-random-shell > .min-h-screen > main { width: 100%; max-width: none; padding: 0; }
+        .overwatch-random-shell button,
+        .overwatch-random-shell .rounded-full.border { border-color: transparent; }
       `}</style>
       <div className="overwatch-random-shell">
         <OverwatchRandomContent />
