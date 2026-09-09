@@ -79,7 +79,7 @@ export default function StreamerAutocomplete({
         className={`w-full ${inputClassName}`}
       />
       {open && canSearch ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-[120] w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-white/12 bg-[#07101c] p-1.5 shadow-[0_22px_58px_rgba(0,0,0,0.58)]">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[120] w-[min(420px,calc(100vw-32px))] overflow-hidden rounded-2xl bg-[#07101c] p-1.5 shadow-[inset_0_1px_0_rgba(125,183,219,0.09),0_22px_58px_rgba(0,0,0,0.58)]">
           <div className="px-3 pb-1.5 pt-1 text-[10px] font-black tracking-[0.18em] text-cyan-100/42">SOOP 스트리머 검색</div>
           {results.map((candidate) => {
             const key = candidate.stationId;
