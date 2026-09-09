@@ -10,12 +10,12 @@ const TEAMS = [
 ];
 const ROLES = ['top', 'jungle', 'mid', 'adc', 'support'];
 const ROLE_META = {
-  top: { label: '탑', icon: '🛡️', tone: 'border-amber-300/28 bg-amber-300/10 text-amber-100' },
-  jungle: { label: '정글', icon: '🌿', tone: 'border-emerald-300/28 bg-emerald-300/10 text-emerald-100' },
-  mid: { label: '미드', icon: '✨', tone: 'border-violet-300/28 bg-violet-300/10 text-violet-100' },
-  adc: { label: '원딜', icon: '🏹', tone: 'border-rose-300/28 bg-rose-300/10 text-rose-100' },
-  support: { label: '서포터', icon: '💚', tone: 'border-cyan-300/28 bg-cyan-300/10 text-cyan-100' },
-  random: { label: '랜덤', icon: '❓', tone: 'border-white/15 bg-white/[0.06] text-white/76' },
+  top: { label: '탑', icon: '🛡️', tone: 'bg-amber-300/11 text-amber-100 shadow-[inset_0_1px_0_rgba(253,230,138,0.10)]' },
+  jungle: { label: '정글', icon: '🌿', tone: 'bg-emerald-300/11 text-emerald-100 shadow-[inset_0_1px_0_rgba(110,231,183,0.10)]' },
+  mid: { label: '미드', icon: '✨', tone: 'bg-violet-300/11 text-violet-100 shadow-[inset_0_1px_0_rgba(196,181,253,0.10)]' },
+  adc: { label: '원딜', icon: '🏹', tone: 'bg-rose-300/11 text-rose-100 shadow-[inset_0_1px_0_rgba(253,164,175,0.10)]' },
+  support: { label: '서포터', icon: '💚', tone: 'bg-cyan-300/11 text-cyan-100 shadow-[inset_0_1px_0_rgba(103,232,249,0.10)]' },
+  random: { label: '랜덤', icon: '❓', tone: 'bg-slate-300/[0.08] text-slate-100/76 shadow-[inset_0_1px_0_rgba(203,213,225,0.07)]' },
 };
 const ROLE_OPTIONS = ['random', ...ROLES];
 const KNOWN_PROFILES = [
@@ -44,7 +44,7 @@ function readSavedState() {
   try { return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
 }
 
-function PlayerCard({ player, profile, compact = false, locked = false, onClick, onRemove, draggable, onDragStart, onDragEnd }) {
+function PlayerCard({ player, profile, compact = false, locked = false, onClick, onRemove, onToggleLock, draggable, onDragStart, onDragEnd }) {
   const meta = ROLE_META[player.position] || ROLE_META.random;
   return (
     <div draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} onClick={onClick} className={`group relative flex cursor-pointer items-center gap-3 rounded-[20px] bg-[linear-gradient(145deg,#142033,#0d1624)] shadow-[inset_0_1px_0_rgba(125,183,219,0.09),0_8px_24px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-[#17243a] ${compact ? 'min-h-[72px] p-3' : 'min-h-[82px] p-4'}`}>
@@ -53,9 +53,9 @@ function PlayerCard({ player, profile, compact = false, locked = false, onClick,
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-black text-white">{player.name}</div>
-        <span className={`mt-1.5 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-black ${meta.tone}`}>{meta.icon} {meta.label}</span>
+        <span className={`mt-1.5 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black ${meta.tone}`}>{meta.icon} {meta.label}</span>
       </div>
-      {locked ? <span className="text-sm" title="자리 잠금">🔒</span> : null}
+      {onToggleLock ? <button type="button" onClick={(event) => { event.stopPropagation(); onToggleLock(); }} className={`ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[11px] font-black transition ${locked ? 'bg-amber-300/18 text-amber-100 shadow-[inset_0_1px_0_rgba(253,230,138,0.16),0_8px_20px_rgba(245,158,11,0.08)]' : 'bg-slate-300/[0.07] text-slate-100/58 shadow-[inset_0_1px_0_rgba(203,213,225,0.07)] hover:bg-slate-300/[0.12] hover:text-white'}`}>{locked ? '🔒 해제' : '🔓 잠금'}</button> : null}
       {onRemove ? <button type="button" onClick={(event) => { event.stopPropagation(); onRemove(player.name); }} className="grid h-7 w-7 place-items-center rounded-full bg-white/[0.055] text-xs font-black text-white/45 opacity-0 transition hover:bg-rose-300/15 hover:text-rose-100 group-hover:opacity-100">×</button> : null}
     </div>
   );
@@ -226,11 +226,11 @@ export default function LolRandomPage() {
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 검색..." className="w-[250px]" inputClassName="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none placeholder:text-white/28 focus:ring-1 focus:ring-amber-200/24" />
             <button type="button" onClick={addParticipants} className="h-11 rounded-xl bg-amber-400 px-5 text-sm font-black text-[#171006] hover:brightness-110">추가</button>
-            <span className="rounded-xl border border-amber-300/24 bg-amber-300/10 px-4 py-2.5 text-sm font-black text-amber-100">5 VS 5 고정</span>
+            <span className="rounded-xl bg-[linear-gradient(135deg,rgba(245,158,11,0.16),rgba(234,179,8,0.08))] px-4 py-2.5 text-sm font-black text-amber-100 shadow-[inset_0_1px_0_rgba(253,230,138,0.12),0_8px_20px_rgba(245,158,11,0.07)]">5 VS 5 고정</span>
             <button type="button" onClick={randomize} className="h-11 rounded-xl bg-[linear-gradient(135deg,#eab308,#0ea5e9)] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(234,179,8,0.16)]">랜덤 섞기</button>
             <button type="button" onClick={resetTeams} className="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-black text-slate-100/72 shadow-[inset_0_1px_0_rgba(180,210,230,0.08)] hover:bg-slate-300/15">팀 초기화</button>
-            <button type="button" onClick={copyResult} className="h-11 rounded-xl border border-cyan-300/22 bg-cyan-300/10 px-4 text-sm font-black text-cyan-100">결과 복사</button>
-            <button type="button" onClick={clearAll} className="h-11 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 text-sm font-black text-rose-100/78">전체삭제</button>
+            <button type="button" onClick={copyResult} className="h-11 rounded-xl bg-cyan-300/10 px-4 text-sm font-black text-cyan-100 shadow-[inset_0_1px_0_rgba(103,232,249,0.11),0_8px_20px_rgba(6,182,212,0.07)] transition hover:bg-cyan-300/16">결과 복사</button>
+            <button type="button" onClick={clearAll} className="h-11 rounded-xl bg-rose-300/10 px-4 text-sm font-black text-rose-100/78 shadow-[inset_0_1px_0_rgba(253,164,175,0.09)] transition hover:bg-rose-300/15">전체삭제</button>
           </div>
           <div className="mt-3 flex flex-wrap gap-4 text-xs font-black text-white/42"><span>등록 {participants.length}명</span><span>대기 {lobby.length}명</span><span>배정 {assignedNames.size}명</span><span>잠금 {Object.values(locks).filter(Boolean).length}칸</span></div>
         </section>
@@ -259,7 +259,7 @@ export default function LolRandomPage() {
                   {ROLES.map((role) => {
                     const key = slotKey(team.id, role);
                     const player = assigned.get(key);
-                    return player ? <PlayerCard key={key} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} compact locked={Boolean(locks[key])} onClick={() => setMoveTarget(player)} draggable={!locks[key]} onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} /> : <EmptySlot key={key} role={role} active={Boolean(dragPlayer) && !locks[key] && (dragPlayer.position === role || dragPlayer.position === 'random')} onDrop={() => { if (dragPlayer) moveToSlot(dragPlayer, key); setDragPlayer(null); }} />;
+                    return player ? <PlayerCard key={key} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} compact locked={Boolean(locks[key])} onToggleLock={() => setLocks((current) => ({ ...current, [key]: !current[key] }))} onClick={() => setMoveTarget(player)} draggable={!locks[key]} onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} /> : <EmptySlot key={key} role={role} active={Boolean(dragPlayer) && !locks[key] && (dragPlayer.position === role || dragPlayer.position === 'random')} onDrop={() => { if (dragPlayer) moveToSlot(dragPlayer, key); setDragPlayer(null); }} />;
                   })}
                 </div>
               </div>
