@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 import { PrisonPageChrome } from '../../components/prison/PrisonPageContent';
+import StreamerAutocomplete from '../../components/utility/StreamerAutocomplete';
 
 const STORAGE_KEY = 'sou:lol-random:v1';
 const TEAMS = [
@@ -147,6 +148,23 @@ export default function LolRandomPage() {
     });
     setNameInput('');
   };
+  const addSuggestedParticipant = (candidate) => {
+    if (!candidate?.nickname || !candidate?.stationId) return;
+    setParticipants((current) => {
+      const duplicate = current.some((player) => normalizeName(player.name) === normalizeName(candidate.nickname) || player.stationId === candidate.stationId);
+      if (duplicate) return current;
+      return [...current, {
+        id: `${Date.now()}-${candidate.stationId}-${Math.random().toString(36).slice(2, 7)}`,
+        name: candidate.nickname,
+        position,
+        stationId: candidate.stationId,
+        profileImage: candidate.profileImage || '',
+        favoriteCount: candidate.favoriteCount,
+      }];
+    });
+    if (candidate.profileImage) setProfiles((current) => ({ ...current, [normalizeName(candidate.nickname)]: candidate.profileImage }));
+    setNameInput('');
+  };
   const removeParticipant = (name) => {
     setParticipants((current) => current.filter((player) => player.name !== name));
     setAssignments((current) => Object.fromEntries(Object.entries(current).map(([key, value]) => [key, value === name ? '' : value])));
@@ -195,13 +213,13 @@ export default function LolRandomPage() {
     <>
       <Head><title>롤 랜덤뽑기 | 장지수용소</title><meta name="description" content="롤 포지션 기반 5대5 랜덤 팀 편성 도구" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
       <PrisonPageChrome wide>
-        <section className="relative w-full overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.016))] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.26)] sm:p-5">
+        <section className="relative w-full overflow-visible rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.016))] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.26)] sm:p-5">
           <div className="flex flex-wrap items-center gap-3">
             <div className="mr-auto"><p className="text-[10px] font-black tracking-[0.28em] text-amber-100/48">LEAGUE OF LEGENDS</p><h1 className="mt-1 text-[28px] font-black tracking-[-0.04em] text-white">롤 랜덤뽑기</h1></div>
             <a href="/utility" className="rounded-xl border border-white/10 bg-white/[0.055] px-4 py-2.5 text-sm font-black text-white/72 hover:bg-white/10">유틸리티 선택</a>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
-            <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') addParticipants(); }} placeholder="스트리머 이름 추가..." className="h-11 w-[250px] rounded-xl border border-white/10 bg-[#08101b] px-4 text-sm font-bold text-white outline-none placeholder:text-white/28 focus:border-amber-200/38" />
+            <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 추가..." className="w-[250px]" inputClassName="h-11 rounded-xl border border-white/10 bg-[#08101b] px-4 text-sm font-bold text-white outline-none placeholder:text-white/28 focus:border-amber-200/38" />
             <select value={position} onChange={(event) => setPosition(event.target.value)} className="h-11 rounded-xl border border-white/10 bg-[#08101b] px-3 text-sm font-black text-white outline-none">
               {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{ROLE_META[role].label}</option>)}
             </select>
@@ -221,7 +239,7 @@ export default function LolRandomPage() {
             <div className="mt-5 grid gap-4">
               {ROLE_OPTIONS.map((role) => {
                 const list = lobby.filter((player) => player.position === role);
-                return <div key={role} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragPlayer) moveToLobby(dragPlayer); setDragPlayer(null); }} className="rounded-[22px] border border-white/8 bg-black/12 p-3"><div className="mb-3 text-sm font-black text-white/68">{ROLE_META[role].icon} {ROLE_META[role].label} <span className="text-white/30">{list.length}</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{list.length ? list.map((player) => <PlayerCard key={player.id} player={player} profile={profiles[normalizeName(player.name)]} onClick={() => setMoveTarget(player)} onRemove={removeParticipant} draggable onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} />) : <div className="rounded-2xl bg-white/[0.018] px-4 py-5 text-center text-xs font-black text-white/22">대기 없음</div>}</div></div>;
+                return <div key={role} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragPlayer) moveToLobby(dragPlayer); setDragPlayer(null); }} className="rounded-[22px] border border-white/8 bg-black/12 p-3"><div className="mb-3 text-sm font-black text-white/68">{ROLE_META[role].icon} {ROLE_META[role].label} <span className="text-white/30">{list.length}</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{list.length ? list.map((player) => <PlayerCard key={player.id} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} onClick={() => setMoveTarget(player)} onRemove={removeParticipant} draggable onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} />) : <div className="rounded-2xl bg-white/[0.018] px-4 py-5 text-center text-xs font-black text-white/22">대기 없음</div>}</div></div>;
               })}
             </div>
           </div>
@@ -235,7 +253,7 @@ export default function LolRandomPage() {
                   {ROLES.map((role) => {
                     const key = slotKey(team.id, role);
                     const player = assigned.get(key);
-                    return player ? <PlayerCard key={key} player={player} profile={profiles[normalizeName(player.name)]} compact locked={Boolean(locks[key])} onClick={() => setMoveTarget(player)} draggable={!locks[key]} onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} /> : <EmptySlot key={key} role={role} active={Boolean(dragPlayer) && !locks[key] && (dragPlayer.position === role || dragPlayer.position === 'random')} onDrop={() => { if (dragPlayer) moveToSlot(dragPlayer, key); setDragPlayer(null); }} />;
+                    return player ? <PlayerCard key={key} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} compact locked={Boolean(locks[key])} onClick={() => setMoveTarget(player)} draggable={!locks[key]} onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} /> : <EmptySlot key={key} role={role} active={Boolean(dragPlayer) && !locks[key] && (dragPlayer.position === role || dragPlayer.position === 'random')} onDrop={() => { if (dragPlayer) moveToSlot(dragPlayer, key); setDragPlayer(null); }} />;
                   })}
                 </div>
               </div>
