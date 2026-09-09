@@ -17,7 +17,7 @@ const ROLE_META = {
   support: { label: '서포터', icon: '💚', tone: 'border-cyan-300/28 bg-cyan-300/10 text-cyan-100' },
   random: { label: '랜덤', icon: '❓', tone: 'border-white/15 bg-white/[0.06] text-white/76' },
 };
-const ROLE_OPTIONS = [...ROLES, 'random'];
+const ROLE_OPTIONS = ['random', ...ROLES];
 const KNOWN_PROFILES = [
   ['장지수', 'https://stimg.sooplive.com/LOGO/ia/iamquaddurup/iamquaddurup.jpg'],
   ['냥냥두둥', 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg'],
@@ -102,7 +102,6 @@ function MoveDialog({ target, assigned, assignments, locks, onClose, onLobby, on
 
 export default function LolRandomPage() {
   const [nameInput, setNameInput] = useState('');
-  const [position, setPosition] = useState('random');
   const [participants, setParticipants] = useState([]);
   const [assignments, setAssignments] = useState({});
   const [locks, setLocks] = useState({});
@@ -143,7 +142,7 @@ export default function LolRandomPage() {
     if (!names.length) return;
     setParticipants((current) => {
       const seen = new Set(current.map((player) => normalizeName(player.name)));
-      const additions = names.filter((name) => !seen.has(normalizeName(name))).map((name) => ({ id: `${Date.now()}-${normalizeName(name)}-${Math.random().toString(36).slice(2, 7)}`, name, position }));
+      const additions = names.filter((name) => !seen.has(normalizeName(name))).map((name) => ({ id: `${Date.now()}-${normalizeName(name)}-${Math.random().toString(36).slice(2, 7)}`, name, position: 'random' }));
       return [...current, ...additions];
     });
     setNameInput('');
@@ -156,7 +155,7 @@ export default function LolRandomPage() {
       return [...current, {
         id: `${Date.now()}-${candidate.stationId}-${Math.random().toString(36).slice(2, 7)}`,
         name: candidate.nickname,
-        position,
+        position: 'random',
         stationId: candidate.stationId,
         profileImage: candidate.profileImage || '',
         favoriteCount: candidate.favoriteCount,
@@ -225,10 +224,7 @@ export default function LolRandomPage() {
             <a href="/utility" className="rounded-xl bg-slate-400/10 px-4 py-2.5 text-sm font-black text-slate-100/75 shadow-[inset_0_1px_0_rgba(180,210,230,0.08)] hover:bg-slate-300/15">유틸리티 선택</a>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
-            <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 추가..." className="w-[250px]" inputClassName="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none placeholder:text-white/28 focus:ring-1 focus:ring-amber-200/24" />
-            <select value={position} onChange={(event) => setPosition(event.target.value)} className="h-11 rounded-xl bg-slate-400/10 px-3 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none focus:ring-1 focus:ring-amber-200/24">
-              {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{ROLE_META[role].label}</option>)}
-            </select>
+            <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 검색..." className="w-[250px]" inputClassName="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none placeholder:text-white/28 focus:ring-1 focus:ring-amber-200/24" />
             <button type="button" onClick={addParticipants} className="h-11 rounded-xl bg-amber-400 px-5 text-sm font-black text-[#171006] hover:brightness-110">추가</button>
             <span className="rounded-xl border border-amber-300/24 bg-amber-300/10 px-4 py-2.5 text-sm font-black text-amber-100">5 VS 5 고정</span>
             <button type="button" onClick={randomize} className="h-11 rounded-xl bg-[linear-gradient(135deg,#eab308,#0ea5e9)] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(234,179,8,0.16)]">랜덤 섞기</button>
