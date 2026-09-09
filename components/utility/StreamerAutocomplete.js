@@ -15,7 +15,7 @@ export default function StreamerAutocomplete({
   onChange,
   onSelect,
   onSubmit,
-  placeholder = '스트리머 이름 추가...',
+  placeholder = '스트리머 이름 검색...',
   className = '',
   inputClassName = '',
 }) {
