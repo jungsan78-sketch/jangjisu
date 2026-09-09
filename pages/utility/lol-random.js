@@ -5,8 +5,8 @@ import StreamerAutocomplete from '../../components/utility/StreamerAutocomplete'
 
 const STORAGE_KEY = 'sou:lol-random:v1';
 const TEAMS = [
-  { id: 'blue', label: 'BLUE TEAM', border: 'border-sky-300/28', glow: 'bg-sky-400/12', badge: 'bg-sky-300/15 text-sky-100' },
-  { id: 'red', label: 'RED TEAM', border: 'border-rose-300/28', glow: 'bg-rose-400/12', badge: 'bg-rose-300/15 text-rose-100' },
+  { id: 'blue', label: 'BLUE TEAM', glow: 'bg-sky-400/12', badge: 'bg-sky-300/15 text-sky-100', shadow: 'shadow-[inset_0_1px_0_rgba(125,211,252,0.12),0_18px_48px_rgba(2,132,199,0.09)]' },
+  { id: 'red', label: 'RED TEAM', glow: 'bg-rose-400/12', badge: 'bg-rose-300/15 text-rose-100', shadow: 'shadow-[inset_0_1px_0_rgba(253,164,175,0.11),0_18px_48px_rgba(225,29,72,0.08)]' },
 ];
 const ROLES = ['top', 'jungle', 'mid', 'adc', 'support'];
 const ROLE_META = {
@@ -47,7 +47,7 @@ function readSavedState() {
 function PlayerCard({ player, profile, compact = false, locked = false, onClick, onRemove, draggable, onDragStart, onDragEnd }) {
   const meta = ROLE_META[player.position] || ROLE_META.random;
   return (
-    <div draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} onClick={onClick} className={`group relative flex cursor-pointer items-center gap-3 rounded-[20px] border border-white/10 bg-[#111927] transition hover:-translate-y-0.5 hover:border-white/20 ${compact ? 'min-h-[72px] p-3' : 'min-h-[82px] p-4'}`}>
+    <div draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} onClick={onClick} className={`group relative flex cursor-pointer items-center gap-3 rounded-[20px] bg-[linear-gradient(145deg,#142033,#0d1624)] shadow-[inset_0_1px_0_rgba(125,183,219,0.09),0_8px_24px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-[#17243a] ${compact ? 'min-h-[72px] p-3' : 'min-h-[82px] p-4'}`}>
       <div className={`${compact ? 'h-11 w-11' : 'h-12 w-12'} grid shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/[0.06] text-lg font-black text-white/72`}>
         {profile ? <img src={profile} alt="" className="h-full w-full object-cover" /> : player.name.slice(0, 1)}
       </div>
@@ -64,7 +64,7 @@ function PlayerCard({ player, profile, compact = false, locked = false, onClick,
 function EmptySlot({ role, active, onDrop }) {
   const meta = ROLE_META[role];
   return (
-    <div onDragOver={(event) => event.preventDefault()} onDrop={onDrop} className={`flex min-h-[72px] items-center gap-3 rounded-[20px] border border-dashed p-3 transition ${active ? 'border-amber-200/48 bg-amber-300/8' : 'border-white/10 bg-black/12'}`}>
+    <div onDragOver={(event) => event.preventDefault()} onDrop={onDrop} className={`flex min-h-[72px] items-center gap-3 rounded-[20px] p-3 shadow-[inset_0_1px_0_rgba(135,177,204,0.055)] transition ${active ? 'bg-amber-300/10 ring-1 ring-amber-200/28' : 'bg-[#080f1a]/72'}`}>
       <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.045] text-lg">{meta.icon}</span>
       <span className="text-sm font-black text-white/38">{meta.label} 대기</span>
     </div>
@@ -190,6 +190,12 @@ export default function LolRandomPage() {
     setAssignments((current) => Object.fromEntries(Object.entries(current).map(([key, name]) => [key, name === player.name ? '' : name])));
     setMoveTarget(null);
   };
+  const moveToPosition = (player, nextPosition) => {
+    if (!player || !ROLE_OPTIONS.includes(nextPosition)) return;
+    setParticipants((current) => current.map((candidate) => candidate.id === player.id ? { ...candidate, position: nextPosition } : candidate));
+    setAssignments((current) => Object.fromEntries(Object.entries(current).map(([key, name]) => [key, name === player.name ? '' : name])));
+    setMoveTarget(null);
+  };
   const randomize = () => {
     const lockedNames = new Set(Object.entries(assignments).filter(([key, name]) => locks[key] && name).map(([, name]) => name));
     const next = { ...assignments };
@@ -213,42 +219,46 @@ export default function LolRandomPage() {
     <>
       <Head><title>롤 랜덤뽑기 | 장지수용소</title><meta name="description" content="롤 포지션 기반 5대5 랜덤 팀 편성 도구" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
       <PrisonPageChrome wide>
-        <section className="relative w-full overflow-visible rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.016))] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.26)] sm:p-5">
+        <section className="relative w-full overflow-visible rounded-[28px] bg-[linear-gradient(180deg,rgba(20,34,52,0.94),rgba(9,17,29,0.96))] p-4 shadow-[inset_0_1px_0_rgba(125,183,219,0.08),0_20px_60px_rgba(0,0,0,0.26)] sm:p-5">
           <div className="flex flex-wrap items-center gap-3">
             <div className="mr-auto"><p className="text-[10px] font-black tracking-[0.28em] text-amber-100/48">LEAGUE OF LEGENDS</p><h1 className="mt-1 text-[28px] font-black tracking-[-0.04em] text-white">롤 랜덤뽑기</h1></div>
-            <a href="/utility" className="rounded-xl border border-white/10 bg-white/[0.055] px-4 py-2.5 text-sm font-black text-white/72 hover:bg-white/10">유틸리티 선택</a>
+            <a href="/utility" className="rounded-xl bg-slate-400/10 px-4 py-2.5 text-sm font-black text-slate-100/75 shadow-[inset_0_1px_0_rgba(180,210,230,0.08)] hover:bg-slate-300/15">유틸리티 선택</a>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
-            <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 추가..." className="w-[250px]" inputClassName="h-11 rounded-xl border border-white/10 bg-[#08101b] px-4 text-sm font-bold text-white outline-none placeholder:text-white/28 focus:border-amber-200/38" />
-            <select value={position} onChange={(event) => setPosition(event.target.value)} className="h-11 rounded-xl border border-white/10 bg-[#08101b] px-3 text-sm font-black text-white outline-none">
+            <StreamerAutocomplete value={nameInput} onChange={setNameInput} onSelect={addSuggestedParticipant} onSubmit={addParticipants} placeholder="스트리머 이름 추가..." className="w-[250px]" inputClassName="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none placeholder:text-white/28 focus:ring-1 focus:ring-amber-200/24" />
+            <select value={position} onChange={(event) => setPosition(event.target.value)} className="h-11 rounded-xl bg-slate-400/10 px-3 text-sm font-black text-white shadow-[inset_0_1px_0_rgba(180,210,230,0.07)] outline-none focus:ring-1 focus:ring-amber-200/24">
               {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{ROLE_META[role].label}</option>)}
             </select>
             <button type="button" onClick={addParticipants} className="h-11 rounded-xl bg-amber-400 px-5 text-sm font-black text-[#171006] hover:brightness-110">추가</button>
             <span className="rounded-xl border border-amber-300/24 bg-amber-300/10 px-4 py-2.5 text-sm font-black text-amber-100">5 VS 5 고정</span>
             <button type="button" onClick={randomize} className="h-11 rounded-xl bg-[linear-gradient(135deg,#eab308,#0ea5e9)] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(234,179,8,0.16)]">랜덤 섞기</button>
-            <button type="button" onClick={resetTeams} className="h-11 rounded-xl border border-white/10 bg-white/[0.055] px-4 text-sm font-black text-white/72">팀 초기화</button>
+            <button type="button" onClick={resetTeams} className="h-11 rounded-xl bg-slate-400/10 px-4 text-sm font-black text-slate-100/72 shadow-[inset_0_1px_0_rgba(180,210,230,0.08)] hover:bg-slate-300/15">팀 초기화</button>
             <button type="button" onClick={copyResult} className="h-11 rounded-xl border border-cyan-300/22 bg-cyan-300/10 px-4 text-sm font-black text-cyan-100">결과 복사</button>
             <button type="button" onClick={clearAll} className="h-11 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 text-sm font-black text-rose-100/78">전체삭제</button>
           </div>
           <div className="mt-3 flex flex-wrap gap-4 text-xs font-black text-white/42"><span>등록 {participants.length}명</span><span>대기 {lobby.length}명</span><span>배정 {assignedNames.size}명</span><span>잠금 {Object.values(locks).filter(Boolean).length}칸</span></div>
         </section>
 
+        <div className="mt-4 flex items-center justify-center rounded-[20px] bg-[linear-gradient(90deg,rgba(14,165,233,0.14),rgba(245,158,11,0.14))] px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(153,216,241,0.11),0_10px_30px_rgba(0,0,0,0.18)]">
+          <p className="text-sm font-black tracking-[-0.01em] text-cyan-50 sm:text-base">카드를 마우스로 드래그해 팀 배정과 포지션 변경이 가능합니다.</p>
+        </div>
+
         <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(360px,0.72fr)_minmax(760px,1.5fr)]">
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5">
+          <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(17,30,47,0.9),rgba(8,15,25,0.94))] p-5 shadow-[inset_0_1px_0_rgba(125,183,219,0.07),0_18px_48px_rgba(0,0,0,0.22)]">
             <div className="flex items-end justify-between"><div><p className="text-[10px] font-black tracking-[0.3em] text-cyan-100/42">WAITING ROOM</p><h2 className="mt-2 text-[30px] font-black text-white">대기실</h2></div><span className="rounded-full bg-white/[0.055] px-3 py-1.5 text-xs font-black text-white/52">{lobby.length}명</span></div>
             <div className="mt-5 grid gap-4">
               {ROLE_OPTIONS.map((role) => {
                 const list = lobby.filter((player) => player.position === role);
-                return <div key={role} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragPlayer) moveToLobby(dragPlayer); setDragPlayer(null); }} className="rounded-[22px] border border-white/8 bg-black/12 p-3"><div className="mb-3 text-sm font-black text-white/68">{ROLE_META[role].icon} {ROLE_META[role].label} <span className="text-white/30">{list.length}</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{list.length ? list.map((player) => <PlayerCard key={player.id} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} onClick={() => setMoveTarget(player)} onRemove={removeParticipant} draggable onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} />) : <div className="rounded-2xl bg-white/[0.018] px-4 py-5 text-center text-xs font-black text-white/22">대기 없음</div>}</div></div>;
+                return <div key={role} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragPlayer) moveToPosition(dragPlayer, role); setDragPlayer(null); }} className={`rounded-[22px] bg-[#0b1421]/82 p-3 shadow-[inset_0_1px_0_rgba(125,183,219,0.055),0_10px_28px_rgba(0,0,0,0.16)] transition ${dragPlayer && dragPlayer.position !== role ? 'ring-1 ring-cyan-300/20' : ''}`}><div className="mb-3 text-sm font-black text-white/68">{ROLE_META[role].icon} {ROLE_META[role].label} <span className="text-white/30">{list.length}</span></div><div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{list.length ? list.map((player) => <PlayerCard key={player.id} player={player} profile={player.profileImage || profiles[normalizeName(player.name)]} onClick={() => setMoveTarget(player)} onRemove={removeParticipant} draggable onDragStart={() => setDragPlayer(player)} onDragEnd={() => setDragPlayer(null)} />) : <div className="rounded-2xl bg-black/15 px-4 py-5 text-center text-xs font-black text-white/22">여기로 드래그해 포지션 변경</div>}</div></div>;
               })}
             </div>
           </div>
 
           <div className="grid content-start gap-5 2xl:grid-cols-2">
             {TEAMS.map((team) => (
-              <div key={team.id} className={`relative overflow-hidden rounded-[28px] border bg-[#0a111d] p-5 ${team.border}`}>
+              <div key={team.id} className={`relative overflow-hidden rounded-[28px] bg-[#0a111d] p-5 ${team.shadow}`}>
                 <div className={`pointer-events-none absolute inset-x-0 top-0 h-28 ${team.glow}`} />
-                <div className="relative flex items-center justify-between border-b border-white/10 pb-4"><h2 className="text-[25px] font-black text-white">{team.label}</h2><span className={`rounded-full px-3 py-1 text-xs font-black ${team.badge}`}>{ROLES.filter((role) => assignments[slotKey(team.id, role)]).length}/5</span></div>
+                <div className="relative flex items-center justify-between pb-4"><h2 className="text-[25px] font-black text-white">{team.label}</h2><span className={`rounded-full px-3 py-1 text-xs font-black ${team.badge}`}>{ROLES.filter((role) => assignments[slotKey(team.id, role)]).length}/5</span></div>
                 <div className="relative mt-4 grid gap-3">
                   {ROLES.map((role) => {
                     const key = slotKey(team.id, role);
