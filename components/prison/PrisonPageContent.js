@@ -224,6 +224,7 @@ export function PrisonSidebar() {
         <SidebarNavItem href="/jangjisu-prison/schedule-calendar" label="일정 캘린더" tone="red" />
         <SidebarNavItem href="/jangjisu-prison/broadcast-data" label="방송 데이터 분석" tone="red" />
         <SidebarNavItem href={FAN_CAFE_URL} label="팬카페" tone="green" external />
+        <SidebarNavItem href="/utility" label="유틸리티" tone="teal" activePaths={['/utility', '/utility/overwatch-random', '/utility/lol-random']} />
         <div className="grid grid-cols-2 gap-2.5">
           <SidebarNavItem href="/jangjisu-prison/multiview" label="멀티뷰" tone="indigo" compact />
           <SidebarNavItem href="/jangjisu-prison/crews" label="숲 크루 목록" tone="indigo" compact />
@@ -253,6 +254,7 @@ export function MobilePrisonNav() {
         { href: '/jangjisu-prison/schedule-calendar', label: '일정 캘린더', tone: 'red', span: 2 },
         { href: '/jangjisu-prison/broadcast-data', label: '방송 데이터 분석', tone: 'red', span: 2 },
         { href: FAN_CAFE_URL, label: '팬카페', tone: 'green', external: true, span: 2 },
+        { href: '/utility', label: '유틸리티', tone: 'teal', span: 2, activePaths: ['/utility', '/utility/overwatch-random', '/utility/lol-random'] },
         { href: '/jangjisu-prison/multiview', label: '멀티뷰', tone: 'indigo', emphasis: true },
         { href: '/jangjisu-prison/crews', label: '숲 크루 목록', tone: 'indigo', emphasis: true },
       ]}
