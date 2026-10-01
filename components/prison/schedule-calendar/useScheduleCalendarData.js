@@ -6,6 +6,8 @@ import { isSameMonth, parseMonthLabel, splitScheduleTitle } from '../../../lib/p
 
 const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 const PROFILE_MAP = new Map(SCHEDULE_MEMBERS.map((member) => [member.nickname, member]));
+// Only the standalone calendar hides these members; shared previews stay intact.
+const HIDDEN_CALENDAR_MEMBERS = new Set(['vivian', 'amanemay', 'ximong']);
 
 function monthUrl(monthInfo) {
   return `/api/prison-schedule?year=${monthInfo.year}&month=${monthInfo.month}&v=4`;
@@ -60,7 +62,7 @@ export default function useScheduleCalendarData(selectedKey, selectedMonth) {
       return itemYear === selectedMonth.year && itemMonth === selectedMonth.month && !item.empty && String(item.title || '').trim();
     }) : [];
     return { ...source, ...state, items, image: profile.image || '', station: profile.station || '', colorIndex };
-  }), [selectedMonth, states]);
+  }).filter((entry) => !HIDDEN_CALENDAR_MEMBERS.has(entry.key)), [selectedMonth, states]);
 
   const events = useMemo(() => entries.flatMap((entry) => entry.items.map((item, itemIndex) => ({
     id: `${entry.key}-${item.dayNumber}-${itemIndex}-${item.title}`,
