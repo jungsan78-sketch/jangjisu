@@ -15,13 +15,13 @@ export const PRISON_SCHEDULE_SOURCES = [
     key: 'linling',
     member: '린링',
     endpoint: '/api/prison-schedule?key=linling&v=3',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=408016242#gid=408016242',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1503321750#gid=1503321750',
   },
   {
     key: 'youoneul',
     member: '유오늘',
     endpoint: '/api/prison-schedule?key=youoneul&v=3',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=981003566#gid=981003566',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=748241738#gid=748241738',
   },
   {
     key: 'doodong',
@@ -35,8 +35,7 @@ export const PRISON_SCHEDULE_SOURCES = [
     key: 'honoe1330',
     member: '이치유',
     endpoint: '/api/prison-schedule?key=honoe1330&v=1',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1613438892#gid=1613438892',
+    sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=528907309#gid=528907309',
   },
   { key: 'ximong', member: '시몽', endpoint: '/api/prison-manual-schedule?key=ximong&v=2', sourceUrl: '' },
 ];
-

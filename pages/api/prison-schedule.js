@@ -3,9 +3,10 @@ import { PRISON_MANUAL_SCHEDULES } from '../../data/prisonManualSchedules';
 import { readSnapshotCache, writeSnapshotCache } from '../../lib/cloudflareSnapshotCache';
 import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSource';
 import { resolveSheetGid } from '../../lib/monthlySheetResolver';
+import { PRISON_SCHEDULE_MONTH_GIDS } from '../../data/prisonScheduleMonthGids';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const SNAPSHOT_VERSION = 'v3';
+const SNAPSHOT_VERSION = 'v4';
 const SNAPSHOT_FRESH_MS = 60 * 60 * 1000;
 const SNAPSHOT_STORAGE_SECONDS = 100 * 24 * 60 * 60;
 const snapshotRefreshPromises = new Map();
@@ -69,7 +70,7 @@ const buildSheetCandidates = (monthInfo) => [
   `${monthInfo.month}월 일정표`,
 ].map((sheetName) => ({ ...monthInfo, sheetName }));
 
-const getSourceGid = (source, monthInfo) => source.gids?.[monthKey(monthInfo)] || '';
+const getSourceGid = (source, monthInfo) => PRISON_SCHEDULE_MONTH_GIDS[source.id]?.[monthKey(monthInfo)] || source.gids?.[monthKey(monthInfo)] || '';
 
 const getSourceUrl = (source, monthInfo, resolvedGid = '') => {
   const gid = resolvedGid || getSourceGid(source, monthInfo);
@@ -478,4 +479,3 @@ export default async function handler(req, res) {
     fetchedAt: new Date().toISOString(),
   });
 }
-
