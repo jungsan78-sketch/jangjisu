@@ -8,6 +8,7 @@ import { PrisonMemberLiveGridContent } from '../PrisonMemberLiveGrid';
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 import MobileAppDrawer from '../navigation/MobileAppDrawer';
 import { useRouter } from 'next/router';
+import PrisonDepartureNotice from './PrisonDepartureNotice';
 
 const LIVE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const LOGO_SRC = '/prison-logo.webp';
@@ -342,6 +343,7 @@ export function PrisonPageChrome({ children, wide = false }) {
 export default function PrisonPageContent() {
   return (
     <PrisonPageChrome>
+      <PrisonDepartureNotice />
       <PrisonQuickNav />
       <section className="sou-theme-preserve-dark overflow-hidden rounded-[26px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.36)] sm:rounded-[36px]" aria-label="장지수용소 대문">
         <div className="relative overflow-hidden">
@@ -359,4 +361,3 @@ export default function PrisonPageContent() {
     </PrisonPageChrome>
   );
 }
-
