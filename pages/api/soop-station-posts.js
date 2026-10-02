@@ -3,6 +3,7 @@ import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
 import { fetchRecentPrisonNotices } from '../../lib/board/prisonNotices';
 import { extractStationId } from '../../lib/soop/liveStatus';
 import { fetchStationPostsPayload } from '../../lib/soop/stationPosts';
+import { filterPrisonMemberMap } from '../../lib/activePrisonMembers';
 
 const CACHE_KEY = 'soop:station-posts:payload:v5';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -208,6 +209,7 @@ export default async function handler(req, res) {
   const cache = getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
   const cachedPayload = await readCachedPayload(cache);
+  if (cachedPayload?.posts) cachedPayload.posts = filterPrisonMemberMap(cachedPayload.posts);
 
   if (!debug && isCachedPayloadFresh(cachedPayload)) {
     res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=3600');
@@ -277,4 +279,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { fetchPrisonYoutubePayload, isPrisonYoutubeUsable } from '../../lib/youtube-data';
+import { filterPrisonYoutubePayload } from '../../lib/activePrisonMembers';
 
 const CACHE_KEY = 'youtube:prison:v4';
 const TTL_SECONDS = 60 * 60 * 6;
@@ -33,6 +34,7 @@ function getRecentUploadsByMember(items = [], limit = 5) {
 }
 
 function getResponsePayload(payload, latestOnly) {
+  payload = filterPrisonYoutubePayload(payload);
   if (!latestOnly) return payload;
   const memberRecent = {
     videos: getRecentUploadsByMember(payload?.videos),
@@ -149,4 +151,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

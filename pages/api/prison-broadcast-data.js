@@ -1,4 +1,5 @@
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
+import { isActivePrisonMember } from '../../lib/activePrisonMembers';
 import { applyPrisonBroadcastDataOverrides } from '../../data/prisonBroadcastDataOverrides';
 import { readBroadcastDataCache, writeBroadcastDataCache } from '../../lib/prisonBroadcastDataCache';
 import {
@@ -138,7 +139,7 @@ function publicPayload(payload) {
   return {
     monthKey: payload.monthKey,
     monthLabel: payload.monthLabel,
-    members: (payload.members || []).map((member) => ({
+    members: (payload.members || []).filter(isActivePrisonMember).map((member) => ({
       id: member.id,
       nickname: member.nickname,
       image: member.image,
@@ -329,4 +330,3 @@ export default async function handler(req, res) {
     return res.status(502).json({ ok: false, message: '방송 데이터를 불러오지 못했습니다. 잠시 후 다시 확인해주세요.' });
   }
 }
-

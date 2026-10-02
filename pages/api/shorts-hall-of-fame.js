@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { buildShortsHallOfFame, fetchMainYoutubePayload, fetchPrisonYoutubePayload, isMainYoutubeUsable, isPrisonYoutubeUsable } from '../../lib/youtube-data';
+import { filterPrisonHallPayload, isActivePrisonMember } from '../../lib/activePrisonMembers';
 
 const MAIN_YOUTUBE_KEY = 'youtube:main:v1';
 const PRISON_YOUTUBE_KEY = 'youtube:prison:v4';
@@ -64,7 +65,19 @@ export default async function handler(req, res) {
 
   const cache = await getCacheBinding();
   const cacheAvailable = isKvNamespace(cache);
-  const cached = await readCachedPayload(cache);
+  let cached = await readCachedPayload(cache);
+  if (cached && Object.values(cached.slots || {}).some((video) => video && !isActivePrisonMember(video))) {
+    // Re-rank from existing KV snapshots, without spending YouTube API quota.
+    const [main, prison] = await Promise.all([
+      readCachedPayload(cache, MAIN_YOUTUBE_KEY),
+      readCachedPayload(cache, PRISON_YOUTUBE_KEY),
+    ]);
+    const rebuilt = isMainYoutubeUsable(main) && isPrisonYoutubeUsable(prison)
+      ? buildShortsHallOfFame(main, prison)
+      : { ok: false };
+    cached = rebuilt.ok ? rebuilt : filterPrisonHallPayload(cached);
+    if (rebuilt.ok) await writeCachedPayload(cache, rebuilt);
+  }
 
   if (cached && !refresh) {
     return res.status(200).json({
@@ -169,4 +182,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

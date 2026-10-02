@@ -12,12 +12,6 @@ export const PRISON_SCHEDULE_SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1114482438#gid=1114482438',
   },
   {
-    key: 'linling',
-    member: '린링',
-    endpoint: '/api/prison-schedule?key=linling&v=3',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=1503321750#gid=1503321750',
-  },
-  {
     key: 'youoneul',
     member: '유오늘',
     endpoint: '/api/prison-schedule?key=youoneul&v=3',

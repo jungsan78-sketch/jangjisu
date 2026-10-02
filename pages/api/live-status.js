@@ -1,11 +1,13 @@
 import { getCachedJson, setCachedJson } from '../../lib/upstashRedis';
 import { buildFallbackStatuses, fetchLiveStatusPayload } from '../../lib/soop/liveStatus';
+import { filterPrisonMemberMap } from '../../lib/activePrisonMembers';
 
 export const SOOP_LIVE_RESPONSE_CACHE_KEY = 'soop:live-status:response:v6';
 export const SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS = 300;
 
 export async function getLiveStatusResponsePayload() {
   const cached = await getCachedJson(SOOP_LIVE_RESPONSE_CACHE_KEY);
+  if (cached?.payload) cached.payload = { ...cached.payload, statuses: filterPrisonMemberMap(cached.payload.statuses) };
   const now = Date.now();
 
   if (cached?.payload && cached.cachedAt && now - cached.cachedAt < SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS * 1000) {
@@ -18,7 +20,8 @@ export async function getLiveStatusResponsePayload() {
   }
 
   try {
-    const payload = await fetchLiveStatusPayload();
+    const live = await fetchLiveStatusPayload();
+    const payload = { ...live, statuses: filterPrisonMemberMap(live.statuses) };
     await setCachedJson(SOOP_LIVE_RESPONSE_CACHE_KEY, { payload, cachedAt: now }, SOOP_LIVE_RESPONSE_CACHE_TTL_SECONDS);
     return {
       ok: true,

@@ -15,7 +15,6 @@ const PRISON_MEMBERS = [
   { nickname: '후룽카카', image: 'https://stimg.sooplive.com/LOGO/ka/kakazzang/kakazzang.jpg', station: 'https://www.sooplive.com/station/kakazzang', youtube: 'https://www.youtube.com/channel/UCdwwfTtOfIaZ8zpLdIi6x4g', cafe: 'https://cafe.naver.com/zzangkaka' },
   { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122', youtube: 'https://www.youtube.com/@%EB%B2%84%ED%8A%9C%EB%B2%84%ED%8F%AC%ED%8F%AC' },
   { nickname: '구월이', image: 'https://stimg.sooplive.com/LOGO/is/isq1158/isq1158.jpg', station: 'https://www.sooplive.com/station/isq1158', youtube: 'https://www.youtube.com/@%EA%B5%AC%EC%9B%94%EC%9D%B4', cafe: 'https://cafe.naver.com/guweol' },
-  { nickname: '린링', image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg', station: 'https://www.sooplive.com/station/mini1212', youtube: 'https://www.youtube.com/@LinLing_', cafe: 'https://cafe.naver.com/linling' },
   { nickname: '유오늘', image: 'https://stimg.sooplive.com/LOGO/yo/youoneul/youoneul.jpg', station: 'https://www.sooplive.com/station/youoneul' },
   { nickname: '하빵', image: 'https://stimg.sooplive.com/LOGO/ha/habbang2/habbang2.jpg', station: 'https://www.sooplive.com/station/habbang2' },
   { nickname: '히루룽', image: 'https://stimg.sooplive.com/LOGO/he/hey092130/hey092130.jpg', station: 'https://www.sooplive.com/station/hey092130' },

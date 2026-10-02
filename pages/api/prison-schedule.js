@@ -4,6 +4,7 @@ import { readSnapshotCache, writeSnapshotCache } from '../../lib/cloudflareSnaps
 import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSource';
 import { resolveSheetGid } from '../../lib/monthlySheetResolver';
 import { PRISON_SCHEDULE_MONTH_GIDS } from '../../data/prisonScheduleMonthGids';
+import { filterPrisonSchedulePayload } from '../../lib/activePrisonMembers';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const SNAPSHOT_VERSION = 'v4';
@@ -25,14 +26,6 @@ const SOURCES = [
     sheetId: '1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs',
     gids: { '2026-07': '739202309', '2026-08': '1765161556', '2026-09': '1114482438' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1J0H1eHRB05ojAW3kqHrQBoMU68DjJV4SgRViwszyZBs/edit?gid=1114482438#gid=1114482438',
-    mode: 'fixedGid',
-  },
-  {
-    id: 'linling',
-    key: '린링',
-    sheetId: '1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0',
-    gids: { '2026-07': '1838232194', '2026-08': '730341520', '2026-09': '408016242' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1qu7DXG99c9WbR5g-t1HL2BU_bFlqhxwN45tscolZ_U0/edit?gid=408016242#gid=408016242',
     mode: 'fixedGid',
   },
   {
@@ -416,6 +409,7 @@ async function refreshScheduleSnapshot(cache, key, monthInfo) {
 async function serveScheduleSnapshot(res, monthInfo) {
   const key = getSnapshotKey(monthInfo);
   const cache = await readSnapshotCache(key);
+  if (cache.record?.payload) cache.record = { ...cache.record, payload: filterPrisonSchedulePayload(cache.record.payload) };
   const cachedAt = Number(cache.record?.cachedAt || 0);
   if (cache.record?.payload && cachedAt && Date.now() - cachedAt < SNAPSHOT_FRESH_MS) {
     return res.status(200).json({ ...cache.record.payload, cache: 'hit', cacheStorage: cache.storage, cachedAt: new Date(cachedAt).toISOString() });

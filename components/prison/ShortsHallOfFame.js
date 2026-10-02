@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { formatRelativeTime } from './prisonShared';
 import { MemberBadges } from './MemberBadges';
 import { startVisibleInterval } from '../../lib/visibleInterval';
+import { filterPrisonHallPayload } from '../../lib/activePrisonMembers';
 
 const SHORTS_HALL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -113,10 +114,10 @@ export default function ShortsHallOfFame() {
     let mounted = true;
     async function load() {
       try {
-        const res = await fetch('/api/shorts-hall-of-fame?members=20260906');
+        const res = await fetch('/api/shorts-hall-of-fame?members=20261002');
         const json = res.ok ? await res.json() : null;
         if (!mounted) return;
-        setPayload({ ...(json || {}), loaded: true });
+        setPayload({ ...filterPrisonHallPayload(json || {}), loaded: true });
       } catch {
         if (!mounted) return;
         setPayload({ loaded: true, slots: {} });
@@ -174,4 +175,3 @@ export default function ShortsHallOfFame() {
     </section>
   );
 }
-
