@@ -13,6 +13,9 @@ export default function LatestNoticeGrid({ notices, loaded, emptyMessage = 'ìµœê
     <div className="sou-latest-notice-grid">
       {notices.map((item) => <LatestNoticeCard key={item.id} item={item} />)}
       <style jsx>{`
+        :global(section#notice:has(.sou-latest-notice-grid)) {
+          scroll-margin-top: 96px;
+        }
         .sou-latest-notice-grid {
           display: grid;
           grid-template-columns: minmax(0, 1fr);
@@ -25,7 +28,13 @@ export default function LatestNoticeGrid({ notices, loaded, emptyMessage = 'ìµœê
             gap: 20px;
           }
         }
+        @media (max-width: 639px) {
+          :global(section#notice:has(.sou-latest-notice-grid)) {
+            scroll-margin-top: 80px;
+          }
+        }
       `}</style>
     </div>
   );
 }
+
