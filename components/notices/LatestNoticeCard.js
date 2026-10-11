@@ -70,9 +70,9 @@ export default function LatestNoticeCard({ item }) {
         .sou-notice-preview { padding: 10px 13px; border-radius: 11px; background: rgba(45,212,191,.055); color: #d2e9e7; }
         .sou-notice-preview p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; white-space: pre-line; margin: 0; font-size: 15px; font-weight: 500; line-height: 1.65; }
         .sou-notice-meta { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: auto; padding-top: 4px; color: #9bb5c8; font-size: 12px; font-weight: 600; }
-        .sou-notice-avatar { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 28px; overflow: hidden; border-radius: 50%; background: rgba(103,232,249,.10); color: #c7edf0; }
+        .sou-notice-avatar { display: flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; background: rgba(103,232,249,.10); color: #c7edf0; }
         .sou-notice-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sou-notice-author { color: #c7edf0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sou-notice-author { color: #c7edf0; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .sou-notice-dot { color: #58758a; }
         .sou-notice-time { white-space: nowrap; }
         .sou-notice-arrow { margin-left: auto; color: #769fae; font-size: 16px; }
@@ -84,7 +84,8 @@ export default function LatestNoticeCard({ item }) {
           .sou-notice-preview { padding: 8px 10px; }
           .sou-notice-preview p { font-size: 14px; line-height: 1.6; }
           .sou-notice-meta { gap: 6px; font-size: 11px; }
-          .sou-notice-avatar { flex-basis: 24px; width: 24px; height: 24px; }
+          .sou-notice-avatar { flex-basis: 32px; width: 32px; height: 32px; }
+          .sou-notice-author { font-size: 14px; }
         }
         @media (prefers-reduced-motion: reduce) {
           .sou-notice-card, .sou-notice-thumbnail img { transition: none; }
