@@ -17,12 +17,6 @@ export const PRISON_SCHEDULE_SOURCES = [
     endpoint: '/api/prison-schedule?key=youoneul&v=3',
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=748241738#gid=748241738',
   },
-  {
-    key: 'doodong',
-    member: '냥냥두둥',
-    endpoint: '/api/prison-schedule?key=doodong&v=2',
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs/edit?gid=1650576825#gid=1650576825',
-  },
   { key: 'vivian', member: '비비안', endpoint: '/api/prison-manual-schedule?key=vivian', sourceUrl: '' },
   { key: 'amanemay', member: '김메이', endpoint: '/api/prison-manual-schedule?key=amanemay', sourceUrl: '' },
   {

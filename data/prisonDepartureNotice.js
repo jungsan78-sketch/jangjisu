@@ -1,10 +1,10 @@
 export const PRISON_DEPARTURE_NOTICE = {
-  nickname: '린링',
-  image: 'https://stimg.sooplive.com/LOGO/mi/mini1212/mini1212.jpg',
-  heading: '린링 출소',
-  message: '그동안 고생하셨습니다',
-  startsAt: '2026-10-02T06:48:00Z',
-  expiresAt: '2026-10-03T06:48:00Z',
+  nickname: '냥냥두둥',
+  image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg',
+  heading: '냥냥두둥 출소',
+  message: '그동안 고생 너무 많았고 쾌유를 빕니다!',
+  startsAt: '2026-10-13T06:50:00Z',
+  expiresAt: '2026-10-14T06:50:00Z',
 };
 
 export function isDepartureNoticeActive(notice, now = Date.now()) {

@@ -1,4 +1,5 @@
 import { ALL_PRISON_MEMBERS } from '../../data/prisonMembers';
+import { isActivePrisonMember } from '../../lib/activePrisonMembers';
 import { readBroadcastSummaryCache, writeBroadcastSummaryCache } from '../../lib/prisonBroadcastSummaryCache';
 import { getReplayMonthStorageTtl, isReplayMonthCacheFresh, resolveReplayMonth } from '../../lib/replayMonthWindow';
 
@@ -587,6 +588,15 @@ export default async function handler(req, res) {
 
   const key = cacheKey(monthInfo, requestedMemberId);
   const cached = await readBroadcastSummaryCache(key);
+  if (cached.record?.payload) {
+    cached.record = {
+      ...cached.record,
+      payload: {
+        ...cached.record.payload,
+        memberStats: (cached.record.payload.memberStats || []).filter(isActivePrisonMember),
+      },
+    };
+  }
   const now = nowDate.getTime();
 
   if (isReplayMonthCacheFresh(cached.record, monthInfo, nowDate)) {
@@ -601,4 +611,3 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: false, sourceType: 'review', monthLabel: monthInfo.monthLabel, monthKind: monthInfo.kind, items: [], memberStats: buildMemberStats([]), totalCount: 0, message: 'SOOP 다시보기 기록을 불러오지 못했습니다.', cache: 'unavailable', cacheStorage: cached.storage });
   }
 }
-

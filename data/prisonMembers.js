@@ -8,7 +8,6 @@ export const WARDEN = {
 };
 
 export const PRISON_MEMBERS = [
-  { nickname: '냥냥두둥', image: 'https://stimg.sooplive.com/LOGO/do/doodong/doodong.jpg', station: 'https://www.sooplive.com/station/doodong', youtube: 'https://www.youtube.com/channel/UCCAaGF_vfM6QygNRCp4x1dw', cafe: 'https://cafe.naver.com/meowdoodong', tags: ['#존예', '#빡대갈(?)', '#샤이'] },
   { nickname: '시몽', image: 'https://stimg.sooplive.com/LOGO/xi/ximong/ximong.jpg', station: 'https://www.sooplive.com/station/ximong', tags: ['#노래왕', '#솔직함', '#반전매력'] },
   { nickname: '후룽카카', image: 'https://stimg.sooplive.com/LOGO/ka/kakazzang/kakazzang.jpg', station: 'https://www.sooplive.com/station/kakazzang', youtube: 'https://www.youtube.com/channel/UCdwwfTtOfIaZ8zpLdIi6x4g', cafe: 'https://cafe.naver.com/zzangkaka', tags: ['#160cm', '#ISFJ', '#그림일기'] },
   { nickname: '포포', image: 'https://stimg.sooplive.com/LOGO/su/sunza1122/sunza1122.jpg', station: 'https://www.sooplive.com/station/sunza1122', youtube: 'https://www.youtube.com/@%EB%B2%84%ED%8A%9C%EB%B2%84%ED%8F%AC%ED%8F%AC', tags: ['#춤꾼', '#천재', '#쇼츠왕'] },

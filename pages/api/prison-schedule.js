@@ -44,14 +44,6 @@ const SOURCES = [
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1wIZ3u6S_4asH9ov7Akm7vdkleWZrKqiH/edit?gid=1613438892#gid=1613438892',
     mode: 'fixedGid',
   },
-  {
-    id: 'doodong',
-    key: '냥냥두둥',
-    sheetId: '1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs',
-    gids: { '2026-08': '1650576825' },
-    sourceUrl: 'https://docs.google.com/spreadsheets/d/1UAfIiDQG3J5RUmIuyEtF54_L7g8dw1ACTYFTT6w-UKs/edit?gid=1650576825#gid=1650576825',
-    mode: 'fixedGid',
-  },
 ];
 
 const monthKey = (monthInfo) => `${monthInfo.year}-${String(monthInfo.month).padStart(2, '0')}`;
