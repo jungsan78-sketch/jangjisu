@@ -1,4 +1,4 @@
-import { fetchLiveStatusPayload } from '../../lib/soop/liveStatus';
+import { getLiveStatusResponsePayload } from '../../lib/soop/liveResponseCache';
 
 const fallback = {
   ok: false,
@@ -19,7 +19,7 @@ const fallback = {
 
 async function enrichWithLiveStatus(payload) {
   try {
-    const live = await fetchLiveStatusPayload();
+    const live = await getLiveStatusResponsePayload();
     const status = live.statuses?.장지수;
     if (!status) return payload;
     return {
