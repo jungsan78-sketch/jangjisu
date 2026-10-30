@@ -147,7 +147,7 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
                   </span>
                 )}
                 {penaltyMode && member.penaltyIsLowest && (
-                  <span className="mt-2 inline-flex rounded-md bg-rose-300/10 px-2 py-0.5 text-[11px] font-bold text-rose-200">{member.penaltyLowestTied ? '공동 최하위' : '현재 최하위'}</span>
+                  <span className="mt-2 inline-flex rounded-md bg-rose-300/10 px-2 py-0.5 text-[11px] font-bold text-rose-200">{member.penaltyLowestTied ? '공동 벌칙위기' : '벌칙위기'}</span>
                 )}
               </span>
             </button>

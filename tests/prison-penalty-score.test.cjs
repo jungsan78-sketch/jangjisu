@@ -135,13 +135,14 @@ test('UI adds the fifth button last, renders breakdowns, and preserves all four 
     assert.equal($('.sou-data-rank[aria-pressed=true]').length, 1);
     if (mode === 'penalty') {
       assert(html.includes('100.00점') && html.includes('0.00점'));
-      assert(html.includes('집계 중') && html.includes('현재 최하위'));
+      assert(html.includes('집계 중') && html.includes('벌칙위기'));
+      assert(!html.includes('현재 최하위') && !html.includes('공동 최하위'));
       assert(html.includes('장지수 포함'));
       assert.equal($('.sou-data-rank').first().find('.grid span.font-bold').length, 4);
       assert(!buttons.first().attr('class').includes('bg-violet-300'));
     } else {
       assert(!html.includes('100.00점'));
-      assert(!html.includes('현재 최하위'));
+      assert(!html.includes('벌칙위기'));
     }
   }
 });
@@ -156,5 +157,17 @@ test('tied scores render matching rank badges and pending rows have no false ran
   const $ = load(html);
   assert.equal($('.sou-data-rank [aria-label="1위, 금"]').length, 2);
   assert.equal($('.sou-data-rank [aria-label="집계 중"]').length, 1);
+  assert(!html.includes('벌칙위기'));
+});
+
+test('joint lowest scores display the agreed shared risk wording', async () => {
+  const React = require('react');
+  const { renderToStaticMarkup } = require('react-dom/server');
+  const { load } = require('cheerio');
+  const Component = await loadComponent();
+  const members = [m('a', [3, 3, 3, 3]), m('b', [1, 2, 1, 2]), m('c', [2, 1, 2, 1])];
+  const html = renderToStaticMarkup(React.createElement(Component, { rankings: { peakViewers: members }, mode: 'penalty', onModeChange() {}, onSelectMember() {} }));
+  const $ = load(html);
+  assert.equal($('.sou-data-rank span').filter((_i, el) => $(el).text() === '공동 벌칙위기').length, 2);
   assert(!html.includes('현재 최하위') && !html.includes('공동 최하위'));
 });
