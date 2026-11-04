@@ -5,6 +5,7 @@ import { buildFreshJangjisuScheduleResponse } from '../../lib/jangjisuScheduleSo
 import { resolveSheetGid } from '../../lib/monthlySheetResolver';
 import { PRISON_SCHEDULE_MONTH_GIDS } from '../../data/prisonScheduleMonthGids';
 import { filterPrisonSchedulePayload } from '../../lib/activePrisonMembers';
+import { buildFreshVivianScheduleResponse, VIVIAN_SHEET_ID } from '../../lib/vivianScheduleSource';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const SNAPSHOT_VERSION = 'v4';
@@ -35,6 +36,12 @@ const SOURCES = [
     gids: { '2026-07': '1665931711', '2026-08': '996600110', '2026-09': '981003566' },
     sourceUrl: 'https://docs.google.com/spreadsheets/d/1OLJnia52yhNXvbTlt273EqO3kIggUy1e-uZso60eHwo/edit?gid=981003566#gid=981003566',
     mode: 'fixedGid',
+  },
+  {
+    id: 'vivian',
+    key: '비비안',
+    sheetId: VIVIAN_SHEET_ID,
+    sourceUrl: `https://docs.google.com/spreadsheets/d/${VIVIAN_SHEET_ID}/edit?gid=209391694#gid=209391694`,
   },
   {
     id: 'honoe1330',
@@ -293,6 +300,7 @@ const fetchFixedGidSchedule = async (source, monthInfo, resolvedGid = '') => {
 };
 
 const fetchSourceSchedule = async (source, monthInfo) => {
+  if (source.id === 'vivian') return buildFreshVivianScheduleResponse(monthInfo);
   if (source.id === 'jangjisu') {
     const result = await buildFreshJangjisuScheduleResponse(monthInfo);
     return { ...result, member: source.key };
@@ -403,7 +411,10 @@ async function serveScheduleSnapshot(res, monthInfo) {
   const cache = await readSnapshotCache(key);
   if (cache.record?.payload) cache.record = { ...cache.record, payload: filterPrisonSchedulePayload(cache.record.payload) };
   const cachedAt = Number(cache.record?.cachedAt || 0);
-  if (cache.record?.payload && cachedAt && Date.now() - cachedAt < SNAPSHOT_FRESH_MS) {
+  // Upgrade the old manual Vivian entry without dropping any existing member snapshots.
+  const needsVivianSheet = Boolean(PRISON_SCHEDULE_MONTH_GIDS.vivian?.[monthKey(monthInfo)])
+    && !cache.record?.payload?.sourceStatus?.some((source) => source.member === '비비안' && !source.manual);
+  if (cache.record?.payload && !needsVivianSheet && cachedAt && Date.now() - cachedAt < SNAPSHOT_FRESH_MS) {
     return res.status(200).json({ ...cache.record.payload, cache: 'hit', cacheStorage: cache.storage, cachedAt: new Date(cachedAt).toISOString() });
   }
 
