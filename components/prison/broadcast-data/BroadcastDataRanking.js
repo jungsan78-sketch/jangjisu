@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { buildPenaltyRankings } from '../../../lib/prisonPenaltyScore';
+import { buildPenaltyRankings, PENALTY_METRICS, PENALTY_MAX_SCORE } from '../../../lib/prisonPenaltyScore';
 
 const numberFormat = new Intl.NumberFormat('ko-KR');
 const scoreFormat = new Intl.NumberFormat('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -95,7 +95,7 @@ export default function BroadcastDataRanking({ rankings, mode, onModeChange, sel
 
       {penaltyMode && (
         <div className="mt-5 rounded-2xl bg-rose-300/[0.055] px-4 py-3 text-sm leading-relaxed text-rose-100/75 shadow-[inset_0_1px_0_rgba(253,164,175,0.07)]">
-          <p className="font-bold">4개 항목의 등수를 각각 25점으로 환산 · 총 100점 만점</p>
+          <p className="font-bold">{PENALTY_METRICS.map(({ label, weight }) => `${label} ${weight}점`).join(' · ')} · 총 {PENALTY_MAX_SCORE}점 만점</p>
           <p className="mt-1 text-xs text-white/50">높을수록 좋은 성적이며, 낮을수록 벌칙 대상입니다. 같은 실적은 평균 등수로 계산하고 최종 동점은 공동 순위로 표시합니다.</p>
           <p className="mt-1 text-xs text-white/40">기존 순위와 같은 멤버 기준(장지수 포함) · 집계 중인 멤버는 계산에서 제외한 현재 점수입니다. 전원 동점이면 벌칙 대상을 정하지 않습니다.</p>
           <p className="mt-1 text-xs text-white/40">점수 표시는 소수점 둘째 자리 반올림이며, 총점과 순위는 반올림 전 값으로 계산합니다.</p>
